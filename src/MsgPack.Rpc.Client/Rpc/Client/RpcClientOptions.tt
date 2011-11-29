@@ -1,0 +1,153 @@
+﻿<#
+//
+// MessagePack for CLI
+//
+// Copyright (C) 2010 FUJIWARA, Yusuke
+//
+//    Licensed under the Apache License, Version 2.0 (the "License");
+//    you may not use this file except in compliance with the License.
+//    You may obtain a copy of the License at
+//
+//        http://www.apache.org/licenses/LICENSE-2.0
+//
+//    Unless required by applicable law or agreed to in writing, software
+//    distributed under the License is distributed on an "AS IS" BASIS,
+//    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//    See the License for the specific language governing permissions and
+//    limitations under the License.
+//
+#>
+<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ output extension=".cs" #>
+<#@ assembly Name="System.Core" #>
+<#@ import namespace="System" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#
+
+// This file defines RpcClientOptions which is chunk of boilerplate.
+// TODO: Use set property instead of setter method to use object initializer syntax.
+// TODO: Implement Clone<T> instead of freezing.
+var __typeName = "RpcClientOptions";
+var __options = new Dictionary<string, Tuple<string, string, string, string>> // Type of option, <summary>, <value>
+{
+	// TODO: Use streamed sending and remove this option.
+	{ "BufferSegmentSize", Tuple.Create( "int?", "Get buffer segment size of buffer in bytes.", "Set buffer segment size of buffer in bytes.", "Buffer chunk size of buffer in bytes." ) },
+	{ "BufferSegmentCount", Tuple.Create( "int?", "Get buffer segment count of buffer in bytes.", "Set buffer segment count of buffer in bytes.", "Buffer chunk size of buffer in bytes." ) },
+	{ "MinimumConnectionCount",   Tuple.Create( "int?", "Get minimum count of connection to preserve in pool.", "Set minimum count of connection to preserve in pool.", "Minimum count of connection to preserve in pool." ) },
+	{ "MaximumConnectionCount",  Tuple.Create( "int?", "Get maximum count of connection to hold in pool.", "Set maximum count of connection to hold in pool.", "Maximum count of connection to hold in pool." ) },
+	{ "ConnectingConcurrency", Tuple.Create( "int?", "Get concurrency of 'Connect' operation in <see cref=\"PollingClientEventLoop\"/>.", "Set concurrency of 'Connect' operation in <see cref=\"PollingClientEventLoop\"/>.", "Concurrency of 'Connect' operation in <see cref=\"PollingClientEventLoop\"/>." ) },
+	{ "SendingConcurrency",	   Tuple.Create( "int?", "Get concurrency of 'Send' operation in <see cref=\"PollingClientEventLoop\"/>.", "Set concurrency of 'Send' operation in <see cref=\"PollingClientEventLoop\"/>.", "Concurrency of 'Send' operation in <see cref=\"PollingClientEventLoop\"/>." ) },
+	{ "ReceivingConcurrency",  Tuple.Create( "int?", "Get concurrency of 'Receive' operation in <see cref=\"PollingClientEventLoop\"/>.", "Set concurrency of 'Receive' operation in <see cref=\"PollingClientEventLoop\"/>.", "Concurrency of 'Receive' operation in <see cref=\"PollingClientEventLoop\"/>." ) },
+	{ "ConnectingQueueLength", Tuple.Create( "int?", "Get number of connection to pool.", "Set number of connection to pool.", "Number of connection to pool" ) },
+	{ "SendingQueueLength",    Tuple.Create( "int?", "Get limit of queue of sending message in <see cref=\"PollingClientEventLoop\"/>.", "Set limit of queue of sending message in <see cref=\"PollingClientEventLoop\"/>.", "Limit of queue of sending message in <see cref=\"PollingClientEventLoop\"/>." ) },
+	{ "ReceivingQueueLength",  Tuple.Create( "int?", "Get limit of queue of receiving message in <see cref=\"PollingClientEventLoop\"/>.", "Set limit of queue of receiving message in <see cref=\"PollingClientEventLoop\"/>.", "Limit of queue of receiving message in <see cref=\"PollingClientEventLoop\"/>." ) },
+	{ "UseConnectionPooling",  Tuple.Create( "bool?", "Get whether connection pooling is used.", "Set whether connection pooling is used.", "If connection pooling is used then true." ) },
+	{ "ForceIPv4",             Tuple.Create( "bool?", "Get whether force using IP v4 even if IP v6 is available.", "Set whether force using IP v4 even if IP v6 is available.", "If IP v4 is forced then true." ) },
+	{ "MaximumRequestQuota",   Tuple.Create( "int?", "Get maximum request length in bytes.", "Set maximum request length in bytes.", "Maximum request length in bytes." ) },
+	{ "MaximumResponseQuota",  Tuple.Create( "int?", "Get maximum response length in bytes.", "Set maximum response length in bytes.", "Maximum response length in bytes." ) },
+	{ "ConnectTimeout",        Tuple.Create( "TimeSpan?", "Get socket connect timeout.", "Set socket connect timeout.", "Socket connect timeout." ) },
+	{ "DrainTimeout",          Tuple.Create( "TimeSpan?", "Get socket drain timeout.", "Set socket drain timeout.", "Socket drain timeout." ) }
+};
+
+#>
+#region -- License Terms --
+//
+// MessagePack for CLI
+//
+// Copyright (C) 2010 FUJIWARA, Yusuke
+//
+//    Licensed under the Apache License, Version 2.0 (the "License");
+//    you may not use this file except in compliance with the License.
+//    You may obtain a copy of the License at
+//
+//        http://www.apache.org/licenses/LICENSE-2.0
+//
+//    Unless required by applicable law or agreed to in writing, software
+//    distributed under the License is distributed on an "AS IS" BASIS,
+//    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//    See the License for the specific language governing permissions and
+//    limitations under the License.
+//
+#endregion -- License Terms --
+
+using System;
+using System.Diagnostics.Contracts;
+
+namespace MsgPack.Rpc
+{
+	// This file generated from <#= __typeName #>.tt T4Template.
+	// Do not modify this file. Edit <#= __typeName #>.tt instead.
+
+	/// <summary>
+	///		Represents various configuration information of MessagePack-RPC client.
+	/// </summary>
+	public sealed class <#= __typeName #>
+	{
+		private bool _isFrozen;
+
+		/// <summary>
+		///		Get the value which indicates this instance is frozen or not.
+		/// </summary>
+		/// <value>
+		///		If this instance is frozen then true.
+		/// </value>
+		public bool IsFrozen
+		{
+			get{ return this._isFrozen; }
+		}
+
+		/// <summary>
+		///		Freeze this instance.
+		/// </summary>
+		/// <remarks>
+		///		Frozen instance will be immutable.
+		/// </remarks>
+		public void Freeze()
+		{
+			this._isFrozen = true;
+		}
+<#
+foreach( var __option in __options )
+{
+#>
+
+		private <#= __option.Value.Item1 #> _<#= __option.Key #>;
+
+		/// <summary>
+		///		<#= __option.Value.Item2 #>
+		/// </summary>
+		/// <value>
+		///		<#= __option.Value.Item4 #>
+		/// </value>
+		/// <exception cref="InvalidOperationException">You attempt to set the value when this instance is frozen.</exception>
+		public <#= __option.Value.Item1 #> <#= __option.Key #>
+		{
+			get
+			{
+				return this._<#= __option.Key #>;
+			}
+			set
+			{
+				if( this._isFrozen )
+				{
+					throw new InvalidOperationException( "This instance is frozen." );
+				}
+
+				Contract.EndContractBlock();
+
+				this._<#= __option.Key #> = value;
+			}
+		}
+<#
+}
+#>
+
+		/// <summary>
+		///		Initialize new instance.
+		/// </summary>
+		public <#= __typeName #>()
+		{
+			// nop.
+		}
+	}
+}

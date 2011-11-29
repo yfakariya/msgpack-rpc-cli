@@ -1,0 +1,127 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>8.0.30703</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{39C460F9-9BE8-4497-AC2F-09C3A66D8D12}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>MsgPack</RootNamespace>
+    <AssemblyName>MsgPack.Rpc.Client</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile>Client</TargetFrameworkProfile>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup>
+    <SignAssembly>true</SignAssembly>
+  </PropertyGroup>
+  <PropertyGroup>
+    <AssemblyOriginatorKeyFile>..\MsgPack.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="MsgPack">
+      <HintPath>..\..\lib\MsgPack.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\CommonAssemblyInfo.cs">
+      <Link>Properties\CommonAssemblyInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\CommonAssemblyInfo.Rpc.cs">
+      <Link>Properties\CommonAssemblyInfo.Rpc.cs</Link>
+    </Compile>
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Rpc\Client\ClientServices.cs" >
+      <DependentUpon>ClientServices.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Rpc\Client\DefaultRpcClientFactoryCache.cs" />
+    <Compile Include="Rpc\Client\NotificationMessageAsyncResult.cs" />
+    <Compile Include="Rpc\Client\Protocols\ClientEventLoop.cs" />
+    <Compile Include="Rpc\Client\Protocols\ClientEventLoopFactory.cs" />
+    <Compile Include="Rpc\Client\Protocols\ClientSessionContext.cs" />
+    <Compile Include="Rpc\Client\Protocols\ClientTransport.cs" />
+    <Compile Include="Rpc\Client\Protocols\ConnectionOrientedClientTransport.cs" />
+    <Compile Include="Rpc\Client\Protocols\IAsyncConnectClient.cs" />
+    <Compile Include="Rpc\Client\Protocols\IMessageIdGenerator.cs" />
+    <Compile Include="Rpc\Client\Protocols\IOCompletionPortClientEventLoop.cs" />
+    <Compile Include="Rpc\Client\Protocols\IOCompletionPortClientEventLoopFactory.cs" />
+    <Compile Include="Rpc\Client\Protocols\MessageIdGenerator.cs" />
+    <Compile Include="Rpc\Client\Protocols\PollingClientEventLoop.bak.cs" />
+    <Compile Include="Rpc\Client\Protocols\Structs.cs" />
+    <Compile Include="Rpc\Client\Protocols\Structs.g.cs" >
+      <DependentUpon>Structs.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Rpc\Client\Protocols\TcpClientTransport.cs" />
+    <Compile Include="Rpc\Client\Protocols\UdpClientTransport.cs" />
+    <Compile Include="Rpc\Client\RequestMessageAsyncResult.cs" />
+    <Compile Include="Rpc\Client\RpcClient.cs" />
+    <Compile Include="Rpc\Client\RpcClientFactory.cs" />
+    <Compile Include="Rpc\Client\RpcClientOptions.cs" >
+      <DependentUpon>RpcClientOptions.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Rpc\Client\RpcProxy.cs" />
+    <Compile Include="Rpc\Client\Services\ConnectionPool.cs" />
+    <Compile Include="Rpc\Client\Services\RequestSerializerFactory.cs" />
+    <Compile Include="Rpc\Client\Services\ResponseDeserializerFactory.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\MsgPack.snk">
+      <Link>MsgPack.snk</Link>
+    </None>
+    <None Include="Rpc\Client\ClientServices.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>ClientServices.cs</LastGenOutput>
+    </None>
+    <None Include="Rpc\Client\Protocols\Structs.g.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>Structs.g.cs</LastGenOutput>
+    </None>
+    <None Include="Rpc\Client\RpcClientOptions.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>RpcClientOptions.cs</LastGenOutput>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\MsgPack.Rpc\MsgPack.Rpc.csproj">
+      <Project>{77ABC1A9-0719-47AD-B2E1-0B12E49E3CD2}</Project>
+      <Name>MsgPack.Rpc</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

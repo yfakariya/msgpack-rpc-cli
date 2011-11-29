@@ -1,0 +1,10 @@
+*.suo
+*.bak
+*.csproj.user
+bin/
+Bin/
+lib/
+local/
+obj/
+Index.dat
+Storage.dat

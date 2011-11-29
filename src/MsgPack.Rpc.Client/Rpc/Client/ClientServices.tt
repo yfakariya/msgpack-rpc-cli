@@ -1,0 +1,211 @@
+﻿<#
+//
+// MessagePack for CLI
+//
+// Copyright (C) 2010 FUJIWARA, Yusuke
+//
+//    Licensed under the Apache License, Version 2.0 (the "License");
+//    you may not use this file except in compliance with the License.
+//    You may obtain a copy of the License at
+//
+//        http://www.apache.org/licenses/LICENSE-2.0
+//
+//    Unless required by applicable law or agreed to in writing, software
+//    distributed under the License is distributed on an "AS IS" BASIS,
+//    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//    See the License for the specific language governing permissions and
+//    limitations under the License.
+//
+#>
+<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ output extension=".cs" #>
+<#@ assembly Name="System.Core" #>
+<#@ import namespace="System" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#
+
+// This file defines RpcClientOptions which is chunk of boilerplate.
+var __typeName = "ClientServices";
+var __options = new Dictionary<string, Tuple<string, string, string, string, string>> // Type of option, <summary>, <value>
+{
+	// TODO: Use streamed sending and remove this option.
+	{ "RequestSerializerFactory", 
+		Tuple.Create( 
+			"RequestSerializerFactory", 
+			"Get <see cref=\"RequestSerializerFactory\"/> to serialize request and notification message.", 
+			"Set custom <see cref=\"RequestSerializerFactory\"/> to serialize request and notification message.", 
+			"<see cref=\"RequestSerializerFactory\"/> to serialize request message.",
+			"RequestSerializerFactory.Default"
+		) 
+	},
+	{ "ResponseDeserializerFactory", 
+		Tuple.Create( 
+			"ResponseDeserializerFactory", 
+			"Get <see cref=\"RequestSerializerFactory\"/> to deserialize response message.", 
+			"Set custom <see cref=\"ResponseDeserializerFactory\"/> to deserialize response message.", 
+			"<see cref=\"ResponseDeserializerFactory\"/> to deserialize response message.",
+			"ResponseDeserializerFactory.Default"
+		) 
+	},
+	{ "SocketFactory", 
+		Tuple.Create( 
+			"Func<Socket, RpcSocket>", 
+			"Get <see cref=\"Func&lt;T,TResult&gt;\">Func&lt;<see cref=\"Socket\"/>, <see cref=\"RpcSocket\"/>&lt;</see> to create <see cref=\"RpcSocket\"/> from <see cref=\"Socket\"/>.", 
+			"Set custom <see cref=\"Func&lt;T,TResult&gt;\">Func&lt;<see cref=\"Socket\"/>, <see cref=\"RpcSocket\"/>&lt;</see> to create <see cref=\"RpcSocket\"/> from <see cref=\"Socket\"/>.", 
+			"<see cref=\"Func&lt;T,TResult&gt;\">Func&lt;<see cref=\"Socket\"/>, <see cref=\"RpcSocket\"/>&lt;</see> to create <see cref=\"RpcSocket\"/> from <see cref=\"Socket\"/>.",
+			"( socket => new SimpleRpcSocket( socket ) )"
+		) 
+	}
+};
+
+#>
+#region -- License Terms --
+//
+// MessagePack for CLI
+//
+// Copyright (C) 2010 FUJIWARA, Yusuke
+//
+//    Licensed under the Apache License, Version 2.0 (the "License");
+//    you may not use this file except in compliance with the License.
+//    You may obtain a copy of the License at
+//
+//        http://www.apache.org/licenses/LICENSE-2.0
+//
+//    Unless required by applicable law or agreed to in writing, software
+//    distributed under the License is distributed on an "AS IS" BASIS,
+//    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//    See the License for the specific language governing permissions and
+//    limitations under the License.
+//
+#endregion -- License Terms --
+
+using System;
+using System.Diagnostics.Contracts;
+using System.IO;
+using System.Net.Sockets;
+using System.Threading;
+
+using MsgPack.Rpc.Protocols;
+using MsgPack.Rpc.Services;
+
+namespace MsgPack.Rpc
+{
+	// This file generated from <#= __typeName #>.tt T4Template.
+	// Do not modify this file. Edit <#= __typeName #>.tt instead.
+
+	/// <summary>
+	///		Represents various configuration information of MessagePack-RPC client.
+	/// </summary>
+	public static class <#= __typeName #>
+	{
+		/// <summary>
+		///		Value which indicates whether I/O complection ports might be available in this runtime.
+		/// </summary>
+		internal static readonly bool CanUseIOCompletionPort = DetermineCanUseIOCompletionPortOnCli();
+
+		private static bool DetermineCanUseIOCompletionPortOnCli()
+		{
+			if ( Environment.OSVersion.Platform != PlatformID.Win32NT )
+			{
+				return false;
+			}
+
+			// TODO: silverlight/moonlight path...
+			string windir = Environment.GetEnvironmentVariable( "windir" );
+			if ( String.IsNullOrEmpty( windir ) )
+			{
+				return false;
+			}
+
+			string clrMSCorLibPath =
+				Path.Combine(
+					windir,
+					"Microsoft.NET",
+					"Framework" + ( IntPtr.Size == 8 ? "64" : String.Empty ),
+					"v" + Environment.Version.Major + Environment.Version.Minor + Environment.Version.Build,
+					"mscorlib.dll"
+				);
+
+			return String.Equals( typeof( object ).Assembly.Location, clrMSCorLibPath, StringComparison.OrdinalIgnoreCase );
+		}
+		
+		/// <summary>
+		///		Get <see cref="ClientEventLoopFactory"/>.
+		/// </summary>
+		/// <value>
+		/// 	Appropriate <see cref="ClientEventLoopFactory"/>.
+		/// </value>
+		public static ClientEventLoopFactory EventLoopFactory
+		{
+			get { return CanUseIOCompletionPort ? ( ClientEventLoopFactory )new IOCompletionPortClientEventLoopFactory() : new PollingClientEventLoopFactory(); }
+		}
+		
+		private static int _isFrozen;
+
+		/// <summary>
+		///		Get the value which indicates this instance is frozen or not.
+		/// </summary>
+		/// <value>
+		///		If this instance is frozen then true.
+		/// </value>
+		public static bool IsFrozen
+		{
+			get{ return <#= __typeName #>._isFrozen != 0; }
+		}
+
+		/// <summary>
+		///		Freeze this instance.
+		/// </summary>
+		/// <remarks>
+		///		Frozen instance will be immutable.
+		/// </remarks>
+		public static void Freeze()
+		{
+			Interlocked.Exchange( ref <#= __typeName #>._isFrozen, 1 );
+		}
+<#
+foreach( var __option in __options )
+{
+#>
+
+		private static <#= __option.Value.Item1 #> _<#= __option.Key #> = <#= __option.Value.Item5 #>;
+
+		/// <summary>
+		///		<#= __option.Value.Item2 #>
+		/// </summary>
+		/// <value>
+		///		<#= __option.Value.Item4 #>
+		/// </value>
+		/// <exception cref="InvalidOperationException">You attempt to set the value when this instance is frozen.</exception>
+		public static <#= __option.Value.Item1 #> <#= __option.Key #>
+		{
+			get
+			{
+				return <#= __typeName #>._<#= __option.Key #>;
+			}
+		}
+				
+		/// <summary>
+		///		<#= __option.Value.Item3 #>
+		/// </summary>
+		/// <param name="value">
+		///		<#= __option.Value.Item4 #>
+		/// 	If this value is null, reset to default.
+		/// </param>
+		/// <exception cref="InvalidOperationException">You attempt to set the value when this instance is frozen.</exception>
+		public static void Set<#= __option.Key #>( <#= __option.Value.Item1 #> value )
+		{
+			if( <#= __typeName #>.IsFrozen )
+			{
+				throw new InvalidOperationException( "This instance is frozen." );
+			}
+
+			Contract.EndContractBlock();
+
+			Interlocked.Exchange( ref <#= __typeName #>._<#= __option.Key #>, value ?? <#= __option.Value.Item5 #> );
+		}
+<#
+}
+#>
+	}
+}

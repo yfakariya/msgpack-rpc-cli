@@ -1,0 +1,144 @@
+﻿<#
+//
+// MessagePack for CLI
+//
+// Copyright (C) 2010 FUJIWARA, Yusuke
+//
+//    Licensed under the Apache License, Version 2.0 (the "License");
+//    you may not use this file except in compliance with the License.
+//    You may obtain a copy of the License at
+//
+//        http://www.apache.org/licenses/LICENSE-2.0
+//
+//    Unless required by applicable law or agreed to in writing, software
+//    distributed under the License is distributed on an "AS IS" BASIS,
+//    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//    See the License for the specific language governing permissions and
+//    limitations under the License.
+//
+#>
+<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ output extension=".cs" #>
+<#@ assembly Name="System.Core" #>
+<#@ import namespace="System" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#
+
+// This file defines RpcServerOptions which is chunk of boilerplate.
+var __typeName = "RpcServerOptions";
+var __options = new Dictionary<string, Tuple<string, string, string>> // Type of option, <summary>, <value>
+{
+	// TODO: Use streamed sending and remove this option.
+	{ "InitialSendBufferSize", Tuple.Create( "int?", "Get or set initial buffer size of sending buffer in bytes.", "Initial buffer size of sending buffer in bytes." ) },
+	{ "ReceiveBufferSize",	   Tuple.Create( "int?", "Get or set receive buffer size in bytes.", "Receive buffer size in bytes." ) },
+	{ "AcceptConcurrency", Tuple.Create( "int?", "Get or set concurrency of 'Accept' operation in <see cref=\"IOCompletionPortServerEventLoop\"/> and <see cref=\"PollingServerEventLoop\"/>.", "Concurrency of 'Accept' operation in <see cref=\"IOCompletionPortServerEventLoop\"/> and <see cref=\"PollingServerEventLoop\"/>." ) },
+	{ "SendingConcurrency",	   Tuple.Create( "int?", "Get or set concurrency of 'Send' operation in <see cref=\"PollingServerEventLoop\"/>.", "Concurrency of 'Send' operation in <see cref=\"PollingServerEventLoop\"/>." ) },
+	{ "ReceivingConcurrency",  Tuple.Create( "int?", "Get or set concurrency of 'Receive' operation in <see cref=\"PollingServerEventLoop\"/>.", "Concurrency of 'Receive' operation in <see cref=\"PollingServerEventLoop\"/>." ) },
+	{ "TimeoutWatchPeriod", Tuple.Create( "TimeSpan?", "Get or set period of execution timeout monitoring.", "Period of execution timeout monitoring." ) },
+	{ "ExecutionTimeout", Tuple.Create( "TimeSpan?", "Get or set duration to timeout worker thread execution.", "Duration to timeout worker thread execution." ) },
+	{ "SendingQueueLength",    Tuple.Create( "int?", "Get or set limit of queue of sending message in <see cref=\"PollingServerEventLoop\"/>.", "Limit of queue of sending message in <see cref=\"PollingServerEventLoop\"/>." ) },
+	{ "ReceivingQueueLength",  Tuple.Create( "int?", "Get or set limit of queue of receiving message in <see cref=\"PollingServerEventLoop\"/>.", "Limit of queue of receiving message in <see cref=\"PollingServerEventLoop\"/>." ) },
+};
+
+#>
+#region -- License Terms --
+//
+// MessagePack for CLI
+//
+// Copyright (C) 2010 FUJIWARA, Yusuke
+//
+//    Licensed under the Apache License, Version 2.0 (the "License");
+//    you may not use this file except in compliance with the License.
+//    You may obtain a copy of the License at
+//
+//        http://www.apache.org/licenses/LICENSE-2.0
+//
+//    Unless required by applicable law or agreed to in writing, software
+//    distributed under the License is distributed on an "AS IS" BASIS,
+//    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//    See the License for the specific language governing permissions and
+//    limitations under the License.
+//
+#endregion -- License Terms --
+
+using System;
+using System.Diagnostics.Contracts;
+
+namespace MsgPack
+{
+	// This file generated from <#= __typeName #>.tt T4Template.
+	// Do not modify this file. Edit <#= __typeName #>.tt instead.
+
+	/// <summary>
+	///		Represents various configuration information of MessagePack-RPC client.
+	/// </summary>
+	public sealed class <#= __typeName #>
+	{
+		private bool _isFrozen;
+
+		/// <summary>
+		///		Get the value which indicates this instance is frozen or not.
+		/// </summary>
+		/// <value>
+		///		If this instance is frozen then true.
+		/// </value>
+		public bool IsFrozen
+		{
+			get{ return this._isFrozen; }
+		}
+
+		/// <summary>
+		///		Freeze this instance.
+		/// </summary>
+		/// <remarks>
+		///		Frozen instance will be immutable.
+		/// </remarks>
+		public void Freeze()
+		{
+			this._isFrozen = true;
+		}
+<#
+foreach( var __option in __options )
+{
+#>
+
+		private <#= __option.Value.Item1 #> _<#= __option.Key #>;
+
+		/// <summary>
+		///		<#= __option.Value.Item2 #>
+		/// </summary>
+		/// <value>
+		///		<#= __option.Value.Item3 #>
+		/// </value>
+		/// <exception cref="InvalidOperationException">You attempt to set the value when this instance is frozen.</exception>
+		public <#= __option.Value.Item1 #> <#= __option.Key #>
+		{
+			get
+			{
+				return this._<#= __option.Key #>;
+			}
+			set
+			{
+				if( this._isFrozen )
+				{
+					throw new InvalidOperationException( "This instance is frozen." );
+				}
+
+				Contract.EndContractBlock();
+
+				this._<#= __option.Key #> = value;
+			}
+		}
+<#
+}
+#>
+
+		/// <summary>
+		///		Initialize new instance.
+		/// </summary>
+		public <#= __typeName #>()
+		{
+			// nop.
+		}
+	}
+}
