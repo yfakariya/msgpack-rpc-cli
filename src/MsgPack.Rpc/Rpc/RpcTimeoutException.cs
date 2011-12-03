@@ -138,7 +138,7 @@ namespace MsgPack.Rpc
 		internal RpcTimeoutException( MessagePackObject unpackedException )
 			: base( RpcError.TimeoutError, unpackedException )
 		{
-			MessagePackObjectDictionary.TryGetTimeSpan( unpackedException, _clientTimeoutKeyUtf8, RpcException.CreateSerializationException, out this._clientTimeout );
+			unpackedException.TryGetTimeSpan( _clientTimeoutKeyUtf8, RpcException.CreateSerializationException, out this._clientTimeout );
 		}
 
 		/// <summary>

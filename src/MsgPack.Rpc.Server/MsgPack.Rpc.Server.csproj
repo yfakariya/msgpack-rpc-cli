@@ -57,27 +57,21 @@
       <Link>Properties\CommonAssemblyInfo.Rpc.cs</Link>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Rpc\Server\Dispatch\Dispatcher.cs" />
-    <Compile Include="Rpc\Server\Dispatch\DispatchTargetResolver.cs" />
-    <Compile Include="Rpc\Server\Dispatch\InvocationErrorHandler.cs" />
-    <Compile Include="Rpc\Server\Dispatch\InvocationResult.cs" />
-    <Compile Include="Rpc\Server\Dispatch\MethodInvoker.cs" />
-    <Compile Include="Rpc\Server\Dispatch\MethodInvokerEmitter.cs" />
-    <Compile Include="Rpc\Server\Dispatch\MethodInvokerEmitterMode.cs" />
-    <Compile Include="Rpc\Server\Dispatch\MethodInvokerProvider.cs" />
-    <Compile Include="Rpc\Server\Dispatch\PostInvocationFilter.cs" />
-    <Compile Include="Rpc\Server\Dispatch\PreInvocationFilter.cs" />
-    <Compile Include="Rpc\Server\Protocols\IOCompletionPortServerEventLoop.cs" />
-    <Compile Include="Rpc\Server\Protocols\ServerEventLoop.cs" />
-    <Compile Include="Rpc\Server\Protocols\ServerSessionContext.cs" />
+    <Compile Include="Rpc\Server\Protocols\Constants.cs" />
+    <Compile Include="Rpc\Server\Protocols\NativeMessageType.cs" />
+    <Compile Include="Rpc\Server\Protocols\RpcMessageReceivedEventArgs.cs" />
     <Compile Include="Rpc\Server\Protocols\ServerSocketAsyncEventArgs.cs" />
     <Compile Include="Rpc\Server\Protocols\ServerTransport.cs" />
     <Compile Include="Rpc\Server\Protocols\TcpServerTransport.cs" />
-    <Compile Include="Rpc\Server\RpcServer.cs" />
-    <Compile Include="Rpc\Server\RpcServerOptions.cs" >
+    <Compile Include="Rpc\Server\Protocols\TransportState.cs" />
+    <Compile Include="Rpc\Server\Protocols\UdpServerTransport.cs" />
+    <Compile Include="Rpc\Server\RpcServer.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Rpc\Server\RpcServerOptions.cs">
       <DependentUpon>RpcServerOptions.tt</DependentUpon>
     </Compile>
-    <Compile Include="Rpc\Server\RpcServerSession.cs" />
+    <Compile Include="Rpc\Server\Tracer.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\MsgPack.snk">
@@ -96,6 +90,9 @@
   </ItemGroup>
   <ItemGroup>
     <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Rpc\Server\Dispatch\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

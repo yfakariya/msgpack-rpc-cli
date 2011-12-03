@@ -134,7 +134,7 @@ namespace MsgPack.Rpc
 			Contract.EndContractBlock();
 
 			this._error = error;
-			var data = new Dictionary<MessagePackObject, MessagePackObject>();
+			var data = new MessagePackObjectDictionary( 2 );
 			data.Add( RpcException.MessageKeyUtf8, description );
 			data.Add( RpcException.DebugInformationKeyUtf8, debugInformation );
 			this._detail = new MessagePackObject( data );

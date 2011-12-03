@@ -46,20 +46,24 @@ namespace MsgPack.Rpc
 		protected internal RpcException( RpcError rpcError, MessagePackObject unpackedException )
 			: this( rpcError, GetString( unpackedException, MessageKeyUtf8, true ), GetString( unpackedException, DebugInformationKeyUtf8, false ) )
 		{
-			IList<MessagePackObject> array;
-			if ( MessagePackObjectDictionary.TryGetArray( unpackedException, _remoteExceptionsUtf8, null, out array ) )
+			if ( unpackedException.IsDictionary )
 			{
-				try
+				MessagePackObject mayBeArray;
+				if ( unpackedException.AsDictionary().TryGetValue( _remoteExceptionsUtf8, out mayBeArray ) && mayBeArray.IsArray )
 				{
-					this._remoteExceptions = new RemoteExceptionInformation[ array.Count ];
-					for ( int i = 0; i < this._remoteExceptions.Length; i++ )
+					var array = mayBeArray.AsList();
+					try
 					{
-						this._remoteExceptions[ i ] = new RemoteExceptionInformation( array[ i ].AsList() );
+						this._remoteExceptions = new RemoteExceptionInformation[ array.Count ];
+						for ( int i = 0; i < this._remoteExceptions.Length; i++ )
+						{
+							this._remoteExceptions[ i ] = new RemoteExceptionInformation( array[ i ].AsList() );
+						}
 					}
-				}
-				catch ( InvalidOperationException ex )
-				{
-					throw new SerializationException( "Failed to deserialize remote exception information", ex );
+					catch ( InvalidOperationException ex )
+					{
+						throw new SerializationException( "Failed to deserialize remote exception information", ex );
+					}
 				}
 			}
 		}
@@ -75,7 +79,7 @@ namespace MsgPack.Rpc
 			public readonly int HResult;
 			public readonly string Message;
 			public readonly RemoteStackFrame[] StackTrace;
-			public readonly IDictionary<MessagePackObject, MessagePackObject> Data;
+			public readonly MessagePackObjectDictionary Data;
 
 			public RemoteExceptionInformation( IList<MessagePackObject> unpacked )
 			{
@@ -143,7 +147,7 @@ namespace MsgPack.Rpc
 		private static string GetString( MessagePackObject unpackedException, MessagePackObject key, bool isRequlred )
 		{
 			string value;
-			MessagePackObjectDictionary.TryGetString( unpackedException, key, isRequlred ? CreateSerializationException : default( Func<string, Exception> ), out value );
+			unpackedException.TryGetString( key, isRequlred ? CreateSerializationException : default( Func<string, Exception> ), out value );
 			return value;
 		}
 
@@ -163,7 +167,7 @@ namespace MsgPack.Rpc
 		/// </returns>
 		public MessagePackObject GetExceptionMessage( bool includesDebugInformation )
 		{
-			var store = new Dictionary<MessagePackObject, MessagePackObject>();
+			var store = new MessagePackObjectDictionary( 2 );
 			store.Add( _errorCodeUtf8, this.RpcError.ErrorCode );
 			store.Add( MessageKeyUtf8, this.Message );
 			this.GetExceptionMessage( store, includesDebugInformation );
@@ -242,7 +246,7 @@ namespace MsgPack.Rpc
 					// data
 					if ( inner.Data != null && inner.Data.Count > 0 )
 					{
-						var data = new Dictionary<MessagePackObject, MessagePackObject>( inner.Data.Count );
+						var data = new MessagePackObjectDictionary( inner.Data.Count );
 						foreach ( System.Collections.DictionaryEntry entry in inner.Data )
 						{
 							data.Add( MessagePackObject.FromObject( entry.Key ), MessagePackObject.FromObject( entry.Value ) );

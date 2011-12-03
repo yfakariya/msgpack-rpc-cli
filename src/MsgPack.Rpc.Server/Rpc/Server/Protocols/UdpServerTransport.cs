@@ -25,41 +25,40 @@ using System.Net.Sockets;
 namespace MsgPack.Rpc.Server.Protocols
 {
 	/// <summary>
-	///		<see cref="ServerTransport"/> implementation for TCP/IP.
+	///		<see cref="ServerTransport"/> implementation for UDP/IP.
 	/// </summary>
-	public sealed class TcpServerTransport : ServerTransport
+	public sealed class UdpServerTransport : ServerTransport
 	{
+		private Socket CurrentSocket
+		{
+			get;
+			set;
+		}
+
 		/// <summary>
-		///		Initializes a new instance of the <see cref="TcpServerTransport"/> class.
+		/// Initializes a new instance of the <see cref="UdpServerTransport"/> class.
 		/// </summary>
 		/// <param name="context">The context information.</param>
 		/// <exception cref="ArgumentNullException">
 		///   <paramref name="context"/> is <c>null</c>.
 		///   </exception>
-		public TcpServerTransport( ServerSocketAsyncEventArgs context )
-			: base( context ) { }
+		public UdpServerTransport( ServerSocketAsyncEventArgs context ) : base( context ) { }
 
 		protected sealed override void InitializeCore( ServerSocketAsyncEventArgs context, EndPoint bindingEndPoint )
 		{
-			// TODO: Pooling
 			// TODO: IPv6
 			// TODO: BackLog-Configuration
-			var socket = new Socket( AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp );
+			var socket = new Socket( AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp );
 			socket.Bind( bindingEndPoint );
 			socket.Listen( 10 );
 			context.ListeningSocket = socket;
-			Tracer.Protocols.TraceEvent( Tracer.EventType.StartListen, Tracer.EventId.StartListen, "Start listen. [ \"endPoint\" : \"{0}\", \"backLog\" : {1} ]", bindingEndPoint, 10 );
-			this.Accept( context );
-		}
-
-		protected sealed override void OnAcceptted( ServerSocketAsyncEventArgs e )
-		{
-			this.Receive( e );
+			//context.RemoteEndPoint = 
+			this.Receive( context );
 		}
 
 		protected sealed override void ReceiveCore( ServerSocketAsyncEventArgs context )
 		{
-			if ( !context.AcceptSocket.ReceiveAsync( context ) )
+			if ( !this.CurrentSocket.ReceiveFromAsync( context ) )
 			{
 				this.OnReceived( context );
 			}
@@ -67,25 +66,9 @@ namespace MsgPack.Rpc.Server.Protocols
 
 		protected sealed override void SendCore( ServerSocketAsyncEventArgs context )
 		{
-			if ( !context.AcceptSocket.SendAsync( context ) )
+			if ( !CurrentSocket.SendToAsync( context ) )
 			{
 				this.OnSent( context );
-			}
-		}
-
-		protected sealed override void OnSent( ServerSocketAsyncEventArgs e )
-		{
-			e.AcceptSocket.Close();
-			e.AcceptSocket = null;
-			base.OnSent( e );
-			this.Accept( e );
-		}
-
-		private void Accept( ServerSocketAsyncEventArgs e )
-		{
-			if ( !e.ListeningSocket.AcceptAsync( e ) )
-			{
-				this.OnAcceptted( e );
 			}
 		}
 	}

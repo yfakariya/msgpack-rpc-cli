@@ -184,7 +184,7 @@ namespace MsgPack.Rpc
 		internal RpcArgumentException( MessagePackObject unpackedException )
 			: base( RpcError.ArgumentError, unpackedException )
 		{
-			MessagePackObjectDictionary.TryGetString( unpackedException, _parameterNameKeyUtf8, RpcException.CreateSerializationException, out this._parameterName );
+			unpackedException.TryGetString( _parameterNameKeyUtf8, RpcException.CreateSerializationException, out this._parameterName );
 		}
 
 		/// <summary>

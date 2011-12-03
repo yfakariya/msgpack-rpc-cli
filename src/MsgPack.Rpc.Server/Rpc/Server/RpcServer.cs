@@ -19,45 +19,72 @@
 #endregion -- License Terms --
 
 using System;
-using System.Diagnostics.Contracts;
+using System.Collections.Generic;
 using System.Net;
-using MsgPack.Rpc.Protocols;
+using MsgPack.Rpc.Server.Protocols;
+using MsgPack.Serialization;
 
-namespace MsgPack.Rpc
+namespace MsgPack.Rpc.Server
 {
 	/// <summary>
 	///		Control stand alone server event loop.
 	/// </summary>
-	public sealed class RpcServer : IDisposable
+	public class RpcServer : IDisposable
 	{
-		private readonly ServerEventLoop _eventLoop;
+		private readonly SerializationContext _serializationContext;
 
-		public RpcServer( ServerEventLoop eventLoop )
+		public SerializationContext SerializationContext
 		{
-			if ( eventLoop == null )
-			{
-				throw new ArgumentNullException( "eventLoop" );
-			}
+			get { return this._serializationContext; }
+		}
 
-			Contract.EndContractBlock();
+		// TODO: auto-scaling
+		// _maximumConcurrency, _currentConcurrency, _minimumIdle, _maximumIdle
 
-			this._eventLoop = eventLoop;
+		private readonly List<ServerTransport> _transports;
+		private readonly int _minimumConcurrency;
+
+		public RpcServer() : this( Environment.ProcessorCount * 2 ) { }
+
+		public RpcServer( int minimumConcurrency )
+		{
+			this._minimumConcurrency = minimumConcurrency;
+			this._transports = new List<ServerTransport>( minimumConcurrency );
+			this._serializationContext = new SerializationContext();
 		}
 
 		public void Dispose()
 		{
-			this._eventLoop.Dispose();
+			this.Stop();
+		}
+
+		private ServerTransport CreateTransport( ServerSocketAsyncEventArgs context )
+		{
+			// TODO: transport factory.
+			return new TcpServerTransport( context );
 		}
 
 		public void Start( EndPoint bindingEndPoint )
 		{
-			this._eventLoop.Start( bindingEndPoint );
+			Tracer.Server.TraceEvent( Tracer.EventType.StartServer, Tracer.EventId.StartServer, "Start server. [\"minimumConcurrency\":{0}]", this._minimumConcurrency );
+			// FIXME: Verification
+			for ( int i = 0; i < this._minimumConcurrency; i++ )
+			{
+				var transport = this.CreateTransport( new ServerSocketAsyncEventArgs( this ) );
+				transport.Initialize( bindingEndPoint );
+				this._transports.Add( transport );
+			}
 		}
 
 		public void Stop()
 		{
-			this._eventLoop.Stop();
-		}
+			// FIXME: Verification
+			foreach ( var transport in this._transports )
+			{
+				transport.Dispose();
+			}
 
+			this._transports.Clear();
+		}
 	}
 }
