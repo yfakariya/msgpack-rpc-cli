@@ -55,6 +55,27 @@ namespace MsgPack.Rpc.Server.Protocols
 		private readonly SerializationState _serializationState;
 		private readonly DeserializationState _deserializationState;
 
+		public event EventHandler<RpcTransportErrorEventArgs> Error;
+
+		protected virtual void OnError( RpcTransportErrorEventArgs e )
+		{
+			if ( e == null )
+			{
+				throw new ArgumentNullException( "e" );
+			}
+
+			this.OnErrorCore( e );
+		}
+
+		private void OnErrorCore( RpcTransportErrorEventArgs e )
+		{
+			var handler = this.Error;
+			if ( handler != null )
+			{
+				handler( this, e );
+			}
+		}
+
 		// TODO: Move to other layer e.g. Server.
 		/// <summary>
 		///		Occurs when request or notifiction mesage is received.
@@ -192,6 +213,58 @@ namespace MsgPack.Rpc.Server.Protocols
 			}
 		}
 
+		private void HandleDeserializationError( string message, Func<byte[]> invalidRequestHeaderProvider )
+		{
+			if ( invalidRequestHeaderProvider != null && Tracer.Protocols.Switch.ShouldTrace( Tracer.EventType.DumpInvalidRequestHeader ) )
+			{
+				var array = invalidRequestHeaderProvider();
+				Tracer.Protocols.TraceData( Tracer.EventType.DumpInvalidRequestHeader, Tracer.EventId.DumpInvalidRequestHeader, BitConverter.ToString( array ), array );
+			}
+
+			this.HandleDeserializationError( RpcError.MessageRefusedError, "Invalid stream.", message, invalidRequestHeaderProvider );
+		}
+
+		private void HandleDeserializationError( RpcError error, string message, string debugInformation, Func<byte[]> invalidRequestHeaderProvider )
+		{
+			var rpcError = new RpcErrorMessage( error, message , debugInformation);
+			this.HandleError( RpcTransportOperation.Deserialize, rpcError );
+			this._deserializationState.ClearDispatchContext();
+			this._deserializationState.ClearBuffers();
+
+			this.SendError( rpcError );
+		}
+
+		internal void HandleError( RpcTransportOperation operation, RpcErrorMessage error )
+		{
+			this.HandleError( new RpcTransportErrorEventArgs( operation, error ) );
+		}
+
+		internal void HandleError( SocketAsyncOperation operation, SocketError socketErrorCode )
+		{
+			this.OnErrorCore( new RpcTransportErrorEventArgs( operation, socketErrorCode ) );
+		}
+
+		private void HandleError( RpcTransportErrorEventArgs e )
+		{
+			var rpcError =
+				e.RpcError
+				?? ( e.SocketErrorCode == null
+				? new RpcErrorMessage( RpcError.RemoteRuntimeError, RpcError.RemoteRuntimeError.DefaultMessage )
+				: e.SocketErrorCode.Value.ToServerRpcError() );
+			Tracer.Protocols.TraceEvent(
+				Tracer.EventType.ForRpcError( e.RpcError.Value.Error ),
+				Tracer.EventId.ForRpcError( e.RpcError.Value.Error ),
+				"Error. [ \"Message ID\" : {0}, \"Operation\" : \"{1}\", \"Error Code\" : {2}, \"Error ID\" : \"{3}\", \"Detail\" : \"{4}\" ]",
+				e.MessageId == null ? "null" : e.MessageId.Value.ToString(),
+				e.Operation,
+				rpcError.Error.ErrorCode,
+				rpcError.Error.Identifier,
+				rpcError.Detail.ToString()
+			);
+
+			this.OnErrorCore( e );
+		}
+
 		/// <summary>
 		///		Initializes this transport for specified <see cref="EndPoint"/>.
 		/// </summary>
@@ -253,7 +326,25 @@ namespace MsgPack.Rpc.Server.Protocols
 		{
 			var context = ( ServerSocketAsyncEventArgs )e;
 
-			// FIXME: Error handling
+			bool? isError = e.SocketError.IsError();
+			if ( isError == null )
+			{
+				Tracer.Protocols.TraceEvent(
+					Tracer.EventType.IgnoreableError,
+					Tracer.EventId.IgnoreableError,
+					"Ignoreable error. [ \"Socket.Handle\" : 0x{0:x}, \"Remote endpoint\" : \"{1}\", \"LastOperation\" : \"{2}\", \"SocketError\" : \"{3}\", \"ErrorCode\" : 0x{4:x8} ]",
+					( sender as Socket ).Handle,
+					context.RemoteEndPoint,
+					context.LastOperation,
+					context.SocketError,
+					( int )context.SocketError
+				);
+			}
+			else if ( isError.GetValueOrDefault() )
+			{
+				this.HandleError( e.LastOperation, e.SocketError );
+				return;
+			}
 
 			if ( this.IsDisposed )
 			{

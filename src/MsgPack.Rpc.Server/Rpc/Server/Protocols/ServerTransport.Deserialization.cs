@@ -52,22 +52,21 @@ namespace MsgPack.Rpc.Server.Protocols
 
 			if ( !this._deserializationState.RootUnpacker.IsArrayHeader )
 			{
-				// FIXME: Error handler
-				var array = this._deserializationState.UnpackingBuffer.ToArray();
-				Tracer.Protocols.TraceData( Tracer.EventType.DumpInvalidRequestHeader, Tracer.EventId.DumpInvalidRequestHeader, BitConverter.ToString( array ), array );
-				throw new InvalidMessagePackStreamException( "Invalid request/notify message stream. Message must be array." );
+				this.HandleDeserializationError( "Invalid request/notify message stream. Message must be array.", () => this._deserializationState.UnpackingBuffer.ToArray() );
+				return true;
 			}
 
 			if ( this._deserializationState.RootUnpacker.ItemsCount != 3 && this._deserializationState.RootUnpacker.ItemsCount != 4 )
 			{
-				// FIXME: Error handler
-				throw new InvalidMessagePackStreamException(
+				this.HandleDeserializationError(
 					String.Format(
 						CultureInfo.CurrentCulture,
 						"Invalid request/notify message stream. Message must be valid size array. Actual size is {0}.",
 						this._deserializationState.RootUnpacker.ItemsCount
-					)
+					),
+					() => this._deserializationState.UnpackingBuffer.ToArray()
 				);
+				return true;
 			}
 
 			this._deserializationState.HeaderUnpacker = this._deserializationState.RootUnpacker.ReadSubtree();
@@ -96,10 +95,10 @@ namespace MsgPack.Rpc.Server.Protocols
 			{
 				numericType = this._deserializationState.HeaderUnpacker.Data.Value.AsInt32();
 			}
-			catch ( InvalidOperationException ex )
+			catch ( InvalidOperationException )
 			{
-				// FIXME: Error handler
-				throw new InvalidMessagePackStreamException( "Invalid request/notify message stream. Message Type must be Int32 compatible integer.", ex );
+				this.HandleDeserializationError( "Invalid request/notify message stream. Message Type must be Int32 compatible integer.", () => this._deserializationState.UnpackingBuffer.ToArray() );
+				return true;
 			}
 
 			MessageType type = ( MessageType )numericType;
@@ -119,8 +118,11 @@ namespace MsgPack.Rpc.Server.Protocols
 				}
 				default:
 				{
-					// FIXME: Error handler
-					throw new InvalidMessagePackStreamException( String.Format( CultureInfo.CurrentCulture, "Unknown message type '{0:x8}'", numericType ) );
+					this.HandleDeserializationError(
+						String.Format( CultureInfo.CurrentCulture, "Unknown message type '{0:x8}'", numericType ),
+						() => this._deserializationState.UnpackingBuffer.ToArray()
+					);
+					return true;
 				}
 			}
 
@@ -147,10 +149,12 @@ namespace MsgPack.Rpc.Server.Protocols
 			{
 				context.Id = this._deserializationState.HeaderUnpacker.Data.Value.AsUInt32();
 			}
-			catch ( InvalidOperationException ex )
+			catch ( InvalidOperationException )
 			{
-				// FIXME: Error handler
-				throw new InvalidMessagePackStreamException( "Invalid request message stream. ID must be UInt32 compatible integer.", ex );
+				this.HandleDeserializationError(
+					"Invalid request message stream. ID must be UInt32 compatible integer.",
+					() => this._deserializationState.UnpackingBuffer.ToArray()
+				);
 			}
 
 			this._deserializationState.NextProcess = this.UnpackMethodName;
@@ -177,10 +181,13 @@ namespace MsgPack.Rpc.Server.Protocols
 			{
 				this._deserializationState.MethodName = this._deserializationState.HeaderUnpacker.Data.Value.AsString();
 			}
-			catch ( InvalidOperationException ex )
+			catch ( InvalidOperationException )
 			{
-				// FIXME: Error handler
-				throw new InvalidMessagePackStreamException( "Invalid request/notify message stream. Method name must be UTF-8 string.", ex );
+				this.HandleDeserializationError(
+					"Invalid request/notify message stream. Method name must be UTF-8 string.",
+					() => this._deserializationState.UnpackingBuffer.ToArray()
+				);
+				return true;
 			}
 
 			this._deserializationState.NextProcess = this.UnpackArgumentsHeader;
@@ -205,16 +212,24 @@ namespace MsgPack.Rpc.Server.Protocols
 
 			if ( !this._deserializationState.HeaderUnpacker.IsArrayHeader )
 			{
-				// FIXME: Error handler
-				throw new InvalidMessagePackStreamException( "Invalid request/notify message stream. Arguments must be array." );
+				this.HandleDeserializationError(
+					"Invalid request/notify message stream. Arguments must be array.",
+					() => this._deserializationState.UnpackingBuffer.ToArray()
+				);
+				return true;
 			}
 
 			this._deserializationState.ArgumentsBufferUnpacker = this._deserializationState.HeaderUnpacker.ReadSubtree();
 
 			if ( Int32.MaxValue < this._deserializationState.ArgumentsBufferUnpacker.ItemsCount )
 			{
-				// FIXME: Error handler
-				throw new NotSupportedException( "Too many arguments." );
+				this.HandleDeserializationError(
+					RpcError.MessageTooLargeError,
+					"Too many arguments.",
+					this._deserializationState.ArgumentsBufferUnpacker.ItemsCount.ToString( "#,0", CultureInfo.CurrentCulture ),
+					() => this._deserializationState.UnpackingBuffer.ToArray()
+				);
+				return true;
 			}
 
 			this._deserializationState.ArgumentsCount = unchecked( ( int )( this._deserializationState.ArgumentsBufferUnpacker.ItemsCount ) );
@@ -342,7 +357,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			/// </summary>
 			public int UnpackedArgumentsCount;
 
-			
+
 			/// <summary>
 			///		Unpacked Message Type part value.
 			/// </summary>

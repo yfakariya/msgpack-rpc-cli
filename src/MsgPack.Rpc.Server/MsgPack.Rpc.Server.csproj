@@ -61,6 +61,7 @@
     <Compile Include="Rpc\Server\Protocols\NativeMessageType.cs" />
     <Compile Include="Rpc\Server\Protocols\RpcMessageReceivedEventArgs.cs" />
     <Compile Include="Rpc\Server\Protocols\ServerSocketAsyncEventArgs.cs" />
+    <Compile Include="Rpc\Server\Protocols\ServerSocketError.cs" />
     <Compile Include="Rpc\Server\Protocols\ServerTransport.cs" />
     <Compile Include="Rpc\Server\Protocols\ServerTransport.Deserialization.cs" />
     <Compile Include="Rpc\Server\Protocols\ServerTransport.Serialization.cs" />

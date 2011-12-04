@@ -59,7 +59,35 @@ namespace MsgPack.Rpc.Server
 			public const TraceEventType NeedMethodName = TraceEventType.Verbose;
 			public const TraceEventType NeedArgumentsArrayHeader = TraceEventType.Verbose;
 			public const TraceEventType NeedArgumentsElement = TraceEventType.Verbose;
+
 			public const TraceEventType DumpInvalidRequestHeader = TraceEventType.Verbose;
+			public const TraceEventType IgnoreableError = TraceEventType.Verbose;
+
+			public static TraceEventType ForRpcError( RpcError rpcError )
+			{
+				if ( 0 < rpcError.ErrorCode || rpcError.ErrorCode == -31 )
+				{
+					return TraceEventType.Warning;
+				}
+
+				switch ( rpcError.ErrorCode % 10 )
+				{
+					case -2:
+					case -4:
+					{
+						return TraceEventType.Warning;
+					}
+					case -1:
+					case -3:
+					{
+						return TraceEventType.Critical;
+					}
+					default:
+					{
+						return TraceEventType.Error;
+					}
+				}
+			}
 		}
 
 		public static class EventId
@@ -84,7 +112,21 @@ namespace MsgPack.Rpc.Server
 			public const int NeedMethodName = 1115;
 			public const int NeedArgumentsArrayHeader = 1116;
 			public const int NeedArgumentsElement = 1117;
-			public const int DumpInvalidRequestHeader = 1119;
+
+			public const int DumpInvalidRequestHeader = 1301;
+			public const int IgnoreableError = 1302;
+
+			internal static int ForRpcError( RpcError rpcError )
+			{
+				if ( 0 < rpcError.ErrorCode )
+				{
+					return 20000;
+				}
+				else
+				{
+					return 10000 + ( rpcError.ErrorCode * -1 );
+				}
+			}
 		}
 	}
 }

@@ -72,9 +72,12 @@
     <Compile Include="Rpc\Protocols\RpcProtocolException.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Rpc\Protocols\RpcTransportErrorEventArgs.cs" />
     <Compile Include="Rpc\Protocols\RpcTransportException.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Rpc\Protocols\RpcTransportOperation.cs" />
+    <Compile Include="Rpc\Protocols\SocketErrorCodeExtension.cs" />
     <Compile Include="Rpc\RpcArgumentException.cs">
       <SubType>Code</SubType>
     </Compile>
