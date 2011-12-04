@@ -25,13 +25,15 @@ using System.Net.Sockets;
 using System.Threading;
 using NUnit.Framework;
 using System.Diagnostics;
+using System.Threading.Tasks;
+using System.IO;
 
 namespace MsgPack.Rpc.Server.Protocols
 {
 	[TestFixture]
 	public class TcpServerTransportTest
 	{
-		private const bool _traceEnabled = true;
+		private const bool _traceEnabled = false;
 		private const int _portNumber = 57319;
 		private DebugTraceSourceSetting _debugTrace;
 
@@ -53,8 +55,8 @@ namespace MsgPack.Rpc.Server.Protocols
 			try
 			{
 				using ( var server = CreateServer() )
+				using ( var target = new TcpServerTransport( new ServerSocketAsyncEventArgs( server ) ) )
 				{
-					var target = new TcpServerTransport( new ServerSocketAsyncEventArgs( server ) );
 					bool isOk = false;
 					using ( var waitHandle = new ManualResetEventSlim() )
 					{
@@ -109,6 +111,8 @@ namespace MsgPack.Rpc.Server.Protocols
 				using ( var stream = client.GetStream() )
 				using ( var packer = Packer.Create( stream ) )
 				{
+					Console.WriteLine( "---- Client sending request ----" );
+
 					packer.PackArrayHeader( 4 );
 					packer.Pack( 0 );
 					packer.Pack( 123 );
@@ -116,6 +120,8 @@ namespace MsgPack.Rpc.Server.Protocols
 					packer.PackArrayHeader( 2 );
 					packer.Pack( "Hello, world" );
 					packer.Pack( now );
+
+					Console.WriteLine( "---- Client sent request ----" );
 
 					if ( Debugger.IsAttached )
 					{
@@ -129,6 +135,7 @@ namespace MsgPack.Rpc.Server.Protocols
 
 					using ( var unpacker = Unpacker.Create( stream ) )
 					{
+						Console.WriteLine( "---- Client receiving response ----" );
 						var result = unpacker.UnpackObject();
 						Assert.That( result.IsArray );
 						var array = result.AsList();
@@ -141,7 +148,177 @@ namespace MsgPack.Rpc.Server.Protocols
 						Assert.That( returnValue.Count, Is.EqualTo( 2 ) );
 						Assert.That( returnValue[ 0 ] == "Hello, world", returnValue[ 0 ].ToString() );
 						Assert.That( returnValue[ 1 ] == now, returnValue[ 1 ].ToString() );
+						Console.WriteLine( "---- Client received response ----" );
 					}
+				}
+			}
+		}
+
+		[Test]
+		public void TestEchoRequestContinuous()
+		{
+			try
+			{
+				using ( var server = CreateServer() )
+				using ( var target = new TcpServerTransport( new ServerSocketAsyncEventArgs( server ) ) )
+				{
+					const int count = 3;
+					bool[] serverStatus = new bool[ count ];
+					using ( var waitHandle = new CountdownEvent( count ) )
+					{
+						target.MessageReceived +=
+							( sender, e ) =>
+							{
+								// Simple echo.
+								try
+								{
+									Assert.That( e.MethodName, Is.EqualTo( "Echo" ) );
+									e.Transport.Send( e.Arguments.ToArray() );
+									serverStatus[ e.Id.Value ] = true;
+								}
+								finally
+								{
+									waitHandle.Signal();
+								}
+							};
+
+						target.Initialize( new IPEndPoint( IPAddress.Any, _portNumber ) );
+
+						TestEchoRequestContinuousCore( serverStatus, waitHandle, count );
+
+						waitHandle.Reset();
+						Array.Clear( serverStatus, 0, serverStatus.Length );
+						// Again
+						TestEchoRequestContinuousCore( serverStatus, waitHandle, count );
+					}
+				}
+			}
+			catch ( SocketException sockEx )
+			{
+				Console.Error.WriteLine( "{0}({1}:0x{1:x8})", sockEx.SocketErrorCode, sockEx.ErrorCode );
+				Console.Error.WriteLine( sockEx );
+				throw;
+			}
+		}
+
+		private static void TestEchoRequestContinuousCore( bool[] serverStatus, CountdownEvent waitHandle, int count )
+		{
+			using ( var client = new TcpClient() )
+			{
+				client.Connect( new IPEndPoint( IPAddress.Loopback, _portNumber ) );
+
+				var now = MessagePackConvert.FromDateTime( DateTime.Now );
+				bool[] resposeStatus = new bool[ count ];
+
+				//var sends =
+				//    Enumerable.Range( 0, count )
+				//    .Select( i =>
+				//        {
+				//            using ( var buffer = new MemoryStream() )
+				//            using ( var packer = Packer.Create( buffer ) )
+				//            {
+				//                packer.PackArrayHeader( 4 );
+				//                packer.Pack( 0 );
+				//                packer.Pack( i );
+				//                packer.Pack( "Echo" );
+				//                packer.PackArrayHeader( 2 );
+				//                packer.Pack( "Hello, world" );
+				//                packer.Pack( now );
+
+				//                return buffer.ToArray();
+				//            }
+				//        }
+				//    ).Select( buffer =>
+				//        Task.Factory.FromAsync<int>( client.Client.BeginSend( buffer, 0, buffer.Length, SocketFlags.None, null, null ), client.Client.EndSend )
+				//    );
+
+				//var receive =
+				//    new Task(
+				//        () =>
+				//        {
+				//            byte[] buffer = new byte[ 65536 ];
+				//            using ( var stream = new MemoryStream() )
+				//            {
+				//                using ( var socket = client.Client.Accept() )
+				//                {
+				//                    for ( int received = socket.Receive( buffer ); 0 < received ; received = socket.Receive( buffer ) )
+				//                    {
+				//                        stream.Write( buffer, 0, received );
+				//                    }
+
+				//                    using ( var unpacker = Unpacker.Create( stream ) )
+				//                    {
+				//                        for ( int i = 0; i < count; i++ )
+				//                        {
+				//                            var result = unpacker.TryUnpackObject();
+				//                            Assert.That( result.Value.IsArray );
+				//                            var array = result.Value.AsList();
+				//                            Assert.That( array.Count, Is.EqualTo( 4 ) );
+				//                            Assert.That( array[ 0 ] == 1, array[ 0 ].ToString() );
+				//                            Assert.That( array[ 1 ].IsTypeOf<int>().GetValueOrDefault() );
+				//                            resposeStatus[ array[ 1 ].AsInt32() ] = true;
+				//                            Assert.That( array[ 2 ] == MessagePackObject.Nil, array[ 2 ].ToString() );
+				//                            Assert.That( array[ 3 ].IsArray, array[ 3 ].ToString() );
+				//                            var returnValue = array[ 3 ].AsList();
+				//                            Assert.That( returnValue.Count, Is.EqualTo( 2 ) );
+				//                            Assert.That( returnValue[ 0 ] == "Hello, world", returnValue[ 0 ].ToString() );
+				//                            Assert.That( returnValue[ 1 ] == now, returnValue[ 1 ].ToString() );
+				//                        }
+				//                    }
+				//                }
+				//            }
+				//        }
+				//    );
+
+				using ( var stream = client.GetStream() )
+				using ( var packer = Packer.Create( stream ) )
+				{
+					for ( int i = 0; i < count; i++ )
+					{
+						Console.WriteLine( "---- Client sending request ----" );
+						packer.PackArrayHeader( 4 );
+						packer.Pack( 0 );
+						packer.Pack( i );
+						packer.Pack( "Echo" );
+						packer.PackArrayHeader( 2 );
+						packer.Pack( "Hello, world" );
+						packer.Pack( now );
+						Console.WriteLine( "---- Client sent request ----" );
+					}
+
+					if ( Debugger.IsAttached )
+					{
+						waitHandle.Wait();
+					}
+					else
+					{
+						Assert.That( waitHandle.Wait( TimeSpan.FromSeconds( count * 3 ) ) );
+					}
+
+					using ( var unpacker = Unpacker.Create( stream ) )
+					{
+						for ( int i = 0; i < count; i++ )
+						{
+							Console.WriteLine( "---- Client receiving response ----" );
+							var result = unpacker.UnpackObject();
+							Assert.That( result.IsArray );
+							var array = result.AsList();
+							Assert.That( array.Count, Is.EqualTo( 4 ) );
+							Assert.That( array[ 0 ] == 1, array[ 0 ].ToString() );
+							Assert.That( array[ 1 ].IsTypeOf<int>().GetValueOrDefault() );
+							resposeStatus[ array[ 1 ].AsInt32() ] = true;
+							Assert.That( array[ 2 ] == MessagePackObject.Nil, array[ 2 ].ToString() );
+							Assert.That( array[ 3 ].IsArray, array[ 3 ].ToString() );
+							var returnValue = array[ 3 ].AsList();
+							Assert.That( returnValue.Count, Is.EqualTo( 2 ) );
+							Assert.That( returnValue[ 0 ] == "Hello, world", returnValue[ 0 ].ToString() );
+							Assert.That( returnValue[ 1 ] == now, returnValue[ 1 ].ToString() );
+							Console.WriteLine( "---- Client received response ----" );
+						}
+					}
+
+					Assert.That( serverStatus, Is.All.True );
+					Assert.That( resposeStatus, Is.All.True );
 				}
 			}
 		}

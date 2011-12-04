@@ -21,13 +21,21 @@
 using System;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using MsgPack.Rpc.Protocols;
 
 namespace MsgPack.Rpc.Server.Protocols
 {
 	partial class ServerTransport
 	{
-		// TODO: Move to other layer e.g. Server.
+		/// <summary>
+		///		Unpack request/notification message array header.
+		/// </summary>
+		/// <param name="context">Context information.</param>
+		/// <returns>
+		///		<c>true</c>, if the pipeline is finished;
+		///		<c>false</c>, the pipeline is interruppted because extra data is needed.
+		/// </returns>
 		private bool UnpackRequestHeader( ServerSocketAsyncEventArgs context )
 		{
 			if ( this._deserializationState.RootUnpacker == null )
@@ -45,6 +53,8 @@ namespace MsgPack.Rpc.Server.Protocols
 			if ( !this._deserializationState.RootUnpacker.IsArrayHeader )
 			{
 				// FIXME: Error handler
+				var array = this._deserializationState.UnpackingBuffer.ToArray();
+				Tracer.Protocols.TraceData( Tracer.EventType.DumpInvalidRequestHeader, Tracer.EventId.DumpInvalidRequestHeader, BitConverter.ToString( array ), array );
 				throw new InvalidMessagePackStreamException( "Invalid request/notify message stream. Message must be array." );
 			}
 
@@ -65,7 +75,14 @@ namespace MsgPack.Rpc.Server.Protocols
 			return this._deserializationState.NextProcess( context );
 		}
 
-		// TODO: Move to other layer e.g. Server.
+		/// <summary>
+		///		Unpack Message Type part on request/notification message.
+		/// </summary>
+		/// <param name="context">Context information.</param>
+		/// <returns>
+		///		<c>true</c>, if the pipeline is finished;
+		///		<c>false</c>, the pipeline is interruppted because extra data is needed.
+		/// </returns>
 		private bool UnpackMessageType( ServerSocketAsyncEventArgs context )
 		{
 			if ( !this._deserializationState.HeaderUnpacker.Read() )
@@ -110,7 +127,14 @@ namespace MsgPack.Rpc.Server.Protocols
 			return this._deserializationState.NextProcess( context );
 		}
 
-		// TODO: Move to other layer e.g. Server.
+		/// <summary>
+		///		Unpack Message ID part on request message.
+		/// </summary>
+		/// <param name="context">Context information.</param>
+		/// <returns>
+		///		<c>true</c>, if the pipeline is finished;
+		///		<c>false</c>, the pipeline is interruppted because extra data is needed.
+		/// </returns>
 		private bool UnpackMessageId( ServerSocketAsyncEventArgs context )
 		{
 			if ( !this._deserializationState.HeaderUnpacker.Read() )
@@ -133,7 +157,14 @@ namespace MsgPack.Rpc.Server.Protocols
 			return this._deserializationState.NextProcess( context );
 		}
 
-		// TODO: Move to other layer e.g. Server.
+		/// <summary>
+		///		Unpack Method Name part on request/notification message.
+		/// </summary>
+		/// <param name="context">Context information.</param>
+		/// <returns>
+		///		<c>true</c>, if the pipeline is finished;
+		///		<c>false</c>, the pipeline is interruppted because extra data is needed.
+		/// </returns>
 		private bool UnpackMethodName( ServerSocketAsyncEventArgs context )
 		{
 			if ( !this._deserializationState.HeaderUnpacker.Read() )
@@ -156,7 +187,14 @@ namespace MsgPack.Rpc.Server.Protocols
 			return this._deserializationState.NextProcess( context );
 		}
 
-		// TODO: Move to other layer e.g. Server.
+		/// <summary>
+		///		Unpack array header of Arguments part on request/notification message.
+		/// </summary>
+		/// <param name="context">Context information.</param>
+		/// <returns>
+		///		<c>true</c>, if the pipeline is finished;
+		///		<c>false</c>, the pipeline is interruppted because extra data is needed.
+		/// </returns>
 		private bool UnpackArgumentsHeader( ServerSocketAsyncEventArgs context )
 		{
 			if ( !this._deserializationState.HeaderUnpacker.Read() )
@@ -187,6 +225,14 @@ namespace MsgPack.Rpc.Server.Protocols
 			return this._deserializationState.NextProcess( context );
 		}
 
+		/// <summary>
+		///		Unpack array elements of Arguments part on request/notification message.
+		/// </summary>
+		/// <param name="context">Context information.</param>
+		/// <returns>
+		///		<c>true</c>, if the pipeline is finished;
+		///		<c>false</c>, the pipeline is interruppted because extra data is needed.
+		/// </returns>
 		private bool UnpackArguments( ServerSocketAsyncEventArgs context )
 		{
 			while ( this._deserializationState.UnpackedArgumentsCount < this._deserializationState.ArgumentsCount )
@@ -207,62 +253,117 @@ namespace MsgPack.Rpc.Server.Protocols
 			return this._deserializationState.NextProcess( context );
 		}
 
+		/// <summary>
+		///		Dispatch request/notification message via the <see cref="MessageRecieved"/> event.
+		/// </summary>
+		/// <param name="context">Context information.</param>
+		/// <returns>
+		///		<c>true</c>, if the pipeline is finished;
+		///		<c>false</c>, the pipeline is interruppted because extra data is needed.
+		/// </returns>
 		private bool Dispatch( ServerSocketAsyncEventArgs context )
 		{
 			this._state = TransportState.Reserved;
+
+			this._deserializationState.ClearBuffers();
+
+			this.OnMessageReceivedCore(
+				new RpcMessageReceivedEventArgs(
+					this,
+					this._deserializationState.MessageType,
+					this._deserializationState.MessageType == MessageType.Notification ? default( int? ) : unchecked( ( int )context.Id ),
+					this._deserializationState.MethodName,
+					this._deserializationState.ArgumentsUnpacker
+				)
+			);
+
 			if ( this._deserializationState.MessageType == MessageType.Notification )
 			{
 				this.Free();
 			}
 
-			try
-			{
-				this.OnMessageReceivedCore(
-					new RpcMessageReceivedEventArgs(
-						this,
-						this._deserializationState.MessageType,
-						this._deserializationState.MessageType == MessageType.Notification ? default( int? ) : unchecked( ( int )context.Id ),
-						this._deserializationState.MethodName,
-						this._deserializationState.ArgumentsUnpacker
-					)
-				);
-			}
-			finally
-			{
-				this.ClearReceiveContextData( context );
-			}
-
 			return true;
 		}
 
-		private void ClearReceiveContextData( ServerSocketAsyncEventArgs context )
-		{
-			this._deserializationState.Clear();
-			context.ReceivedData.Clear();
-			Array.Clear( context.ReceivingBuffer, 0, context.ReceivingBuffer.Length );
-		}
-
+		/// <summary>
+		///		Encapselates deserialization state.
+		/// </summary>
 		private sealed class DeserializationState
 		{
+			/// <summary>
+			///		The initial process of the deserialization pipeline.
+			/// </summary>
 			private readonly Func<ServerSocketAsyncEventArgs, bool> _initialProcess;
 
+			/// <summary>
+			///		Next (that is, resuming) process on the deserialization pipeline.
+			/// </summary>
 			public Func<ServerSocketAsyncEventArgs, bool> NextProcess;
 
+			/// <summary>
+			///		Buffer that stores unpacking binaries received.
+			/// </summary>
 			public ByteArraySegmentStream UnpackingBuffer;
 
+
+			/// <summary>
+			///		<see cref="Unpacker"/> to unpack entire request/notification message.
+			/// </summary>
 			public Unpacker RootUnpacker;
+
+			/// <summary>
+			///		Subtree <see cref="Unpacker"/> to unpack request/notification message as array.
+			/// </summary>
 			public Unpacker HeaderUnpacker;
 
+
+			/// <summary>
+			///		Buffer to store binaries for arguments array for subsequent deserialization.
+			/// </summary>
 			public readonly MemoryStream ArgumentsBuffer;
+
+			/// <summary>
+			///		<see cref="Packer"/> to re-pack to binaries of arguments for subsequent deserialization.
+			/// </summary>
 			public Packer ArgumentsBufferPacker;
+
+			/// <summary>
+			///		Subtree <see cref="Unpacker"/> to parse arguments array as opaque sequence.
+			/// </summary>
 			public Unpacker ArgumentsBufferUnpacker;
+
+			/// <summary>
+			///		The count of declared method arguments.
+			/// </summary>
 			public int ArgumentsCount;
+
+			/// <summary>
+			///		The count of unpacked method arguments.
+			/// </summary>
 			public int UnpackedArgumentsCount;
 
+			
+			/// <summary>
+			///		Unpacked Message Type part value.
+			/// </summary>
 			public MessageType MessageType;
+
+			/// <summary>
+			///		Unpacked Method Name part value.
+			/// </summary>
 			public string MethodName;
+
+			/// <summary>
+			///		<see cref="Unpacker"/> to deserialize arguments on the dispatcher.
+			/// </summary>
 			public Unpacker ArgumentsUnpacker;
 
+			/// <summary>
+			///		Initializes a new instance of the <see cref="DeserializationState"/> class.
+			/// </summary>
+			/// <param name="initialProcess">
+			///		The initial process of the deserialization pipeline.
+			///	</param>
 			public DeserializationState( Func<ServerSocketAsyncEventArgs, bool> initialProcess )
 			{
 				this._initialProcess = initialProcess;
@@ -271,15 +372,17 @@ namespace MsgPack.Rpc.Server.Protocols
 				this.ArgumentsBuffer = new MemoryStream( 65536 );
 			}
 
-			public void Clear()
+			private static bool InvalidFlow( ServerSocketAsyncEventArgs context )
 			{
-				this.NextProcess = this._initialProcess;
+				throw new InvalidOperationException( "Invalid state transition." );
+			}
 
-				if ( this.ArgumentsUnpacker != null )
-				{
-					this.ArgumentsUnpacker.Dispose();
-					this.ArgumentsUnpacker = null;
-				}
+			/// <summary>
+			///		Clears the buffers to deserialize message, which is not required to dispatch and invoke server method.
+			/// </summary>
+			public void ClearBuffers()
+			{
+				this.NextProcess = InvalidFlow;
 
 				if ( this.ArgumentsBufferUnpacker != null )
 				{
@@ -293,11 +396,8 @@ namespace MsgPack.Rpc.Server.Protocols
 					this.ArgumentsBufferPacker = null;
 				}
 
-				this.ArgumentsBuffer.SetLength( 0 );
 				this.ArgumentsCount = 0;
 				this.UnpackedArgumentsCount = 0;
-				this.MethodName = null;
-				this.MessageType = MessageType.Response; // Invalid value.
 				if ( this.HeaderUnpacker != null )
 				{
 					this.HeaderUnpacker.Dispose();
@@ -312,9 +412,52 @@ namespace MsgPack.Rpc.Server.Protocols
 
 				if ( this.UnpackingBuffer != null )
 				{
+					this.TruncateUsedReceivedData();
 					this.UnpackingBuffer.Dispose();
 					this.UnpackingBuffer = null;
 				}
+			}
+
+			/// <summary>
+			///		Truncates the used segments from the received data.
+			/// </summary>
+			private void TruncateUsedReceivedData()
+			{
+				long remaining = this.UnpackingBuffer.Position;
+				var segments = this.UnpackingBuffer.GetBuffer();
+				while ( segments.Any() && 0 < remaining )
+				{
+					if ( segments[ 0 ].Count < remaining )
+					{
+						remaining -= segments[ 0 ].Count;
+						segments.RemoveAt( 0 );
+					}
+					else
+					{
+						int newCount = segments[ 0 ].Count - unchecked( ( int )remaining );
+						int newOffset = segments[ 0 ].Offset + unchecked( ( int )remaining );
+						segments[ 0 ] = new ArraySegment<byte>( segments[ 0 ].Array, newOffset, newCount );
+						remaining -= newCount;
+					}
+				}
+			}
+
+			/// <summary>
+			///		Clears the dispatch context information.
+			/// </summary>
+			public void ClearDispatchContext()
+			{
+				this.NextProcess = this._initialProcess;
+
+				this.MethodName = null;
+				this.MessageType = MessageType.Response; // Invalid value.
+				if ( this.ArgumentsUnpacker != null )
+				{
+					this.ArgumentsUnpacker.Dispose();
+					this.ArgumentsUnpacker = null;
+				}
+
+				this.ArgumentsBuffer.SetLength( 0 );
 			}
 		}
 	}

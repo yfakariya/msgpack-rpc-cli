@@ -29,6 +29,12 @@ namespace MsgPack.Rpc
 	internal sealed class ByteArraySegmentStream : Stream
 	{
 		private readonly IList<ArraySegment<byte>> _segments;
+
+		public IList<ArraySegment<byte>> GetBuffer()
+		{
+			return this._segments;
+		}
+
 		private int _segmentIndex;
 		private int _offsetInCurrentSegment;
 
@@ -178,6 +184,22 @@ namespace MsgPack.Rpc
 					this._position++;
 				}
 			}
+		}
+
+		public byte[] ToArray()
+		{
+			if ( this._segments.Count == 0 )
+			{
+				return new byte[ 0 ];
+			}
+
+			IEnumerable<byte> result = this._segments[ 0 ].AsEnumerable();
+			for ( int i = 1; i < this._segments.Count; i++ )
+			{
+				result = result.Concat( this._segments[ i ].AsEnumerable() );
+			}
+
+			return result.ToArray();
 		}
 
 		public sealed override void Flush()

@@ -19,6 +19,7 @@
 #endregion -- License Terms --
 
 using System;
+using System.Collections.Generic;
 
 namespace MsgPack.Rpc
 {
@@ -26,7 +27,7 @@ namespace MsgPack.Rpc
 	{
 		public static T Get<T>( this ArraySegment<T> source, int index )
 		{
-			if ( source == null )
+			if ( source.Array == null )
 			{
 				throw new ArgumentNullException( "source" );
 			}
@@ -76,8 +77,26 @@ namespace MsgPack.Rpc
 				throw new ArgumentException( "Array is too small.", "array" );
 			}
 
+			if ( source.Array == null )
+			{
+				return 0;
+			}
+
 			Array.ConstrainedCopy( source.Array, source.Offset + sourceOffset, array, arrayOffset, length );
 			return length;
+		}
+
+		public static IEnumerable<T> AsEnumerable<T>( this ArraySegment<T> source )
+		{
+			if ( source.Array == null )
+			{
+				yield break;
+			}
+
+			for ( int i = 0; i < source.Count; i++ )
+			{
+				yield return source.Array[ i + source.Offset ];
+			}
 		}
 	}
 }

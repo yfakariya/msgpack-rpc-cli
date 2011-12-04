@@ -29,6 +29,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		Receiving = 2,
 		Reserved = 3,
 		Sending = 4,
-		Disposed = -1
+		Disposing = -1,
+		Disposed = -2
 	}
 }

@@ -83,53 +83,6 @@ namespace MsgPack.Rpc.Server.Protocols
 		/// </value>
 		public Socket ListeningSocket { get; set; }
 
-		private readonly ArraySegment<byte>[] _sendingBuffer;
-
-		/// <summary>
-		///		Gets the sending buffer.
-		/// </summary>
-		/// <value>
-		///		The sending buffer.
-		/// </value>
-		/// <remarks>
-		///		Each segment corresponds to the message segment.
-		///		<list type="table">
-		///			<listheader>
-		///				<term>Index</term>
-		///				<description>Content</description>
-		///			</listheader>
-		///			<item>
-		///				<term>0</term>
-		///				<description>
-		///					Common response header, namely array header and message type.
-		///					Do not change this element.
-		///				</description>
-		///			</item>
-		///			<item>
-		///				<term>1</term>
-		///				<description>
-		///					Message ID to correpond the response to the request.
-		///				</description>
-		///			</item>
-		///			<item>
-		///				<term>2</term>
-		///				<description>
-		///					Error identifier.
-		///				</description>
-		///			</item>
-		///			<item>
-		///				<term>3</term>
-		///				<description>
-		///					Return value.
-		///				</description>
-		///			</item>
-		///		</list>
-		/// </remarks>
-		internal ArraySegment<byte>[] SendingBuffer
-		{
-			get { return this._sendingBuffer; }
-		}
-		
 		/// <summary>
 		///		Gets or sets the message id.
 		/// </summary>
@@ -142,49 +95,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			get;
 			set;
 		}
-		
-		private readonly MemoryStream _idBuffer;
-
-		/// <summary>
-		///		Gets the reusable buffer to pack <see cref="Id"/>.
-		/// </summary>
-		/// <value>
-		///		The reusable buffer to pack <see cref="Id"/>.
-		///		This value will not be <c>null</c>.
-		/// </value>
-		internal MemoryStream IdBuffer
-		{
-			get { return this._idBuffer; }
-		}
-
-		private readonly MemoryStream _errorDataBuffer;
-
-		/// <summary>
-		///		Gets the reusable buffer to pack error ID.
-		/// </summary>
-		/// <value>
-		///		The reusable buffer to pack error ID.
-		///		This value will not be <c>null</c>.
-		/// </value>
-		internal MemoryStream ErrorDataBuffer
-		{
-			get { return this._errorDataBuffer; }
-		}
-
-		private readonly MemoryStream _returnDataBuffer;
-
-		/// <summary>
-		///		Gets the reusable buffer to pack return value or error detail.
-		/// </summary>
-		/// <value>
-		///		The reusable buffer to pack return value or error detail.
-		///		This value will not be <c>null</c>.
-		/// </value>
-		internal MemoryStream ReturnDataBuffer
-		{
-			get { return this._returnDataBuffer; }
-		}
-
+				
 		private byte[] _receivingBuffer;
 
 		/// <summary>
@@ -232,8 +143,11 @@ namespace MsgPack.Rpc.Server.Protocols
 			get { return this._receivedData; }
 		}
 
-		private static readonly ArraySegment<byte> _responseHeader =
-			new ArraySegment<byte>( new byte[] { 0x94, 0x01 } ); // [FixArray4], [Response:1]
+		public bool IsClientShutdowned
+		{
+			get;
+			internal set;
+		}
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="ServerSocketAsyncEventArgs"/> class.
@@ -242,16 +156,10 @@ namespace MsgPack.Rpc.Server.Protocols
 		public ServerSocketAsyncEventArgs( RpcServer server )
 		{
 			this._server = new WeakReference( server );
-			this._idBuffer = new MemoryStream( 5 );
 			// TODO: Configurable
 			this._receivingBuffer = new byte[ 65536 ];
+			// TODO: ArrayDeque is preferred.
 			this._receivedData = new List<ArraySegment<byte>>( 1 );
-			// TODO: Configurable
-			this._errorDataBuffer = new MemoryStream( 128 );
-			// TODO: Configurable
-			this._returnDataBuffer = new MemoryStream( 65536 );
-			this._sendingBuffer = new ArraySegment<byte>[ 4 ];
-			this._sendingBuffer[ 0 ] = _responseHeader;
 		}
 	}
 }

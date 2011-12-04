@@ -19,6 +19,7 @@
 #endregion -- License Terms --
 
 using System;
+using System.Diagnostics.Contracts;
 using System.Net;
 using System.Net.Sockets;
 
@@ -52,40 +53,98 @@ namespace MsgPack.Rpc.Server.Protocols
 			this.Accept( context );
 		}
 
-		protected sealed override void OnAcceptted( ServerSocketAsyncEventArgs e )
+		protected sealed override void OnClientShutdown( ServerSocketAsyncEventArgs context )
 		{
-			this.Receive( e );
+			Contract.Assert( context.IsClientShutdowned );
+			base.OnClientShutdown( context );
+			// Because IsClientShutdowned is detected by checking no more data to recieved, 
+			// so it is safe to shutdown receival.
+			context.AcceptSocket.Shutdown( SocketShutdown.Receive );
+			context.AcceptSocket.Shutdown( SocketShutdown.Send );
+			context.AcceptSocket.Close();
+			context.AcceptSocket = null;
+			this.Accept( context );
+		}
+
+		private void Accept( ServerSocketAsyncEventArgs context )
+		{
+			Tracer.Protocols.TraceEvent( Tracer.EventType.BeginAccept, Tracer.EventId.BeginAccept, "Wait for connection." );
+
+			// Ensure buffers are cleared to avoid unepxected data feeding on Accept
+			context.SetBuffer( null, 0, 0 );
+			context.BufferList = null;
+
+			try
+			{
+				if ( !context.ListeningSocket.AcceptAsync( context ) )
+				{
+					this.OnAcceptted( context );
+				}
+			}
+			catch ( ObjectDisposedException )
+			{
+				if ( !this.IsDisposed )
+				{
+					throw;
+				}
+			}
+
+		}
+
+		protected sealed override void OnAcceptted( ServerSocketAsyncEventArgs context )
+		{
+			base.OnAcceptted( context );
+			this.Receive( context );
 		}
 
 		protected sealed override void ReceiveCore( ServerSocketAsyncEventArgs context )
 		{
-			if ( !context.AcceptSocket.ReceiveAsync( context ) )
+			try
 			{
-				this.OnReceived( context );
+				if ( !context.AcceptSocket.ReceiveAsync( context ) )
+				{
+					this.OnReceived( context );
+				}
+			}
+			catch ( ObjectDisposedException )
+			{
+				if ( !this.IsDisposed )
+				{
+					throw;
+				}
 			}
 		}
 
 		protected sealed override void SendCore( ServerSocketAsyncEventArgs context )
 		{
-			if ( !context.AcceptSocket.SendAsync( context ) )
+			try
 			{
-				this.OnSent( context );
+				if ( !context.AcceptSocket.SendAsync( context ) )
+				{
+					this.OnSent( context );
+				}
 			}
-		}
-
-		protected sealed override void OnSent( ServerSocketAsyncEventArgs e )
-		{
-			e.AcceptSocket.Close();
-			e.AcceptSocket = null;
-			base.OnSent( e );
-			this.Accept( e );
-		}
-
-		private void Accept( ServerSocketAsyncEventArgs e )
-		{
-			if ( !e.ListeningSocket.AcceptAsync( e ) )
+			catch ( ObjectDisposedException )
 			{
-				this.OnAcceptted( e );
+				if ( !this.IsDisposed )
+				{
+					throw;
+				}
+			}
+
+		}
+
+		protected sealed override void OnSent( ServerSocketAsyncEventArgs context )
+		{
+			base.OnSent( context );
+
+			if ( context.IsClientShutdowned )
+			{
+				this.OnClientShutdown( context );
+			}
+			else
+			{
+				this.Receive( context );
 			}
 		}
 	}

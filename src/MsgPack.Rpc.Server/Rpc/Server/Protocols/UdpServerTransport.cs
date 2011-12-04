@@ -56,6 +56,12 @@ namespace MsgPack.Rpc.Server.Protocols
 			this.Receive( context );
 		}
 
+		protected sealed override void OnClientShutdown( ServerSocketAsyncEventArgs context )
+		{
+			base.OnClientShutdown( context );
+			this.Receive( context );
+		}
+
 		protected sealed override void ReceiveCore( ServerSocketAsyncEventArgs context )
 		{
 			if ( !this.CurrentSocket.ReceiveFromAsync( context ) )

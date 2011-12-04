@@ -63,6 +63,7 @@
     <Compile Include="Rpc\Server\Protocols\ServerSocketAsyncEventArgs.cs" />
     <Compile Include="Rpc\Server\Protocols\ServerTransport.cs" />
     <Compile Include="Rpc\Server\Protocols\ServerTransport.Deserialization.cs" />
+    <Compile Include="Rpc\Server\Protocols\ServerTransport.Serialization.cs" />
     <Compile Include="Rpc\Server\Protocols\TcpServerTransport.cs" />
     <Compile Include="Rpc\Server\Protocols\TransportState.cs" />
     <Compile Include="Rpc\Server\Protocols\UdpServerTransport.cs" />

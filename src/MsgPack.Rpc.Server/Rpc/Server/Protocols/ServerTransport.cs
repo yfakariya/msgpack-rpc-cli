@@ -38,13 +38,22 @@ namespace MsgPack.Rpc.Server.Protocols
 		/// </summary>
 		private TransportState _state;
 
+		public bool IsDisposed
+		{
+			get
+			{
+				var state = this._state;
+				return state == TransportState.Disposing || state == TransportState.Disposed;
+			}
+		}
+
 		/// <summary>
 		///		Context information including socket state, session state, and buffers.
 		/// </summary>
 		private readonly ServerSocketAsyncEventArgs _context;
 
+		private readonly SerializationState _serializationState;
 		private readonly DeserializationState _deserializationState;
-
 
 		// TODO: Move to other layer e.g. Server.
 		/// <summary>
@@ -71,14 +80,17 @@ namespace MsgPack.Rpc.Server.Protocols
 
 		private void OnMessageReceivedCore( RpcMessageReceivedEventArgs e )
 		{
-			Tracer.Protocols.TraceEvent(
-				Tracer.EventType.DispatchRequest,
-				Tracer.EventId.DispatchRequest,
-				"Dispatch request. [ \"type\" : \"{0}\", \"id\" : {1}, \"method\" : \"{2}\" ]",
-				e.MessageType,
-				e.Id,
-				e.MethodName
-			);
+			if ( Tracer.Protocols.Switch.ShouldTrace( Tracer.EventType.DispatchRequest ) )
+			{
+				Tracer.Protocols.TraceEvent(
+					Tracer.EventType.DispatchRequest,
+					Tracer.EventId.DispatchRequest,
+					"Dispatch request. [ \"type\" : \"{0}\", \"id\" : {1}, \"method\" : \"{2}\" ]",
+					e.MessageType,
+					e.Id,
+					e.MethodName
+				);
+			}
 
 			var handler = this.MessageReceived;
 			if ( handler != null )
@@ -102,6 +114,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			}
 
 			this._context = context;
+			this._serializationState = new SerializationState();
 			this._deserializationState = new DeserializationState( this.UnpackRequestHeader );
 		}
 
@@ -122,8 +135,43 @@ namespace MsgPack.Rpc.Server.Protocols
 		{
 			if ( disposing )
 			{
-				this._context.Dispose();
-				this._state = TransportState.Disposed;
+				if ( !this.IsDisposed )
+				{
+					this._state = TransportState.Disposing;
+					ShutdownSocketRudely( this._context.AcceptSocket );
+					ShutdownSocketRudely( this._context.ConnectSocket );
+					ShutdownSocketRudely( this._context.ListeningSocket );
+
+					this._context.Dispose();
+					this._state = TransportState.Disposed;
+				}
+			}
+		}
+
+		private static void ShutdownSocketRudely( Socket socket )
+		{
+			if ( socket != null )
+			{
+				try
+				{
+					socket.Shutdown( SocketShutdown.Both );
+				}
+				catch ( SocketException sockEx )
+				{
+					switch ( sockEx.SocketErrorCode )
+					{
+						case SocketError.NotConnected:
+						{
+							break;
+						}
+						default:
+						{
+							throw;
+						}
+					}
+				}
+
+				socket.Close();
 			}
 		}
 
@@ -143,6 +191,7 @@ namespace MsgPack.Rpc.Server.Protocols
 				throw new InvalidOperationException( String.Format( CultureInfo.CurrentCulture, "Tranport must be '{0}' but actual '{1}'.", desiredState, this._state ) );
 			}
 		}
+
 		/// <summary>
 		///		Initializes this transport for specified <see cref="EndPoint"/>.
 		/// </summary>
@@ -176,6 +225,25 @@ namespace MsgPack.Rpc.Server.Protocols
 		/// <param name="bindingEndPoint">The binding local end point. This value will not be <c>null</c>.</param>
 		protected abstract void InitializeCore( ServerSocketAsyncEventArgs context, EndPoint bindingEndPoint );
 
+		public void Shutdown()
+		{
+			// FIXME: Graceful shutdown
+			throw new NotImplementedException();
+		}
+
+		protected virtual void ShutdownCore()
+		{
+			throw new NotImplementedException();
+		}
+
+		protected virtual void OnClientShutdown( ServerSocketAsyncEventArgs context )
+		{
+			this._state = TransportState.Idle;
+			this._deserializationState.ClearBuffers();
+			this._deserializationState.ClearDispatchContext();
+			// FIXME: Clear seraializtion state.
+		}
+
 		/// <summary>
 		///		Dispatches <see cref="E:SocketAsyncEventArgs.Completed"/> event and handles socket level error.
 		/// </summary>
@@ -186,6 +254,11 @@ namespace MsgPack.Rpc.Server.Protocols
 			var context = ( ServerSocketAsyncEventArgs )e;
 
 			// FIXME: Error handling
+
+			if ( this.IsDisposed )
+			{
+				return;
+			}
 
 			switch ( context.LastOperation )
 			{
@@ -251,7 +324,27 @@ namespace MsgPack.Rpc.Server.Protocols
 		protected void Receive( ServerSocketAsyncEventArgs context )
 		{
 			this.VerifyState( TransportState.Idle );
+
+			// First, drain last received request.
+			if ( !context.IsClientShutdowned && context.ReceivedData.Any( segment => 0 < segment.Count ) )
+			{
+				// Process remaining binaries. This pipeline recursively call this method on other thread.
+				if ( !this._deserializationState.NextProcess( context ) )
+				{
+					// Draining was not ended. Try to take next bytes.
+					this.Receive( context );
+				}
+
+				// This method must be called on other thread on the above pipeline, so exit this thread.
+				return;
+			}
+
+			// There might be dirty data due to client shutdown.
+			context.ReceivedData.Clear();
+			Array.Clear( context.ReceivingBuffer, 0, context.ReceivingBuffer.Length );
+
 			context.SetBuffer( context.ReceivingBuffer, 0, context.ReceivingBuffer.Length );
+
 			this.ReceiveCore( context );
 		}
 
@@ -283,30 +376,60 @@ namespace MsgPack.Rpc.Server.Protocols
 				this.VerifyState( TransportState.Receiving );
 			}
 
-			Tracer.Protocols.TraceEvent(
-				Tracer.EventType.AcceptInboundTcp,
-				Tracer.EventId.AcceptInboundTcp,
-				"Receive request. [ \"socket\" : 0x{0:x8}, \"localEndPoint\" : \"{1}\", \"remoteEndPoint\" : \"{2}\", \"bytesTransfered\" : {3}, \"available\" : {4} ]",
-				context.AcceptSocket.Handle,
-				context.AcceptSocket.LocalEndPoint,
-				context.AcceptSocket.RemoteEndPoint,
-				context.BytesTransferred,
-				context.AcceptSocket.ReceiveBufferSize
-			);
+			if ( Tracer.Protocols.Switch.ShouldTrace( Tracer.EventType.AcceptInboundTcp ) )
+			{
+				Tracer.Protocols.TraceEvent(
+					Tracer.EventType.AcceptInboundTcp,
+					Tracer.EventId.AcceptInboundTcp,
+					"Receive request. [ \"socket\" : 0x{0:x8}, \"localEndPoint\" : \"{1}\", \"remoteEndPoint\" : \"{2}\", \"bytesTransfered\" : {3}, \"available\" : {4} ]",
+					context.AcceptSocket.Handle,
+					context.AcceptSocket.LocalEndPoint,
+					context.AcceptSocket.RemoteEndPoint,
+					context.BytesTransferred,
+					context.AcceptSocket.ReceiveBufferSize
+				);
+			}
 
-			context.ReceivedData.Add( new ArraySegment<byte>( context.ReceivingBuffer, context.Offset, context.BytesTransferred ) );
-			context.SetReceivingBufferOffset( context.BytesTransferred );
+			if ( context.BytesTransferred == 0 )
+			{
+				// recv() returns 0 when the client socket shutdown gracefully.
+				context.IsClientShutdowned = true;
+				if ( !context.ReceivedData.Any( segment => 0 < segment.Count ) )
+				{
+					// There are not data to handle.
+					this.OnClientShutdown( context );
+					return;
+				}
+			}
+			else
+			{
+				context.IsClientShutdowned = false;
+				context.ReceivedData.Add( new ArraySegment<byte>( context.ReceivingBuffer, context.Offset, context.BytesTransferred ) );
+				context.SetReceivingBufferOffset( context.BytesTransferred );
+			}
 
 			// FIXME: Quota
-			Tracer.Protocols.TraceEvent(
-				Tracer.EventType.DeserializeRequest,
-				Tracer.EventId.DeserializeRequest,
-				"Deserialize request. [\"length\" : 0x{0:x}]",
-				context.ReceivedData.Sum( item => ( long )item.Count )
-			);
+			if ( Tracer.Protocols.Switch.ShouldTrace( Tracer.EventType.DeserializeRequest ) )
+			{
+				Tracer.Protocols.TraceEvent(
+					Tracer.EventType.DeserializeRequest,
+					Tracer.EventId.DeserializeRequest,
+					"Deserialize request. [\"length\" : 0x{0:x}]",
+					context.ReceivedData.Sum( item => ( long )item.Count )
+				);
+			}
 
+			// Go deserialization pipeline.
 			if ( !this._deserializationState.NextProcess( context ) )
 			{
+				if ( context.IsClientShutdowned )
+				{
+					// Client no longer send any additional data, so reset state.
+					this.OnClientShutdown( context );
+					return;
+				}
+
+				// Wait to arrive more data from client.
 				this.ReceiveCore( context );
 				return;
 			}
@@ -324,6 +447,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		private void Free()
 		{
 			this.VerifyState( TransportState.Reserved );
+			this._deserializationState.ClearDispatchContext();
 			this._state = TransportState.Idle;
 		}
 
@@ -383,13 +507,16 @@ namespace MsgPack.Rpc.Server.Protocols
 		/// </param>
 		private void SendCore( object errorData, object returnData )
 		{
-			Tracer.Protocols.TraceEvent(
-				Tracer.EventType.SerializeResponse,
-				Tracer.EventId.SerializeResponse,
-				"Serialize response. [ \"errorData\" : \"{0}\", \"returnData\" : \"{1}\" ]",
-				errorData,
-				returnData
-			);
+			if ( Tracer.Protocols.Switch.ShouldTrace( Tracer.EventType.SerializeResponse ) )
+			{
+				Tracer.Protocols.TraceEvent(
+					Tracer.EventType.SerializeResponse,
+					Tracer.EventId.SerializeResponse,
+					"Serialize response. [ \"errorData\" : \"{0}\", \"returnData\" : \"{1}\" ]",
+					errorData,
+					returnData
+				);
+			}
 
 			ArraySegment<byte> errorDataBytes;
 			if ( errorData == null )
@@ -398,10 +525,15 @@ namespace MsgPack.Rpc.Server.Protocols
 			}
 			else
 			{
-				using ( var packer = Packer.Create( this._context.ErrorDataBuffer, false ) )
+				using ( var packer = Packer.Create( this._serializationState.ErrorDataBuffer, false ) )
 				{
 					this._context.SerializationContext.GetSerializer( errorData.GetType() ).PackTo( packer, errorData );
-					errorDataBytes = new ArraySegment<byte>( this._context.ErrorDataBuffer.GetBuffer(), 0, unchecked( ( int )this._context.ErrorDataBuffer.Length ) );
+					errorDataBytes =
+						new ArraySegment<byte>(
+							this._serializationState.ErrorDataBuffer.GetBuffer(),
+							0,
+							unchecked( ( int )this._serializationState.ErrorDataBuffer.Length )
+						);
 				}
 			}
 
@@ -412,10 +544,15 @@ namespace MsgPack.Rpc.Server.Protocols
 			}
 			else
 			{
-				using ( var packer = Packer.Create( this._context.ReturnDataBuffer, false ) )
+				using ( var packer = Packer.Create( this._serializationState.ReturnDataBuffer, false ) )
 				{
 					this._context.SerializationContext.GetSerializer( returnData.GetType() ).PackTo( packer, returnData );
-					returnDataBytes = new ArraySegment<byte>( this._context.ReturnDataBuffer.GetBuffer(), 0, unchecked( ( int )this._context.ReturnDataBuffer.Length ) );
+					returnDataBytes =
+						new ArraySegment<byte>(
+							this._serializationState.ReturnDataBuffer.GetBuffer(),
+							0,
+							unchecked( ( int )this._serializationState.ReturnDataBuffer.Length )
+						);
 				}
 			}
 
@@ -437,14 +574,19 @@ namespace MsgPack.Rpc.Server.Protocols
 		/// </remarks>
 		internal void SendCore( ArraySegment<byte> errorData, ArraySegment<byte> returnData )
 		{
+			this._deserializationState.ClearDispatchContext();
+
 			SerializeResponse( errorData, returnData );
 
-			Tracer.Protocols.TraceEvent(
-				Tracer.EventType.SendOutboundData,
-				Tracer.EventId.SendOutboundData,
-				"Send response. [ \"bytesTransferring\" : {0} ]",
-				this._context.SendingBuffer.Sum( segment => ( long )segment.Count )
-			);
+			if ( Tracer.Protocols.Switch.ShouldTrace( Tracer.EventType.SendOutboundData ) )
+			{
+				Tracer.Protocols.TraceEvent(
+					Tracer.EventType.SendOutboundData,
+					Tracer.EventId.SendOutboundData,
+					"Send response. [ \"bytesTransferring\" : {0} ]",
+					this._serializationState.SendingBuffer.Sum( segment => ( long )segment.Count )
+				);
+			}
 
 			this.SendCore( this._context );
 		}
@@ -452,16 +594,21 @@ namespace MsgPack.Rpc.Server.Protocols
 		// TODO: Move to other layer e.g. Server.
 		private void SerializeResponse( ArraySegment<byte> errorData, ArraySegment<byte> returnData )
 		{
-			using ( var packer = Packer.Create( this._context.IdBuffer, false ) )
+			using ( var packer = Packer.Create( this._serializationState.IdBuffer, false ) )
 			{
 				packer.Pack( this._context.Id );
-				this._context.SendingBuffer[ 1 ] = new ArraySegment<byte>( this._context.IdBuffer.GetBuffer(), 0, unchecked( ( int )this._context.IdBuffer.Position ) );
+				this._serializationState.SendingBuffer[ 1 ] =
+					new ArraySegment<byte>(
+						this._serializationState.IdBuffer.GetBuffer(),
+						0,
+						unchecked( ( int )this._serializationState.IdBuffer.Position )
+					);
 			}
 
-			this._context.SendingBuffer[ 2 ] = errorData;
-			this._context.SendingBuffer[ 3 ] = returnData;
+			this._serializationState.SendingBuffer[ 2 ] = errorData;
+			this._serializationState.SendingBuffer[ 3 ] = returnData;
 			this._context.SetBuffer( null, 0, 0 );
-			this._context.BufferList = this._context.SendingBuffer;
+			this._context.BufferList = this._serializationState.SendingBuffer;
 		}
 
 		/// <summary>
@@ -474,6 +621,10 @@ namespace MsgPack.Rpc.Server.Protocols
 		///		Called when asynchronous 'Send' operation is completed.
 		/// </summary>
 		/// <param name="context">Context information.</param>
+		/// <returns>
+		///		<c>true</c>, if the subsequent request is already received;
+		///		<c>false</c>, otherwise.
+		/// </returns>
 		///	<exception cref="InvalidOperationException">
 		///		This instance is not in 'Sending' state.
 		///	</exception>
@@ -482,19 +633,22 @@ namespace MsgPack.Rpc.Server.Protocols
 		///	</exception>
 		protected virtual void OnSent( ServerSocketAsyncEventArgs context )
 		{
-			Tracer.Protocols.TraceEvent(
-				Tracer.EventType.SentOutboundData,
-				Tracer.EventId.SentOutboundData,
-				"Sent response. [ \"remoteEndPoint\" : \"{0}\", \"bytesTransferred\" : {1} ]",
-				context.RemoteEndPoint,
-				context.BytesTransferred
-			);
+			if ( Tracer.Protocols.Switch.ShouldTrace( Tracer.EventType.SentOutboundData ) )
+			{
+				Tracer.Protocols.TraceEvent(
+						Tracer.EventType.SentOutboundData,
+						Tracer.EventId.SentOutboundData,
+						"Sent response. [ \"remoteEndPoint\" : \"{0}\", \"bytesTransferred\" : {1} ]",
+						context.RemoteEndPoint,
+						context.BytesTransferred
+					);
+			}
+
 			this.VerifyState( TransportState.Sending );
 			this._state = TransportState.Idle;
+
+			this._serializationState.Clear();
 			context.BufferList = null;
-			context.IdBuffer.SetLength( 0 );
-			context.ErrorDataBuffer.SetLength( 0 );
-			context.ReturnDataBuffer.SetLength( 0 );
 			// TODO: Decrement concurrency counter
 		}
 	}

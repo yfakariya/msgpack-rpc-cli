@@ -44,6 +44,7 @@ namespace MsgPack.Rpc.Server
 			public const TraceEventType UnexpectedLastOperation = TraceEventType.Warning;
 			public const TraceEventType BoundSocket = TraceEventType.Start;
 			public const TraceEventType CloseTransport = TraceEventType.Stop;
+			public const TraceEventType BeginAccept = TraceEventType.Verbose;
 			public const TraceEventType AcceptInboundTcp = TraceEventType.Verbose;
 			public const TraceEventType ReceiveInboundData = TraceEventType.Verbose;
 			public const TraceEventType DeserializeRequest = TraceEventType.Verbose;
@@ -58,6 +59,7 @@ namespace MsgPack.Rpc.Server
 			public const TraceEventType NeedMethodName = TraceEventType.Verbose;
 			public const TraceEventType NeedArgumentsArrayHeader = TraceEventType.Verbose;
 			public const TraceEventType NeedArgumentsElement = TraceEventType.Verbose;
+			public const TraceEventType DumpInvalidRequestHeader = TraceEventType.Verbose;
 		}
 
 		public static class EventId
@@ -67,7 +69,8 @@ namespace MsgPack.Rpc.Server
 			public const int BoundSocket = 1001;
 			public const int CloseTransport = 1002;
 			public const int UnexpectedLastOperation = 1091;
-			public const int AcceptInboundTcp = 1201;
+			public const int BeginAccept = 1201;
+			public const int AcceptInboundTcp = 1202;
 			public const int ReceiveInboundData = 1101;
 			public const int DeserializeRequest = 1111;
 			public const int DispatchRequest = 1131;
@@ -81,6 +84,7 @@ namespace MsgPack.Rpc.Server
 			public const int NeedMethodName = 1115;
 			public const int NeedArgumentsArrayHeader = 1116;
 			public const int NeedArgumentsElement = 1117;
+			public const int DumpInvalidRequestHeader = 1119;
 		}
 	}
 }
