@@ -29,12 +29,26 @@ using NUnit.Framework;
 namespace MsgPack.Rpc.Server.Protocols
 {
 	// TODOs
-	// ErrorHandling
-	// Parallel Return
-	// Dispatcher
+	// Parallel Return -> Implements queue in session layer. And use dedicated SocketAsyncEventArgs (_sendingContext).
+	//		-> Serialize -> Session Queue -> Server WatchDog -> Transport
+	// Dispatcher -> Shim generator (from NLiblet), Lookup, Invoker
+	// Error test
+	// Refactor move deserialization from transport to session.
+
+	// Client:
+	//   Transport -- Send/Receive, Header deserialization, EventLoop
+	//   SessionManager -- SessionTable, ErrorHandler
+	//   Client -- sync API, serialization/deserialization
+	//   IDL
+
+	// Others
+	//   UDP
+	//   Client SocketPool
+	//   
 	[TestFixture]
 	public class TcpServerTransportTest
 	{
+		// TODO: Error packet test.
 		private const bool _traceEnabled = false;
 		private const int _portNumber = 57319;
 		private DebugTraceSourceSetting _debugTrace;
