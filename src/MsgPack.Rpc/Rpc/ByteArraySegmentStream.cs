@@ -52,11 +52,13 @@ namespace MsgPack.Rpc
 			get { return this._segments.Sum( item => ( long )item.Count ); }
 		}
 
+		private long _position;
+
 		public sealed override long Position
 		{
 			get
 			{
-				return this._segments.Take( this._segmentIndex ).Sum( item => ( long )item.Count ) + this._offsetInCurrentSegment;
+				return this._position;
 			}
 			set
 			{
@@ -65,8 +67,7 @@ namespace MsgPack.Rpc
 					throw new ArgumentOutOfRangeException( "value" );
 				}
 
-				var position = this.Position;
-				this.Seek( value - position );
+				this.Seek( value - this._position );
 			}
 		}
 
@@ -85,11 +86,14 @@ namespace MsgPack.Rpc
 				result += copied;
 				remains -= copied;
 				this._offsetInCurrentSegment += copied;
+
 				if ( this._offsetInCurrentSegment == this._segments[ this._segmentIndex ].Count )
 				{
 					this._segmentIndex++;
 					this._offsetInCurrentSegment = 0;
 				}
+
+				this._position += copied;
 			}
 
 			return result;
@@ -97,14 +101,13 @@ namespace MsgPack.Rpc
 
 		public sealed override long Seek( long offset, SeekOrigin origin )
 		{
-			long position = this.Position;
 			long length = this.Length;
 			long offsetFromCurrent;
 			switch ( origin )
 			{
 				case SeekOrigin.Begin:
 				{
-					offsetFromCurrent = offset - position;
+					offsetFromCurrent = offset - this._position;
 					break;
 				}
 				case SeekOrigin.Current:
@@ -114,7 +117,7 @@ namespace MsgPack.Rpc
 				}
 				case SeekOrigin.End:
 				{
-					offsetFromCurrent = length + offset - position;
+					offsetFromCurrent = length + offset - this._position;
 					break;
 				}
 				default:
@@ -123,20 +126,20 @@ namespace MsgPack.Rpc
 				}
 			}
 
-			if ( offsetFromCurrent + position < 0 || length < offsetFromCurrent + position )
+			if ( offsetFromCurrent + this._position < 0 || length < offsetFromCurrent + this._position )
 			{
 				throw new ArgumentOutOfRangeException( "offset" );
 			}
 
 			this.Seek( offsetFromCurrent );
-			return offsetFromCurrent + position;
+			return this._position;
 		}
 
 		private void Seek( long offsetFromCurrent )
 		{
 #if DEBUG
-			Contract.Assert( 0 <= offsetFromCurrent + this.Position, offsetFromCurrent + this.Position + " < 0" );
-			Contract.Assert( offsetFromCurrent + this.Position <= this.Length, this.Length + " <= " + offsetFromCurrent + this.Position );
+			Contract.Assert( 0 <= offsetFromCurrent + this._position, offsetFromCurrent + this._position + " < 0" );
+			Contract.Assert( offsetFromCurrent + this._position <= this.Length, this.Length + " <= " + offsetFromCurrent + this._position );
 #endif
 
 			if ( offsetFromCurrent < 0 )
@@ -153,6 +156,8 @@ namespace MsgPack.Rpc
 					{
 						this._offsetInCurrentSegment--;
 					}
+
+					this._position--;
 				}
 			}
 			else
@@ -169,6 +174,8 @@ namespace MsgPack.Rpc
 					{
 						this._offsetInCurrentSegment++;
 					}
+
+					this._position++;
 				}
 			}
 		}

@@ -24,13 +24,14 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using MsgPack.Rpc.Protocols;
+using System.Collections.Generic;
 
 namespace MsgPack.Rpc.Server.Protocols
 {
 	/// <summary>
 	///		Encapselates underlying transport layer protocols and handle low level errors.
 	/// </summary>
-	public abstract class ServerTransport : IDisposable
+	public abstract partial class ServerTransport : IDisposable
 	{
 		/// <summary>
 		///		State of this transport.
@@ -41,6 +42,9 @@ namespace MsgPack.Rpc.Server.Protocols
 		///		Context information including socket state, session state, and buffers.
 		/// </summary>
 		private readonly ServerSocketAsyncEventArgs _context;
+
+		private readonly DeserializationState _deserializationState;
+
 
 		// TODO: Move to other layer e.g. Server.
 		/// <summary>
@@ -98,6 +102,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			}
 
 			this._context = context;
+			this._deserializationState = new DeserializationState( this.UnpackRequestHeader );
 		}
 
 		/// <summary>
@@ -292,138 +297,18 @@ namespace MsgPack.Rpc.Server.Protocols
 			context.ReceivedData.Add( new ArraySegment<byte>( context.ReceivingBuffer, context.Offset, context.BytesTransferred ) );
 			context.SetReceivingBufferOffset( context.BytesTransferred );
 
-			// FIXME: Feeding
-			if ( 0 < context.BytesTransferred )
+			// FIXME: Quota
+			Tracer.Protocols.TraceEvent(
+				Tracer.EventType.DeserializeRequest,
+				Tracer.EventId.DeserializeRequest,
+				"Deserialize request. [\"length\" : 0x{0:x}]",
+				context.ReceivedData.Sum( item => ( long )item.Count )
+			);
+
+			if ( !this._deserializationState.NextProcess( context ) )
 			{
 				this.ReceiveCore( context );
 				return;
-			}
-
-			try
-			{
-				this._state = TransportState.Reserved;
-
-				Tracer.Protocols.TraceEvent(
-					Tracer.EventType.DeserializeRequest,
-					Tracer.EventId.DeserializeRequest,
-					"Deserialize request. [\"length\" : 0x{0:x}]",
-					context.ReceivedData.Sum( item => ( long )item.Count )
-				);
-
-				using ( var stream = new ByteArraySegmentStream( context.ReceivedData ) )
-				using ( var unpacker = Unpacker.Create( stream ) )
-				{
-					MessageType type;
-					string methodName;
-					DeserializeRequestHeaders( context, unpacker, out type, out methodName );
-
-					using ( var argumentsUnpacker = unpacker.ReadSubtree() )
-					{
-						if ( type == MessageType.Notification )
-						{
-							this.Free();
-						}
-
-						this.OnMessageReceivedCore(
-							new RpcMessageReceivedEventArgs(
-								this,
-								type,
-								type == MessageType.Notification ? default( int? ) : unchecked( ( int )context.Id ),
-								methodName,
-								argumentsUnpacker
-							)
-						);
-					}
-				}
-			}
-			finally
-			{
-				context.ReceivedData.Clear();
-				Array.Clear( context.ReceivingBuffer, 0, context.ReceivingBuffer.Length );
-			}
-		}
-
-		// TODO: Move to other layer e.g. Server.
-		private static void DeserializeRequestHeaders( ServerSocketAsyncEventArgs context, Unpacker unpacker, out MessageType type, out string methodName )
-		{
-			if ( !unpacker.Read() || !unpacker.IsArrayHeader )
-			{
-				// FIXME: Error handler
-				throw new InvalidMessagePackStreamException( "Invalid request/notify message stream. Message must be array." );
-			}
-
-			if ( unpacker.ItemsCount != 3 && unpacker.ItemsCount != 4 )
-			{
-				// FIXME: Error handler
-				throw new InvalidMessagePackStreamException( String.Format( CultureInfo.CurrentCulture, "Invalid request/notify message stream. Message must be valid size array. Actual size is {0}.", unpacker.ItemsCount ) );
-			}
-
-			if ( !unpacker.Read() )
-			{
-				// FIXME: Error handler
-				throw new InvalidMessagePackStreamException( "Unexpectedly ends." );
-			}
-
-			int numericType;
-			try
-			{
-				numericType = unpacker.Data.Value.AsInt32();
-			}
-			catch ( InvalidOperationException ex )
-			{
-				// FIXME: Error handler
-				throw new InvalidMessagePackStreamException( "Invalid request/notify message stream. Message Type must be Int32 compatible integer.", ex );
-			}
-
-			if ( numericType == 0 )
-			{
-				if ( !unpacker.Read() )
-				{
-					// FIXME: Error handler
-					throw new InvalidMessagePackStreamException( "Unexpectedly ends." );
-				}
-
-				try
-				{
-					context.Id = unpacker.Data.Value.AsUInt32();
-				}
-				catch ( InvalidOperationException ex )
-				{
-					// FIXME: Error handler
-					throw new InvalidMessagePackStreamException( "Invalid request message stream. ID must be UInt32 compatible integer.", ex );
-				}
-			}
-			else
-			{
-				if ( numericType != 2 )
-				{
-					// FIXME: Error handler
-					throw new InvalidMessagePackStreamException( String.Format( CultureInfo.CurrentCulture, "Unknown message type '{0:x8}'", numericType ) );
-				}
-			}
-
-			type = ( MessageType )numericType;
-
-			if ( !unpacker.Read() )
-			{
-				// FIXME: Error handler
-				throw new InvalidMessagePackStreamException( "Unexpectedly ends." );
-			}
-			
-			try
-			{
-				methodName = unpacker.Data.Value.AsString();
-			}
-			catch ( InvalidOperationException ex )
-			{
-				// FIXME: Error handler
-				throw new InvalidMessagePackStreamException( "Invalid request/notify message stream. Method name must be UTF-8 string.", ex );
-			}
-
-			if ( !unpacker.Read() || !unpacker.IsArrayHeader )
-			{
-				// FIXME: Error handler
-				throw new InvalidMessagePackStreamException( "Invalid request/notify message stream. Arguments must be array." );
 			}
 		}
 

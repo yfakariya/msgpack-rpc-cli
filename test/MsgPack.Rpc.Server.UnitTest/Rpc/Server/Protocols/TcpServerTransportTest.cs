@@ -24,6 +24,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using NUnit.Framework;
+using System.Diagnostics;
 
 namespace MsgPack.Rpc.Server.Protocols
 {
@@ -73,13 +74,18 @@ namespace MsgPack.Rpc.Server.Protocols
 								}
 							};
 
-						target.Initialize( new IPEndPoint( IPAddress.Loopback, _portNumber ) );
+						target.Initialize( new IPEndPoint( IPAddress.Any, _portNumber ) );
 
 						TestEchoRequestCore( ref isOk, waitHandle );
 
 						waitHandle.Reset();
 						isOk = false;
 						// Again
+						TestEchoRequestCore( ref isOk, waitHandle );
+
+						waitHandle.Reset();
+						isOk = false;
+						// Again 2
 						TestEchoRequestCore( ref isOk, waitHandle );
 					}
 				}
@@ -111,9 +117,14 @@ namespace MsgPack.Rpc.Server.Protocols
 					packer.Pack( "Hello, world" );
 					packer.Pack( now );
 
-					client.Client.Shutdown( SocketShutdown.Send );
-
-					Assert.That( waitHandle.Wait( TimeSpan.FromSeconds( 3 ) ) );
+					if ( Debugger.IsAttached )
+					{
+						waitHandle.Wait();
+					}
+					else
+					{
+						Assert.That( waitHandle.Wait( TimeSpan.FromSeconds( 3 ) ) );
+					}
 					Assert.That( isOk, "Server failed" );
 
 					using ( var unpacker = Unpacker.Create( stream ) )

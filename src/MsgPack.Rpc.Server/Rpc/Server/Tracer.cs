@@ -51,6 +51,13 @@ namespace MsgPack.Rpc.Server
 			public const TraceEventType SerializeResponse = TraceEventType.Verbose;
 			public const TraceEventType SendOutboundData = TraceEventType.Verbose;
 			public const TraceEventType SentOutboundData = TraceEventType.Verbose;
+
+			public const TraceEventType NeedRequestHader = TraceEventType.Verbose;
+			public const TraceEventType NeedMessageType = TraceEventType.Verbose;
+			public const TraceEventType NeedMessageId = TraceEventType.Verbose;
+			public const TraceEventType NeedMethodName = TraceEventType.Verbose;
+			public const TraceEventType NeedArgumentsArrayHeader = TraceEventType.Verbose;
+			public const TraceEventType NeedArgumentsElement = TraceEventType.Verbose;
 		}
 
 		public static class EventId
@@ -67,6 +74,13 @@ namespace MsgPack.Rpc.Server
 			public const int SerializeResponse = 1141;
 			public const int SendOutboundData = 1151;
 			public const int SentOutboundData = 1152;
+
+			public const int NeedRequestHader = 1112;
+			public const int NeedMessageType = 1113;
+			public const int NeedMessageId = 1114;
+			public const int NeedMethodName = 1115;
+			public const int NeedArgumentsArrayHeader = 1116;
+			public const int NeedArgumentsElement = 1117;
 		}
 	}
 }

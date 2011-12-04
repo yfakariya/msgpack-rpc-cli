@@ -23,6 +23,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net.Sockets;
 using MsgPack.Serialization;
+using MsgPack.Rpc.Protocols;
 
 namespace MsgPack.Rpc.Server.Protocols
 {
@@ -128,7 +129,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		{
 			get { return this._sendingBuffer; }
 		}
-
+		
 		/// <summary>
 		///		Gets or sets the message id.
 		/// </summary>
@@ -141,7 +142,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			get;
 			set;
 		}
-
+		
 		private readonly MemoryStream _idBuffer;
 
 		/// <summary>
@@ -151,7 +152,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		///		The reusable buffer to pack <see cref="Id"/>.
 		///		This value will not be <c>null</c>.
 		/// </value>
-		public MemoryStream IdBuffer
+		internal MemoryStream IdBuffer
 		{
 			get { return this._idBuffer; }
 		}
@@ -185,7 +186,6 @@ namespace MsgPack.Rpc.Server.Protocols
 		}
 
 		private byte[] _receivingBuffer;
-
 
 		/// <summary>
 		///		Gets the buffer to receive data.

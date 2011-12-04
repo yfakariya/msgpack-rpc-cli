@@ -22,6 +22,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using MsgPack.Rpc.Protocols;
+using System.Diagnostics.Contracts;
 
 namespace MsgPack.Rpc.Server.Protocols
 {
@@ -41,8 +42,8 @@ namespace MsgPack.Rpc.Server.Protocols
 		public ServerTransport Transport
 		{
 			get { return this._transport; }
-		} 
-		
+		}
+
 		private readonly string _methodName;
 
 		/// <summary>
@@ -81,7 +82,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		public int? Id
 		{
 			get { return _id; }
-		} 
+		}
 
 		private readonly Unpacker _underlyingUnpacker;
 
@@ -160,13 +161,22 @@ namespace MsgPack.Rpc.Server.Protocols
 				throw new InvalidOperationException( "ArgumentsUnpacker was already called." );
 			}
 
-			var list = new List<MessagePackObject>( checked( ( int )this._underlyingUnpacker.ItemsCount ) );
-			while ( this._underlyingUnpacker.Read() )
-			{
-				list.Add( this._underlyingUnpacker.Data.Value );
-			}
+			Contract.Assert( this._underlyingUnpacker.IsInStart );
 
-			this._arguments = new ReadOnlyCollection<MessagePackObject>( list );
+			if ( !this._underlyingUnpacker.Read() )
+			{
+				this._arguments = new ReadOnlyCollection<MessagePackObject>( new MessagePackObject[ 0 ] );
+			}
+			else
+			{
+				var list = new List<MessagePackObject>( checked( ( int )this._underlyingUnpacker.ItemsCount ) );
+				while ( this._underlyingUnpacker.Read() )
+				{
+					list.Add( this._underlyingUnpacker.Data.Value );
+				}
+
+				this._arguments = new ReadOnlyCollection<MessagePackObject>( list );
+			}
 		}
 	}
 }
