@@ -149,23 +149,20 @@ namespace MsgPack.Rpc.Server.Protocols
 					}
 					Assert.That( isOk, "Server failed" );
 
-					using ( var unpacker = Unpacker.Create( stream ) )
-					{
-						Console.WriteLine( "---- Client receiving response ----" );
-						var result = unpacker.UnpackObject();
-						Assert.That( result.IsArray );
-						var array = result.AsList();
-						Assert.That( array.Count, Is.EqualTo( 4 ) );
-						Assert.That( array[ 0 ] == 1, array[ 0 ].ToString() );
-						Assert.That( array[ 1 ] == 123, array[ 1 ].ToString() );
-						Assert.That( array[ 2 ] == MessagePackObject.Nil, array[ 2 ].ToString() );
-						Assert.That( array[ 3 ].IsArray, array[ 3 ].ToString() );
-						var returnValue = array[ 3 ].AsList();
-						Assert.That( returnValue.Count, Is.EqualTo( 2 ) );
-						Assert.That( returnValue[ 0 ] == "Hello, world", returnValue[ 0 ].ToString() );
-						Assert.That( returnValue[ 1 ] == now, returnValue[ 1 ].ToString() );
-						Console.WriteLine( "---- Client received response ----" );
-					}
+					Console.WriteLine( "---- Client receiving response ----" );
+					var result = Unpacking.UnpackObject( stream ).Value;
+					Assert.That( result.IsArray );
+					var array = result.AsList();
+					Assert.That( array.Count, Is.EqualTo( 4 ) );
+					Assert.That( array[ 0 ] == 1, array[ 0 ].ToString() );
+					Assert.That( array[ 1 ] == 123, array[ 1 ].ToString() );
+					Assert.That( array[ 2 ] == MessagePackObject.Nil, array[ 2 ].ToString() );
+					Assert.That( array[ 3 ].IsArray, array[ 3 ].ToString() );
+					var returnValue = array[ 3 ].AsList();
+					Assert.That( returnValue.Count, Is.EqualTo( 2 ) );
+					Assert.That( returnValue[ 0 ] == "Hello, world", returnValue[ 0 ].ToString() );
+					Assert.That( returnValue[ 1 ] == now, returnValue[ 1 ].ToString() );
+					Console.WriteLine( "---- Client received response ----" );
 				}
 			}
 		}
@@ -316,7 +313,8 @@ namespace MsgPack.Rpc.Server.Protocols
 						for ( int i = 0; i < count; i++ )
 						{
 							Console.WriteLine( "---- Client receiving response ----" );
-							var result = unpacker.UnpackObject();
+							Assert.That( unpacker.Read() );
+							var result = unpacker.Data.Value;
 							Assert.That( result.IsArray );
 							var array = result.AsList();
 							Assert.That( array.Count, Is.EqualTo( 4 ) );
@@ -341,7 +339,7 @@ namespace MsgPack.Rpc.Server.Protocols
 
 		private static RpcServer CreateServer()
 		{
-			return new RpcServer( 1 );
+			return new RpcServer( new RpcServerConfiguration() { MinimumConcurrency = 1 } );
 		}
 	}
 }
