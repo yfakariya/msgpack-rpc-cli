@@ -30,8 +30,8 @@ namespace MsgPack.Rpc.Protocols
 	/// <summary>
 	/// 	Context information of connecting operation.
 	/// </summary>
-	[StructLayout( LayoutKind.Sequential )]
-	public partial struct ConnectingContext  : IEquatable<ConnectingContext>
+	[global::System.Runtime.InteropServices.StructLayout( global::System.Runtime.InteropServices.LayoutKind.Sequential )]
+	public partial struct ConnectingContext : global::System.IEquatable<ConnectingContext>
 	{
 		/// <summary>
 		/// 	Get empty instance.
@@ -114,7 +114,7 @@ namespace MsgPack.Rpc.Protocols
 		/// <returns>
 		/// 	If specified instance equals to this instance then true.
 		/// </returns>
-		public override bool Equals( Object obj )
+		public override bool Equals( object obj )
 		{
 			if( Object.ReferenceEquals( obj, null ) )
 			{
@@ -132,7 +132,7 @@ namespace MsgPack.Rpc.Protocols
 		/// <summary>
 		/// 	Compare specified object is equal to this instnace.
 		/// </summary>
-		/// <param name="obj">
+		/// <param name="other">
 		/// 	<see cref="ConnectingContext"/> to compare.
 		/// </param>
 		/// <returns>
@@ -181,8 +181,8 @@ namespace MsgPack.Rpc.Protocols
 	/// <summary>
 	/// 	Context information of sending operation.
 	/// </summary>
-	[StructLayout( LayoutKind.Sequential )]
-	public partial struct SendingContext  : IEquatable<SendingContext>
+	[global::System.Runtime.InteropServices.StructLayout( global::System.Runtime.InteropServices.LayoutKind.Sequential )]
+	public partial struct SendingContext : global::System.IEquatable<SendingContext>
 	{
 		/// <summary>
 		/// 	Get empty instance.
@@ -299,7 +299,7 @@ namespace MsgPack.Rpc.Protocols
 		/// <returns>
 		/// 	If specified instance equals to this instance then true.
 		/// </returns>
-		public override bool Equals( Object obj )
+		public override bool Equals( object obj )
 		{
 			if( Object.ReferenceEquals( obj, null ) )
 			{
@@ -317,7 +317,7 @@ namespace MsgPack.Rpc.Protocols
 		/// <summary>
 		/// 	Compare specified object is equal to this instnace.
 		/// </summary>
-		/// <param name="obj">
+		/// <param name="other">
 		/// 	<see cref="SendingContext"/> to compare.
 		/// </param>
 		/// <returns>
@@ -366,8 +366,8 @@ namespace MsgPack.Rpc.Protocols
 	/// <summary>
 	/// 	Context information of receiving operation.
 	/// </summary>
-	[StructLayout( LayoutKind.Sequential )]
-	public partial struct ReceivingContext  : IEquatable<ReceivingContext>
+	[global::System.Runtime.InteropServices.StructLayout( global::System.Runtime.InteropServices.LayoutKind.Sequential )]
+	public partial struct ReceivingContext : global::System.IEquatable<ReceivingContext>
 	{
 		/// <summary>
 		/// 	Get empty instance.
@@ -474,7 +474,7 @@ namespace MsgPack.Rpc.Protocols
 		/// <returns>
 		/// 	If specified instance equals to this instance then true.
 		/// </returns>
-		public override bool Equals( Object obj )
+		public override bool Equals( object obj )
 		{
 			if( Object.ReferenceEquals( obj, null ) )
 			{
@@ -492,7 +492,7 @@ namespace MsgPack.Rpc.Protocols
 		/// <summary>
 		/// 	Compare specified object is equal to this instnace.
 		/// </summary>
-		/// <param name="obj">
+		/// <param name="other">
 		/// 	<see cref="ReceivingContext"/> to compare.
 		/// </param>
 		/// <returns>

@@ -17,7 +17,7 @@
 //    limitations under the License.
 //
 #><#@ template debug="false" hostspecific="false" language="C#" #>
-<#@ include file="../../../Struct.tt" #>
+<#@ include file="../../../../../lib/StructCS.ttinclude" #>
 <#@ assembly name="System.Core.dll" #>
 <#@ import namespace="System" #>
 <#@ import namespace="System.Collections.Generic" #>

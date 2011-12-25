@@ -62,6 +62,9 @@
     </Compile>
     <Compile Include="Rpc\Client\Protocols\Structs.g.cs">
       <SubType>Code</SubType>
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Structs.g.tt</DependentUpon>
     </Compile>
     <Compile Include="Rpc\Client\RpcClient.cs" />
     <Compile Include="Rpc\Client\RpcClientFactory.cs" />
