@@ -20,7 +20,6 @@
 
 using System;
 using System.Runtime.Serialization;
-using MsgPack.Collections;
 
 namespace MsgPack.Rpc
 {

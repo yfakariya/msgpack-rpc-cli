@@ -21,7 +21,6 @@
 using System;
 using System.Runtime.Serialization;
 using MsgPack.Rpc.Protocols;
-using MsgPack.Collections;
 
 namespace MsgPack.Rpc
 {

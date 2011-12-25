@@ -21,7 +21,6 @@
 using System;
 using System.Diagnostics.Contracts;
 using System.Globalization;
-using System.Collections.Generic;
 
 namespace MsgPack.Rpc
 {
@@ -31,9 +30,15 @@ namespace MsgPack.Rpc
 	public struct RpcErrorMessage
 	{
 		/// <summary>
-		///		Instance which represents success (that is, not error.)
+		///		Gets the instance which represents success (that is, not error.)
 		/// </summary>
-		public static readonly RpcErrorMessage Success = new RpcErrorMessage();
+		/// <value>
+		///		The instance which represents success (that is, not error.)
+		/// </value>
+		public static RpcErrorMessage Success
+		{
+			get { return new RpcErrorMessage(); }
+		}
 
 		/// <summary>
 		///		Get the value whether this instance represents success.

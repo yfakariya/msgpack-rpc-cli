@@ -20,17 +20,7 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Globalization;
-using System.Linq;
-using System.Net.Sockets;
-using System.Reflection;
 using System.Runtime.Serialization;
-using MsgPack.Rpc.Protocols;
-using System.Text;
-using MsgPack.Collections;
-using System.Runtime.InteropServices;
-using System.Diagnostics.Contracts;
 
 namespace MsgPack.Rpc
 {

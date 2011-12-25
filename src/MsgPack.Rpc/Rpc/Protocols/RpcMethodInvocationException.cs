@@ -19,10 +19,9 @@
 #endregion -- License Terms --
 
 using System;
-using System.Runtime.Serialization;
-using System.Diagnostics.Contracts;
-using MsgPack.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
+using System.Runtime.Serialization;
 
 namespace MsgPack.Rpc.Protocols
 {
