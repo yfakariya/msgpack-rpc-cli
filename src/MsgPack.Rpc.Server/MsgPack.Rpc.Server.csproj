@@ -43,6 +43,7 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -57,6 +58,28 @@
       <Link>Properties\CommonAssemblyInfo.Rpc.cs</Link>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Rpc\Server\Dispatch\AsyncServiceInvoker`1.cs" />
+    <Compile Include="Rpc\Server\Dispatch\DefaultServiceTypeLocator.cs" />
+    <Compile Include="Rpc\Server\Dispatch\FileBasedServiceTypeLocator.cs" />
+    <Compile Include="Rpc\Server\Dispatch\IAsyncServiceInvoker.cs" />
+    <Compile Include="Rpc\Server\Dispatch\InvocationHelper.cs" />
+    <Compile Include="Rpc\Server\Dispatch\IServiceInvoker.cs" />
+    <Compile Include="Rpc\Server\Dispatch\OperationDescription.cs" />
+    <Compile Include="Rpc\Server\Dispatch\ServiceDescription.cs" />
+    <Compile Include="Rpc\Server\Dispatch\SvcFileInterop\AttributeNameParsingState.cs" />
+    <Compile Include="Rpc\Server\Dispatch\SvcFileInterop\AttributeValueParsingState.cs" />
+    <Compile Include="Rpc\Server\Dispatch\SvcFileInterop\FinishedState.cs" />
+    <Compile Include="Rpc\Server\Dispatch\SvcFileInterop\InitialState.cs" />
+    <Compile Include="Rpc\Server\Dispatch\SvcFileInterop\RuntimeDirectiveIndicatorFoundState.cs" />
+    <Compile Include="Rpc\Server\Dispatch\SvcFileInterop\ServerDirectiveIndicatorFoundState.cs" />
+    <Compile Include="Rpc\Server\Dispatch\SvcFileInterop\ServiceHostDirectiveParsingState.cs" />
+    <Compile Include="Rpc\Server\Dispatch\SvcFileInterop\StartTagFoundState.cs" />
+    <Compile Include="Rpc\Server\Dispatch\SvcFileInterop\SvcDirectiveParserState.cs" />
+    <Compile Include="Rpc\Server\Dispatch\SvcFileInterop\SvcFileParser.cs" />
+    <Compile Include="Rpc\Server\Dispatch\SvcFileInterop\ServiceHostDirective.cs" />
+    <Compile Include="Rpc\Server\Dispatch\ServiceInvokerEmitter.cs" />
+    <Compile Include="Rpc\Server\Dispatch\ServiceInvokerGenerator.cs" />
+    <Compile Include="Rpc\Server\Dispatch\ServiceTypeLocator.cs" />
     <Compile Include="Rpc\Server\Protocols\Constants.cs" />
     <Compile Include="Rpc\Server\Protocols\NativeMessageType.cs" />
     <Compile Include="Rpc\Server\Protocols\RpcMessageReceivedEventArgs.cs" />
@@ -94,9 +117,7 @@
   <ItemGroup>
     <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Rpc\Server\Dispatch\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

@@ -59,6 +59,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Rpc\ArraySegmentExtensions.cs" />
     <Compile Include="Rpc\ByteArraySegmentStream.cs" />
+    <Compile Include="Rpc\RpcIdentifierUtility.cs" />
     <Compile Include="Rpc\MessagePackObjectExtension.cs" />
     <Compile Include="Rpc\Protocols\MessageType.cs">
       <SubType>Code</SubType>

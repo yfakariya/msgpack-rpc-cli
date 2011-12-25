@@ -46,7 +46,7 @@ namespace MsgPack.Rpc.Server.Protocols
 
 			if ( !this._deserializationState.RootUnpacker.Read() )
 			{
-				Tracer.Protocols.TraceEvent( Tracer.EventType.NeedRequestHader, Tracer.EventId.NeedRequestHader, "Array header is needed." );
+				Tracer.Protocols.TraceEvent( Tracer.EventType.NeedRequestHeader, Tracer.EventId.NeedRequestHeader, "Array header is needed." );
 				return false;
 			}
 

@@ -37,6 +37,12 @@ namespace MsgPack.Rpc.Server
 			get { return _protocols; }
 		}
 
+		private static readonly TraceSource _emit = new TraceSource( "MsgPack.Rpc.Server.Dispatch.Emit" );
+		public static TraceSource Emit
+		{
+			get { return _emit; }
+		}
+
 		public static class EventType
 		{
 			public const TraceEventType StartServer = TraceEventType.Start;
@@ -49,11 +55,14 @@ namespace MsgPack.Rpc.Server
 			public const TraceEventType ReceiveInboundData = TraceEventType.Verbose;
 			public const TraceEventType DeserializeRequest = TraceEventType.Verbose;
 			public const TraceEventType DispatchRequest = TraceEventType.Verbose;
+			public const TraceEventType OperationStart = TraceEventType.Start;
+			public const TraceEventType OperationSucceeded = TraceEventType.Stop;
+			public const TraceEventType OperationFailed = TraceEventType.Warning;
 			public const TraceEventType SerializeResponse = TraceEventType.Verbose;
 			public const TraceEventType SendOutboundData = TraceEventType.Verbose;
 			public const TraceEventType SentOutboundData = TraceEventType.Verbose;
 
-			public const TraceEventType NeedRequestHader = TraceEventType.Verbose;
+			public const TraceEventType NeedRequestHeader = TraceEventType.Verbose;
 			public const TraceEventType NeedMessageType = TraceEventType.Verbose;
 			public const TraceEventType NeedMessageId = TraceEventType.Verbose;
 			public const TraceEventType NeedMethodName = TraceEventType.Verbose;
@@ -88,6 +97,9 @@ namespace MsgPack.Rpc.Server
 					}
 				}
 			}
+
+			public const TraceEventType DefineType = TraceEventType.Verbose;
+			public const TraceEventType ILTrace = TraceEventType.Verbose;
 		}
 
 		public static class EventId
@@ -102,11 +114,14 @@ namespace MsgPack.Rpc.Server
 			public const int ReceiveInboundData = 1101;
 			public const int DeserializeRequest = 1111;
 			public const int DispatchRequest = 1131;
+			public const int OperationStart = 1132;
+			public const int OperationSucceeded = 1133;
+			public const int OperationFailed = 1134;
 			public const int SerializeResponse = 1141;
 			public const int SendOutboundData = 1151;
 			public const int SentOutboundData = 1152;
 
-			public const int NeedRequestHader = 1112;
+			public const int NeedRequestHeader = 1112;
 			public const int NeedMessageType = 1113;
 			public const int NeedMessageId = 1114;
 			public const int NeedMethodName = 1115;
@@ -127,6 +142,9 @@ namespace MsgPack.Rpc.Server
 					return 10000 + ( rpcError.ErrorCode * -1 );
 				}
 			}
+
+			public const int DefineType = 1401;
+			public const int ILTrace = 1499;
 		}
 	}
 }
