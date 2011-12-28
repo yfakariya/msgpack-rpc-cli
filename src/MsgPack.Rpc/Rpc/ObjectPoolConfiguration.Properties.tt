@@ -128,17 +128,17 @@ foreach( Property __property in __properties )
 			set
 			{
 				this.VerifyIsNotFrozen();
-				
-				if( value == null )
-				{
-					this._<#= Capitalize( __property.Name ) #> = <#= __property.Default #>;
-				}
-				else
-				{
-					Validate<#= __property.Name #>( value );
-					this._<#= Capitalize( __property.Name ) #> = value;
-				}
+				Validate<#= __property.Name #>( value );
+				this._<#= Capitalize( __property.Name ) #> = value;
 			}
+		}
+		
+		/// <summary>
+		/// 	Resets the <#=  __property.Name #> property value.
+		/// </summary>
+		public void Reset<#=  __property.Name #>()
+		{
+			this._<#= Capitalize( __property.Name ) #> = <#= __property.Default #>;
 		}
 		
 		static partial void Validate<#= __property.Name #>( <#= __property.Type #> value );

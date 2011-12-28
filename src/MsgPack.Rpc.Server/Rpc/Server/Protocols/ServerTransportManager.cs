@@ -27,16 +27,16 @@ namespace MsgPack.Rpc.Server.Protocols
 {
 	public abstract class ServerTransportManager : IDisposable
 	{
-		private readonly ObjectPool<ServerRequestSocketAsyncEventArgs> _requestContextPool;
+		private readonly ObjectPool<ServerRequestContext> _requestContextPool;
 
-		public ObjectPool<ServerRequestSocketAsyncEventArgs> RequestContextPool
+		public ObjectPool<ServerRequestContext> RequestContextPool
 		{
 			get { return this._requestContextPool; }
 		}
 
-		private readonly ObjectPool<ServerResponseSocketAsyncEventArgs> _responseContextPool;
+		private readonly ObjectPool<ServerResponseContext> _responseContextPool;
 
-		public ObjectPool<ServerResponseSocketAsyncEventArgs> ResponseContextPool
+		public ObjectPool<ServerResponseContext> ResponseContextPool
 		{
 			get { return this._responseContextPool; }
 		}
@@ -91,8 +91,8 @@ namespace MsgPack.Rpc.Server.Protocols
 			}
 
 			this._configuration = server.Configuration;
-			this._requestContextPool = server.Configuration.RequestContextPoolProvider( () => new ServerRequestSocketAsyncEventArgs() );
-			this._responseContextPool = server.Configuration.ResponseContextPoolProvider( () => new ServerResponseSocketAsyncEventArgs() );
+			this._requestContextPool = server.Configuration.RequestContextPoolProvider( () => new ServerRequestContext() );
+			this._responseContextPool = server.Configuration.ResponseContextPoolProvider( () => new ServerResponseContext() );
 		}
 
 		public void Dispose()

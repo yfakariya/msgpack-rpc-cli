@@ -94,12 +94,12 @@ namespace MsgPack.Rpc.Server.Dispatch
 			this._returnValueSerializer = context.GetSerializer<T>();
 		}
 
-		void IServiceInvoker.Invoke( Unpacker arguments, int messageId, ServerResponseSocketAsyncEventArgs responseContext )
+		void IServiceInvoker.Invoke( Unpacker arguments, int messageId, ServerResponseContext responseContext )
 		{
 			this.InvokeAsync( arguments, messageId, responseContext ).Wait();
 		}
 
-		public Task InvokeAsync( Unpacker arguments, int messageId, ServerResponseSocketAsyncEventArgs responseContext )
+		public Task InvokeAsync( Unpacker arguments, int messageId, ServerResponseContext responseContext )
 		{
 			if ( arguments == null )
 			{
@@ -124,7 +124,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 			var tuple = Tuple.Create( this, messageId, responseContext, error );
 			if ( task == null )
 			{
-				return Task.Factory.StartNew( state => HandleInvocationResult( null, state as Tuple<AsyncServiceInvoker<T>, int, ServerResponseSocketAsyncEventArgs, RpcErrorMessage> ), tuple );
+				return Task.Factory.StartNew( state => HandleInvocationResult( null, state as Tuple<AsyncServiceInvoker<T>, int, ServerResponseContext, RpcErrorMessage> ), tuple );
 			}
 			else
 			{
@@ -149,7 +149,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 			}
 		}
 
-		private static void HandleInvocationResult( Task previous, Tuple<AsyncServiceInvoker<T>, int, ServerResponseSocketAsyncEventArgs, RpcErrorMessage> closureState )
+		private static void HandleInvocationResult( Task previous, Tuple<AsyncServiceInvoker<T>, int, ServerResponseContext, RpcErrorMessage> closureState )
 		{
 			var @this = closureState.Item1;
 			var messageId = closureState.Item2;

@@ -40,10 +40,10 @@ namespace MsgPack.Rpc.Server.Protocols
 			base.SetTransportPool( server.Configuration.TcpTransportPoolProvider( () => new TcpServerTransport( this ) ) );
 			this._listeningContextPool = server.Configuration.ListeningContextPoolProvider( () => new ListeningContext() );
 			this._listeningSocket = new Socket( AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp );
-			var bindingEndPoint = this.Configuration.BindingEndPoint ?? NetworkEnvironment.GetDefaultEndPoint( server.Configuration.PortNumber.Value );
+			var bindingEndPoint = this.Configuration.BindingEndPoint ?? NetworkEnvironment.GetDefaultEndPoint( server.Configuration.PortNumber );
 			this._listeningSocket.Bind( bindingEndPoint );
-			this._listeningSocket.Listen( server.Configuration.ListenBackLog.Value );
-			Tracer.Protocols.TraceEvent( Tracer.EventType.StartListen, Tracer.EventId.StartListen, "Start listen. [ \"endPoint\" : \"{0}\", \"backLog\" : {1} ]", bindingEndPoint, server.Configuration.ListenBackLog.Value );
+			this._listeningSocket.Listen( server.Configuration.ListenBackLog );
+			Tracer.Protocols.TraceEvent( Tracer.EventType.StartListen, Tracer.EventId.StartListen, "Start listen. [ \"endPoint\" : \"{0}\", \"backLog\" : {1} ]", bindingEndPoint, server.Configuration.ListenBackLog );
 			this.StartAccept();
 		}
 
@@ -65,7 +65,7 @@ namespace MsgPack.Rpc.Server.Protocols
 
 		private void StartAccept()
 		{
-			var concurrency = this.Configuration.MinimumConnection.Value;
+			var concurrency = this.Configuration.MinimumConnection;
 			for ( int i = 0; i < concurrency; i++ )
 			{
 				var context = this._listeningContextPool.Borrow();

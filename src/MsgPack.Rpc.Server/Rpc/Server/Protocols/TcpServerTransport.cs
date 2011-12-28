@@ -30,7 +30,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		public TcpServerTransport( TcpServerTransportManager manager )
 			: base( manager ) { }
 
-		protected sealed override void ReceiveCore( ServerRequestSocketAsyncEventArgs context )
+		protected sealed override void ReceiveCore( ServerRequestContext context )
 		{
 			try
 			{
@@ -48,7 +48,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			}
 		}
 
-		protected sealed override void SendCore( ServerResponseSocketAsyncEventArgs context )
+		protected sealed override void SendCore( ServerResponseContext context )
 		{
 			try
 			{

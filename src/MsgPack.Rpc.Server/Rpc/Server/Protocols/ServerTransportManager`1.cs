@@ -36,8 +36,8 @@ namespace MsgPack.Rpc.Server.Protocols
 		{
 			this._activeTransports =
 				new ConcurrentDictionary<TTransport, object>(
-					server.Configuration.MinimumConnection ?? Environment.ProcessorCount,
-					server.Configuration.MaximumConnection ?? Environment.ProcessorCount
+					server.Configuration.MinimumConnection,
+					server.Configuration.MaximumConnection
 				);
 		}
 

@@ -26,7 +26,7 @@ using MsgPack.Serialization;
 
 namespace MsgPack.Rpc.Server.Protocols
 {
-	public sealed class ServerResponseSocketAsyncEventArgs : ServerSocketAsyncEventArgs, ILeaseable<ServerResponseSocketAsyncEventArgs>
+	public sealed class ServerResponseContext : ServerContext, ILeaseable<ServerResponseContext>
 	{
 		/// <summary>
 		///		Constant part of the response header.
@@ -105,7 +105,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		/// </remarks>
 		internal readonly ArraySegment<byte>[] SendingBuffer;
 
-		public ServerResponseSocketAsyncEventArgs()
+		public ServerResponseContext()
 		{
 			this._idBuffer = new MemoryStream( 5 );
 			// TODO: Configurable
@@ -176,7 +176,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			this.State = ServerProcessingState.Reserved;
 		}
 
-		void ILeaseable<ServerResponseSocketAsyncEventArgs>.SetLease( ILease<ServerResponseSocketAsyncEventArgs> lease )
+		void ILeaseable<ServerResponseContext>.SetLease( ILease<ServerResponseContext> lease )
 		{
 			base.SetLease( lease );
 		}

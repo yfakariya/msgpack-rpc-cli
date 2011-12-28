@@ -71,7 +71,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			try
 			{
 				using ( var server = CreateServer() )
-				using ( var target = new TcpServerTransport( new ServerSocketAsyncEventArgs( server ) ) )
+				using ( var target = new TcpServerTransport( new ServerContext( server ) ) )
 				{
 					bool isOk = false;
 					using ( var waitHandle = new ManualResetEventSlim() )
@@ -83,7 +83,7 @@ namespace MsgPack.Rpc.Server.Protocols
 								try
 								{
 									Assert.That( e.MethodName, Is.EqualTo( "Echo" ) );
-									var context = new ServerResponseSocketAsyncEventArgs();
+									var context = new ServerResponseContext();
 									context.ReturnDataPacker.Pack( e.Arguments.ToArray() );
 									e.Transport.Send( context );
 									isOk = true;
@@ -175,7 +175,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			try
 			{
 				using ( var server = CreateServer() )
-				using ( var target = new TcpServerTransport( new ServerSocketAsyncEventArgs( server ) ) )
+				using ( var target = new TcpServerTransport( new ServerContext( server ) ) )
 				{
 					const int count = 3;
 					bool[] serverStatus = new bool[ count ];
@@ -188,7 +188,7 @@ namespace MsgPack.Rpc.Server.Protocols
 								try
 								{
 									Assert.That( e.MethodName, Is.EqualTo( "Echo" ) );
-									var context = new ServerResponseSocketAsyncEventArgs();
+									var context = new ServerResponseContext();
 									context.ReturnDataPacker.Pack( e.Arguments.ToArray() );
 									e.Transport.Send( context );
 									serverStatus[ e.Id.Value ] = true;

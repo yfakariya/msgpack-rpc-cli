@@ -114,7 +114,7 @@ namespace MsgPack.Rpc.Server
 				
 		private void OnMessageReceived( object source, RpcMessageReceivedEventArgs e )
 		{
-			ServerResponseSocketAsyncEventArgs responseContext = null;
+			ServerResponseContext responseContext = null;
 			if ( e.MessageType == MessageType.Request )
 			{
 				responseContext = this._transportManager.ResponseContextPool.Borrow();

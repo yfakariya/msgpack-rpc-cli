@@ -29,7 +29,7 @@ namespace MsgPack.Rpc.Server.Protocols
 	{
 		public UdpServerTransport( UdpServerTransportManager manager ) : base( manager ) { }
 
-		protected sealed override void ReceiveCore( ServerRequestSocketAsyncEventArgs context )
+		protected sealed override void ReceiveCore( ServerRequestContext context )
 		{
 			// Manager stores the socket which is dedicated socket to this transport in the AcceptSocket property.
 			if ( !context.AcceptSocket.ReceiveFromAsync( context ) )
@@ -38,7 +38,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			}
 		}
 
-		protected sealed override void SendCore( ServerResponseSocketAsyncEventArgs context )
+		protected sealed override void SendCore( ServerResponseContext context )
 		{
 			// Manager stores the socket which is dedicated socket to this transport in the AcceptSocket property.
 			if ( !context.AcceptSocket.SendToAsync( context ) )

@@ -28,17 +28,17 @@ using MsgPack.Rpc.Protocols;
 
 namespace MsgPack.Rpc.Server.Protocols
 {
-	public sealed class ServerRequestSocketAsyncEventArgs : ServerSocketAsyncEventArgs, ILeaseable<ServerRequestSocketAsyncEventArgs>
+	public sealed class ServerRequestContext : ServerContext, ILeaseable<ServerRequestContext>
 	{
 		/// <summary>
 		///		The initial process of the deserialization pipeline.
 		/// </summary>
-		private Func<ServerRequestSocketAsyncEventArgs, bool> _initialProcess;
+		private Func<ServerRequestContext, bool> _initialProcess;
 
 		/// <summary>
 		///		Next (that is, resuming) process on the deserialization pipeline.
 		/// </summary>
-		internal Func<ServerRequestSocketAsyncEventArgs, bool> NextProcess;
+		internal Func<ServerRequestContext, bool> NextProcess;
 
 		/// <summary>
 		///		Buffer that stores unpacking binaries received.
@@ -98,7 +98,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		/// </summary>
 		internal Unpacker ArgumentsUnpacker;
 
-		public ServerRequestSocketAsyncEventArgs()
+		public ServerRequestContext()
 		{
 			// TODO: Configurable
 			this.ArgumentsBuffer = new MemoryStream( 65536 );
@@ -111,7 +111,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			this.NextProcess = transport.UnpackRequestHeader;
 		}
 
-		private static bool InvalidFlow( ServerSocketAsyncEventArgs context )
+		private static bool InvalidFlow( ServerContext context )
 		{
 			throw new InvalidOperationException( "Invalid state transition." );
 		}
@@ -208,7 +208,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			this.State = ServerProcessingState.Uninitialized;
 		}
 
-		void ILeaseable<ServerRequestSocketAsyncEventArgs>.SetLease( ILease<ServerRequestSocketAsyncEventArgs> lease )
+		void ILeaseable<ServerRequestContext>.SetLease( ILease<ServerRequestContext> lease )
 		{
 			base.SetLease( lease );
 		}

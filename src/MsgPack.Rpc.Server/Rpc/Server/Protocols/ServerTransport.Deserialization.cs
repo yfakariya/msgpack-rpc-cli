@@ -38,7 +38,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		///		<c>true</c>, if the pipeline is finished;
 		///		<c>false</c>, the pipeline is interruppted because extra data is needed.
 		/// </returns>
-		internal bool UnpackRequestHeader( ServerRequestSocketAsyncEventArgs context )
+		internal bool UnpackRequestHeader( ServerRequestContext context )
 		{
 			Contract.Assert( context != null );
 
@@ -88,7 +88,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		///		<c>true</c>, if the pipeline is finished;
 		///		<c>false</c>, the pipeline is interruppted because extra data is needed.
 		/// </returns>
-		private bool UnpackMessageType( ServerRequestSocketAsyncEventArgs context )
+		private bool UnpackMessageType( ServerRequestContext context )
 		{
 			if ( !context.HeaderUnpacker.Read() )
 			{
@@ -144,7 +144,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		///		<c>true</c>, if the pipeline is finished;
 		///		<c>false</c>, the pipeline is interruppted because extra data is needed.
 		/// </returns>
-		private bool UnpackMessageId( ServerRequestSocketAsyncEventArgs context )
+		private bool UnpackMessageId( ServerRequestContext context )
 		{
 			if ( !context.HeaderUnpacker.Read() )
 			{
@@ -178,7 +178,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		///		<c>true</c>, if the pipeline is finished;
 		///		<c>false</c>, the pipeline is interruppted because extra data is needed.
 		/// </returns>
-		private bool UnpackMethodName( ServerRequestSocketAsyncEventArgs context )
+		private bool UnpackMethodName( ServerRequestContext context )
 		{
 			if ( !context.HeaderUnpacker.Read() )
 			{
@@ -212,7 +212,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		///		<c>true</c>, if the pipeline is finished;
 		///		<c>false</c>, the pipeline is interruppted because extra data is needed.
 		/// </returns>
-		private bool UnpackArgumentsHeader( ServerRequestSocketAsyncEventArgs context )
+		private bool UnpackArgumentsHeader( ServerRequestContext context )
 		{
 			if ( !context.HeaderUnpacker.Read() )
 			{
@@ -260,7 +260,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		///		<c>true</c>, if the pipeline is finished;
 		///		<c>false</c>, the pipeline is interruppted because extra data is needed.
 		/// </returns>
-		private bool UnpackArguments( ServerRequestSocketAsyncEventArgs context )
+		private bool UnpackArguments( ServerRequestContext context )
 		{
 			while ( context.UnpackedArgumentsCount < context.ArgumentsCount )
 			{
@@ -288,7 +288,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		///		<c>true</c>, if the pipeline is finished;
 		///		<c>false</c>, the pipeline is interruppted because extra data is needed.
 		/// </returns>
-		private bool Dispatch( ServerRequestSocketAsyncEventArgs context )
+		private bool Dispatch( ServerRequestContext context )
 		{
 			context.State = ServerProcessingState.Reserved;
 			context.ClearBuffers();

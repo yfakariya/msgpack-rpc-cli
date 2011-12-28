@@ -84,8 +84,8 @@
     <Compile Include="Rpc\Server\Protocols\ListeningContext.cs" />
     <Compile Include="Rpc\Server\Protocols\NativeMessageType.cs" />
     <Compile Include="Rpc\Server\Protocols\RpcMessageReceivedEventArgs.cs" />
-    <Compile Include="Rpc\Server\Protocols\ServerRequestSocketAsyncEventArgs.cs" />
-    <Compile Include="Rpc\Server\Protocols\ServerSocketAsyncEventArgs.cs" />
+    <Compile Include="Rpc\Server\Protocols\ServerRequestContext.cs" />
+    <Compile Include="Rpc\Server\Protocols\ServerContext.cs" />
     <Compile Include="Rpc\Server\Protocols\ServerSocketError.cs" />
     <Compile Include="Rpc\Server\Protocols\ServerTransport.cs" />
     <Compile Include="Rpc\Server\Protocols\ServerTransport.Deserialization.cs" />
@@ -106,10 +106,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>RpcServerConfiguration.Properties.tt</DependentUpon>
     </Compile>
-    <Compile Include="Rpc\Server\RpcServerOptions.cs">
-      <DependentUpon>RpcServerOptions.tt</DependentUpon>
-    </Compile>
-    <Compile Include="Rpc\Server\Protocols\ServerResponseSocketAsyncEventArgs.cs" />
+    <Compile Include="Rpc\Server\Protocols\ServerResponseContext.cs" />
     <Compile Include="Rpc\Server\Tracer.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -119,10 +116,6 @@
     <None Include="Rpc\Server\RpcServerConfiguration.Properties.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>RpcServerConfiguration.Properties.cs</LastGenOutput>
-    </None>
-    <None Include="Rpc\Server\RpcServerOptions.tt">
-      <Generator>TextTemplatingFileGenerator</Generator>
-      <LastGenOutput>RpcServerOptions.cs</LastGenOutput>
     </None>
   </ItemGroup>
   <ItemGroup>

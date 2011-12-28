@@ -43,17 +43,17 @@ namespace MsgPack.Rpc
 			set
 			{
 				this.VerifyIsNotFrozen();
-				
-				if( value == null )
-				{
-					this._minimumReserved = 1;
-				}
-				else
-				{
-					ValidateMinimumReserved( value );
-					this._minimumReserved = value;
-				}
+				ValidateMinimumReserved( value );
+				this._minimumReserved = value;
 			}
+		}
+		
+		/// <summary>
+		/// 	Resets the MinimumReserved property value.
+		/// </summary>
+		public void ResetMinimumReserved()
+		{
+			this._minimumReserved = 1;
 		}
 		
 		static partial void ValidateMinimumReserved( int value );
@@ -72,17 +72,17 @@ namespace MsgPack.Rpc
 			set
 			{
 				this.VerifyIsNotFrozen();
-				
-				if( value == null )
-				{
-					this._maximumPooled = null;
-				}
-				else
-				{
-					ValidateMaximumPooled( value );
-					this._maximumPooled = value;
-				}
+				ValidateMaximumPooled( value );
+				this._maximumPooled = value;
 			}
+		}
+		
+		/// <summary>
+		/// 	Resets the MaximumPooled property value.
+		/// </summary>
+		public void ResetMaximumPooled()
+		{
+			this._maximumPooled = null;
 		}
 		
 		static partial void ValidateMaximumPooled( int? value );
@@ -101,17 +101,17 @@ namespace MsgPack.Rpc
 			set
 			{
 				this.VerifyIsNotFrozen();
-				
-				if( value == null )
-				{
-					this._exhausionPolicy = ExhausionPolicy.BlockUntilAvailable;
-				}
-				else
-				{
-					ValidateExhausionPolicy( value );
-					this._exhausionPolicy = value;
-				}
+				ValidateExhausionPolicy( value );
+				this._exhausionPolicy = value;
 			}
+		}
+		
+		/// <summary>
+		/// 	Resets the ExhausionPolicy property value.
+		/// </summary>
+		public void ResetExhausionPolicy()
+		{
+			this._exhausionPolicy = ExhausionPolicy.BlockUntilAvailable;
 		}
 		
 		static partial void ValidateExhausionPolicy( ExhausionPolicy value );
@@ -130,17 +130,17 @@ namespace MsgPack.Rpc
 			set
 			{
 				this.VerifyIsNotFrozen();
-				
-				if( value == null )
-				{
-					this._borrowTimeout = null;
-				}
-				else
-				{
-					ValidateBorrowTimeout( value );
-					this._borrowTimeout = value;
-				}
+				ValidateBorrowTimeout( value );
+				this._borrowTimeout = value;
 			}
+		}
+		
+		/// <summary>
+		/// 	Resets the BorrowTimeout property value.
+		/// </summary>
+		public void ResetBorrowTimeout()
+		{
+			this._borrowTimeout = null;
 		}
 		
 		static partial void ValidateBorrowTimeout( TimeSpan? value );
@@ -159,17 +159,17 @@ namespace MsgPack.Rpc
 			set
 			{
 				this.VerifyIsNotFrozen();
-				
-				if( value == null )
-				{
-					this._evitionInterval = TimeSpan.FromMinutes( 3 );
-				}
-				else
-				{
-					ValidateEvitionInterval( value );
-					this._evitionInterval = value;
-				}
+				ValidateEvitionInterval( value );
+				this._evitionInterval = value;
 			}
+		}
+		
+		/// <summary>
+		/// 	Resets the EvitionInterval property value.
+		/// </summary>
+		public void ResetEvitionInterval()
+		{
+			this._evitionInterval = TimeSpan.FromMinutes( 3 );
 		}
 		
 		static partial void ValidateEvitionInterval( TimeSpan? value );

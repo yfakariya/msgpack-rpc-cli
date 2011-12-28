@@ -29,7 +29,7 @@ namespace MsgPack.Rpc.Server.Protocols
 	/// <summary>
 	///		Represents context information of asynchronous server operation.
 	/// </summary>
-	public abstract class ServerSocketAsyncEventArgs : SocketAsyncEventArgs, ILeaseable<ServerSocketAsyncEventArgs>
+	public abstract class ServerContext : SocketAsyncEventArgs, ILeaseable<ServerContext>
 	{
 		internal ServerProcessingState State;
 
@@ -108,19 +108,19 @@ namespace MsgPack.Rpc.Server.Protocols
 			internal set;
 		}
 
-		private ILease<ServerSocketAsyncEventArgs> _asLease;
+		private ILease<ServerContext> _asLease;
 
-		void ILeaseable<ServerSocketAsyncEventArgs>.SetLease( ILease<ServerSocketAsyncEventArgs> lease )
+		void ILeaseable<ServerContext>.SetLease( ILease<ServerContext> lease )
 		{
 			this.SetLease( lease );
 		}
 
-		protected void SetLease( ILease<ServerSocketAsyncEventArgs> lease )
+		protected void SetLease( ILease<ServerContext> lease )
 		{
 			this._asLease = lease;
 		}
 		
-		protected ServerSocketAsyncEventArgs()
+		protected ServerContext()
 		{
 			// TODO: Configurable
 			this._receivingBuffer = new byte[ 65536 ];

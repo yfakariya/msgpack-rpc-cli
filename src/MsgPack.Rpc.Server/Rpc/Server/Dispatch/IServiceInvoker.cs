@@ -41,6 +41,6 @@ namespace MsgPack.Rpc.Server.Dispatch
 		///		The context object to pack response value or error.
 		///		This is <c>null</c> for the notification messages.
 		///	</param>
-		void Invoke( Unpacker arguments, int messageId, ServerResponseSocketAsyncEventArgs responseContext );
+		void Invoke( Unpacker arguments, int messageId, ServerResponseContext responseContext );
 	}
 }

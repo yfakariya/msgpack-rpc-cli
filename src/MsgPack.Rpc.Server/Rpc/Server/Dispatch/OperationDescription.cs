@@ -43,9 +43,9 @@ namespace MsgPack.Rpc.Server.Dispatch
 
 		private readonly MethodInfo _method;
 
-		private readonly Func<Unpacker, int, ServerResponseSocketAsyncEventArgs, Task> _operation;
+		private readonly Func<Unpacker, int, ServerResponseContext, Task> _operation;
 
-		public Func<Unpacker, int, ServerResponseSocketAsyncEventArgs, Task> Operation
+		public Func<Unpacker, int, ServerResponseContext, Task> Operation
 		{
 			get { return this._operation; }
 		}
@@ -57,7 +57,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 			get { return this._id; }
 		}
 
-		private OperationDescription( ServiceDescription service, MethodInfo method, string id, Func<Unpacker, int, ServerResponseSocketAsyncEventArgs, Task> operation )
+		private OperationDescription( ServiceDescription service, MethodInfo method, string id, Func<Unpacker, int, ServerResponseContext, Task> operation )
 		{
 			this._service = service;
 			this._method = method;

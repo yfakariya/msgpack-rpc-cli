@@ -52,6 +52,6 @@ namespace MsgPack.Rpc.Server.Dispatch
 		/// <returns>
 		///		<see cref="Task"/> to control entire process including sending response.
 		/// </returns>
-		Task InvokeAsync( Unpacker arguments, int messageId, ServerResponseSocketAsyncEventArgs responseContext );
+		Task InvokeAsync( Unpacker arguments, int messageId, ServerResponseContext responseContext );
 	}
 }

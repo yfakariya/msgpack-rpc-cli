@@ -201,7 +201,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		///		Verify internal state transition.
 		/// </summary>
 		/// <param name="desiredState">Desired next state.</param>
-		private void VerifyState( ServerSocketAsyncEventArgs context, ServerProcessingState desiredState )
+		private void VerifyState( ServerContext context, ServerProcessingState desiredState )
 		{
 			Contract.Assert( context != null );
 
@@ -216,7 +216,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			}
 		}
 
-		private void HandleDeserializationError( ServerRequestSocketAsyncEventArgs context, string message, Func<byte[]> invalidRequestHeaderProvider )
+		private void HandleDeserializationError( ServerRequestContext context, string message, Func<byte[]> invalidRequestHeaderProvider )
 		{
 			if ( invalidRequestHeaderProvider != null && Tracer.Protocols.Switch.ShouldTrace( Tracer.EventType.DumpInvalidRequestHeader ) )
 			{
@@ -227,7 +227,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			this.HandleDeserializationError( context, RpcError.MessageRefusedError, "Invalid stream.", message, invalidRequestHeaderProvider );
 		}
 
-		private void HandleDeserializationError( ServerRequestSocketAsyncEventArgs context, RpcError error, string message, string debugInformation, Func<byte[]> invalidRequestHeaderProvider )
+		private void HandleDeserializationError( ServerRequestContext context, RpcError error, string message, string debugInformation, Func<byte[]> invalidRequestHeaderProvider )
 		{
 			this.BeginShutdown();
 			int? messageId = context.MessageType == MessageType.Request ? context.Id : default( int? );
@@ -271,7 +271,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		/// <param name="e">Event data.</param>
 		private void OnSocketOperationCompleted( object sender, SocketAsyncEventArgs e )
 		{
-			var context = ( ServerSocketAsyncEventArgs )e;
+			var context = ( ServerContext )e;
 
 			if ( !this.Manager.HandleError( sender, e ) )
 			{
@@ -284,7 +284,7 @@ namespace MsgPack.Rpc.Server.Protocols
 				case SocketAsyncOperation.ReceiveFrom:
 				case SocketAsyncOperation.ReceiveMessageFrom:
 				{
-					var requestContext = context as ServerRequestSocketAsyncEventArgs;
+					var requestContext = context as ServerRequestContext;
 					Contract.Assert( requestContext != null );
 					this.OnReceived( requestContext );
 					break;
@@ -293,7 +293,7 @@ namespace MsgPack.Rpc.Server.Protocols
 				case SocketAsyncOperation.SendTo:
 				case SocketAsyncOperation.SendPackets:
 				{
-					var responseContext = context as ServerResponseSocketAsyncEventArgs;
+					var responseContext = context as ServerResponseContext;
 					Contract.Assert( responseContext != null );
 					this.OnSent( responseContext );
 					break;
@@ -324,7 +324,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		///	<exception cref="ObjectDisposedException">
 		///		This instance is disposed.
 		///	</exception>
-		public void Receive( ServerRequestSocketAsyncEventArgs context )
+		public void Receive( ServerRequestContext context )
 		{
 			if ( context == null )
 			{
@@ -342,7 +342,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			this.PrivateReceive( context );
 		}
 
-		private void PrivateReceive( ServerRequestSocketAsyncEventArgs context )
+		private void PrivateReceive( ServerRequestContext context )
 		{
 			if ( this.IsInShutdown )
 			{
@@ -368,7 +368,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			}
 		}
 
-		private void DrainRemainingReceivedData( ServerRequestSocketAsyncEventArgs context )
+		private void DrainRemainingReceivedData( ServerRequestContext context )
 		{
 			// Process remaining binaries. This pipeline recursively call this method on other thread.
 			if ( !context.NextProcess( context ) )
@@ -384,7 +384,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		///		Performs protocol specific asynchronous 'Receive' operation.
 		/// </summary>
 		/// <param name="context">Context information.</param>
-		protected abstract void ReceiveCore( ServerRequestSocketAsyncEventArgs context );
+		protected abstract void ReceiveCore( ServerRequestContext context );
 
 		/// <summary>
 		///		Called when asynchronous 'Receive' operation is completed.
@@ -396,7 +396,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		///	<exception cref="ObjectDisposedException">
 		///		This instance is disposed.
 		///	</exception>
-		protected virtual void OnReceived( ServerRequestSocketAsyncEventArgs context )
+		protected virtual void OnReceived( ServerRequestContext context )
 		{
 			if ( context == null )
 			{
@@ -514,7 +514,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			this.PrivateSend( context );
 		}
 
-		public void Send( ServerResponseSocketAsyncEventArgs context )
+		public void Send( ServerResponseContext context )
 		{
 			if ( context == null )
 			{
@@ -525,7 +525,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			this.PrivateSend( context );
 		}
 
-		private void PrivateSend( ServerResponseSocketAsyncEventArgs context )
+		private void PrivateSend( ServerResponseContext context )
 		{
 			context.Prepare();
 
@@ -546,7 +546,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		///		Performs protocol specific asynchronous 'Send' operation.
 		/// </summary>
 		/// <param name="context">Context information.</param>
-		protected abstract void SendCore( ServerResponseSocketAsyncEventArgs context );
+		protected abstract void SendCore( ServerResponseContext context );
 
 		/// <summary>
 		///		Called when asynchronous 'Send' operation is completed.
@@ -562,7 +562,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		///	<exception cref="ObjectDisposedException">
 		///		This instance is disposed.
 		///	</exception>
-		protected virtual void OnSent( ServerResponseSocketAsyncEventArgs context )
+		protected virtual void OnSent( ServerResponseContext context )
 		{
 			if ( Tracer.Protocols.Switch.ShouldTrace( Tracer.EventType.SentOutboundData ) )
 			{

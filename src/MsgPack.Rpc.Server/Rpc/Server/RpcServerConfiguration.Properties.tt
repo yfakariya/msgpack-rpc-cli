@@ -32,7 +32,7 @@ new List<Property>()
 	new Property()
 	{
 		Name = "MinimumConnection",
-		Type = "int?",
+		Type = "int",
 		Default = "2",
 		Summary = "Gets or sets the minimum connection to be pool for newly inbound connection.",
 		Value = "The minimum connection to be pool for newly inbound connection. " +
@@ -41,7 +41,7 @@ new List<Property>()
 	new Property()
 	{
 		Name = "MaximumConnection",
-		Type = "int?",
+		Type = "int",
 		Default = "100",
 		Summary = "Gets or sets the maximum connection to be handle inbound connection.",
 		Value = "The minimum connection to be handle inbound connection. " +
@@ -50,7 +50,7 @@ new List<Property>()
 	new Property()
 	{
 		Name = "MinimumConcurrentRequest",
-		Type = "int?",
+		Type = "int",
 		Default = "2",
 		Summary = "Gets or sets the minimum concurrency for the each clients.",
 		Value = "The minimum concurrency for the each clients. " +
@@ -59,7 +59,7 @@ new List<Property>()
 	new Property()
 	{
 		Name = "MaximumConcurrentRequest",
-		Type = "int?",
+		Type = "int",
 		Default = "10",
 		Summary = "Gets or sets the maximum concurrency for the each clients.",
 		Value = "The maximum concurrency for the each clients. " +
@@ -77,7 +77,7 @@ new List<Property>()
 	new Property()
 	{
 		Name = "ListenBackLog",
-		Type = "int?",
+		Type = "int",
 		Default = "100",
 		Summary = "Gets or sets the listen back log of each sockets.",
 		Value = "The listen back log of each sockets. " +
@@ -86,7 +86,7 @@ new List<Property>()
 	new Property()
 	{
 		Name = "PortNumber",
-		Type = "int?",
+		Type = "int",
 		Default = "10912",
 		Summary = "Gets or sets the listening port number.",
 		Value = "The listening port number. " +
@@ -120,13 +120,13 @@ Func<string, string, Property> __objectPoolProviderPropertyFactory =
 __properties.Add( 
 	__objectPoolProviderPropertyFactory(
 		"RequestContextPoolProvider",
-		"ServerRequestSocketAsyncEventArgs"
+		"ServerRequestContext"
 	)
 );
 __properties.Add( 
 	__objectPoolProviderPropertyFactory(
 		"ResponseContextPoolProvider",
-		"ServerResponseSocketAsyncEventArgs"
+		"ServerResponseContext"
 	)
 );
 __properties.Add( 
@@ -201,17 +201,17 @@ foreach( Property __property in __properties )
 			set
 			{
 				this.VerifyIsNotFrozen();
-				
-				if( value == null )
-				{
-					this._<#= Capitalize( __property.Name ) #> = <#= __property.Default #>;
-				}
-				else
-				{
-					Validate<#= __property.Name #>( value );
-					this._<#= Capitalize( __property.Name ) #> = value;
-				}
+				Validate<#= __property.Name #>( value );
+				this._<#= Capitalize( __property.Name ) #> = value;
 			}
+		}
+		
+		/// <summary>
+		/// 	Resets the <#=  __property.Name #> property value.
+		/// </summary>
+		public void Reset<#=  __property.Name #>()
+		{
+			this._<#= Capitalize( __property.Name ) #> = <#= __property.Default #>;
 		}
 		
 		static partial void Validate<#= __property.Name #>( <#= __property.Type #> value );
