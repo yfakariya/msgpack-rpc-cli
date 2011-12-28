@@ -19,63 +19,37 @@
 #endregion -- License Terms --
 
 using System;
-using System.Net;
-using System.Net.Sockets;
 
 namespace MsgPack.Rpc.Server.Protocols
 {
 	/// <summary>
 	///		<see cref="ServerTransport"/> implementation for UDP/IP.
 	/// </summary>
-	public sealed class UdpServerTransport : ServerTransport
+	public sealed class UdpServerTransport : ServerTransport, ILeaseable<UdpServerTransport>
 	{
-		private Socket CurrentSocket
-		{
-			get;
-			set;
-		}
+		public UdpServerTransport( UdpServerTransportManager manager ) : base( manager ) { }
 
-		/// <summary>
-		/// Initializes a new instance of the <see cref="UdpServerTransport"/> class.
-		/// </summary>
-		/// <param name="context">The context information.</param>
-		/// <exception cref="ArgumentNullException">
-		///   <paramref name="context"/> is <c>null</c>.
-		///   </exception>
-		public UdpServerTransport( ServerSocketAsyncEventArgs context ) : base( context ) { }
-
-		protected sealed override void InitializeCore( ServerSocketAsyncEventArgs context, EndPoint bindingEndPoint )
+		protected sealed override void ReceiveCore( ServerRequestSocketAsyncEventArgs context )
 		{
-			// TODO: IPv6
-			// TODO: BackLog-Configuration
-			var socket = new Socket( AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp );
-			socket.Bind( bindingEndPoint );
-			socket.Listen( 10 );
-			context.ListeningSocket = socket;
-			//context.RemoteEndPoint = 
-			this.Receive( context );
-		}
-
-		protected sealed override void OnClientShutdown( ServerSocketAsyncEventArgs context )
-		{
-			base.OnClientShutdown( context );
-			this.Receive( context );
-		}
-
-		protected sealed override void ReceiveCore( ServerSocketAsyncEventArgs context )
-		{
-			if ( !this.CurrentSocket.ReceiveFromAsync( context ) )
+			// Manager stores the socket which is dedicated socket to this transport in the AcceptSocket property.
+			if ( !context.AcceptSocket.ReceiveFromAsync( context ) )
 			{
 				this.OnReceived( context );
 			}
 		}
 
-		protected sealed override void SendCore( ServerSocketAsyncEventArgs context )
+		protected sealed override void SendCore( ServerResponseSocketAsyncEventArgs context )
 		{
-			if ( !CurrentSocket.SendToAsync( context ) )
+			// Manager stores the socket which is dedicated socket to this transport in the AcceptSocket property.
+			if ( !context.AcceptSocket.SendToAsync( context ) )
 			{
 				this.OnSent( context );
 			}
+		}
+
+		void ILeaseable<UdpServerTransport>.SetLease( ILease<UdpServerTransport> lease )
+		{
+			base.SetLease( lease );
 		}
 	}
 }

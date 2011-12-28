@@ -19,28 +19,39 @@
 #endregion -- License Terms --
 
 using System;
-using MsgPack.Rpc.Server.Protocols;
 
-namespace MsgPack.Rpc.Server.Dispatch
+namespace MsgPack.Rpc
 {
-	// FIXME: Remove if can do it
+	// TODO: Move to NLiblet
 	/// <summary>
-	///		Defines non-generic interface of <see cref="ServiceInvoker"/>.
+	///		Defines common interface for freezable objects.
 	/// </summary>
-	internal interface IServiceInvoker
+	public interface IFreezable
 	{
+
 		/// <summary>
-		///		Invokes target service operation.
+		///		Gets a value indicating whether this instance is frozen.
 		/// </summary>
-		/// <param name="arguments"><see cref="Unpacker"/> to unpack arguments.</param>
-		/// <param name="messageId">
-		///		Id of the current request message. 
-		///		This value is not defined for the notification messages.
-		///	</param>
-		/// <param name="responseContext">
-		///		The context object to pack response value or error.
-		///		This is <c>null</c> for the notification messages.
-		///	</param>
-		void Invoke( Unpacker arguments, int messageId, ServerResponseSocketAsyncEventArgs responseContext );
+		/// <value>
+		///   <c>true</c> if this instance is frozen; otherwise, <c>false</c>.
+		/// </value>
+		bool IsFrozen { get; }
+		
+		/// <summary>
+		///		Freezes this instance.
+		/// </summary>
+		/// <returns>
+		///		This instance.
+		/// </returns>
+		IFreezable Freeze();
+		
+		/// <summary>
+		///		Gets the frozen copy of this instance.
+		/// </summary>
+		/// <returns>
+		///		This instance if it is already frozen.
+		///		Otherwise, frozen copy of this instance.
+		/// </returns>
+		IFreezable AsFrozen();
 	}
 }

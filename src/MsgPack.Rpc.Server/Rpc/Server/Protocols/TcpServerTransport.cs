@@ -19,85 +19,18 @@
 #endregion -- License Terms --
 
 using System;
-using System.Diagnostics.Contracts;
-using System.Net;
-using System.Net.Sockets;
 
 namespace MsgPack.Rpc.Server.Protocols
 {
 	/// <summary>
 	///		<see cref="ServerTransport"/> implementation for TCP/IP.
 	/// </summary>
-	public sealed class TcpServerTransport : ServerTransport
+	public sealed class TcpServerTransport : ServerTransport, ILeaseable<TcpServerTransport>
 	{
-		/// <summary>
-		///		Initializes a new instance of the <see cref="TcpServerTransport"/> class.
-		/// </summary>
-		/// <param name="context">The context information.</param>
-		/// <exception cref="ArgumentNullException">
-		///   <paramref name="context"/> is <c>null</c>.
-		///   </exception>
-		public TcpServerTransport( ServerSocketAsyncEventArgs context )
-			: base( context ) { }
+		public TcpServerTransport( TcpServerTransportManager manager )
+			: base( manager ) { }
 
-		protected sealed override void InitializeCore( ServerSocketAsyncEventArgs context, EndPoint bindingEndPoint )
-		{
-			// TODO: Pooling
-			// TODO: IPv6
-			// TODO: BackLog-Configuration
-			var socket = new Socket( AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp );
-			socket.Bind( bindingEndPoint );
-			socket.Listen( 10 );
-			context.ListeningSocket = socket;
-			Tracer.Protocols.TraceEvent( Tracer.EventType.StartListen, Tracer.EventId.StartListen, "Start listen. [ \"endPoint\" : \"{0}\", \"backLog\" : {1} ]", bindingEndPoint, 10 );
-			this.Accept( context );
-		}
-
-		protected sealed override void OnClientShutdown( ServerSocketAsyncEventArgs context )
-		{
-			Contract.Assert( context.IsClientShutdowned );
-			base.OnClientShutdown( context );
-			// Because IsClientShutdowned is detected by checking no more data to recieved, 
-			// so it is safe to shutdown receival.
-			context.AcceptSocket.Shutdown( SocketShutdown.Receive );
-			context.AcceptSocket.Shutdown( SocketShutdown.Send );
-			context.AcceptSocket.Close();
-			context.AcceptSocket = null;
-			this.Accept( context );
-		}
-
-		private void Accept( ServerSocketAsyncEventArgs context )
-		{
-			Tracer.Protocols.TraceEvent( Tracer.EventType.BeginAccept, Tracer.EventId.BeginAccept, "Wait for connection." );
-
-			// Ensure buffers are cleared to avoid unepxected data feeding on Accept
-			context.SetBuffer( null, 0, 0 );
-			context.BufferList = null;
-
-			try
-			{
-				if ( !context.ListeningSocket.AcceptAsync( context ) )
-				{
-					this.OnAcceptted( context );
-				}
-			}
-			catch ( ObjectDisposedException )
-			{
-				if ( !this.IsDisposed )
-				{
-					throw;
-				}
-			}
-
-		}
-
-		protected sealed override void OnAcceptted( ServerSocketAsyncEventArgs context )
-		{
-			base.OnAcceptted( context );
-			this.Receive( context );
-		}
-
-		protected sealed override void ReceiveCore( ServerSocketAsyncEventArgs context )
+		protected sealed override void ReceiveCore( ServerRequestSocketAsyncEventArgs context )
 		{
 			try
 			{
@@ -115,7 +48,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			}
 		}
 
-		protected sealed override void SendCore( ServerSocketAsyncEventArgs context )
+		protected sealed override void SendCore( ServerResponseSocketAsyncEventArgs context )
 		{
 			try
 			{
@@ -131,21 +64,11 @@ namespace MsgPack.Rpc.Server.Protocols
 					throw;
 				}
 			}
-
 		}
 
-		protected sealed override void OnSent( ServerSocketAsyncEventArgs context )
+		void ILeaseable<TcpServerTransport>.SetLease( ILease<TcpServerTransport> lease )
 		{
-			base.OnSent( context );
-
-			if ( context.IsClientShutdowned )
-			{
-				this.OnClientShutdown( context );
-			}
-			else
-			{
-				this.Receive( context );
-			}
+			base.SetLease( lease );
 		}
 	}
 }

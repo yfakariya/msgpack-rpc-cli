@@ -20,60 +20,18 @@
 
 using System;
 using System.Collections.Generic;
-using System.IO;
+using System.Diagnostics.Contracts;
 using System.Net.Sockets;
-using MsgPack.Serialization;
-using MsgPack.Rpc.Protocols;
+using System.Threading;
 
 namespace MsgPack.Rpc.Server.Protocols
 {
 	/// <summary>
 	///		Represents context information of asynchronous server operation.
 	/// </summary>
-	public sealed class ServerSocketAsyncEventArgs : SocketAsyncEventArgs
+	public abstract class ServerSocketAsyncEventArgs : SocketAsyncEventArgs, ILeaseable<ServerSocketAsyncEventArgs>
 	{
-		// TODO: ?
-		private readonly WeakReference _server;
-
-		/// <summary>
-		///		Gets the server reference to obtain global settings.
-		/// </summary>
-		/// <value>
-		///		The server reference to obtain global settings.
-		///		This value can be <c>null</c>.
-		/// </value>
-		internal RpcServer Server
-		{
-			get
-			{
-				if ( this._server.IsAlive )
-				{
-					try
-					{
-						return this._server.Target as RpcServer;
-					}
-					catch ( InvalidOperationException ) { }
-				}
-
-				return null;
-			}
-		}
-
-		/// <summary>
-		///		Gets the serialization context to obtain serializer.
-		/// </summary>
-		/// <value>
-		///		The serialization context to obtain serializer.
-		///		This value will be <c>null</c> when <see cref="Server"/> is <c>null</c>.
-		/// </value>
-		internal SerializationContext SerializationContext
-		{
-			get
-			{
-				var server = this.Server;
-				return server == null ? null : server.SerializationContext;
-			}
-		}
+		internal ServerProcessingState State;
 
 		/// <summary>
 		///		Gets or sets the listening socket.
@@ -90,7 +48,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		///		The message id. 
 		///		This value will be undefined for the notification message.
 		/// </value>
-		internal uint Id
+		internal int Id
 		{
 			get;
 			set;
@@ -143,23 +101,49 @@ namespace MsgPack.Rpc.Server.Protocols
 			get { return this._receivedData; }
 		}
 
+		[Obsolete("Use more stable way")]
 		public bool IsClientShutdowned
 		{
 			get;
 			internal set;
 		}
 
-		/// <summary>
-		/// Initializes a new instance of the <see cref="ServerSocketAsyncEventArgs"/> class.
-		/// </summary>
-		/// <param name="server">The server.</param>
-		public ServerSocketAsyncEventArgs( RpcServer server )
+		private ILease<ServerSocketAsyncEventArgs> _asLease;
+
+		void ILeaseable<ServerSocketAsyncEventArgs>.SetLease( ILease<ServerSocketAsyncEventArgs> lease )
 		{
-			this._server = new WeakReference( server );
+			this.SetLease( lease );
+		}
+
+		protected void SetLease( ILease<ServerSocketAsyncEventArgs> lease )
+		{
+			this._asLease = lease;
+		}
+		
+		protected ServerSocketAsyncEventArgs()
+		{
 			// TODO: Configurable
 			this._receivingBuffer = new byte[ 65536 ];
 			// TODO: ArrayDeque is preferred.
 			this._receivedData = new List<ArraySegment<byte>>( 1 );
+		}
+
+		internal void ReturnLease()
+		{
+			try { }
+			finally
+			{
+				var asLease = Interlocked.Exchange( ref this._asLease, null );
+				if ( asLease != null )
+				{
+					asLease.Dispose();
+				}
+			}
+		}
+
+		internal virtual void Clear()
+		{
+			this.ReturnLease();
 		}
 	}
 }

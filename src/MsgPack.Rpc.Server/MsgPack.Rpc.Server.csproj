@@ -81,27 +81,44 @@
     <Compile Include="Rpc\Server\Dispatch\ServiceInvokerGenerator.cs" />
     <Compile Include="Rpc\Server\Dispatch\ServiceTypeLocator.cs" />
     <Compile Include="Rpc\Server\Protocols\Constants.cs" />
+    <Compile Include="Rpc\Server\Protocols\ListeningContext.cs" />
     <Compile Include="Rpc\Server\Protocols\NativeMessageType.cs" />
     <Compile Include="Rpc\Server\Protocols\RpcMessageReceivedEventArgs.cs" />
+    <Compile Include="Rpc\Server\Protocols\ServerRequestSocketAsyncEventArgs.cs" />
     <Compile Include="Rpc\Server\Protocols\ServerSocketAsyncEventArgs.cs" />
     <Compile Include="Rpc\Server\Protocols\ServerSocketError.cs" />
     <Compile Include="Rpc\Server\Protocols\ServerTransport.cs" />
     <Compile Include="Rpc\Server\Protocols\ServerTransport.Deserialization.cs" />
-    <Compile Include="Rpc\Server\Protocols\ServerTransport.Serialization.cs" />
+    <Compile Include="Rpc\Server\Protocols\ServerTransport.ILeaseable.cs" />
+    <Compile Include="Rpc\Server\Protocols\ServerTransportManager.cs" />
+    <Compile Include="Rpc\Server\Protocols\ServerTransportManager`1.cs" />
     <Compile Include="Rpc\Server\Protocols\TcpServerTransport.cs" />
-    <Compile Include="Rpc\Server\Protocols\TransportState.cs" />
+    <Compile Include="Rpc\Server\Protocols\ServerProcessingState.cs" />
+    <Compile Include="Rpc\Server\Protocols\TcpServerTransportManager.cs" />
     <Compile Include="Rpc\Server\Protocols\UdpServerTransport.cs" />
+    <Compile Include="Rpc\Server\Protocols\UdpServerTransportManager.cs" />
     <Compile Include="Rpc\Server\RpcServer.cs">
       <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Rpc\Server\RpcServerConfiguration.cs" />
+    <Compile Include="Rpc\Server\RpcServerConfiguration.Properties.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>RpcServerConfiguration.Properties.tt</DependentUpon>
     </Compile>
     <Compile Include="Rpc\Server\RpcServerOptions.cs">
       <DependentUpon>RpcServerOptions.tt</DependentUpon>
     </Compile>
+    <Compile Include="Rpc\Server\Protocols\ServerResponseSocketAsyncEventArgs.cs" />
     <Compile Include="Rpc\Server\Tracer.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\MsgPack.snk">
       <Link>MsgPack.snk</Link>
+    </None>
+    <None Include="Rpc\Server\RpcServerConfiguration.Properties.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>RpcServerConfiguration.Properties.cs</LastGenOutput>
     </None>
     <None Include="Rpc\Server\RpcServerOptions.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
@@ -117,7 +134,6 @@
   <ItemGroup>
     <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
   </ItemGroup>
-  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

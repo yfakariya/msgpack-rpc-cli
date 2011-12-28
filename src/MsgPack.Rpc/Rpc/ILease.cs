@@ -20,16 +20,24 @@
 
 using System;
 
-namespace MsgPack.Rpc.Server.Protocols
+namespace MsgPack.Rpc
 {
-	internal enum TransportState
+	// TODO: Move to NLiblet
+	// This interface exists for contra-variance.
+	/// <summary>
+	///		Represents object lease from the pool.
+	/// </summary>
+	/// <typeparam name="T">
+	///		The type of leased object.
+	/// </typeparam>
+	public interface ILease<out T> : IDisposable
 	{
-		Uninitialized = 0,
-		Idle = 1,
-		Receiving = 2,
-		Reserved = 3,
-		Sending = 4,
-		Disposing = -1,
-		Disposed = -2
+		/// <summary>
+		///		Gets the leased object itself.
+		/// </summary>
+		/// <value>
+		///		The leased object itself.
+		/// </value>
+		T Value { get; }
 	}
 }

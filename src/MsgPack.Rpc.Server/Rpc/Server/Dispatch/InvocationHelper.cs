@@ -25,6 +25,7 @@ using System.Reflection;
 using MsgPack.Serialization;
 using MsgPack.Rpc.Protocols;
 using System.Diagnostics.Contracts;
+using MsgPack.Rpc.Server.Protocols;
 
 namespace MsgPack.Rpc.Server.Dispatch
 {
@@ -116,33 +117,6 @@ namespace MsgPack.Rpc.Server.Dispatch
 					operationId,
 					error.ToString()
 				);
-			}
-		}
-
-		internal static void SerializeResponse<T>( Packer responsePacker, int messageId, RpcErrorMessage error, T returnValue, MessagePackSerializer<T> returnValueSerializer )
-		{
-			// Not notification
-			responsePacker.PackArrayHeader( 4 );
-			responsePacker.Pack( 1 );
-			responsePacker.Pack( messageId );
-			responsePacker.Pack( error.Error.Identifier );
-			if ( error.IsSuccess )
-			{
-				Contract.Assert( returnValueSerializer != null );
-
-				if ( returnValueSerializer == null )
-				{
-					// void
-					responsePacker.PackNull();
-				}
-				else
-				{
-					returnValueSerializer.PackTo( responsePacker, returnValue );
-				}
-			}
-			else
-			{
-				responsePacker.Pack( error.Detail );
 			}
 		}
 	}

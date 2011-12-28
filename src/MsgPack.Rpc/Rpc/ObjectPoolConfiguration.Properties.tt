@@ -1,0 +1,164 @@
+﻿<#
+//
+// MessagePack for CLI
+//
+// Copyright (C) 2010 FUJIWARA, Yusuke
+//
+//    Licensed under the Apache License, Version 2.0 (the "License");
+//    you may not use this file except in compliance with the License.
+//    You may obtain a copy of the License at
+//
+//        http://www.apache.org/licenses/LICENSE-2.0
+//
+//    Unless required by applicable law or agreed to in writing, software
+//    distributed under the License is distributed on an "AS IS" BASIS,
+//    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//    See the License for the specific language governing permissions and
+//    limitations under the License.
+//
+#>
+<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ output extension=".cs" #>
+<#@ assembly Name="System.Core" #>
+<#@ import namespace="System" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#
+
+// This file defines RpcServerOptions which is chunk of boilerplate.
+var __typeName = "ObjectPoolConfiguration";
+var __properties =
+new List<Property>()
+{
+	new Property()
+	{
+		Name = "MinimumReserved",
+		Type = "int",
+		Default = "1",
+		Summary = "Gets or sets the minimum reserved object count in the pool.",
+		Value = "The minimum reserved object count in the pool. " +
+			"The default is 1.",
+	},
+	new Property()
+	{
+		Name = "MaximumPooled",
+		Type = "int?",
+		Default = "null",
+		Summary = "Gets or sets the maximum poolable objects count.",
+		Value = "The maximum poolable objects count. " +
+			"<c>null</c> indicates unlimited pooling. " +
+			"The default is <c>null</c>.",
+	},
+	new Property()
+	{
+		Name = "ExhausionPolicy",
+		Type = "ExhausionPolicy",
+		Default = "ExhausionPolicy.BlockUntilAvailable",
+		Summary = "Gets or sets the exhausion policy of the pool.",
+		Value = "The exhausion policy of the pool. " +
+			"The default is <see cref=\"ExhausionPolicy.BlockUntilAvailable\"/>.",
+	},
+	new Property()
+	{
+		Name = "BorrowTimeout",
+		Type = "TimeSpan?",
+		Default = "null",
+		Summary = "Gets or sets the maximum concurrency for the each clients.",
+		Value = "The timeout of blocking of the borrowing when the pool is exhausited. " +
+			"<c>null</c> indicates unlimited waiting. " +
+			"The default is <c>null</c>.",
+	},
+	new Property()
+	{
+		Name = "EvitionInterval",
+		Type = "TimeSpan?",
+		Default = "TimeSpan.FromMinutes( 3 )",
+		Summary = "Gets or sets the interval to evict extra pooled objects.",
+		Value = "The interval to evict extra pooled objects. " +
+			"The default is 3 minutes.",
+	},
+};
+
+#>
+#region -- License Terms --
+//
+// MessagePack for CLI
+//
+// Copyright (C) 2010 FUJIWARA, Yusuke
+//
+//    Licensed under the Apache License, Version 2.0 (the "License");
+//    you may not use this file except in compliance with the License.
+//    You may obtain a copy of the License at
+//
+//        http://www.apache.org/licenses/LICENSE-2.0
+//
+//    Unless required by applicable law or agreed to in writing, software
+//    distributed under the License is distributed on an "AS IS" BASIS,
+//    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//    See the License for the specific language governing permissions and
+//    limitations under the License.
+//
+#endregion -- License Terms --
+
+using System;
+using System.Diagnostics.Contracts;
+
+namespace MsgPack.Rpc
+{
+	// This file generated from <#= __typeName #>.tt T4Template.
+	// Do not modify this file. Edit <#= __typeName #>.tt instead.
+
+	partial class <#= __typeName #>
+	{
+<#
+foreach( Property __property in __properties )
+{
+#>
+
+		private <#= __property.Type #> _<#= Capitalize( __property.Name ) #> = <#= __property.Default #>;
+		
+		/// <summary>
+		/// 	<#= __property.Summary #>
+		/// </summary>
+		/// <value>
+		/// 	<#= __property.Value #>
+		/// </value>
+		public <#= __property.Type #> <#= __property.Name #>
+		{
+			get{ return this._<#= Capitalize( __property.Name ) #>; }
+			set
+			{
+				this.VerifyIsNotFrozen();
+				
+				if( value == null )
+				{
+					this._<#= Capitalize( __property.Name ) #> = <#= __property.Default #>;
+				}
+				else
+				{
+					Validate<#= __property.Name #>( value );
+					this._<#= Capitalize( __property.Name ) #> = value;
+				}
+			}
+		}
+		
+		static partial void Validate<#= __property.Name #>( <#= __property.Type #> value );
+<#
+}
+#>
+	}
+}
+<#+
+private static string Capitalize( string value )
+{
+	return Char.ToLowerInvariant( value[ 0 ] ) + value.Substring( 1 );
+}
+
+private class Property
+{
+	public string Name;
+	public string Type;
+	public string Summary;
+	public string Value;
+	public string Default;
+}
+#>

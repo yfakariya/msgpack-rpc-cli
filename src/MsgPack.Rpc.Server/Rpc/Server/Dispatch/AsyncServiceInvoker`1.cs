@@ -24,6 +24,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using MsgPack.Rpc.Protocols;
 using MsgPack.Serialization;
+using MsgPack.Rpc.Server.Protocols;
 
 namespace MsgPack.Rpc.Server.Dispatch
 {
@@ -93,12 +94,12 @@ namespace MsgPack.Rpc.Server.Dispatch
 			this._returnValueSerializer = context.GetSerializer<T>();
 		}
 
-		void IServiceInvoker.Invoke( Unpacker arguments, int messageId, Packer responsePacker )
+		void IServiceInvoker.Invoke( Unpacker arguments, int messageId, ServerResponseSocketAsyncEventArgs responseContext )
 		{
-			this.InvokeAsync( arguments, messageId, responsePacker ).Wait();
+			this.InvokeAsync( arguments, messageId, responseContext ).Wait();
 		}
 
-		public Task InvokeAsync( Unpacker arguments, int messageId, Packer responsePacker )
+		public Task InvokeAsync( Unpacker arguments, int messageId, ServerResponseSocketAsyncEventArgs responseContext )
 		{
 			if ( arguments == null )
 			{
@@ -111,7 +112,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 				Tracer.Server.TraceData(
 					Tracer.EventType.OperationStart,
 					Tracer.EventId.OperationStart,
-					responsePacker == null ? MessageType.Notification : MessageType.Request,
+					responseContext == null ? MessageType.Notification : MessageType.Request,
 					messageId,
 					this._operationId
 				);
@@ -120,10 +121,10 @@ namespace MsgPack.Rpc.Server.Dispatch
 			Task task;
 			RpcErrorMessage error;
 			this.InvokeCore( arguments, out task, out error );
-			var tuple = Tuple.Create( this, messageId, responsePacker, error );
+			var tuple = Tuple.Create( this, messageId, responseContext, error );
 			if ( task == null )
 			{
-				return Task.Factory.StartNew( state => HandleInvocationResult( null, state as Tuple<AsyncServiceInvoker<T>, int, Packer, RpcErrorMessage> ), tuple );
+				return Task.Factory.StartNew( state => HandleInvocationResult( null, state as Tuple<AsyncServiceInvoker<T>, int, ServerResponseSocketAsyncEventArgs, RpcErrorMessage> ), tuple );
 			}
 			else
 			{
@@ -148,11 +149,11 @@ namespace MsgPack.Rpc.Server.Dispatch
 			}
 		}
 
-		private static void HandleInvocationResult( Task previous, Tuple<AsyncServiceInvoker<T>, int, Packer, RpcErrorMessage> closureState )
+		private static void HandleInvocationResult( Task previous, Tuple<AsyncServiceInvoker<T>, int, ServerResponseSocketAsyncEventArgs, RpcErrorMessage> closureState )
 		{
 			var @this = closureState.Item1;
 			var messageId = closureState.Item2;
-			var responsePacker = closureState.Item3;
+			var responseContext = closureState.Item3;
 			var error = closureState.Item4;
 
 			T result = default( T );
@@ -175,16 +176,16 @@ namespace MsgPack.Rpc.Server.Dispatch
 					previous.Dispose();
 				}
 
-				InvocationHelper.TraceInvocationResult( responsePacker == null ? MessageType.Notification : MessageType.Request, messageId, @this._operationId, error, result );
+				InvocationHelper.TraceInvocationResult( responseContext == null ? MessageType.Notification : MessageType.Request, messageId, @this._operationId, error, result );
 			}
 			finally
 			{
 				Trace.CorrelationManager.StopLogicalOperation();
 			}
 
-			if ( responsePacker != null )
+			if ( responseContext != null )
 			{
-				InvocationHelper.SerializeResponse( responsePacker, messageId, error, result, @this._returnValueSerializer );
+				responseContext.Serialize( result, error, @this._returnValueSerializer );
 			}
 		}
 

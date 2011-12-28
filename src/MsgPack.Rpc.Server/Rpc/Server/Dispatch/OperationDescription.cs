@@ -25,6 +25,7 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using MsgPack.Serialization;
+using MsgPack.Rpc.Server.Protocols;
 
 namespace MsgPack.Rpc.Server.Dispatch
 {
@@ -42,9 +43,9 @@ namespace MsgPack.Rpc.Server.Dispatch
 
 		private readonly MethodInfo _method;
 
-		private readonly Func<Unpacker, int, Packer, Task> _operation;
+		private readonly Func<Unpacker, int, ServerResponseSocketAsyncEventArgs, Task> _operation;
 
-		public Func<Unpacker, int, Packer, Task> Operation
+		public Func<Unpacker, int, ServerResponseSocketAsyncEventArgs, Task> Operation
 		{
 			get { return this._operation; }
 		}
@@ -56,7 +57,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 			get { return this._id; }
 		}
 
-		private OperationDescription( ServiceDescription service, MethodInfo method, string id, Func<Unpacker, int, Packer, Task> operation )
+		private OperationDescription( ServiceDescription service, MethodInfo method, string id, Func<Unpacker, int, ServerResponseSocketAsyncEventArgs, Task> operation )
 		{
 			this._service = service;
 			this._method = method;

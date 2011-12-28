@@ -19,12 +19,12 @@
 #endregion -- License Terms --
 
 using System;
+using System.Diagnostics.Contracts;
 using System.Globalization;
 using System.Linq;
-using System.Net;
 using System.Net.Sockets;
+using System.Threading;
 using MsgPack.Rpc.Protocols;
-using System.Collections.Generic;
 
 namespace MsgPack.Rpc.Server.Protocols
 {
@@ -33,47 +33,52 @@ namespace MsgPack.Rpc.Server.Protocols
 	/// </summary>
 	public abstract partial class ServerTransport : IDisposable
 	{
-		/// <summary>
-		///		State of this transport.
-		/// </summary>
-		private TransportState _state;
+		private Socket _boundSocket;
+
+		protected internal Socket BoundSocket
+		{
+			get { return this._boundSocket; }
+			internal set { this._boundSocket = value; }
+		}
+
+		private int _processing;
+
+		private bool _isClientShutdowned;
+
+		private bool _isDisposed;
 
 		public bool IsDisposed
 		{
 			get
 			{
-				var state = this._state;
-				return state == TransportState.Disposing || state == TransportState.Disposed;
+				return this._isDisposed;
 			}
 		}
 
-		/// <summary>
-		///		Context information including socket state, session state, and buffers.
-		/// </summary>
-		private readonly ServerSocketAsyncEventArgs _context;
+		private readonly WeakReference _managerReference;
 
-		private readonly SerializationState _serializationState;
-		private readonly DeserializationState _deserializationState;
-
-		public event EventHandler<RpcTransportErrorEventArgs> Error;
-
-		protected virtual void OnError( RpcTransportErrorEventArgs e )
+		protected internal ServerTransportManager Manager
 		{
-			if ( e == null )
+			get
 			{
-				throw new ArgumentNullException( "e" );
-			}
+				if ( this._managerReference.IsAlive )
+				{
+					try
+					{
+						return this._managerReference.Target as ServerTransportManager;
+					}
+					catch ( InvalidOperationException ) { }
+				}
 
-			this.OnErrorCore( e );
+				return null;
+			}
 		}
+		
+		private bool _isInShutdown;
 
-		private void OnErrorCore( RpcTransportErrorEventArgs e )
+		public bool IsInShutdown
 		{
-			var handler = this.Error;
-			if ( handler != null )
-			{
-				handler( this, e );
-			}
+			get { return this._isInShutdown; }
 		}
 
 		// TODO: Move to other layer e.g. Server.
@@ -119,24 +124,41 @@ namespace MsgPack.Rpc.Server.Protocols
 				handler( this, e );
 			}
 		}
+		
+		internal event EventHandler AllResponseSent;
 
-		/// <summary>
-		///		Initializes a new instance of the <see cref="ServerTransport"/> class.
-		/// </summary>
-		/// <param name="context">The context information.</param>
-		/// <exception cref="ArgumentNullException">
-		///		<paramref name="context"/> is <c>null</c>.
-		/// </exception>
-		protected ServerTransport( ServerSocketAsyncEventArgs context )
+		protected virtual void OnAllResponseSent()
 		{
-			if ( context == null )
+			var handler = this.AllResponseSent;
+			if ( handler != null )
 			{
-				throw new ArgumentNullException( "context" );
+				handler( this, EventArgs.Empty );
+			}
+		}
+
+		private void OnProcessFinished()
+		{
+			if ( Interlocked.Decrement( ref this._processing ) == 0 )
+			{
+				try
+				{
+					this.OnAllResponseSent();
+				}
+				finally
+				{
+					this._boundSocket.Shutdown( SocketShutdown.Send );
+				}
+			}
+		}
+
+		protected ServerTransport( ServerTransportManager manager )
+		{
+			if ( manager == null )
+			{
+				throw new ArgumentNullException( "manager" );
 			}
 
-			this._context = context;
-			this._serializationState = new SerializationState();
-			this._deserializationState = new DeserializationState( this.UnpackRequestHeader );
+			this._managerReference = new WeakReference( manager );
 		}
 
 		/// <summary>
@@ -158,41 +180,20 @@ namespace MsgPack.Rpc.Server.Protocols
 			{
 				if ( !this.IsDisposed )
 				{
-					this._state = TransportState.Disposing;
-					ShutdownSocketRudely( this._context.AcceptSocket );
-					ShutdownSocketRudely( this._context.ConnectSocket );
-					ShutdownSocketRudely( this._context.ListeningSocket );
-
-					this._context.Dispose();
-					this._state = TransportState.Disposed;
+					this.DisposeLease();
+					this._isDisposed = true;
+					Thread.MemoryBarrier();
 				}
 			}
 		}
 
-		private static void ShutdownSocketRudely( Socket socket )
+		public void BeginShutdown()
 		{
-			if ( socket != null )
+			if ( !this._isInShutdown )
 			{
-				try
-				{
-					socket.Shutdown( SocketShutdown.Both );
-				}
-				catch ( SocketException sockEx )
-				{
-					switch ( sockEx.SocketErrorCode )
-					{
-						case SocketError.NotConnected:
-						{
-							break;
-						}
-						default:
-						{
-							throw;
-						}
-					}
-				}
-
-				socket.Close();
+				this._isInShutdown = true;
+				Thread.MemoryBarrier();
+				this._boundSocket.Shutdown( SocketShutdown.Receive );
 			}
 		}
 
@@ -200,20 +201,22 @@ namespace MsgPack.Rpc.Server.Protocols
 		///		Verify internal state transition.
 		/// </summary>
 		/// <param name="desiredState">Desired next state.</param>
-		private void VerifyState( TransportState desiredState )
+		private void VerifyState( ServerSocketAsyncEventArgs context, ServerProcessingState desiredState )
 		{
-			if ( this._state == TransportState.Disposed )
+			Contract.Assert( context != null );
+
+			if ( this.IsDisposed )
 			{
 				throw new ObjectDisposedException( this.ToString() );
 			}
 
-			if ( this._state != desiredState )
+			if ( context.State != desiredState )
 			{
-				throw new InvalidOperationException( String.Format( CultureInfo.CurrentCulture, "Tranport must be '{0}' but actual '{1}'.", desiredState, this._state ) );
+				throw new InvalidOperationException( String.Format( CultureInfo.CurrentCulture, "Tranport must be '{0}' but actual '{1}'.", desiredState, context.State ) );
 			}
 		}
 
-		private void HandleDeserializationError( string message, Func<byte[]> invalidRequestHeaderProvider )
+		private void HandleDeserializationError( ServerRequestSocketAsyncEventArgs context, string message, Func<byte[]> invalidRequestHeaderProvider )
 		{
 			if ( invalidRequestHeaderProvider != null && Tracer.Protocols.Switch.ShouldTrace( Tracer.EventType.DumpInvalidRequestHeader ) )
 			{
@@ -221,27 +224,23 @@ namespace MsgPack.Rpc.Server.Protocols
 				Tracer.Protocols.TraceData( Tracer.EventType.DumpInvalidRequestHeader, Tracer.EventId.DumpInvalidRequestHeader, BitConverter.ToString( array ), array );
 			}
 
-			this.HandleDeserializationError( RpcError.MessageRefusedError, "Invalid stream.", message, invalidRequestHeaderProvider );
+			this.HandleDeserializationError( context, RpcError.MessageRefusedError, "Invalid stream.", message, invalidRequestHeaderProvider );
 		}
 
-		private void HandleDeserializationError( RpcError error, string message, string debugInformation, Func<byte[]> invalidRequestHeaderProvider )
+		private void HandleDeserializationError( ServerRequestSocketAsyncEventArgs context, RpcError error, string message, string debugInformation, Func<byte[]> invalidRequestHeaderProvider )
 		{
-			var rpcError = new RpcErrorMessage( error, message , debugInformation);
+			this.BeginShutdown();
+			int? messageId = context.MessageType == MessageType.Request ? context.Id : default( int? );
+			var rpcError = new RpcErrorMessage( error, message, debugInformation );
 			this.HandleError( RpcTransportOperation.Deserialize, rpcError );
-			this._deserializationState.ClearDispatchContext();
-			this._deserializationState.ClearBuffers();
+			context.Clear();
 
-			this.SendError( rpcError );
+			this.SendError( messageId, rpcError );
 		}
 
 		internal void HandleError( RpcTransportOperation operation, RpcErrorMessage error )
 		{
 			this.HandleError( new RpcTransportErrorEventArgs( operation, error ) );
-		}
-
-		internal void HandleError( SocketAsyncOperation operation, SocketError socketErrorCode )
-		{
-			this.OnErrorCore( new RpcTransportErrorEventArgs( operation, socketErrorCode ) );
 		}
 
 		private void HandleError( RpcTransportErrorEventArgs e )
@@ -262,59 +261,7 @@ namespace MsgPack.Rpc.Server.Protocols
 				rpcError.Detail.ToString()
 			);
 
-			this.OnErrorCore( e );
-		}
-
-		/// <summary>
-		///		Initializes this transport for specified <see cref="EndPoint"/>.
-		/// </summary>
-		/// <param name="bindingEndPoint">The binding local end point.</param>
-		/// <exception cref="ArgumentNullException">
-		///		<paramref name="bindingEndPoint"/> is <c>null</c>.
-		/// </exception>
-		///	<exception cref="InvalidOperationException">
-		///		This instance is not in 'Uninitialized' state.
-		///	</exception>
-		///	<exception cref="ObjectDisposedException">
-		///		This instance is disposed.
-		///	</exception>
-		public void Initialize( EndPoint bindingEndPoint )
-		{
-			if ( bindingEndPoint == null )
-			{
-				throw new ArgumentNullException( "bindingEndPoint" );
-			}
-
-			this.VerifyState( TransportState.Uninitialized );
-			this._context.Completed += OnSocketOperationCompleted;
-			this.InitializeCore( this._context, bindingEndPoint );
-			this._state = TransportState.Idle;
-		}
-
-		/// <summary>
-		///		Performs derived class specific initialization for specified <see cref="EndPoint"/>.
-		/// </summary>
-		/// <param name="context">The context information. This value will not be <c>null</c>.</param>
-		/// <param name="bindingEndPoint">The binding local end point. This value will not be <c>null</c>.</param>
-		protected abstract void InitializeCore( ServerSocketAsyncEventArgs context, EndPoint bindingEndPoint );
-
-		public void Shutdown()
-		{
-			// FIXME: Graceful shutdown
-			throw new NotImplementedException();
-		}
-
-		protected virtual void ShutdownCore()
-		{
-			throw new NotImplementedException();
-		}
-
-		protected virtual void OnClientShutdown( ServerSocketAsyncEventArgs context )
-		{
-			this._state = TransportState.Idle;
-			this._deserializationState.ClearBuffers();
-			this._deserializationState.ClearDispatchContext();
-			// FIXME: Clear seraializtion state.
+			this.Manager.OnErrorCore( e );
 		}
 
 		/// <summary>
@@ -326,50 +273,29 @@ namespace MsgPack.Rpc.Server.Protocols
 		{
 			var context = ( ServerSocketAsyncEventArgs )e;
 
-			bool? isError = e.SocketError.IsError();
-			if ( isError == null )
-			{
-				Tracer.Protocols.TraceEvent(
-					Tracer.EventType.IgnoreableError,
-					Tracer.EventId.IgnoreableError,
-					"Ignoreable error. [ \"Socket.Handle\" : 0x{0:x}, \"Remote endpoint\" : \"{1}\", \"LastOperation\" : \"{2}\", \"SocketError\" : \"{3}\", \"ErrorCode\" : 0x{4:x8} ]",
-					( sender as Socket ).Handle,
-					context.RemoteEndPoint,
-					context.LastOperation,
-					context.SocketError,
-					( int )context.SocketError
-				);
-			}
-			else if ( isError.GetValueOrDefault() )
-			{
-				this.HandleError( e.LastOperation, e.SocketError );
-				return;
-			}
-
-			if ( this.IsDisposed )
+			if ( !this.Manager.HandleError( sender, e ) )
 			{
 				return;
 			}
 
 			switch ( context.LastOperation )
 			{
-				case SocketAsyncOperation.Accept:
-				{
-					this.OnAcceptted( context );
-					break;
-				}
 				case SocketAsyncOperation.Receive:
 				case SocketAsyncOperation.ReceiveFrom:
 				case SocketAsyncOperation.ReceiveMessageFrom:
 				{
-					this.OnReceived( context );
+					var requestContext = context as ServerRequestSocketAsyncEventArgs;
+					Contract.Assert( requestContext != null );
+					this.OnReceived( requestContext );
 					break;
 				}
 				case SocketAsyncOperation.Send:
 				case SocketAsyncOperation.SendTo:
 				case SocketAsyncOperation.SendPackets:
 				{
-					this.OnSent( context );
+					var responseContext = context as ServerResponseSocketAsyncEventArgs;
+					Contract.Assert( responseContext != null );
+					this.OnSent( responseContext );
 					break;
 				}
 				default:
@@ -387,21 +313,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			}
 		}
 
-		/// <summary>
-		///		Called when asynchronous 'Accept' operation is completed.
-		/// </summary>
-		/// <param name="context">Context information.</param>
-		///	<exception cref="InvalidOperationException">
-		///		This instance is not in 'Idle' state.
-		///	</exception>
-		///	<exception cref="ObjectDisposedException">
-		///		This instance is disposed.
-		///	</exception>
-		protected virtual void OnAcceptted( ServerSocketAsyncEventArgs context )
-		{
-			this.VerifyState( TransportState.Idle );
-		}
-
+				
 		/// <summary>
 		///		Receives byte stream from remote end point.
 		/// </summary>
@@ -412,38 +324,67 @@ namespace MsgPack.Rpc.Server.Protocols
 		///	<exception cref="ObjectDisposedException">
 		///		This instance is disposed.
 		///	</exception>
-		protected void Receive( ServerSocketAsyncEventArgs context )
+		public void Receive( ServerRequestSocketAsyncEventArgs context )
 		{
-			this.VerifyState( TransportState.Idle );
-
-			// First, drain last received request.
-			if ( !context.IsClientShutdowned && context.ReceivedData.Any( segment => 0 < segment.Count ) )
+			if ( context == null )
 			{
-				// Process remaining binaries. This pipeline recursively call this method on other thread.
-				if ( !this._deserializationState.NextProcess( context ) )
-				{
-					// Draining was not ended. Try to take next bytes.
-					this.Receive( context );
-				}
+				throw new ArgumentNullException( "context" );
+			}
 
-				// This method must be called on other thread on the above pipeline, so exit this thread.
+			this.VerifyState( context, ServerProcessingState.Idle );
+			
+			if ( this._isClientShutdowned )
+			{
+				// TODO: Tracing
 				return;
 			}
 
-			// There might be dirty data due to client shutdown.
-			context.ReceivedData.Clear();
-			Array.Clear( context.ReceivingBuffer, 0, context.ReceivingBuffer.Length );
+			this.PrivateReceive( context );
+		}
 
-			context.SetBuffer( context.ReceivingBuffer, 0, context.ReceivingBuffer.Length );
+		private void PrivateReceive( ServerRequestSocketAsyncEventArgs context )
+		{
+			if ( this.IsInShutdown )
+			{
+				// Subsequent receival cannot be processed now.
+				// TODO: Tracing
+				return;
+			}
 
-			this.ReceiveCore( context );
+			// First, drain last received request.
+			if ( context.ReceivedData.Any( segment => 0 < segment.Count ) )
+			{
+				this.DrainRemainingReceivedData( context );
+			}
+			else
+			{
+				// There might be dirty data due to client shutdown.
+				context.ReceivedData.Clear();
+				Array.Clear( context.ReceivingBuffer, 0, context.ReceivingBuffer.Length );
+
+				context.SetBuffer( context.ReceivingBuffer, 0, context.ReceivingBuffer.Length );
+
+				this.ReceiveCore( context );
+			}
+		}
+
+		private void DrainRemainingReceivedData( ServerRequestSocketAsyncEventArgs context )
+		{
+			// Process remaining binaries. This pipeline recursively call this method on other thread.
+			if ( !context.NextProcess( context ) )
+			{
+				// Draining was not ended. Try to take next bytes.
+				this.Receive( context );
+			}
+
+			// This method must be called on other thread on the above pipeline, so exit this thread.
 		}
 
 		/// <summary>
 		///		Performs protocol specific asynchronous 'Receive' operation.
 		/// </summary>
 		/// <param name="context">Context information.</param>
-		protected abstract void ReceiveCore( ServerSocketAsyncEventArgs context );
+		protected abstract void ReceiveCore( ServerRequestSocketAsyncEventArgs context );
 
 		/// <summary>
 		///		Called when asynchronous 'Receive' operation is completed.
@@ -455,16 +396,21 @@ namespace MsgPack.Rpc.Server.Protocols
 		///	<exception cref="ObjectDisposedException">
 		///		This instance is disposed.
 		///	</exception>
-		protected virtual void OnReceived( ServerSocketAsyncEventArgs context )
+		protected virtual void OnReceived( ServerRequestSocketAsyncEventArgs context )
 		{
-			if ( this._state == TransportState.Idle )
+			if ( context == null )
 			{
-				this._state = TransportState.Receiving;
+				throw new ArgumentNullException( "context" );
+			}
+
+			if ( context.State == ServerProcessingState.Idle )
+			{
+				context.State = ServerProcessingState.Receiving;
 				// TODO: Increment concurrency counter
 			}
 			else
 			{
-				this.VerifyState( TransportState.Receiving );
+				this.VerifyState( context, ServerProcessingState.Receiving );
 			}
 
 			if ( Tracer.Protocols.Switch.ShouldTrace( Tracer.EventType.AcceptInboundTcp ) )
@@ -484,17 +430,15 @@ namespace MsgPack.Rpc.Server.Protocols
 			if ( context.BytesTransferred == 0 )
 			{
 				// recv() returns 0 when the client socket shutdown gracefully.
-				context.IsClientShutdowned = true;
+				this._isClientShutdowned = true;
 				if ( !context.ReceivedData.Any( segment => 0 < segment.Count ) )
 				{
 					// There are not data to handle.
-					this.OnClientShutdown( context );
 					return;
 				}
 			}
 			else
 			{
-				context.IsClientShutdowned = false;
 				context.ReceivedData.Add( new ArraySegment<byte>( context.ReceivingBuffer, context.Offset, context.BytesTransferred ) );
 				context.SetReceivingBufferOffset( context.BytesTransferred );
 			}
@@ -511,12 +455,19 @@ namespace MsgPack.Rpc.Server.Protocols
 			}
 
 			// Go deserialization pipeline.
-			if ( !this._deserializationState.NextProcess( context ) )
+			if ( !context.NextProcess( context ) )
 			{
-				if ( context.IsClientShutdowned )
+				if ( this._isClientShutdowned )
 				{
 					// Client no longer send any additional data, so reset state.
-					this.OnClientShutdown( context );
+					// TODO: Tracing
+					return;
+				}
+
+				if ( this.IsInShutdown )
+				{
+					// Server no longer process any subsequent retrieval.
+					// TODO: Tracing
 					return;
 				}
 
@@ -524,45 +475,6 @@ namespace MsgPack.Rpc.Server.Protocols
 				this.ReceiveCore( context );
 				return;
 			}
-		}
-
-		/// <summary>
-		///		Free this context to enable receive subsequent request/notification. 
-		/// </summary>
-		///	<exception cref="InvalidOperationException">
-		///		This instance is not in 'Reserved for Response' state.
-		///	</exception>
-		///	<exception cref="ObjectDisposedException">
-		///		This instance is disposed.
-		///	</exception>
-		private void Free()
-		{
-			this.VerifyState( TransportState.Reserved );
-			this._deserializationState.ClearDispatchContext();
-			this._state = TransportState.Idle;
-		}
-
-		// TODO: Move to other layer e.g. Server.
-		/// <summary>
-		///		Sends specified return value as response.
-		/// </summary>
-		/// <param name="returnValue">
-		///		Return value. 
-		///		This value must be serializable via <see cref="T:MsgPack.Serialization.MessagePackSerializer{T}"/>. 
-		///		This value can be <c>null</c>, but remote client might not understand nor permit it.
-		///	</param>
-		///	<exception cref="InvalidOperationException">
-		///		This instance is not in 'Reserved for Response' state.
-		///	</exception>
-		///	<exception cref="ObjectDisposedException">
-		///		This instance is disposed.
-		///	</exception>
-		public void Send( object returnValue )
-		{
-			this.VerifyState( TransportState.Reserved );
-			this._state = TransportState.Sending;
-
-			this.SendCore( null, returnValue );
 		}
 
 		// TODO: Move to other layer e.g. Server.
@@ -578,96 +490,44 @@ namespace MsgPack.Rpc.Server.Protocols
 		///	<exception cref="ObjectDisposedException">
 		///		This instance is disposed.
 		///	</exception>
-		public void SendError( RpcErrorMessage rpcError )
+		private void SendError( int? messageId, RpcErrorMessage rpcError )
 		{
-			this.VerifyState( TransportState.Reserved );
-			this._state = TransportState.Sending;
+			if ( messageId == null )
+			{
+				this.OnProcessFinished();
+				return;
+			}
 
-			this.SendCore( rpcError.Error.Identifier, rpcError.Detail );
+			var manager = this.Manager;
+			if ( manager == null )
+			{
+				// TODO: Logging
+				this.OnProcessFinished();
+				return;
+			}
+
+			var context = manager.ResponseContextPool.Borrow();
+			context.Id = messageId.Value;
+			this.VerifyState( context, ServerProcessingState.Reserved );
+
+			context.Serialize<object>( null, rpcError, null );
+			this.PrivateSend( context );
 		}
 
-		// TODO: Move to other layer e.g. Server.
-		/// <summary>
-		///		Sends specified data as response.
-		/// </summary>
-		/// <param name="errorData">
-		///		Error identifier.
-		/// </param>
-		/// <param name="returnData">
-		///		Return value or detailed error information.
-		/// </param>
-		private void SendCore( object errorData, object returnData )
+		public void Send( ServerResponseSocketAsyncEventArgs context )
 		{
-			if ( Tracer.Protocols.Switch.ShouldTrace( Tracer.EventType.SerializeResponse ) )
+			if ( context == null )
 			{
-				Tracer.Protocols.TraceEvent(
-					Tracer.EventType.SerializeResponse,
-					Tracer.EventId.SerializeResponse,
-					"Serialize response. [ \"errorData\" : \"{0}\", \"returnData\" : \"{1}\" ]",
-					errorData,
-					returnData
-				);
+				throw new ArgumentNullException( "context" );
 			}
 
-			ArraySegment<byte> errorDataBytes;
-			if ( errorData == null )
-			{
-				errorDataBytes = Constants.Nil;
-			}
-			else
-			{
-				using ( var packer = Packer.Create( this._serializationState.ErrorDataBuffer, false ) )
-				{
-					this._context.SerializationContext.GetSerializer( errorData.GetType() ).PackTo( packer, errorData );
-					errorDataBytes =
-						new ArraySegment<byte>(
-							this._serializationState.ErrorDataBuffer.GetBuffer(),
-							0,
-							unchecked( ( int )this._serializationState.ErrorDataBuffer.Length )
-						);
-				}
-			}
-
-			ArraySegment<byte> returnDataBytes;
-			if ( returnData == null )
-			{
-				returnDataBytes = Constants.Nil;
-			}
-			else
-			{
-				using ( var packer = Packer.Create( this._serializationState.ReturnDataBuffer, false ) )
-				{
-					this._context.SerializationContext.GetSerializer( returnData.GetType() ).PackTo( packer, returnData );
-					returnDataBytes =
-						new ArraySegment<byte>(
-							this._serializationState.ReturnDataBuffer.GetBuffer(),
-							0,
-							unchecked( ( int )this._serializationState.ReturnDataBuffer.Length )
-						);
-				}
-			}
-
-			this.SendCore( errorDataBytes, returnDataBytes );
+			this.VerifyState( context, ServerProcessingState.Reserved );
+			this.PrivateSend( context );
 		}
 
-		// TODO: Move to other layer e.g. Server.
-		/// <summary>
-		///		Sends specified data as response.
-		/// </summary>
-		/// <param name="errorData">
-		///		Serialized error identifier.
-		/// </param>
-		/// <param name="returnData">
-		///		Serialized return value or detailed error information.
-		/// </param>
-		/// <remarks>
-		///		Dispatcher uses this method to avoid boxing.
-		/// </remarks>
-		internal void SendCore( ArraySegment<byte> errorData, ArraySegment<byte> returnData )
+		private void PrivateSend( ServerResponseSocketAsyncEventArgs context )
 		{
-			this._deserializationState.ClearDispatchContext();
-
-			SerializeResponse( errorData, returnData );
+			context.Prepare();
 
 			if ( Tracer.Protocols.Switch.ShouldTrace( Tracer.EventType.SendOutboundData ) )
 			{
@@ -675,38 +535,18 @@ namespace MsgPack.Rpc.Server.Protocols
 					Tracer.EventType.SendOutboundData,
 					Tracer.EventId.SendOutboundData,
 					"Send response. [ \"bytesTransferring\" : {0} ]",
-					this._serializationState.SendingBuffer.Sum( segment => ( long )segment.Count )
+					context.SendingBuffer.Sum( segment => ( long )segment.Count )
 				);
 			}
 
-			this.SendCore( this._context );
-		}
-
-		// TODO: Move to other layer e.g. Server.
-		private void SerializeResponse( ArraySegment<byte> errorData, ArraySegment<byte> returnData )
-		{
-			using ( var packer = Packer.Create( this._serializationState.IdBuffer, false ) )
-			{
-				packer.Pack( this._context.Id );
-				this._serializationState.SendingBuffer[ 1 ] =
-					new ArraySegment<byte>(
-						this._serializationState.IdBuffer.GetBuffer(),
-						0,
-						unchecked( ( int )this._serializationState.IdBuffer.Position )
-					);
-			}
-
-			this._serializationState.SendingBuffer[ 2 ] = errorData;
-			this._serializationState.SendingBuffer[ 3 ] = returnData;
-			this._context.SetBuffer( null, 0, 0 );
-			this._context.BufferList = this._serializationState.SendingBuffer;
+			this.SendCore( context );
 		}
 
 		/// <summary>
 		///		Performs protocol specific asynchronous 'Send' operation.
 		/// </summary>
 		/// <param name="context">Context information.</param>
-		protected abstract void SendCore( ServerSocketAsyncEventArgs context );
+		protected abstract void SendCore( ServerResponseSocketAsyncEventArgs context );
 
 		/// <summary>
 		///		Called when asynchronous 'Send' operation is completed.
@@ -722,7 +562,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		///	<exception cref="ObjectDisposedException">
 		///		This instance is disposed.
 		///	</exception>
-		protected virtual void OnSent( ServerSocketAsyncEventArgs context )
+		protected virtual void OnSent( ServerResponseSocketAsyncEventArgs context )
 		{
 			if ( Tracer.Protocols.Switch.ShouldTrace( Tracer.EventType.SentOutboundData ) )
 			{
@@ -735,12 +575,20 @@ namespace MsgPack.Rpc.Server.Protocols
 					);
 			}
 
-			this.VerifyState( TransportState.Sending );
-			this._state = TransportState.Idle;
-
-			this._serializationState.Clear();
-			context.BufferList = null;
-			// TODO: Decrement concurrency counter
+			this.VerifyState( context, ServerProcessingState.Sending );
+			context.Clear();
+			try
+			{
+				this.OnProcessFinished();
+			}
+			finally
+			{
+				var manager = this.Manager;
+				if ( manager != null )
+				{
+					manager.ReturnTransport( this );
+				}
+			}
 		}
 	}
 }

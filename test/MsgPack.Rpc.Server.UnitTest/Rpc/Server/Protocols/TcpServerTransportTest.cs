@@ -83,7 +83,9 @@ namespace MsgPack.Rpc.Server.Protocols
 								try
 								{
 									Assert.That( e.MethodName, Is.EqualTo( "Echo" ) );
-									e.Transport.Send( e.Arguments.ToArray() );
+									var context = new ServerResponseSocketAsyncEventArgs();
+									context.ReturnDataPacker.Pack( e.Arguments.ToArray() );
+									e.Transport.Send( context );
 									isOk = true;
 								}
 								finally
@@ -186,7 +188,9 @@ namespace MsgPack.Rpc.Server.Protocols
 								try
 								{
 									Assert.That( e.MethodName, Is.EqualTo( "Echo" ) );
-									e.Transport.Send( e.Arguments.ToArray() );
+									var context = new ServerResponseSocketAsyncEventArgs();
+									context.ReturnDataPacker.Pack( e.Arguments.ToArray() );
+									e.Transport.Send( context );
 									serverStatus[ e.Id.Value ] = true;
 								}
 								finally
@@ -222,66 +226,6 @@ namespace MsgPack.Rpc.Server.Protocols
 
 				var now = MessagePackConvert.FromDateTime( DateTime.Now );
 				bool[] resposeStatus = new bool[ count ];
-
-				//var sends =
-				//    Enumerable.Range( 0, count )
-				//    .Select( i =>
-				//        {
-				//            using ( var buffer = new MemoryStream() )
-				//            using ( var packer = Packer.Create( buffer ) )
-				//            {
-				//                packer.PackArrayHeader( 4 );
-				//                packer.Pack( 0 );
-				//                packer.Pack( i );
-				//                packer.Pack( "Echo" );
-				//                packer.PackArrayHeader( 2 );
-				//                packer.Pack( "Hello, world" );
-				//                packer.Pack( now );
-
-				//                return buffer.ToArray();
-				//            }
-				//        }
-				//    ).Select( buffer =>
-				//        Task.Factory.FromAsync<int>( client.Client.BeginSend( buffer, 0, buffer.Length, SocketFlags.None, null, null ), client.Client.EndSend )
-				//    );
-
-				//var receive =
-				//    new Task(
-				//        () =>
-				//        {
-				//            byte[] buffer = new byte[ 65536 ];
-				//            using ( var stream = new MemoryStream() )
-				//            {
-				//                using ( var socket = client.Client.Accept() )
-				//                {
-				//                    for ( int received = socket.Receive( buffer ); 0 < received ; received = socket.Receive( buffer ) )
-				//                    {
-				//                        stream.Write( buffer, 0, received );
-				//                    }
-
-				//                    using ( var unpacker = Unpacker.Create( stream ) )
-				//                    {
-				//                        for ( int i = 0; i < count; i++ )
-				//                        {
-				//                            var result = unpacker.TryUnpackObject();
-				//                            Assert.That( result.Value.IsArray );
-				//                            var array = result.Value.AsList();
-				//                            Assert.That( array.Count, Is.EqualTo( 4 ) );
-				//                            Assert.That( array[ 0 ] == 1, array[ 0 ].ToString() );
-				//                            Assert.That( array[ 1 ].IsTypeOf<int>().GetValueOrDefault() );
-				//                            resposeStatus[ array[ 1 ].AsInt32() ] = true;
-				//                            Assert.That( array[ 2 ] == MessagePackObject.Nil, array[ 2 ].ToString() );
-				//                            Assert.That( array[ 3 ].IsArray, array[ 3 ].ToString() );
-				//                            var returnValue = array[ 3 ].AsList();
-				//                            Assert.That( returnValue.Count, Is.EqualTo( 2 ) );
-				//                            Assert.That( returnValue[ 0 ] == "Hello, world", returnValue[ 0 ].ToString() );
-				//                            Assert.That( returnValue[ 1 ] == now, returnValue[ 1 ].ToString() );
-				//                        }
-				//                    }
-				//                }
-				//            }
-				//        }
-				//    );
 
 				using ( var stream = client.GetStream() )
 				using ( var packer = Packer.Create( stream ) )

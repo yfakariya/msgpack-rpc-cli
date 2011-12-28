@@ -1,0 +1,237 @@
+﻿<#
+//
+// MessagePack for CLI
+//
+// Copyright (C) 2010 FUJIWARA, Yusuke
+//
+//    Licensed under the Apache License, Version 2.0 (the "License");
+//    you may not use this file except in compliance with the License.
+//    You may obtain a copy of the License at
+//
+//        http://www.apache.org/licenses/LICENSE-2.0
+//
+//    Unless required by applicable law or agreed to in writing, software
+//    distributed under the License is distributed on an "AS IS" BASIS,
+//    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//    See the License for the specific language governing permissions and
+//    limitations under the License.
+//
+#>
+<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ output extension=".cs" #>
+<#@ assembly Name="System.Core" #>
+<#@ import namespace="System" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#
+
+// This file defines RpcServerOptions which is chunk of boilerplate.
+var __typeName = "RpcServerConfiguration";
+var __properties =
+new List<Property>()
+{
+	new Property()
+	{
+		Name = "MinimumConnection",
+		Type = "int?",
+		Default = "2",
+		Summary = "Gets or sets the minimum connection to be pool for newly inbound connection.",
+		Value = "The minimum connection to be pool for newly inbound connection. " +
+			"The default is 2.",
+	},
+	new Property()
+	{
+		Name = "MaximumConnection",
+		Type = "int?",
+		Default = "100",
+		Summary = "Gets or sets the maximum connection to be handle inbound connection.",
+		Value = "The minimum connection to be handle inbound connection. " +
+			"The default is 100.",
+	},
+	new Property()
+	{
+		Name = "MinimumConcurrentRequest",
+		Type = "int?",
+		Default = "2",
+		Summary = "Gets or sets the minimum concurrency for the each clients.",
+		Value = "The minimum concurrency for the each clients. " +
+			"The default is 2.",
+	},
+	new Property()
+	{
+		Name = "MaximumConcurrentRequest",
+		Type = "int?",
+		Default = "10",
+		Summary = "Gets or sets the maximum concurrency for the each clients.",
+		Value = "The maximum concurrency for the each clients. " +
+			"The default is 10.",
+	},
+	new Property()
+	{
+		Name = "BindingEndPoint",
+		Type = "EndPoint",
+		Default = "null",
+		Summary = "Gets or sets the local end point to be bound.",
+		Value = "The local end point to be bound. " +
+			"The default is <c>null</c>. The server will select appropriate version IP and bind to it with port 0.",
+	},
+	new Property()
+	{
+		Name = "ListenBackLog",
+		Type = "int?",
+		Default = "100",
+		Summary = "Gets or sets the listen back log of each sockets.",
+		Value = "The listen back log of each sockets. " +
+			"The default is 100.",
+	},
+	new Property()
+	{
+		Name = "PortNumber",
+		Type = "int?",
+		Default = "10912",
+		Summary = "Gets or sets the listening port number.",
+		Value = "The listening port number. " +
+			"The default is 10912.",
+	},
+	new Property()
+	{
+		Name = "ServiceTypeLocatorProvider",
+		Type = "Func<ServiceTypeLocator>",
+		Default = "() => new DefaultServiceTypeLocator()",
+		Summary = "Gets or sets the factory function which creates new <see cref=\"ServiceTypeLocator\" />.",
+		Value = "The factory function which creates new <see cref=\"ServiceTypeLocator\" />. " +
+			"The default is the delegate which creates <see cref=\"DefaultServiceTypeLocator\" /> instance.",
+	},
+};
+
+Func<string, string, Property> __objectPoolProviderPropertyFactory =
+	( string name, string poolee ) =>
+		new Property()
+		{
+			Name = name,
+			Type = "Func<Func<" + poolee + ">, ObjectPool<" + poolee + ">>",
+			Default = "( factory ) => new StandardObjectPool<" + poolee + ">( factory, null )",
+			Summary = "Gets or sets the factory function which creates new <see cref=\"ObjectPool{T}\" /> of " +
+				"<see cref=\""+ poolee + "\" />.",
+			Value = "The factory function which creates new <see cref=\"ObjectPool{T}\" /> of " +
+				"<see cref=\""+ poolee + "\" />. " +
+				"The default is the delegate which creates <see cref=\"StandardObjectPool{T}\" /> instance with <c>null</c> configuration.",
+		};
+
+__properties.Add( 
+	__objectPoolProviderPropertyFactory(
+		"RequestContextPoolProvider",
+		"ServerRequestSocketAsyncEventArgs"
+	)
+);
+__properties.Add( 
+	__objectPoolProviderPropertyFactory(
+		"ResponseContextPoolProvider",
+		"ServerResponseSocketAsyncEventArgs"
+	)
+);
+__properties.Add( 
+	__objectPoolProviderPropertyFactory(
+		"ListeningContextPoolProvider",
+		"ListeningContext"
+	)
+);
+__properties.Add( 
+	__objectPoolProviderPropertyFactory(
+		"TcpTransportPoolProvider",
+		"TcpServerTransport"
+	)
+);
+__properties.Add( 
+	__objectPoolProviderPropertyFactory(
+		"UdpTransportPoolProvider",
+		"UdpServerTransport"
+	)
+);
+
+#>
+#region -- License Terms --
+//
+// MessagePack for CLI
+//
+// Copyright (C) 2010 FUJIWARA, Yusuke
+//
+//    Licensed under the Apache License, Version 2.0 (the "License");
+//    you may not use this file except in compliance with the License.
+//    You may obtain a copy of the License at
+//
+//        http://www.apache.org/licenses/LICENSE-2.0
+//
+//    Unless required by applicable law or agreed to in writing, software
+//    distributed under the License is distributed on an "AS IS" BASIS,
+//    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//    See the License for the specific language governing permissions and
+//    limitations under the License.
+//
+#endregion -- License Terms --
+
+using System;
+using System.Diagnostics.Contracts;
+using System.Net;
+using MsgPack.Rpc.Server.Dispatch;
+using MsgPack.Rpc.Server.Protocols;
+
+namespace MsgPack.Rpc.Server
+{
+	// This file generated from <#= __typeName #>.tt T4Template.
+	// Do not modify this file. Edit <#= __typeName #>.tt instead.
+
+	partial class <#= __typeName #>
+	{
+<#
+foreach( Property __property in __properties )
+{
+#>
+
+		private <#= __property.Type #> _<#= Capitalize( __property.Name ) #> = <#= __property.Default #>;
+		
+		/// <summary>
+		/// 	<#= __property.Summary #>
+		/// </summary>
+		/// <value>
+		/// 	<#= __property.Value #>
+		/// </value>
+		public <#= __property.Type #> <#= __property.Name #>
+		{
+			get{ return this._<#= Capitalize( __property.Name ) #>; }
+			set
+			{
+				this.VerifyIsNotFrozen();
+				
+				if( value == null )
+				{
+					this._<#= Capitalize( __property.Name ) #> = <#= __property.Default #>;
+				}
+				else
+				{
+					Validate<#= __property.Name #>( value );
+					this._<#= Capitalize( __property.Name ) #> = value;
+				}
+			}
+		}
+		
+		static partial void Validate<#= __property.Name #>( <#= __property.Type #> value );
+<#
+}
+#>
+	}
+}
+<#+
+private static string Capitalize( string value )
+{
+	return Char.ToLowerInvariant( value[ 0 ] ) + value.Substring( 1 );
+}
+
+private class Property
+{
+	public string Name;
+	public string Type;
+	public string Summary;
+	public string Value;
+	public string Default;
+}
+#>

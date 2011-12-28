@@ -20,6 +20,7 @@
 
 using System;
 using System.Threading.Tasks;
+using MsgPack.Rpc.Server.Protocols;
 
 namespace MsgPack.Rpc.Server.Dispatch
 {
@@ -44,13 +45,13 @@ namespace MsgPack.Rpc.Server.Dispatch
 		///		Id of the current request message. 
 		///		This value is not defined for the notification messages.
 		///	</param>
-		/// <param name="responsePacker">
-		///		<see cref="Packer"/> to pack return values and errors to the request message. 
+		/// <param name="responseContext">
+		///		The context object to pack response value or error.
 		///		This is <c>null</c> for the notification messages.
 		///	</param>
 		/// <returns>
 		///		<see cref="Task"/> to control entire process including sending response.
 		/// </returns>
-		Task InvokeAsync( Unpacker arguments, int messageId, Packer responsePacker );
+		Task InvokeAsync( Unpacker arguments, int messageId, ServerResponseSocketAsyncEventArgs responseContext );
 	}
 }

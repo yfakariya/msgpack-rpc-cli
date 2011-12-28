@@ -59,6 +59,23 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Rpc\ArraySegmentExtensions.cs" />
     <Compile Include="Rpc\ByteArraySegmentStream.cs" />
+    <Compile Include="Rpc\FinalizableObjectLease.cs" />
+    <Compile Include="Rpc\ForgettableObjectLease.cs" />
+    <Compile Include="Rpc\FreezableObject.cs" />
+    <Compile Include="Rpc\IFreezable.cs" />
+    <Compile Include="Rpc\ILease.cs" />
+    <Compile Include="Rpc\ILeaseable.cs" />
+    <Compile Include="Rpc\Leaseable.cs" />
+    <Compile Include="Rpc\NetworkEnvironment.cs" />
+    <Compile Include="Rpc\ObjectLease.cs" />
+    <Compile Include="Rpc\ObjectPool.cs" />
+    <Compile Include="Rpc\ObjectPoolConfiguration.cs" />
+    <Compile Include="Rpc\ObjectPoolConfiguration.Properties.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>ObjectPoolConfiguration.Properties.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Rpc\OnTheFlyObjectPool.cs" />
     <Compile Include="Rpc\RpcIdentifierUtility.cs" />
     <Compile Include="Rpc\MessagePackObjectExtension.cs" />
     <Compile Include="Rpc\Protocols\MessageType.cs">
@@ -109,6 +126,7 @@
     <Compile Include="Rpc\RpcTimeoutException.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Rpc\StandardObjectPool.cs" />
     <Compile Include="Rpc\UnexpcetedRpcException.cs">
       <SubType>Code</SubType>
     </Compile>
@@ -117,9 +135,16 @@
     <None Include="..\MsgPack.snk">
       <Link>MsgPack.snk</Link>
     </None>
+    <None Include="Rpc\ObjectPoolConfiguration.Properties.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>ObjectPoolConfiguration.Properties.cs</LastGenOutput>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Rpc\Serialization\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
