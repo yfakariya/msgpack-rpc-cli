@@ -47,11 +47,12 @@ namespace MsgPack.Rpc.Server.Protocols
 				context.UnpackingBuffer = new ByteArraySegmentStream( context.ReceivedData );
 				context.RootUnpacker = Unpacker.Create( context.UnpackingBuffer, false );
 				Interlocked.Increment( ref this._processing );
+				context.RenewSessionId();
 			}
 
 			if ( !context.RootUnpacker.Read() )
 			{
-				Tracer.Protocols.TraceEvent( Tracer.EventType.NeedRequestHeader, Tracer.EventId.NeedRequestHeader, "Array header is needed." );
+				Tracer.Protocols.TraceEvent( Tracer.EventType.NeedRequestHeader, Tracer.EventId.NeedRequestHeader, "Array header is needed. [ \"SessionId\" : {0} ]", context.SessionId );
 				return false;
 			}
 
@@ -92,7 +93,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		{
 			if ( !context.HeaderUnpacker.Read() )
 			{
-				Tracer.Protocols.TraceEvent( Tracer.EventType.NeedMessageType, Tracer.EventId.NeedMessageType, "Message Type is needed." );
+				Tracer.Protocols.TraceEvent( Tracer.EventType.NeedMessageType, Tracer.EventId.NeedMessageType, "Message Type is needed. [ \"SessionId\" : {0} ]", context.SessionId );
 				return false;
 			}
 
@@ -148,13 +149,13 @@ namespace MsgPack.Rpc.Server.Protocols
 		{
 			if ( !context.HeaderUnpacker.Read() )
 			{
-				Tracer.Protocols.TraceEvent( Tracer.EventType.NeedMessageId, Tracer.EventId.NeedMessageId, "Message ID is needed." );
+				Tracer.Protocols.TraceEvent( Tracer.EventType.NeedMessageId, Tracer.EventId.NeedMessageId, "Message ID is needed. [ \"SessionId\" : {0} ]", context.SessionId );
 				return false;
 			}
 
 			try
 			{
-				context.Id = unchecked( ( int )context.HeaderUnpacker.Data.Value.AsUInt32() );
+				context.MessageId = unchecked( ( int )context.HeaderUnpacker.Data.Value.AsUInt32() );
 			}
 			catch ( InvalidOperationException )
 			{
@@ -182,7 +183,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		{
 			if ( !context.HeaderUnpacker.Read() )
 			{
-				Tracer.Protocols.TraceEvent( Tracer.EventType.NeedMethodName, Tracer.EventId.NeedMethodName, "Method Name is needed." );
+				Tracer.Protocols.TraceEvent( Tracer.EventType.NeedMethodName, Tracer.EventId.NeedMethodName, "Method Name is needed. [ \"SessionId\" : {0} ]", context.SessionId );
 				return false;
 			}
 
@@ -216,7 +217,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		{
 			if ( !context.HeaderUnpacker.Read() )
 			{
-				Tracer.Protocols.TraceEvent( Tracer.EventType.NeedArgumentsArrayHeader, Tracer.EventId.NeedArgumentsArrayHeader, "Arguments array header is needed." );
+				Tracer.Protocols.TraceEvent( Tracer.EventType.NeedArgumentsArrayHeader, Tracer.EventId.NeedArgumentsArrayHeader, "Arguments array header is needed. [ \"SessionId\" : {0} ]", context.SessionId );
 				return false;
 			}
 
@@ -266,7 +267,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			{
 				if ( !context.ArgumentsBufferUnpacker.Read() )
 				{
-					Tracer.Protocols.TraceEvent( Tracer.EventType.NeedArgumentsElement, Tracer.EventId.NeedArgumentsElement, "Arguments array element is needed. {0}/{1}", context.UnpackedArgumentsCount, context.ArgumentsCount );
+					Tracer.Protocols.TraceEvent( Tracer.EventType.NeedArgumentsElement, Tracer.EventId.NeedArgumentsElement, "Arguments array element is needed. {0}/{1}  [ \"SessionId\" : {2} ]", context.UnpackedArgumentsCount, context.ArgumentsCount, context.SessionId );
 					return false;
 				}
 
@@ -290,34 +291,37 @@ namespace MsgPack.Rpc.Server.Protocols
 		/// </returns>
 		private bool Dispatch( ServerRequestContext context )
 		{
-			context.State = ServerProcessingState.Reserved;
 			context.ClearBuffers();
 
-			var messageId = context.MessageType == MessageType.Notification ? default( int? ) : unchecked( ( int )context.Id );
+			var isNotification = context.MessageType == MessageType.Notification;
 			try
 			{
-				// TODO: Pooling
-				this.OnMessageReceivedCore(
-					new RpcMessageReceivedEventArgs(
-						this,
-						context.MessageType,
-						messageId,
-						context.MethodName,
-						context.ArgumentsUnpacker
-					)
+				this._dispatcher.Dispatch(
+					this,
+					context
 				);
 			}
 			finally
 			{
 				context.ClearDispatchContext();
 
-				if ( messageId == null )
+				if ( isNotification )
 				{
 					this.OnProcessFinished();
 				}
 			}
 
-			return true;
+			if ( context.UnpackingBuffer.Length > 0 )
+			{
+				// Subsequent request is already arrived.
+				context.NextProcess = this.UnpackRequestHeader;
+				return context.NextProcess( context );
+			}
+			else
+			{
+				// Try receive subsequent.
+				return true;
+			}
 		}
 	}
 }

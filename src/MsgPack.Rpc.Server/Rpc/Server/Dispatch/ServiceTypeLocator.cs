@@ -20,86 +20,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Collections.ObjectModel;
-using System.Collections.Concurrent;
-using System.Net.Sockets;
-using System.Reflection.Emit;
-using System.Reflection;
-using System.Threading;
-using System.Runtime.CompilerServices;
-using System.Linq.Expressions;
-using MsgPack.Serialization;
-using System.IO;
-using System.Diagnostics;
-using System.Globalization;
-using System.Xml;
-using System.Text.RegularExpressions;
-using MsgPack.Rpc.Server.Dispatch.SvcFileInterop;
-
-namespace MsgPack.Rpc.Server
-{
-	internal sealed class ResponseMessage
-	{
-		public MessagePackObject Error;
-		public MessagePackObject ReturnValueOrDetail;
-	}
-
-	public sealed class RpcServerSession
-	{
-		private readonly BlockingCollection<ResponseMessage> _sendQueue = new BlockingCollection<ResponseMessage>();
-		private readonly SocketAsyncEventArgs _sendingContext = new SocketAsyncEventArgs();
-
-		internal bool TryTakeResponse( out ResponseMessage response )
-		{
-			return this._sendQueue.TryTake( out response );
-		}
-
-		internal TTuple GetArguments<TTuple>( IList<Type> templates )
-		{
-			throw new NotImplementedException();
-		}
-
-		internal void SetReturn<T>( T value )
-		{
-			throw new NotImplementedException();
-		}
-
-		internal void HandleException( Exception exception )
-		{
-			throw new NotImplementedException();
-		}
-
-		internal void SetError( RpcErrorMessage rpcErrorMessage )
-		{
-			throw new NotImplementedException();
-		}
-	}
-
-	[AttributeUsage( AttributeTargets.Interface | AttributeTargets.Class, AllowMultiple = false, Inherited = true )]
-	public sealed class MessagePackRpcServiceContractAttribute : Attribute
-	{
-		private readonly string _name;
-
-		public string Name { get { return this._name; } }
-
-		public string Application { get; set; }
-
-		public string Version { get; set; }
-
-		public MessagePackRpcServiceContractAttribute( string name )
-		{
-			this._name = name;
-		}
-	}
-
-	[AttributeUsage( AttributeTargets.Method, AllowMultiple = false, Inherited = true )]
-	public sealed class MessagePackRpcMethodAttribute : Attribute
-	{
-		public MessagePackRpcMethodAttribute() { }
-	}
-}
 
 namespace MsgPack.Rpc.Server.Dispatch
 {
@@ -114,6 +34,6 @@ namespace MsgPack.Rpc.Server.Dispatch
 		/// <returns>
 		///		The collection of <see cref="ServiceDescription"/>.
 		/// </returns>
-		public abstract Collection<ServiceDescription> FindServices();
+		public abstract IEnumerable<ServiceDescription> FindServices();
 	}
 }

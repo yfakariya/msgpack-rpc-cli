@@ -235,7 +235,65 @@ namespace MsgPack.Rpc.Server
 		
 		static partial void ValidatePortNumber( int value );
 
-		private Func<ServiceTypeLocator> _serviceTypeLocatorProvider = () => new DefaultServiceTypeLocator();
+		private Func<RpcServer, ServerTransportManager> _transportManagerProvider = ( server ) => new TcpServerTransportManager( server );
+		
+		/// <summary>
+		/// 	Gets or sets the factory function which creates new <see cref="ServerTransportManager" />.
+		/// </summary>
+		/// <value>
+		/// 	The factory function which creates new <see cref="ServerTransportManager" />. The default is the delegate which creates <see cref="TcpServerTransportManager" /> instance.
+		/// </value>
+		public Func<RpcServer, ServerTransportManager> TransportManagerProvider
+		{
+			get{ return this._transportManagerProvider; }
+			set
+			{
+				this.VerifyIsNotFrozen();
+				ValidateTransportManagerProvider( value );
+				this._transportManagerProvider = value;
+			}
+		}
+		
+		/// <summary>
+		/// 	Resets the TransportManagerProvider property value.
+		/// </summary>
+		public void ResetTransportManagerProvider()
+		{
+			this._transportManagerProvider = ( server ) => new TcpServerTransportManager( server );
+		}
+		
+		static partial void ValidateTransportManagerProvider( Func<RpcServer, ServerTransportManager> value );
+
+		private Func<RpcServer, Dispatcher> _dispatcherProvider = ( server ) => new LocatorBasedDispatcher( server );
+		
+		/// <summary>
+		/// 	Gets or sets the factory function which creates new <see cref="Dispatcher" />.
+		/// </summary>
+		/// <value>
+		/// 	The factory function which creates new <see cref="Dispatcher" />. The default is the delegate which creates <see cref="LocatorBasedDispatcher" /> instance.
+		/// </value>
+		public Func<RpcServer, Dispatcher> DispatcherProvider
+		{
+			get{ return this._dispatcherProvider; }
+			set
+			{
+				this.VerifyIsNotFrozen();
+				ValidateDispatcherProvider( value );
+				this._dispatcherProvider = value;
+			}
+		}
+		
+		/// <summary>
+		/// 	Resets the DispatcherProvider property value.
+		/// </summary>
+		public void ResetDispatcherProvider()
+		{
+			this._dispatcherProvider = ( server ) => new LocatorBasedDispatcher( server );
+		}
+		
+		static partial void ValidateDispatcherProvider( Func<RpcServer, Dispatcher> value );
+
+		private Func<RpcServerConfiguration, ServiceTypeLocator> _serviceTypeLocatorProvider = ( config ) => new DefaultServiceTypeLocator();
 		
 		/// <summary>
 		/// 	Gets or sets the factory function which creates new <see cref="ServiceTypeLocator" />.
@@ -243,7 +301,7 @@ namespace MsgPack.Rpc.Server
 		/// <value>
 		/// 	The factory function which creates new <see cref="ServiceTypeLocator" />. The default is the delegate which creates <see cref="DefaultServiceTypeLocator" /> instance.
 		/// </value>
-		public Func<ServiceTypeLocator> ServiceTypeLocatorProvider
+		public Func<RpcServerConfiguration, ServiceTypeLocator> ServiceTypeLocatorProvider
 		{
 			get{ return this._serviceTypeLocatorProvider; }
 			set
@@ -259,12 +317,12 @@ namespace MsgPack.Rpc.Server
 		/// </summary>
 		public void ResetServiceTypeLocatorProvider()
 		{
-			this._serviceTypeLocatorProvider = () => new DefaultServiceTypeLocator();
+			this._serviceTypeLocatorProvider = ( config ) => new DefaultServiceTypeLocator();
 		}
 		
-		static partial void ValidateServiceTypeLocatorProvider( Func<ServiceTypeLocator> value );
+		static partial void ValidateServiceTypeLocatorProvider( Func<RpcServerConfiguration, ServiceTypeLocator> value );
 
-		private Func<Func<ServerRequestContext>, ObjectPool<ServerRequestContext>> _requestContextPoolProvider = ( factory ) => new StandardObjectPool<ServerRequestContext>( factory, null );
+		private Func<Func<ServerRequestContext>, ObjectPoolConfiguration, ObjectPool<ServerRequestContext>> _requestContextPoolProvider = ( factory, configuration ) => new StandardObjectPool<ServerRequestContext>( factory, configuration );
 		
 		/// <summary>
 		/// 	Gets or sets the factory function which creates new <see cref="ObjectPool{T}" /> of <see cref="ServerRequestContext" />.
@@ -272,7 +330,7 @@ namespace MsgPack.Rpc.Server
 		/// <value>
 		/// 	The factory function which creates new <see cref="ObjectPool{T}" /> of <see cref="ServerRequestContext" />. The default is the delegate which creates <see cref="StandardObjectPool{T}" /> instance with <c>null</c> configuration.
 		/// </value>
-		public Func<Func<ServerRequestContext>, ObjectPool<ServerRequestContext>> RequestContextPoolProvider
+		public Func<Func<ServerRequestContext>, ObjectPoolConfiguration, ObjectPool<ServerRequestContext>> RequestContextPoolProvider
 		{
 			get{ return this._requestContextPoolProvider; }
 			set
@@ -288,12 +346,12 @@ namespace MsgPack.Rpc.Server
 		/// </summary>
 		public void ResetRequestContextPoolProvider()
 		{
-			this._requestContextPoolProvider = ( factory ) => new StandardObjectPool<ServerRequestContext>( factory, null );
+			this._requestContextPoolProvider = ( factory, configuration ) => new StandardObjectPool<ServerRequestContext>( factory, configuration );
 		}
 		
-		static partial void ValidateRequestContextPoolProvider( Func<Func<ServerRequestContext>, ObjectPool<ServerRequestContext>> value );
+		static partial void ValidateRequestContextPoolProvider( Func<Func<ServerRequestContext>, ObjectPoolConfiguration, ObjectPool<ServerRequestContext>> value );
 
-		private Func<Func<ServerResponseContext>, ObjectPool<ServerResponseContext>> _responseContextPoolProvider = ( factory ) => new StandardObjectPool<ServerResponseContext>( factory, null );
+		private Func<Func<ServerResponseContext>, ObjectPoolConfiguration, ObjectPool<ServerResponseContext>> _responseContextPoolProvider = ( factory, configuration ) => new StandardObjectPool<ServerResponseContext>( factory, configuration );
 		
 		/// <summary>
 		/// 	Gets or sets the factory function which creates new <see cref="ObjectPool{T}" /> of <see cref="ServerResponseContext" />.
@@ -301,7 +359,7 @@ namespace MsgPack.Rpc.Server
 		/// <value>
 		/// 	The factory function which creates new <see cref="ObjectPool{T}" /> of <see cref="ServerResponseContext" />. The default is the delegate which creates <see cref="StandardObjectPool{T}" /> instance with <c>null</c> configuration.
 		/// </value>
-		public Func<Func<ServerResponseContext>, ObjectPool<ServerResponseContext>> ResponseContextPoolProvider
+		public Func<Func<ServerResponseContext>, ObjectPoolConfiguration, ObjectPool<ServerResponseContext>> ResponseContextPoolProvider
 		{
 			get{ return this._responseContextPoolProvider; }
 			set
@@ -317,12 +375,12 @@ namespace MsgPack.Rpc.Server
 		/// </summary>
 		public void ResetResponseContextPoolProvider()
 		{
-			this._responseContextPoolProvider = ( factory ) => new StandardObjectPool<ServerResponseContext>( factory, null );
+			this._responseContextPoolProvider = ( factory, configuration ) => new StandardObjectPool<ServerResponseContext>( factory, configuration );
 		}
 		
-		static partial void ValidateResponseContextPoolProvider( Func<Func<ServerResponseContext>, ObjectPool<ServerResponseContext>> value );
+		static partial void ValidateResponseContextPoolProvider( Func<Func<ServerResponseContext>, ObjectPoolConfiguration, ObjectPool<ServerResponseContext>> value );
 
-		private Func<Func<ListeningContext>, ObjectPool<ListeningContext>> _listeningContextPoolProvider = ( factory ) => new StandardObjectPool<ListeningContext>( factory, null );
+		private Func<Func<ListeningContext>, ObjectPoolConfiguration, ObjectPool<ListeningContext>> _listeningContextPoolProvider = ( factory, configuration ) => new StandardObjectPool<ListeningContext>( factory, configuration );
 		
 		/// <summary>
 		/// 	Gets or sets the factory function which creates new <see cref="ObjectPool{T}" /> of <see cref="ListeningContext" />.
@@ -330,7 +388,7 @@ namespace MsgPack.Rpc.Server
 		/// <value>
 		/// 	The factory function which creates new <see cref="ObjectPool{T}" /> of <see cref="ListeningContext" />. The default is the delegate which creates <see cref="StandardObjectPool{T}" /> instance with <c>null</c> configuration.
 		/// </value>
-		public Func<Func<ListeningContext>, ObjectPool<ListeningContext>> ListeningContextPoolProvider
+		public Func<Func<ListeningContext>, ObjectPoolConfiguration, ObjectPool<ListeningContext>> ListeningContextPoolProvider
 		{
 			get{ return this._listeningContextPoolProvider; }
 			set
@@ -346,12 +404,12 @@ namespace MsgPack.Rpc.Server
 		/// </summary>
 		public void ResetListeningContextPoolProvider()
 		{
-			this._listeningContextPoolProvider = ( factory ) => new StandardObjectPool<ListeningContext>( factory, null );
+			this._listeningContextPoolProvider = ( factory, configuration ) => new StandardObjectPool<ListeningContext>( factory, configuration );
 		}
 		
-		static partial void ValidateListeningContextPoolProvider( Func<Func<ListeningContext>, ObjectPool<ListeningContext>> value );
+		static partial void ValidateListeningContextPoolProvider( Func<Func<ListeningContext>, ObjectPoolConfiguration, ObjectPool<ListeningContext>> value );
 
-		private Func<Func<TcpServerTransport>, ObjectPool<TcpServerTransport>> _tcpTransportPoolProvider = ( factory ) => new StandardObjectPool<TcpServerTransport>( factory, null );
+		private Func<Func<TcpServerTransport>, ObjectPoolConfiguration, ObjectPool<TcpServerTransport>> _tcpTransportPoolProvider = ( factory, configuration ) => new StandardObjectPool<TcpServerTransport>( factory, configuration );
 		
 		/// <summary>
 		/// 	Gets or sets the factory function which creates new <see cref="ObjectPool{T}" /> of <see cref="TcpServerTransport" />.
@@ -359,7 +417,7 @@ namespace MsgPack.Rpc.Server
 		/// <value>
 		/// 	The factory function which creates new <see cref="ObjectPool{T}" /> of <see cref="TcpServerTransport" />. The default is the delegate which creates <see cref="StandardObjectPool{T}" /> instance with <c>null</c> configuration.
 		/// </value>
-		public Func<Func<TcpServerTransport>, ObjectPool<TcpServerTransport>> TcpTransportPoolProvider
+		public Func<Func<TcpServerTransport>, ObjectPoolConfiguration, ObjectPool<TcpServerTransport>> TcpTransportPoolProvider
 		{
 			get{ return this._tcpTransportPoolProvider; }
 			set
@@ -375,12 +433,12 @@ namespace MsgPack.Rpc.Server
 		/// </summary>
 		public void ResetTcpTransportPoolProvider()
 		{
-			this._tcpTransportPoolProvider = ( factory ) => new StandardObjectPool<TcpServerTransport>( factory, null );
+			this._tcpTransportPoolProvider = ( factory, configuration ) => new StandardObjectPool<TcpServerTransport>( factory, configuration );
 		}
 		
-		static partial void ValidateTcpTransportPoolProvider( Func<Func<TcpServerTransport>, ObjectPool<TcpServerTransport>> value );
+		static partial void ValidateTcpTransportPoolProvider( Func<Func<TcpServerTransport>, ObjectPoolConfiguration, ObjectPool<TcpServerTransport>> value );
 
-		private Func<Func<UdpServerTransport>, ObjectPool<UdpServerTransport>> _udpTransportPoolProvider = ( factory ) => new StandardObjectPool<UdpServerTransport>( factory, null );
+		private Func<Func<UdpServerTransport>, ObjectPoolConfiguration, ObjectPool<UdpServerTransport>> _udpTransportPoolProvider = ( factory, configuration ) => new StandardObjectPool<UdpServerTransport>( factory, configuration );
 		
 		/// <summary>
 		/// 	Gets or sets the factory function which creates new <see cref="ObjectPool{T}" /> of <see cref="UdpServerTransport" />.
@@ -388,7 +446,7 @@ namespace MsgPack.Rpc.Server
 		/// <value>
 		/// 	The factory function which creates new <see cref="ObjectPool{T}" /> of <see cref="UdpServerTransport" />. The default is the delegate which creates <see cref="StandardObjectPool{T}" /> instance with <c>null</c> configuration.
 		/// </value>
-		public Func<Func<UdpServerTransport>, ObjectPool<UdpServerTransport>> UdpTransportPoolProvider
+		public Func<Func<UdpServerTransport>, ObjectPoolConfiguration, ObjectPool<UdpServerTransport>> UdpTransportPoolProvider
 		{
 			get{ return this._udpTransportPoolProvider; }
 			set
@@ -404,9 +462,9 @@ namespace MsgPack.Rpc.Server
 		/// </summary>
 		public void ResetUdpTransportPoolProvider()
 		{
-			this._udpTransportPoolProvider = ( factory ) => new StandardObjectPool<UdpServerTransport>( factory, null );
+			this._udpTransportPoolProvider = ( factory, configuration ) => new StandardObjectPool<UdpServerTransport>( factory, configuration );
 		}
 		
-		static partial void ValidateUdpTransportPoolProvider( Func<Func<UdpServerTransport>, ObjectPool<UdpServerTransport>> value );
+		static partial void ValidateUdpTransportPoolProvider( Func<Func<UdpServerTransport>, ObjectPoolConfiguration, ObjectPool<UdpServerTransport>> value );
 	}
 }

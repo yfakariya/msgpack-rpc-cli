@@ -19,28 +19,24 @@
 #endregion -- License Terms --
 
 using System;
-using MsgPack.Rpc.Server.Protocols;
 
-namespace MsgPack.Rpc.Server.Dispatch
+namespace MsgPack.Rpc
 {
-	// FIXME: Remove if can do it
+	// TODO: Move to NLiblet
+
 	/// <summary>
-	///		Defines non-generic interface of <see cref="ServiceInvoker"/>.
+	///		Defines exhausion policy of the object pool.
 	/// </summary>
-	internal interface IServiceInvoker
+	public enum ExhausionPolicy
 	{
 		/// <summary>
-		///		Invokes target service operation.
+		///		Blocks the caller threads until any objects will be available.
 		/// </summary>
-		/// <param name="arguments"><see cref="Unpacker"/> to unpack arguments.</param>
-		/// <param name="messageId">
-		///		Id of the current request message. 
-		///		This value is not defined for the notification messages.
-		///	</param>
-		/// <param name="responseContext">
-		///		The context object to pack response value or error.
-		///		This is <c>null</c> for the notification messages.
-		///	</param>
-		void Invoke( Unpacker arguments, int messageId, ServerResponseContext responseContext );
+		BlockUntilAvailable,
+
+		/// <summary>
+		///		Throws the <see cref="ObjectPoolEmptyException"/> immediately.
+		/// </summary>
+		ThrowException
 	}
 }

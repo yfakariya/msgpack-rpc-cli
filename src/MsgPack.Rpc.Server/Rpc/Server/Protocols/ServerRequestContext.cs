@@ -102,13 +102,13 @@ namespace MsgPack.Rpc.Server.Protocols
 		{
 			// TODO: Configurable
 			this.ArgumentsBuffer = new MemoryStream( 65536 );
-			this.State = ServerProcessingState.Uninitialized;
 		}
 
-		internal void SetTransport( ServerTransport transport )
+		internal override void SetTransport( ServerTransport transport )
 		{
 			this._initialProcess = transport.UnpackRequestHeader;
 			this.NextProcess = transport.UnpackRequestHeader;
+			base.SetTransport( transport );
 		}
 
 		private static bool InvalidFlow( ServerContext context )
@@ -120,6 +120,12 @@ namespace MsgPack.Rpc.Server.Protocols
 		{
 			this.ClearBuffers();
 			this.ClearDispatchContext();
+			if ( this.UnpackingBuffer != null )
+			{
+				this.UnpackingBuffer.Dispose();
+				this.UnpackingBuffer = null;
+			}
+			this.NextProcess = InvalidFlow;
 			base.Clear();
 		}
 
@@ -128,8 +134,6 @@ namespace MsgPack.Rpc.Server.Protocols
 		/// </summary>
 		internal void ClearBuffers()
 		{
-			this.NextProcess = InvalidFlow;
-
 			if ( this.ArgumentsBufferUnpacker != null )
 			{
 				this.ArgumentsBufferUnpacker.Dispose();
@@ -159,8 +163,6 @@ namespace MsgPack.Rpc.Server.Protocols
 			if ( this.UnpackingBuffer != null )
 			{
 				this.TruncateUsedReceivedData();
-				this.UnpackingBuffer.Dispose();
-				this.UnpackingBuffer = null;
 			}
 		}
 
@@ -169,21 +171,21 @@ namespace MsgPack.Rpc.Server.Protocols
 		/// </summary>
 		private void TruncateUsedReceivedData()
 		{
-			long remaining = this.UnpackingBuffer.Position;
+			long removals = this.UnpackingBuffer.Position;
 			var segments = this.UnpackingBuffer.GetBuffer();
-			while ( segments.Any() && 0 < remaining )
+			while ( segments.Any() && 0 < removals )
 			{
-				if ( segments[ 0 ].Count < remaining )
+				if ( segments[ 0 ].Count <= removals )
 				{
-					remaining -= segments[ 0 ].Count;
+					removals -= segments[ 0 ].Count;
 					segments.RemoveAt( 0 );
 				}
 				else
 				{
-					int newCount = segments[ 0 ].Count - unchecked( ( int )remaining );
-					int newOffset = segments[ 0 ].Offset + unchecked( ( int )remaining );
+					int newCount = segments[ 0 ].Count - unchecked( ( int )removals );
+					int newOffset = segments[ 0 ].Offset + unchecked( ( int )removals );
 					segments[ 0 ] = new ArraySegment<byte>( segments[ 0 ].Array, newOffset, newCount );
-					remaining -= newCount;
+					removals = 0;
 				}
 			}
 		}
@@ -193,8 +195,6 @@ namespace MsgPack.Rpc.Server.Protocols
 		/// </summary>
 		internal void ClearDispatchContext()
 		{
-			this.NextProcess = this._initialProcess;
-
 			this.MethodName = null;
 			this.MessageType = MessageType.Response; // Invalid value.
 			if ( this.ArgumentsUnpacker != null )
@@ -204,8 +204,6 @@ namespace MsgPack.Rpc.Server.Protocols
 			}
 
 			this.ArgumentsBuffer.SetLength( 0 );
-			base.ReturnLease();
-			this.State = ServerProcessingState.Uninitialized;
 		}
 
 		void ILeaseable<ServerRequestContext>.SetLease( ILease<ServerRequestContext> lease )

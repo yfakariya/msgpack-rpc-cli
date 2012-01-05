@@ -116,7 +116,6 @@ namespace MsgPack.Rpc.Server.Protocols
 			this.SendingBuffer[ 0 ] = _responseHeader;
 			this._returnDataPacker = Packer.Create( this._returnDataBuffer, false );
 			this._errorDataPacker = Packer.Create( this._errorDataBuffer, false );
-			this.State = ServerProcessingState.Reserved;
 		}
 
 		internal void Serialize<T>( T returnValue, RpcErrorMessage error, MessagePackSerializer<T> returnValueSerializer )
@@ -155,11 +154,18 @@ namespace MsgPack.Rpc.Server.Protocols
 
 		internal void Prepare()
 		{
-			this.SendingBuffer[ 2 ] = new ArraySegment<byte>( this._errorDataBuffer.GetBuffer(), 0, ( int )this._errorDataBuffer.Length );
-			this.SendingBuffer[ 3 ] = new ArraySegment<byte>( this._returnDataBuffer.GetBuffer(), 0, ( int )this._returnDataBuffer.Length );
+			Contract.Assert( this.SendingBuffer[ 0 ].Array != null );
+
+			using ( var packer = Packer.Create( this._idBuffer, false ) )
+			{
+				packer.Pack( this.MessageId );
+			}
+
+			this.SendingBuffer[ 1 ] = new ArraySegment<byte>( this._idBuffer.GetBuffer(), 0, unchecked( ( int )this._idBuffer.Length ) );
+			this.SendingBuffer[ 2 ] = new ArraySegment<byte>( this._errorDataBuffer.GetBuffer(), 0, unchecked( ( int )this._errorDataBuffer.Length ) );
+			this.SendingBuffer[ 3 ] = new ArraySegment<byte>( this._returnDataBuffer.GetBuffer(), 0, unchecked( ( int )this._returnDataBuffer.Length ) );
 			this.SetBuffer( null, 0, 0 );
 			this.BufferList = this.SendingBuffer;
-			this.State = ServerProcessingState.Sending;
 		}
 
 		internal sealed override void Clear()
@@ -173,7 +179,6 @@ namespace MsgPack.Rpc.Server.Protocols
 			this._errorDataPacker.Dispose();
 			this._errorDataPacker = Packer.Create( this._errorDataBuffer, false );
 			base.Clear();
-			this.State = ServerProcessingState.Reserved;
 		}
 
 		void ILeaseable<ServerResponseContext>.SetLease( ILease<ServerResponseContext> lease )

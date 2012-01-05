@@ -90,16 +90,18 @@ namespace MsgPack.Rpc.Server.Dispatch
 			}
 		}
 
-		internal static void TraceInvocationResult<T>( MessageType messageType, int messageId, string operationId, RpcErrorMessage error, T result )
+		internal static void TraceInvocationResult<T>( long sessionId, MessageType messageType, int messageId, string operationId, RpcErrorMessage error, T result )
 		{
 			if ( error.IsSuccess )
 			{
 				if ( Tracer.Server.Switch.ShouldTrace( Tracer.EventType.OperationSucceeded ) )
 				{
 					// FIXME: Formatting
-					Tracer.Server.TraceData(
+					Tracer.Server.TraceEvent(
 						Tracer.EventType.OperationSucceeded,
 						Tracer.EventId.OperationSucceeded,
+						"Operation succeeded. [ \"SessionId\" : {0}, \"MessageType\" : \"{1}\", \"MessageID\" : {2}, \"OperationID\" : \"{3}\", \"Result\" : \"{4}\" ]",
+						sessionId,
 						messageType,
 						messageId,
 						operationId,
@@ -109,13 +111,15 @@ namespace MsgPack.Rpc.Server.Dispatch
 			}
 			else
 			{
-				Tracer.Server.TraceData(
+				Tracer.Server.TraceEvent(
 					Tracer.EventType.OperationFailed,
 					Tracer.EventId.OperationFailed,
+					"Operation failed. [ \"SessionId\" : {0}, \"MessageType\" : \"{1}\", \"MessageID\" : {2}, \"OperationID\" : \"{3}\", \"Error\" : \"{4}\" ]",
+					sessionId,
 					messageType,
 					messageId,
 					operationId,
-					error.ToString()
+					error
 				);
 			}
 		}

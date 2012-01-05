@@ -73,7 +73,9 @@ namespace MsgPack.Rpc.Server.Protocols
 				return null;
 			}
 		}
-		
+
+		private readonly Dispatcher _dispatcher;
+
 		private bool _isInShutdown;
 
 		public bool IsInShutdown
@@ -124,7 +126,7 @@ namespace MsgPack.Rpc.Server.Protocols
 				handler( this, e );
 			}
 		}
-		
+
 		internal event EventHandler AllResponseSent;
 
 		protected virtual void OnAllResponseSent()
@@ -158,7 +160,14 @@ namespace MsgPack.Rpc.Server.Protocols
 				throw new ArgumentNullException( "manager" );
 			}
 
+			var server = manager.Server;
+			if ( server == null )
+			{
+				throw new InvalidOperationException( "Cannot get RpcServer from the transport manager." );
+			}
+
 			this._managerReference = new WeakReference( manager );
+			this._dispatcher = server.Configuration.DispatcherProvider( server );
 		}
 
 		/// <summary>
@@ -197,22 +206,11 @@ namespace MsgPack.Rpc.Server.Protocols
 			}
 		}
 
-		/// <summary>
-		///		Verify internal state transition.
-		/// </summary>
-		/// <param name="desiredState">Desired next state.</param>
-		private void VerifyState( ServerContext context, ServerProcessingState desiredState )
+		private void VerifyIsNotDisposed()
 		{
-			Contract.Assert( context != null );
-
 			if ( this.IsDisposed )
 			{
 				throw new ObjectDisposedException( this.ToString() );
-			}
-
-			if ( context.State != desiredState )
-			{
-				throw new InvalidOperationException( String.Format( CultureInfo.CurrentCulture, "Tranport must be '{0}' but actual '{1}'.", desiredState, context.State ) );
 			}
 		}
 
@@ -230,7 +228,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		private void HandleDeserializationError( ServerRequestContext context, RpcError error, string message, string debugInformation, Func<byte[]> invalidRequestHeaderProvider )
 		{
 			this.BeginShutdown();
-			int? messageId = context.MessageType == MessageType.Request ? context.Id : default( int? );
+			int? messageId = context.MessageType == MessageType.Request ? context.MessageId : default( int? );
 			var rpcError = new RpcErrorMessage( error, message, debugInformation );
 			this.HandleError( RpcTransportOperation.Deserialize, rpcError );
 			context.Clear();
@@ -269,7 +267,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		/// </summary>
 		/// <param name="sender"><see cref="Socket"/>.</param>
 		/// <param name="e">Event data.</param>
-		private void OnSocketOperationCompleted( object sender, SocketAsyncEventArgs e )
+		internal void OnSocketOperationCompleted( object sender, SocketAsyncEventArgs e )
 		{
 			var context = ( ServerContext )e;
 
@@ -313,7 +311,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			}
 		}
 
-				
+
 		/// <summary>
 		///		Receives byte stream from remote end point.
 		/// </summary>
@@ -331,23 +329,40 @@ namespace MsgPack.Rpc.Server.Protocols
 				throw new ArgumentNullException( "context" );
 			}
 
-			this.VerifyState( context, ServerProcessingState.Idle );
-			
-			if ( this._isClientShutdowned )
+			if ( context.BoundTransport != this )
 			{
-				// TODO: Tracing
-				return;
+				throw new ArgumentException( "Context is not bound to this object.", "context" );
 			}
+
+			this.VerifyIsNotDisposed();
 
 			this.PrivateReceive( context );
 		}
 
 		private void PrivateReceive( ServerRequestContext context )
 		{
+			if ( this._isClientShutdowned )
+			{
+				Tracer.Protocols.TraceEvent(
+					Tracer.EventType.ReceiveCanceledDueToClientShutdown,
+					Tracer.EventId.ReceiveCanceledDueToClientShutdown,
+					"Cancel receive due to client shutdown. [ \"RemoteEndPoint\" : \"{0}\", \"LocalEndPoint\" : \"{1}\" ]",
+					context.AcceptSocket == null ? null : context.AcceptSocket.RemoteEndPoint,
+					context.AcceptSocket == null ? null : context.AcceptSocket.LocalEndPoint
+				);
+				return;
+			}
+
 			if ( this.IsInShutdown )
 			{
 				// Subsequent receival cannot be processed now.
-				// TODO: Tracing
+				Tracer.Protocols.TraceEvent(
+					Tracer.EventType.ReceiveCanceledDueToServerShutdown,
+					Tracer.EventId.ReceiveCanceledDueToServerShutdown,
+					"Cancel receive due to server shutdown. [ \"RemoteEndPoint\" : \"{0}\", \"LocalEndPoint\" : \"{1}\" ]",
+					context.AcceptSocket == null ? null : context.AcceptSocket.RemoteEndPoint,
+					context.AcceptSocket == null ? null : context.AcceptSocket.LocalEndPoint
+				);
 				return;
 			}
 
@@ -364,6 +379,13 @@ namespace MsgPack.Rpc.Server.Protocols
 
 				context.SetBuffer( context.ReceivingBuffer, 0, context.ReceivingBuffer.Length );
 
+				Tracer.Protocols.TraceEvent(
+					Tracer.EventType.BeginReceive,
+					Tracer.EventId.BeginReceive,
+					"Receive inbound data. [ \"RemoteEndPoint\" : \"{0}\", \"LocalEndPoint\" : \"{1}\" ]",
+					context.AcceptSocket == null ? null : context.AcceptSocket.RemoteEndPoint,
+					context.AcceptSocket == null ? null : context.AcceptSocket.LocalEndPoint
+				);
 				this.ReceiveCore( context );
 			}
 		}
@@ -374,7 +396,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			if ( !context.NextProcess( context ) )
 			{
 				// Draining was not ended. Try to take next bytes.
-				this.Receive( context );
+				this.PrivateReceive( context );
 			}
 
 			// This method must be called on other thread on the above pipeline, so exit this thread.
@@ -403,22 +425,13 @@ namespace MsgPack.Rpc.Server.Protocols
 				throw new ArgumentNullException( "context" );
 			}
 
-			if ( context.State == ServerProcessingState.Idle )
-			{
-				context.State = ServerProcessingState.Receiving;
-				// TODO: Increment concurrency counter
-			}
-			else
-			{
-				this.VerifyState( context, ServerProcessingState.Receiving );
-			}
-
-			if ( Tracer.Protocols.Switch.ShouldTrace( Tracer.EventType.AcceptInboundTcp ) )
+			if ( Tracer.Protocols.Switch.ShouldTrace( Tracer.EventType.ReceiveInboundData ) )
 			{
 				Tracer.Protocols.TraceEvent(
-					Tracer.EventType.AcceptInboundTcp,
-					Tracer.EventId.AcceptInboundTcp,
-					"Receive request. [ \"socket\" : 0x{0:x8}, \"localEndPoint\" : \"{1}\", \"remoteEndPoint\" : \"{2}\", \"bytesTransfered\" : {3}, \"available\" : {4} ]",
+					Tracer.EventType.ReceiveInboundData,
+					Tracer.EventId.ReceiveInboundData,
+					"Receive request. [ \"Socket\" : 0x{0:x8}, \"LocalEndPoint\" : \"{1}\", \"RemoteEndPoint\" : \"{2}\", \"BytesTransfered\" : {3}, \"Available\" : {4} ]",
+					context.SessionId,
 					context.AcceptSocket.Handle,
 					context.AcceptSocket.LocalEndPoint,
 					context.AcceptSocket.RemoteEndPoint,
@@ -430,10 +443,17 @@ namespace MsgPack.Rpc.Server.Protocols
 			if ( context.BytesTransferred == 0 )
 			{
 				// recv() returns 0 when the client socket shutdown gracefully.
+				Tracer.Protocols.TraceEvent(
+					Tracer.EventType.DetectClientShutdown,
+					Tracer.EventId.DetectClientShutdown,
+					"Client shutdown current socket. [ \"RemoteEndPoint\" : \"{0}\" ]",
+					context.RemoteEndPoint
+				);
 				this._isClientShutdowned = true;
 				if ( !context.ReceivedData.Any( segment => 0 < segment.Count ) )
 				{
 					// There are not data to handle.
+					context.Clear();
 					return;
 				}
 			}
@@ -449,7 +469,8 @@ namespace MsgPack.Rpc.Server.Protocols
 				Tracer.Protocols.TraceEvent(
 					Tracer.EventType.DeserializeRequest,
 					Tracer.EventId.DeserializeRequest,
-					"Deserialize request. [\"length\" : 0x{0:x}]",
+					"Deserialize request. [ \"SessionID\" : {0}, \"Length\" : {1} ]",
+					context.SessionId,
 					context.ReceivedData.Sum( item => ( long )item.Count )
 				);
 			}
@@ -507,8 +528,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			}
 
 			var context = manager.ResponseContextPool.Borrow();
-			context.Id = messageId.Value;
-			this.VerifyState( context, ServerProcessingState.Reserved );
+			context.MessageId = messageId.Value;
 
 			context.Serialize<object>( null, rpcError, null );
 			this.PrivateSend( context );
@@ -521,7 +541,12 @@ namespace MsgPack.Rpc.Server.Protocols
 				throw new ArgumentNullException( "context" );
 			}
 
-			this.VerifyState( context, ServerProcessingState.Reserved );
+			if ( context.BoundTransport != this )
+			{
+				throw new ArgumentException( "Context is not bound to this object.", "context" );
+			}
+
+			this.VerifyIsNotDisposed();
 			this.PrivateSend( context );
 		}
 
@@ -534,7 +559,9 @@ namespace MsgPack.Rpc.Server.Protocols
 				Tracer.Protocols.TraceEvent(
 					Tracer.EventType.SendOutboundData,
 					Tracer.EventId.SendOutboundData,
-					"Send response. [ \"bytesTransferring\" : {0} ]",
+					"Send response. [ \"SessionID\" : {0}, \"RemoteEndPoint\" : {1}, \"BytesTransferring\" : {2} ]",
+					context.SessionId,
+					context.RemoteEndPoint,
 					context.SendingBuffer.Sum( segment => ( long )segment.Count )
 				);
 			}
@@ -569,13 +596,13 @@ namespace MsgPack.Rpc.Server.Protocols
 				Tracer.Protocols.TraceEvent(
 						Tracer.EventType.SentOutboundData,
 						Tracer.EventId.SentOutboundData,
-						"Sent response. [ \"remoteEndPoint\" : \"{0}\", \"bytesTransferred\" : {1} ]",
+						"Sent response. [ \"SessionID\" : {0}, \"RemoteEndPoint\" : \"{1}\", \"BytesTransferred\" : {2} ]",
+						context.SessionId,
 						context.RemoteEndPoint,
 						context.BytesTransferred
 					);
 			}
 
-			this.VerifyState( context, ServerProcessingState.Sending );
 			context.Clear();
 			try
 			{

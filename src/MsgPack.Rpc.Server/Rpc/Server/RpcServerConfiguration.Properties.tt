@@ -94,9 +94,27 @@ new List<Property>()
 	},
 	new Property()
 	{
+		Name = "TransportManagerProvider",
+		Type = "Func<RpcServer, ServerTransportManager>",
+		Default = "( server ) => new TcpServerTransportManager( server )",
+		Summary = "Gets or sets the factory function which creates new <see cref=\"ServerTransportManager\" />.",
+		Value = "The factory function which creates new <see cref=\"ServerTransportManager\" />. " +
+			"The default is the delegate which creates <see cref=\"TcpServerTransportManager\" /> instance.",
+	},
+	new Property()
+	{
+		Name = "DispatcherProvider",
+		Type = "Func<RpcServer, Dispatcher>",
+		Default = "( server ) => new LocatorBasedDispatcher( server )",
+		Summary = "Gets or sets the factory function which creates new <see cref=\"Dispatcher\" />.",
+		Value = "The factory function which creates new <see cref=\"Dispatcher\" />. " +
+			"The default is the delegate which creates <see cref=\"LocatorBasedDispatcher\" /> instance.",
+	},
+	new Property()
+	{
 		Name = "ServiceTypeLocatorProvider",
-		Type = "Func<ServiceTypeLocator>",
-		Default = "() => new DefaultServiceTypeLocator()",
+		Type = "Func<RpcServerConfiguration, ServiceTypeLocator>",
+		Default = "( config ) => new DefaultServiceTypeLocator()",
 		Summary = "Gets or sets the factory function which creates new <see cref=\"ServiceTypeLocator\" />.",
 		Value = "The factory function which creates new <see cref=\"ServiceTypeLocator\" />. " +
 			"The default is the delegate which creates <see cref=\"DefaultServiceTypeLocator\" /> instance.",
@@ -108,8 +126,8 @@ Func<string, string, Property> __objectPoolProviderPropertyFactory =
 		new Property()
 		{
 			Name = name,
-			Type = "Func<Func<" + poolee + ">, ObjectPool<" + poolee + ">>",
-			Default = "( factory ) => new StandardObjectPool<" + poolee + ">( factory, null )",
+			Type = "Func<Func<" + poolee + ">, ObjectPoolConfiguration, ObjectPool<" + poolee + ">>",
+			Default = "( factory, configuration ) => new StandardObjectPool<" + poolee + ">( factory, configuration )",
 			Summary = "Gets or sets the factory function which creates new <see cref=\"ObjectPool{T}\" /> of " +
 				"<see cref=\""+ poolee + "\" />.",
 			Value = "The factory function which creates new <see cref=\"ObjectPool{T}\" /> of " +

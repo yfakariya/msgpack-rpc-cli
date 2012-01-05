@@ -20,15 +20,22 @@
 
 using System;
 
-namespace MsgPack.Rpc.Server.Protocols
+namespace MsgPack.Rpc
 {
-	internal enum ServerProcessingState
+	[AttributeUsage( AttributeTargets.Interface | AttributeTargets.Class, AllowMultiple = false, Inherited = true )]
+	public sealed class MessagePackRpcServiceContractAttribute : Attribute
 	{
-		Idle = 0,
-		Receiving = 1,
-		Reserved = 2,
-		Sending = 3,
-		Disposing = -1,
-		Disposed = -2
+		private readonly string _name;
+
+		public string Name { get { return this._name; } }
+
+		public string Application { get; set; }
+
+		public string Version { get; set; }
+
+		public MessagePackRpcServiceContractAttribute( string name )
+		{
+			this._name = name;
+		}
 	}
 }

@@ -19,7 +19,7 @@
 #endregion -- License Terms --
 
 using System;
-using System.Collections.ObjectModel;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq.Expressions;
@@ -31,9 +31,9 @@ namespace MsgPack.Rpc.Server.Dispatch
 	{
 		public string BaseDirectory { get; set; }
 
-		public sealed override Collection<ServiceDescription> FindServices()
+		public sealed override IEnumerable<ServiceDescription> FindServices()
 		{
-			var result = new Collection<ServiceDescription>();
+			var result = new List<ServiceDescription>();
 			foreach ( var file in Directory.GetFiles( String.IsNullOrWhiteSpace( this.BaseDirectory ) ? AppDomain.CurrentDomain.BaseDirectory : this.BaseDirectory, "*.svc" ) )
 			{
 				result.Add( ExtractServiceDescription( file ) );

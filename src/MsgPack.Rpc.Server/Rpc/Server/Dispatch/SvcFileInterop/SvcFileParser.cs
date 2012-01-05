@@ -21,6 +21,7 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Diagnostics.Contracts;
 
 namespace MsgPack.Rpc.Server.Dispatch.SvcFileInterop
 {
@@ -41,7 +42,7 @@ namespace MsgPack.Rpc.Server.Dispatch.SvcFileInterop
 		/// <returns>Parsed <see cref="ServiceHostDirective"/>.</returns>
 		public ServiceHostDirective Parse( TextReader input )
 		{
-			Debug.Assert( input != null );
+			Contract.Assert( input != null );
 
 			SvcDirectiveParserState state = new InitialState();
 

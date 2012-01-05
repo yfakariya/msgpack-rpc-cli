@@ -66,6 +66,8 @@
     <Compile Include="Rpc\ILease.cs" />
     <Compile Include="Rpc\ILeaseable.cs" />
     <Compile Include="Rpc\Leaseable.cs" />
+    <Compile Include="Rpc\MessagePackRpcMethodAttribute.cs" />
+    <Compile Include="Rpc\MessagePackRpcServiceContractAttribute.cs" />
     <Compile Include="Rpc\NetworkEnvironment.cs" />
     <Compile Include="Rpc\ObjectLease.cs" />
     <Compile Include="Rpc\ObjectPool.cs" />

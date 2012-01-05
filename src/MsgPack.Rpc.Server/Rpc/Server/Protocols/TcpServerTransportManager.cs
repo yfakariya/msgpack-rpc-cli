@@ -37,8 +37,8 @@ namespace MsgPack.Rpc.Server.Protocols
 		public TcpServerTransportManager( RpcServer server )
 			: base( server )
 		{
-			base.SetTransportPool( server.Configuration.TcpTransportPoolProvider( () => new TcpServerTransport( this ) ) );
-			this._listeningContextPool = server.Configuration.ListeningContextPoolProvider( () => new ListeningContext() );
+			base.SetTransportPool( server.Configuration.TcpTransportPoolProvider( () => new TcpServerTransport( this ), server.Configuration.CreateTcpTransportPoolConfiguration() ) );
+			this._listeningContextPool = server.Configuration.ListeningContextPoolProvider( () => new ListeningContext(), server.Configuration.CreateListeningContextPoolConfiguration() );
 			this._listeningSocket = new Socket( AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp );
 			var bindingEndPoint = this.Configuration.BindingEndPoint ?? NetworkEnvironment.GetDefaultEndPoint( server.Configuration.PortNumber );
 			this._listeningSocket.Bind( bindingEndPoint );
@@ -47,14 +47,14 @@ namespace MsgPack.Rpc.Server.Protocols
 			this.StartAccept();
 		}
 
-		protected sealed override void Dispose( bool disposing )
+		protected sealed override void DisposeCore( bool disposing )
 		{
 			if ( disposing )
 			{
 				this._listeningSocket.Close();
 			}
 
-			base.Dispose( disposing );
+			base.DisposeCore( disposing );
 		}
 
 		protected sealed override void BeginShutdownCore()
@@ -95,7 +95,7 @@ namespace MsgPack.Rpc.Server.Protocols
 					Tracer.Protocols.TraceEvent(
 						Tracer.EventType.UnexpectedLastOperation,
 						Tracer.EventId.UnexpectedLastOperation,
-						"Unexpected operation. [ \"sender.Handle\" : 0x{0}, \"remoteEndPoint\" : \"{1}\", \"lastOperation\" : \"{2}\" ]",
+						"Unexpected operation. [ \"Soekct\" : 0x{0}, \"RemoteEndPoint\" : \"{1}\", \"LastOperation\" : \"{2}\" ]",
 						( ( Socket )sender ).Handle,
 						e.RemoteEndPoint,
 						e.LastOperation
@@ -107,8 +107,6 @@ namespace MsgPack.Rpc.Server.Protocols
 
 		private void Accept( ListeningContext context )
 		{
-			Tracer.Protocols.TraceEvent( Tracer.EventType.BeginAccept, Tracer.EventId.BeginAccept, "Wait for connection." );
-
 			// Ensure buffers are cleared to avoid unepxected data feeding on Accept
 			context.SetBuffer( null, 0, 0 );
 			context.BufferList = null;
@@ -117,8 +115,11 @@ namespace MsgPack.Rpc.Server.Protocols
 			{
 				if ( this.IsInShutdown )
 				{
+					// TODO: Trace
 					return;
 				}
+
+				Tracer.Protocols.TraceEvent( Tracer.EventType.BeginAccept, Tracer.EventId.BeginAccept, "Wait for connection. [ \"LocalEndPoint\" : \"{0}\" ]", this._listeningSocket.LocalEndPoint );
 
 				if ( !this._listeningSocket.AcceptAsync( context ) )
 				{
@@ -134,11 +135,16 @@ namespace MsgPack.Rpc.Server.Protocols
 					throw;
 				}
 			}
-
 		}
 
 		private void OnAcceptted( ListeningContext context )
 		{
+			Tracer.Protocols.TraceEvent( 
+				Tracer.EventType.AcceptInboundTcp,
+				Tracer.EventId.AcceptInboundTcp, 
+				"Accept. [ \"RemoteEndPoit\" : \"{0}\", \"LocalEndPoint\" : \"{1}\" ]", context.AcceptSocket.RemoteEndPoint, context.AcceptSocket.LocalEndPoint 
+			);
+
 			var transport = this.GetTransport( context.AcceptSocket );
 			context.AcceptSocket = null;
 			this.Accept( context );

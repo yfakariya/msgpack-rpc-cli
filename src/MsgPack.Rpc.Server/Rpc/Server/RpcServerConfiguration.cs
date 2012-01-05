@@ -47,6 +47,31 @@ namespace MsgPack.Rpc.Server
 		/// </summary>
 		public RpcServerConfiguration() { }
 
+		public ObjectPoolConfiguration CreateListeningContextPoolConfiguration()
+		{
+			return new ObjectPoolConfiguration() { ExhausionPolicy = ExhausionPolicy.ThrowException, MaximumPooled = this.MaximumConnection, MinimumReserved = this.MinimumConnection };
+		}
+
+		public ObjectPoolConfiguration CreateTcpTransportPoolConfiguration()
+		{
+			return new ObjectPoolConfiguration() { ExhausionPolicy = ExhausionPolicy.BlockUntilAvailable, MaximumPooled = this.MaximumConcurrentRequest, MinimumReserved = this.MinimumConcurrentRequest };
+		}
+
+		public ObjectPoolConfiguration CreateUdpTransportPoolConfiguration()
+		{
+			return new ObjectPoolConfiguration() { ExhausionPolicy = ExhausionPolicy.BlockUntilAvailable, MaximumPooled = this.MaximumConcurrentRequest, MinimumReserved = this.MinimumConcurrentRequest };
+		}
+
+		public ObjectPoolConfiguration CreateRequestContextPoolConfiguration()
+		{
+			return new ObjectPoolConfiguration() { ExhausionPolicy = ExhausionPolicy.BlockUntilAvailable, MaximumPooled = this.MaximumConcurrentRequest, MinimumReserved = this.MinimumConcurrentRequest };
+		}
+
+		public ObjectPoolConfiguration CreateResponseContextPoolConfiguration()
+		{
+			return new ObjectPoolConfiguration() { ExhausionPolicy = ExhausionPolicy.BlockUntilAvailable, MaximumPooled = this.MaximumConcurrentRequest, MinimumReserved = this.MinimumConcurrentRequest };
+		}
+				
 		static partial void ValidateBindingEndPoint( EndPoint value )
 		{
 			if ( value == null )
@@ -55,7 +80,7 @@ namespace MsgPack.Rpc.Server
 			}
 		}
 
-		static partial void ValidateListeningContextPoolProvider( Func<Func<ListeningContext>, ObjectPool<ListeningContext>> value )
+		static partial void ValidateListeningContextPoolProvider( Func<Func<ListeningContext>, ObjectPoolConfiguration, ObjectPool<ListeningContext>> value )
 		{
 			if ( value == null )
 			{
@@ -63,7 +88,7 @@ namespace MsgPack.Rpc.Server
 			}
 		}
 
-		static partial void ValidateRequestContextPoolProvider( Func<Func<ServerRequestContext>, ObjectPool<ServerRequestContext>> value )
+		static partial void ValidateRequestContextPoolProvider( Func<Func<ServerRequestContext>, ObjectPoolConfiguration, ObjectPool<ServerRequestContext>> value )
 		{
 			if ( value == null )
 			{
@@ -71,7 +96,7 @@ namespace MsgPack.Rpc.Server
 			}
 		}
 
-		static partial void ValidateResponseContextPoolProvider( Func<Func<ServerResponseContext>, ObjectPool<ServerResponseContext>> value )
+		static partial void ValidateResponseContextPoolProvider( Func<Func<ServerResponseContext>, ObjectPoolConfiguration, ObjectPool<ServerResponseContext>> value )
 		{
 			if ( value == null )
 			{
@@ -79,7 +104,7 @@ namespace MsgPack.Rpc.Server
 			}
 		}
 
-		static partial void ValidateServiceTypeLocatorProvider( Func<ServiceTypeLocator> value )
+		static partial void ValidateTransportManagerProvider( Func<RpcServer, ServerTransportManager> value )
 		{
 			if ( value == null )
 			{
@@ -87,7 +112,7 @@ namespace MsgPack.Rpc.Server
 			}
 		}
 
-		static partial void ValidateTcpTransportPoolProvider( Func<Func<TcpServerTransport>, ObjectPool<TcpServerTransport>> value )
+		static partial void ValidateDispatcherProvider( Func<RpcServer, Dispatcher> value )
 		{
 			if ( value == null )
 			{
@@ -95,7 +120,23 @@ namespace MsgPack.Rpc.Server
 			}
 		}
 
-		static partial void ValidateUdpTransportPoolProvider( Func<Func<UdpServerTransport>, ObjectPool<UdpServerTransport>> value )
+		static partial void ValidateServiceTypeLocatorProvider( Func<RpcServerConfiguration, ServiceTypeLocator> value )
+		{
+			if ( value == null )
+			{
+				throw new ArgumentNullException( "value" );
+			}
+		}
+
+		static partial void ValidateTcpTransportPoolProvider( Func<Func<TcpServerTransport>, ObjectPoolConfiguration, ObjectPool<TcpServerTransport>> value )
+		{
+			if ( value == null )
+			{
+				throw new ArgumentNullException( "value" );
+			}
+		}
+
+		static partial void ValidateUdpTransportPoolProvider( Func<Func<UdpServerTransport>, ObjectPoolConfiguration, ObjectPool<UdpServerTransport>> value )
 		{
 			if ( value == null )
 			{
@@ -145,7 +186,7 @@ namespace MsgPack.Rpc.Server
 
 		static partial void ValidatePortNumber( int value )
 		{
-			if ( value < 0 || UInt16.MaxValue < value ) 
+			if ( value < 0 || UInt16.MaxValue < value )
 			{
 				throw new ArgumentOutOfRangeException( "PortNumber must be between 0 and 65,535.", "value" );
 			}

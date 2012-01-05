@@ -99,9 +99,9 @@ namespace MsgPack.Rpc.Server.Dispatch
 		/// <remarks>
 		///		This implementation causes collection copying.
 		/// </remarks>
-		public sealed override Collection<ServiceDescription> FindServices()
+		public sealed override IEnumerable<ServiceDescription> FindServices()
 		{
-			return new Collection<ServiceDescription>( this._serviceTypes.ToArray() );
+			return this._serviceTypes.ToArray();
 		}
 	}
 }

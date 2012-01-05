@@ -24,6 +24,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
+using System.Threading.Tasks;
 using NUnit.Framework;
 
 namespace MsgPack.Rpc.Server.Protocols
@@ -49,7 +50,7 @@ namespace MsgPack.Rpc.Server.Protocols
 	public class TcpServerTransportTest
 	{
 		// TODO: Error packet test.
-		private const bool _traceEnabled = false;
+		private const bool _traceEnabled = true;
 		private const int _portNumber = 57319;
 		private DebugTraceSourceSetting _debugTrace;
 
@@ -70,43 +71,42 @@ namespace MsgPack.Rpc.Server.Protocols
 		{
 			try
 			{
-				using ( var server = CreateServer() )
-				using ( var target = new TcpServerTransport( new ServerContext( server ) ) )
+				bool isOk = false;
+				string message = "Hello, world";
+				using ( var waitHandle = new ManualResetEventSlim() )
 				{
-					bool isOk = false;
-					using ( var waitHandle = new ManualResetEventSlim() )
-					{
-						target.MessageReceived +=
-							( sender, e ) =>
+					using ( var server =
+						CreateServer(
+							( id, args ) =>
 							{
-								// Simple echo.
 								try
 								{
-									Assert.That( e.MethodName, Is.EqualTo( "Echo" ) );
-									var context = new ServerResponseContext();
-									context.ReturnDataPacker.Pack( e.Arguments.ToArray() );
-									e.Transport.Send( context );
+									Assert.That( args[ 0 ] == message );
+									Assert.That( args[ 1 ].IsTypeOf<Int64>().GetValueOrDefault() );
 									isOk = true;
+									return args;
 								}
 								finally
 								{
 									waitHandle.Set();
 								}
-							};
+							}
+						)
+					)
+					using ( var manager = new TcpServerTransportManager( server ) )
+					{
 
-						target.Initialize( new IPEndPoint( IPAddress.Any, _portNumber ) );
-
-						TestEchoRequestCore( ref isOk, waitHandle );
+						TestEchoRequestCore( ref isOk, waitHandle, message );
 
 						waitHandle.Reset();
 						isOk = false;
 						// Again
-						TestEchoRequestCore( ref isOk, waitHandle );
+						TestEchoRequestCore( ref isOk, waitHandle, message );
 
 						waitHandle.Reset();
 						isOk = false;
 						// Again 2
-						TestEchoRequestCore( ref isOk, waitHandle );
+						TestEchoRequestCore( ref isOk, waitHandle, message );
 					}
 				}
 			}
@@ -118,7 +118,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			}
 		}
 
-		private static void TestEchoRequestCore( ref bool isOk, ManualResetEventSlim waitHandle )
+		private static void TestEchoRequestCore( ref bool isOk, ManualResetEventSlim waitHandle, string message )
 		{
 			using ( var client = new TcpClient() )
 			{
@@ -136,7 +136,7 @@ namespace MsgPack.Rpc.Server.Protocols
 					packer.Pack( 123 );
 					packer.Pack( "Echo" );
 					packer.PackArrayHeader( 2 );
-					packer.Pack( "Hello, world" );
+					packer.Pack( message );
 					packer.Pack( now );
 
 					Console.WriteLine( "---- Client sent request ----" );
@@ -149,10 +149,9 @@ namespace MsgPack.Rpc.Server.Protocols
 					{
 						Assert.That( waitHandle.Wait( TimeSpan.FromSeconds( 3 ) ) );
 					}
-					Assert.That( isOk, "Server failed" );
 
 					Console.WriteLine( "---- Client receiving response ----" );
-					var result = Unpacking.UnpackObject( stream ).Value;
+					var result = Unpacking.UnpackObject( stream );
 					Assert.That( result.IsArray );
 					var array = result.AsList();
 					Assert.That( array.Count, Is.EqualTo( 4 ) );
@@ -162,7 +161,7 @@ namespace MsgPack.Rpc.Server.Protocols
 					Assert.That( array[ 3 ].IsArray, array[ 3 ].ToString() );
 					var returnValue = array[ 3 ].AsList();
 					Assert.That( returnValue.Count, Is.EqualTo( 2 ) );
-					Assert.That( returnValue[ 0 ] == "Hello, world", returnValue[ 0 ].ToString() );
+					Assert.That( returnValue[ 0 ] == message, returnValue[ 0 ].ToString() );
 					Assert.That( returnValue[ 1 ] == now, returnValue[ 1 ].ToString() );
 					Console.WriteLine( "---- Client received response ----" );
 				}
@@ -174,40 +173,40 @@ namespace MsgPack.Rpc.Server.Protocols
 		{
 			try
 			{
-				using ( var server = CreateServer() )
-				using ( var target = new TcpServerTransport( new ServerContext( server ) ) )
-				{
-					const int count = 3;
-					bool[] serverStatus = new bool[ count ];
-					using ( var waitHandle = new CountdownEvent( count ) )
-					{
-						target.MessageReceived +=
-							( sender, e ) =>
+				const int count = 3;
+				bool[] serverStatus = new bool[ count ];
+				string message = "Hello, world";
+				using ( var waitHandle = new CountdownEvent( count ) )
+				using ( var server =
+					CreateServer(
+						( id, args ) =>
+						{
+							try
 							{
-								// Simple echo.
-								try
+								Assert.That( args[ 0 ] == message );
+								Assert.That( args[ 1 ].IsTypeOf<Int64>().GetValueOrDefault() );
+								lock ( serverStatus )
 								{
-									Assert.That( e.MethodName, Is.EqualTo( "Echo" ) );
-									var context = new ServerResponseContext();
-									context.ReturnDataPacker.Pack( e.Arguments.ToArray() );
-									e.Transport.Send( context );
-									serverStatus[ e.Id.Value ] = true;
+									serverStatus[ id ] = true;
 								}
-								finally
-								{
-									waitHandle.Signal();
-								}
-							};
 
-						target.Initialize( new IPEndPoint( IPAddress.Any, _portNumber ) );
+								return args;
+							}
+							finally
+							{
+								waitHandle.Signal();
+							}
+						}
+					)
+				)
+				using ( var manager = new TcpServerTransportManager( server ) )
+				{
+					TestEchoRequestContinuousCore( serverStatus, waitHandle, count, message );
 
-						TestEchoRequestContinuousCore( serverStatus, waitHandle, count );
-
-						waitHandle.Reset();
-						Array.Clear( serverStatus, 0, serverStatus.Length );
-						// Again
-						TestEchoRequestContinuousCore( serverStatus, waitHandle, count );
-					}
+					waitHandle.Reset();
+					Array.Clear( serverStatus, 0, serverStatus.Length );
+					// Again
+					TestEchoRequestContinuousCore( serverStatus, waitHandle, count, message );
 				}
 			}
 			catch ( SocketException sockEx )
@@ -218,7 +217,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			}
 		}
 
-		private static void TestEchoRequestContinuousCore( bool[] serverStatus, CountdownEvent waitHandle, int count )
+		private static void TestEchoRequestContinuousCore( bool[] serverStatus, CountdownEvent waitHandle, int count, string message )
 		{
 			using ( var client = new TcpClient() )
 			{
@@ -238,7 +237,7 @@ namespace MsgPack.Rpc.Server.Protocols
 						packer.Pack( i );
 						packer.Pack( "Echo" );
 						packer.PackArrayHeader( 2 );
-						packer.Pack( "Hello, world" );
+						packer.Pack( message );
 						packer.Pack( now );
 						Console.WriteLine( "---- Client sent request ----" );
 					}
@@ -252,38 +251,96 @@ namespace MsgPack.Rpc.Server.Protocols
 						Assert.That( waitHandle.Wait( TimeSpan.FromSeconds( count * 3 ) ) );
 					}
 
-					using ( var unpacker = Unpacker.Create( stream ) )
+					for ( int i = 0; i < count; i++ )
 					{
-						for ( int i = 0; i < count; i++ )
-						{
-							Console.WriteLine( "---- Client receiving response ----" );
-							Assert.That( unpacker.Read() );
-							var result = unpacker.Data.Value;
-							Assert.That( result.IsArray );
-							var array = result.AsList();
-							Assert.That( array.Count, Is.EqualTo( 4 ) );
-							Assert.That( array[ 0 ] == 1, array[ 0 ].ToString() );
-							Assert.That( array[ 1 ].IsTypeOf<int>().GetValueOrDefault() );
-							resposeStatus[ array[ 1 ].AsInt32() ] = true;
-							Assert.That( array[ 2 ] == MessagePackObject.Nil, array[ 2 ].ToString() );
-							Assert.That( array[ 3 ].IsArray, array[ 3 ].ToString() );
-							var returnValue = array[ 3 ].AsList();
-							Assert.That( returnValue.Count, Is.EqualTo( 2 ) );
-							Assert.That( returnValue[ 0 ] == "Hello, world", returnValue[ 0 ].ToString() );
-							Assert.That( returnValue[ 1 ] == now, returnValue[ 1 ].ToString() );
-							Console.WriteLine( "---- Client received response ----" );
-						}
+						Console.WriteLine( "---- Client receiving response ----" );
+						var array = Unpacking.UnpackArray( stream );
+						Assert.That( array.Count, Is.EqualTo( 4 ) );
+						Assert.That( array[ 0 ] == 1, array[ 0 ].ToString() );
+						Assert.That( array[ 1 ].IsTypeOf<int>().GetValueOrDefault() );
+						resposeStatus[ array[ 1 ].AsInt32() ] = true;
+						Assert.That( array[ 2 ] == MessagePackObject.Nil, array[ 2 ].ToString() );
+						Assert.That( array[ 3 ].IsArray, array[ 3 ].ToString() );
+						var returnValue = array[ 3 ].AsList();
+						Assert.That( returnValue.Count, Is.EqualTo( 2 ) );
+						Assert.That( returnValue[ 0 ] == message, returnValue[ 0 ].ToString() );
+						Assert.That( returnValue[ 1 ] == now, returnValue[ 1 ].ToString() );
+						Console.WriteLine( "---- Client received response ----" );
 					}
 
-					Assert.That( serverStatus, Is.All.True );
+					lock ( serverStatus )
+					{
+						Assert.That( serverStatus, Is.All.True, String.Join( ", ", serverStatus ) );
+					}
 					Assert.That( resposeStatus, Is.All.True );
 				}
 			}
 		}
 
-		private static RpcServer CreateServer()
+		private static RpcServer CreateServer( Func<int, MessagePackObject[], MessagePackObject> callback )
 		{
-			return new RpcServer( new RpcServerConfiguration() { MinimumConcurrency = 1 } );
+			return
+				new RpcServer(
+					new RpcServerConfiguration()
+					{
+						BindingEndPoint = new IPEndPoint( IPAddress.Any, _portNumber ),
+						MinimumConcurrentRequest = 1,
+						MaximumConcurrentRequest = 10,
+						MinimumConnection = 1,
+						MaximumConnection = 1,
+						DispatcherProvider = server => new CallbackDispatcher( server, callback )
+					}
+				);
 		}
+
+		private sealed class CallbackDispatcher : Dispatcher
+		{
+			private readonly Func<int, MessagePackObject[], MessagePackObject> _callback;
+
+			public CallbackDispatcher( RpcServer server, Func<int, MessagePackObject[], MessagePackObject> callback )
+				: base( server )
+			{
+				this._callback = callback;
+			}
+
+			protected sealed override Func<ServerRequestContext, ServerResponseContext, System.Threading.Tasks.Task> Dispatch( string methodName )
+			{
+				return
+					( requestContext, responseContext ) =>
+					{
+						MessagePackObject[] args;
+						if ( requestContext.ArgumentsUnpacker.Read() )
+						{
+							args = requestContext.ArgumentsUnpacker.ToArray();
+						}
+						else
+						{
+							args = new MessagePackObject[ 0 ];
+						}
+
+						var messageId = requestContext.MessageId;
+
+						return
+							Task.Factory.StartNew(
+								() =>
+								{
+									MessagePackObject returnValue;
+									try
+									{
+										returnValue = this._callback( messageId, args );
+									}
+									catch ( Exception exception )
+									{
+										base.SetException( responseContext, exception );
+										return;
+									}
+
+									base.SetReturnValue( responseContext, returnValue );
+								}
+							);
+					};
+			}
+		}
+
 	}
 }

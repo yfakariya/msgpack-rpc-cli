@@ -55,18 +55,15 @@ namespace MsgPack.Rpc.Server
 		// _maximumConcurrency, _currentConcurrency, _minimumIdle, _maximumIdle
 
 		private ServerTransportManager _transportManager;
-		private readonly ServiceTypeLocator _locator;
-		private readonly Dictionary<string, OperationDescription> _operations;
+		private Dispatcher _dispatcher;
 
 		public RpcServer() : this( null ) { }
 
 		public RpcServer( RpcServerConfiguration configuration )
 		{
 			var safeConfiguration = ( configuration ?? RpcServerConfiguration.Default ).AsFrozen();
-			this._operations = new Dictionary<string, OperationDescription>();
-			this._locator = safeConfiguration.ServiceTypeLocatorProvider();
-			this._serializationContext = new SerializationContext();
 			this._configuration = safeConfiguration;
+			this._serializationContext = new SerializationContext();
 		}
 
 		public void Dispose()
@@ -80,85 +77,36 @@ namespace MsgPack.Rpc.Server
 			return new TcpServerTransportManager( this );
 		}
 
-		public void Start( EndPoint bindingEndPoint )
+		public bool Start()
 		{
-			if ( this._transportManager != null )
+			var currentDispatcher = Interlocked.CompareExchange( ref this._dispatcher, this._configuration.DispatcherProvider( this ), null );
+			if ( currentDispatcher != null )
 			{
-				throw new InvalidOperationException( "Already started." );
+				return false;
 			}
 
 			Tracer.Server.TraceEvent( Tracer.EventType.StartServer, Tracer.EventId.StartServer, "Start server. Configuration:[{0}]", this._configuration );
 
-			this.PopluateOperations();
-			this._transportManager = this.CreateTransportManager();
+			this._transportManager = this._configuration.TransportManagerProvider( this );
+			return true;
 		}
 
-		private void PopluateOperations()
+		public bool Stop()
 		{
-			foreach ( var service in this._locator.FindServices() )
+			var currentDispatcher = Interlocked.Exchange( ref this._dispatcher, null );
+			if ( currentDispatcher == null )
 			{
-				foreach ( var operation in OperationDescription.FromServiceDescription( this._serializationContext, service ) )
-				{
-					this._operations.Add( operation.Id, operation );
-				}
-			}
-		}
-
-		public void Stop()
-		{
-			this._transportManager.BeginShutdown();
-			this._transportManager.Dispose();
-			this._transportManager = null;
-			this._operations.Clear();
-		}
-				
-		private void OnMessageReceived( object source, RpcMessageReceivedEventArgs e )
-		{
-			ServerResponseContext responseContext = null;
-			if ( e.MessageType == MessageType.Request )
-			{
-				responseContext = this._transportManager.ResponseContextPool.Borrow();
-				responseContext.Id = e.Id.Value;
+				return false;
 			}
 
-			OperationDescription operation;
-			if ( !this._operations.TryGetValue( e.MethodName, out operation ) )
+			if ( this._transportManager != null )
 			{
-				var error = new RpcErrorMessage( RpcError.NoMethodError, "Operation does not exist.", null );
-				InvocationHelper.TraceInvocationResult<object>(
-					e.MessageType,
-					e.Id.GetValueOrDefault(),
-					e.MethodName,
-					error,
-					null
-				);
-
-				if ( responseContext != null )
-				{
-					responseContext.Serialize<object>( null, error, null );
-				}
-
-				return;
+				this._transportManager.BeginShutdown();
+				this._transportManager.Dispose();
+				this._transportManager = null;
 			}
 
-			var task = operation.Operation( e.ArgumentsUnpacker, e.Id.GetValueOrDefault(), responseContext );
-
-#if NET_4_5
-			task.ContinueWith( ( previous, state ) =>
-				{
-					previous.Dispose();
-					( state as IDisposable ).Dispose();
-				},
-				responseContext
-			);
-#else
-			task.ContinueWith( previous =>
-				{
-					previous.Dispose();
-					e.Transport.Send( responseContext );
-				}
-			);
-#endif
+			return true;
 		}
 	}
 }

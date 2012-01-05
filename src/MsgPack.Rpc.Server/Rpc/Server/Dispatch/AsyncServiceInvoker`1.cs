@@ -25,6 +25,7 @@ using System.Threading.Tasks;
 using MsgPack.Rpc.Protocols;
 using MsgPack.Serialization;
 using MsgPack.Rpc.Server.Protocols;
+using System.Diagnostics.Contracts;
 
 namespace MsgPack.Rpc.Server.Dispatch
 {
@@ -84,32 +85,30 @@ namespace MsgPack.Rpc.Server.Dispatch
 
 		protected AsyncServiceInvoker( SerializationContext context, ServiceDescription serviceDescription, MethodInfo targetOperation )
 		{
-			Debug.Assert( context != null );
-			Debug.Assert( serviceDescription != null );
-			Debug.Assert( targetOperation != null );
+			Contract.Assert( context != null );
+			Contract.Assert( serviceDescription != null );
+			Contract.Assert( targetOperation != null );
 
 			this._serviceDescription = serviceDescription;
 			this._targetOperation = targetOperation;
 			this._operationId = serviceDescription.ToString() + "::" + targetOperation.Name;
 			this._returnValueSerializer = context.GetSerializer<T>();
 		}
-
-		void IServiceInvoker.Invoke( Unpacker arguments, int messageId, ServerResponseContext responseContext )
+		
+		public Task InvokeAsync( ServerRequestContext requestContext, ServerResponseContext responseContext )
 		{
-			this.InvokeAsync( arguments, messageId, responseContext ).Wait();
-		}
-
-		public Task InvokeAsync( Unpacker arguments, int messageId, ServerResponseContext responseContext )
-		{
-			if ( arguments == null )
+			if ( requestContext == null )
 			{
-				throw new ArgumentNullException( "arguments" );
+				throw new ArgumentNullException( "requestContext" );
 			}
 
+			var messageId = requestContext.MessageId;
+			var arguments = requestContext.ArgumentsUnpacker;
+
 			Trace.CorrelationManager.StartLogicalOperation();
-			if ( Tracer.Server.Switch.ShouldTrace( Tracer.EventType.OperationStart ) )
+			if ( Tracer.Dispatch.Switch.ShouldTrace( Tracer.EventType.OperationStart ) )
 			{
-				Tracer.Server.TraceData(
+				Tracer.Dispatch.TraceData(
 					Tracer.EventType.OperationStart,
 					Tracer.EventId.OperationStart,
 					responseContext == null ? MessageType.Notification : MessageType.Request,
@@ -121,10 +120,10 @@ namespace MsgPack.Rpc.Server.Dispatch
 			Task task;
 			RpcErrorMessage error;
 			this.InvokeCore( arguments, out task, out error );
-			var tuple = Tuple.Create( this, messageId, responseContext, error );
+			var tuple = Tuple.Create( this, requestContext.SessionId, messageId, responseContext, error );
 			if ( task == null )
 			{
-				return Task.Factory.StartNew( state => HandleInvocationResult( null, state as Tuple<AsyncServiceInvoker<T>, int, ServerResponseContext, RpcErrorMessage> ), tuple );
+				return Task.Factory.StartNew( state => HandleInvocationResult( null, state as Tuple<AsyncServiceInvoker<T>, long, int, ServerResponseContext, RpcErrorMessage> ), tuple );
 			}
 			else
 			{
@@ -149,12 +148,13 @@ namespace MsgPack.Rpc.Server.Dispatch
 			}
 		}
 
-		private static void HandleInvocationResult( Task previous, Tuple<AsyncServiceInvoker<T>, int, ServerResponseContext, RpcErrorMessage> closureState )
+		private static void HandleInvocationResult( Task previous, Tuple<AsyncServiceInvoker<T>, long, int, ServerResponseContext, RpcErrorMessage> closureState )
 		{
 			var @this = closureState.Item1;
-			var messageId = closureState.Item2;
-			var responseContext = closureState.Item3;
-			var error = closureState.Item4;
+			var sessionId = closureState.Item2;
+			var messageId = closureState.Item3;
+			var responseContext = closureState.Item4;
+			var error = closureState.Item5;
 
 			T result = default( T );
 			try
@@ -176,7 +176,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 					previous.Dispose();
 				}
 
-				InvocationHelper.TraceInvocationResult( responseContext == null ? MessageType.Notification : MessageType.Request, messageId, @this._operationId, error, result );
+				InvocationHelper.TraceInvocationResult( sessionId, responseContext == null ? MessageType.Notification : MessageType.Request, messageId, @this._operationId, error, result );
 			}
 			finally
 			{

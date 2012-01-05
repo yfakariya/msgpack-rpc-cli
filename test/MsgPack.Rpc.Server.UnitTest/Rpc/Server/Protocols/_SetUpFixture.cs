@@ -1,4 +1,4 @@
-#region -- License Terms --
+﻿#region -- License Terms --
 //
 // MessagePack for CLI
 //
@@ -19,16 +19,19 @@
 #endregion -- License Terms --
 
 using System;
+using System.Diagnostics.Contracts;
+using NUnit.Framework;
 
-namespace MsgPack.Rpc.Server.Protocols
+namespace MsgPack.Rpc.Server.Transport
 {
-	internal enum ServerProcessingState
+	[CLSCompliant( false )]
+	[SetUpFixture]
+	public sealed class _SetUpFixture
 	{
-		Idle = 0,
-		Receiving = 1,
-		Reserved = 2,
-		Sending = 3,
-		Disposing = -1,
-		Disposed = -2
+		[SetUp]
+		public void SetupCurrentNamespaceTests()
+		{
+			Contract.ContractFailed += ( sender, e ) => e.SetUnwind();
+		}
 	}
 }

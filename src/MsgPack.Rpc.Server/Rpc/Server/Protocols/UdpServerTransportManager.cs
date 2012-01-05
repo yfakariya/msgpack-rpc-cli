@@ -27,7 +27,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		public UdpServerTransportManager( RpcServer server )
 			: base( server )
 		{
-			base.SetTransportPool( server.Configuration.UdpTransportPoolProvider( () => new UdpServerTransport( this ) ) );
+			base.SetTransportPool( server.Configuration.UdpTransportPoolProvider( () => new UdpServerTransport( this ), server.Configuration.CreateUdpTransportPoolConfiguration() ) );
 		}
 	}
 }

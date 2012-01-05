@@ -60,6 +60,8 @@
     <Compile Include="Rpc\Server\Protocols\TcpServerTransportTest.cs" />
     <Compile Include="Rpc\Server\Protocols\UdpServerTransportTest.cs" />
     <Compile Include="Rpc\Server\RpcServerTest.cs" />
+    <Compile Include="Rpc\Server\Protocols\_SetUpFixture.cs" />
+    <Compile Include="Rpc\Server\_SetUpFixture.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\MsgPack.Rpc.Server\MsgPack.Rpc.Server.csproj">
@@ -75,9 +77,14 @@
     <None Include="..\..\src\MsgPack.snk">
       <Link>MsgPack.snk</Link>
     </None>
+    <None Include="App.config" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>
+    </PostBuildEvent>
+  </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

@@ -31,7 +31,14 @@ namespace MsgPack.Rpc.Server.Protocols
 	/// </summary>
 	public abstract class ServerContext : SocketAsyncEventArgs, ILeaseable<ServerContext>
 	{
-		internal ServerProcessingState State;
+		private static long _lastSessionId;
+
+		private long _sessionId;
+		public long SessionId
+		{
+			get { return this._sessionId; }
+			internal set { this._sessionId = value; }
+		}
 
 		/// <summary>
 		///		Gets or sets the listening socket.
@@ -48,12 +55,12 @@ namespace MsgPack.Rpc.Server.Protocols
 		///		The message id. 
 		///		This value will be undefined for the notification message.
 		/// </value>
-		internal int Id
+		internal int MessageId
 		{
 			get;
 			set;
 		}
-				
+
 		private byte[] _receivingBuffer;
 
 		/// <summary>
@@ -101,7 +108,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			get { return this._receivedData; }
 		}
 
-		[Obsolete("Use more stable way")]
+		[Obsolete( "Use more stable way" )]
 		public bool IsClientShutdowned
 		{
 			get;
@@ -119,7 +126,31 @@ namespace MsgPack.Rpc.Server.Protocols
 		{
 			this._asLease = lease;
 		}
-		
+
+		private ServerTransport _boundTransport;
+
+		internal ServerTransport BoundTransport
+		{
+			get { return this._boundTransport; }
+		}
+
+		private EventHandler<SocketAsyncEventArgs> _boundEventHandler;
+
+		internal virtual void SetTransport( ServerTransport transport )
+		{
+			this.AcceptSocket = transport.BoundSocket;
+			EventHandler<SocketAsyncEventArgs> newHandler = transport.OnSocketOperationCompleted;
+			var oldHandler = Interlocked.Exchange( ref this._boundEventHandler, newHandler );
+			Contract.Assert( oldHandler == null, "Bounded: " + oldHandler );
+			if ( oldHandler != null )
+			{
+				this.Completed -= oldHandler;
+			}
+
+			this.Completed += this._boundEventHandler;
+			this._boundTransport = transport;
+		}
+
 		protected ServerContext()
 		{
 			// TODO: Configurable
@@ -128,11 +159,23 @@ namespace MsgPack.Rpc.Server.Protocols
 			this._receivedData = new List<ArraySegment<byte>>( 1 );
 		}
 
+		public void RenewSessionId()
+		{
+			this._sessionId = Interlocked.Increment( ref _lastSessionId );
+		}
+
 		internal void ReturnLease()
 		{
 			try { }
 			finally
 			{
+				var handler = Interlocked.Exchange( ref this._boundEventHandler, null );
+				if ( handler != null )
+				{
+					this.Completed -= handler;
+					this._boundTransport = null;
+				}
+
 				var asLease = Interlocked.Exchange( ref this._asLease, null );
 				if ( asLease != null )
 				{

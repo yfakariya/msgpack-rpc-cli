@@ -24,56 +24,11 @@ using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.Globalization;
 using System.Runtime.CompilerServices;
-using System.Runtime.Serialization;
 using System.Threading;
 
 namespace MsgPack.Rpc
 {
 	// TODO: Move to NLiblet
-
-	/// <summary>
-	///		Defines exhausion policy of the object pool.
-	/// </summary>
-	public enum ExhausionPolicy
-	{
-		/// <summary>
-		///		Blocks the caller threads until any objects will be available.
-		/// </summary>
-		BlockUntilAvailable,
-
-		/// <summary>
-		///		Throws the <see cref="ObjectPoolEmptyException"/> immediately.
-		/// </summary>
-		ThrowException
-	}
-
-	/// <summary>
-	///		Occurs when the object pool with <see cref="ExhausionPolicy.ThrowException"/> is empty at borrowing.
-	/// </summary>
-	public sealed class ObjectPoolEmptyException : Exception
-	{
-		/// <summary>
-		/// Initializes a new instance of the <see cref="ObjectPoolEmptyException"/> class.
-		/// </summary>
-		public ObjectPoolEmptyException() : base( "The object pool is empty." ) { }
-
-		/// <summary>
-		/// Initializes a new instance of the <see cref="ObjectPoolEmptyException"/> class.
-		/// </summary>
-		/// <param name="message">The message.</param>
-		public ObjectPoolEmptyException( string message ) : base( message ) { }
-
-		/// <summary>
-		/// Initializes a new instance of the <see cref="ObjectPoolEmptyException"/> class.
-		/// </summary>
-		/// <param name="message">The message.</param>
-		/// <param name="innerException">The inner exception.</param>
-		public ObjectPoolEmptyException( string message, Exception innerException ) : base( message, innerException ) { }
-
-#if !SILVERLIGHT
-		private ObjectPoolEmptyException( SerializationInfo info, StreamingContext context ) : base( info, context ) { }
-#endif
-	}
 
 	internal sealed class StandardObjectPool<T> : ObjectPool<T>
 			where T : class, ILeaseable<T>
@@ -116,8 +71,8 @@ namespace MsgPack.Rpc
 			}
 
 			this._evictionIntervalMilliseconds = safeConfiguration.EvitionInterval == null ? default( int? ) : unchecked( ( int )safeConfiguration.EvitionInterval.Value.TotalMilliseconds );
-			if ( safeConfiguration.MaximumPooled != null 
-				&& safeConfiguration.MinimumReserved != safeConfiguration.MaximumPooled.GetValueOrDefault() 
+			if ( safeConfiguration.MaximumPooled != null
+				&& safeConfiguration.MinimumReserved != safeConfiguration.MaximumPooled.GetValueOrDefault()
 				&& this._evictionIntervalMilliseconds != null )
 			{
 				this._evictionTimer = new Timer( this.OnEvictionTimerElapsed, null, this._evictionIntervalMilliseconds.Value, Timeout.Infinite );
@@ -178,20 +133,29 @@ namespace MsgPack.Rpc
 		protected sealed override T BorrowCore()
 		{
 			T result;
-			if ( this._pool.TryTake( out result, 0 ) )
+			while ( true )
 			{
-				return result;
-			}
-
-			if ( this._pool.Count < this._pool.BoundedCapacity )
-			{
-				var newObject = this._factory();
-				if ( this._pool.TryAdd( newObject, 0 ) )
+				if ( this._pool.TryTake( out result, 0 ) )
 				{
-					return newObject;
+					return result;
 				}
 
-				DisposeItem( newObject );
+				if ( this._pool.Count < this._pool.BoundedCapacity )
+				{
+					var newObject = this._factory();
+					if ( this._pool.TryAdd( newObject, 0 ) )
+					{
+						// Try retake
+						continue;
+					}
+					else
+					{
+						DisposeItem( newObject );
+					}
+				}
+
+				// Wait or exception
+				break;
 			}
 
 			if ( this._configuration.ExhausionPolicy == ExhausionPolicy.ThrowException )

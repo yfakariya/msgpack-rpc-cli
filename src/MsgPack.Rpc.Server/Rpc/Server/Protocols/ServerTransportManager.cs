@@ -27,6 +27,25 @@ namespace MsgPack.Rpc.Server.Protocols
 {
 	public abstract class ServerTransportManager : IDisposable
 	{
+		private readonly WeakReference _serverReference;
+
+		protected internal RpcServer Server
+		{
+			get
+			{
+				if ( this._serverReference.IsAlive )
+				{
+					try
+					{
+						return this._serverReference.Target as RpcServer;
+					}
+					catch ( InvalidOperationException ) { }
+				}
+
+				return null;
+			}
+		}
+
 		private readonly ObjectPool<ServerRequestContext> _requestContextPool;
 
 		public ObjectPool<ServerRequestContext> RequestContextPool
@@ -91,8 +110,9 @@ namespace MsgPack.Rpc.Server.Protocols
 			}
 
 			this._configuration = server.Configuration;
-			this._requestContextPool = server.Configuration.RequestContextPoolProvider( () => new ServerRequestContext() );
-			this._responseContextPool = server.Configuration.ResponseContextPoolProvider( () => new ServerResponseContext() );
+			this._requestContextPool = server.Configuration.RequestContextPoolProvider( () => new ServerRequestContext(), server.Configuration.CreateRequestContextPoolConfiguration() );
+			this._responseContextPool = server.Configuration.ResponseContextPoolProvider( () => new ServerResponseContext(), server.Configuration.CreateResponseContextPoolConfiguration() );
+			this._serverReference = new WeakReference( server );
 		}
 
 		public void Dispose()
@@ -101,11 +121,18 @@ namespace MsgPack.Rpc.Server.Protocols
 			GC.SuppressFinalize( this );
 		}
 
-		protected virtual void Dispose( bool disposing )
+		protected void Dispose( bool disposing )
 		{
 			this._isDisposed = true;
 			Thread.MemoryBarrier();
+			this.OnDisposing( disposing );
+			this.DisposeCore( disposing );
+			this.OnDisposed( disposing );
 		}
+
+		protected virtual void OnDisposing( bool disposing ){}
+		protected virtual void DisposeCore( bool disposing ) { }
+		protected virtual void OnDisposed( bool disposing ) { }
 
 		public void BeginShutdown()
 		{
@@ -126,7 +153,7 @@ namespace MsgPack.Rpc.Server.Protocols
 				Tracer.Protocols.TraceEvent(
 					Tracer.EventType.IgnoreableError,
 					Tracer.EventId.IgnoreableError,
-					"Ignoreable error. [ \"Socket.Handle\" : 0x{0:x}, \"Remote endpoint\" : \"{1}\", \"LastOperation\" : \"{2}\", \"SocketError\" : \"{3}\", \"ErrorCode\" : 0x{4:x8} ]",
+					"Ignoreable error. [ \"Socket\" : 0x{0:x}, \"RemoteEndpoint\" : \"{1}\", \"LastOperation\" : \"{2}\", \"SocketError\" : \"{3}\", \"ErrorCode\" : 0x{4:x8} ]",
 					( sender as Socket ).Handle,
 					e.RemoteEndPoint,
 					e.LastOperation,
@@ -137,16 +164,22 @@ namespace MsgPack.Rpc.Server.Protocols
 			}
 			else if ( isError.GetValueOrDefault() )
 			{
-				this.HandleError( e.LastOperation, e.SocketError );
+				Tracer.Protocols.TraceEvent(
+					Tracer.EventType.SocketError,
+					Tracer.EventId.SocketError,
+					"Socket error. [ \"Socket\" : 0x{0:x}, \"RemoteEndpoint\" : \"{1}\", \"LastOperation\" : \"{2}\", \"SocketError\" : \"{3}\", \"ErrorCode\" : 0x{4:x8} ]",
+					( sender as Socket ).Handle,
+					e.RemoteEndPoint,
+					e.LastOperation,
+					e.SocketError,
+					( int )e.SocketError
+				);
+
+				this.OnErrorCore( new RpcTransportErrorEventArgs( e.LastOperation, e.SocketError ) );
 				return false;
 			}
 
 			return true;
-		}
-
-		internal void HandleError( SocketAsyncOperation operation, SocketError socketErrorCode )
-		{
-			this.OnErrorCore( new RpcTransportErrorEventArgs( operation, socketErrorCode ) );
 		}
 
 		internal abstract void ReturnTransport( ServerTransport transport );

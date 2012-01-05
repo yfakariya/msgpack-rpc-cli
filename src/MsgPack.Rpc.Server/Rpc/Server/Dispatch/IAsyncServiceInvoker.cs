@@ -27,7 +27,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 	/// <summary>
 	///		Defines non-generic interface for asynchronous service invoker.
 	/// </summary>
-	internal interface IAsyncServiceInvoker : IServiceInvoker
+	internal interface IAsyncServiceInvoker
 	{
 		/// <summary>
 		///		Gets the ID of the operation.
@@ -41,9 +41,10 @@ namespace MsgPack.Rpc.Server.Dispatch
 		///		Invokes target service operation asynchronously.
 		/// </summary>
 		/// <param name="arguments"><see cref="Unpacker"/> to unpack arguments.</param>
-		/// <param name="messageId">
-		///		Id of the current request message. 
-		///		This value is not defined for the notification messages.
+		/// <param name="requestContext">
+		///		The context object to hold request data.
+		///		Note that properties of the context is only valid until this method returns.
+		///		That is, it will be unpredectable state in the asynchronous operation. 
 		///	</param>
 		/// <param name="responseContext">
 		///		The context object to pack response value or error.
@@ -52,6 +53,6 @@ namespace MsgPack.Rpc.Server.Dispatch
 		/// <returns>
 		///		<see cref="Task"/> to control entire process including sending response.
 		/// </returns>
-		Task InvokeAsync( Unpacker arguments, int messageId, ServerResponseContext responseContext );
+		Task InvokeAsync( ServerRequestContext requestContext, ServerResponseContext responseContext );
 	}
 }

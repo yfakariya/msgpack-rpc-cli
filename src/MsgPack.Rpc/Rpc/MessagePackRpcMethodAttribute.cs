@@ -20,15 +20,11 @@
 
 using System;
 
-namespace MsgPack.Rpc.Server.Protocols
+namespace MsgPack.Rpc
 {
-	internal enum ServerProcessingState
+	[AttributeUsage( AttributeTargets.Method, AllowMultiple = false, Inherited = true )]
+	public sealed class MessagePackRpcMethodAttribute : Attribute
 	{
-		Idle = 0,
-		Receiving = 1,
-		Reserved = 2,
-		Sending = 3,
-		Disposing = -1,
-		Disposed = -2
+		public MessagePackRpcMethodAttribute() { }
 	}
 }
