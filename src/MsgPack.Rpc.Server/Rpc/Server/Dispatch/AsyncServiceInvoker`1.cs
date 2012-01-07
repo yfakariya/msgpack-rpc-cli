@@ -120,7 +120,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 			Task task;
 			RpcErrorMessage error;
 			this.InvokeCore( arguments, out task, out error );
-			var tuple = Tuple.Create( this, requestContext.SessionId, messageId, responseContext, error );
+			var tuple = Tuple.Create( this, requestContext.SessionId, messageId.GetValueOrDefault(), responseContext, error );
 			if ( task == null )
 			{
 				return Task.Factory.StartNew( state => HandleInvocationResult( null, state as Tuple<AsyncServiceInvoker<T>, long, int, ServerResponseContext, RpcErrorMessage> ), tuple );

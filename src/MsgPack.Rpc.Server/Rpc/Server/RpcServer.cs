@@ -51,6 +51,108 @@ namespace MsgPack.Rpc.Server
 		}
 
 
+		private EventHandler<RpcClientErrorEventArgs> _clientError;
+
+		public event EventHandler<RpcClientErrorEventArgs> ClientError
+		{
+			add
+			{
+				EventHandler<RpcClientErrorEventArgs> oldHandler;
+				EventHandler<RpcClientErrorEventArgs> currentHandler = this._clientError;
+				do
+				{
+					oldHandler = currentHandler;
+					var newHandler = Delegate.Combine( oldHandler, value ) as EventHandler<RpcClientErrorEventArgs>;
+					currentHandler = Interlocked.CompareExchange( ref this._clientError, newHandler, oldHandler );
+				} while ( oldHandler != currentHandler );
+			}
+			remove
+			{
+				EventHandler<RpcClientErrorEventArgs> oldHandler;
+				EventHandler<RpcClientErrorEventArgs> currentHandler = this._clientError;
+				do
+				{
+					oldHandler = currentHandler;
+					var newHandler = Delegate.Remove( oldHandler, value ) as EventHandler<RpcClientErrorEventArgs>;
+					currentHandler = Interlocked.CompareExchange( ref this._clientError, newHandler, oldHandler );
+				} while ( oldHandler != currentHandler );
+			}
+		}
+
+		protected virtual void OnClientError( RpcClientErrorEventArgs e )
+		{
+			if ( e == null )
+			{
+				throw new ArgumentNullException( "e" );
+			}
+
+			var handler = Interlocked.CompareExchange( ref this._clientError, null, null );
+			if ( handler != null )
+			{
+				handler( this, e );
+			}
+		}
+
+		internal void RaiseClientError( ServerRequestContext context, RpcErrorMessage rpcError )
+		{
+			this.OnClientError( 
+				new RpcClientErrorEventArgs( rpcError ) 
+				{ 
+					RemoteEndPoint = context.RemoteEndPoint, 
+					SessionId = context.SessionId,
+					MessageId = context.MessageId
+				}
+			);
+		}
+
+
+		private EventHandler<RpcServerErrorEventArgs> _serverError;
+
+		public event EventHandler<RpcServerErrorEventArgs> ServerError
+		{
+			add
+			{
+				EventHandler<RpcServerErrorEventArgs> oldHandler;
+				EventHandler<RpcServerErrorEventArgs> currentHandler = this._serverError;
+				do
+				{
+					oldHandler = currentHandler;
+					var newHandler = Delegate.Combine( oldHandler, value ) as EventHandler<RpcServerErrorEventArgs>;
+					currentHandler = Interlocked.CompareExchange( ref this._serverError, newHandler, oldHandler );
+				} while ( oldHandler != currentHandler );
+			}
+			remove
+			{
+				EventHandler<RpcServerErrorEventArgs> oldHandler;
+				EventHandler<RpcServerErrorEventArgs> currentHandler = this._serverError;
+				do
+				{
+					oldHandler = currentHandler;
+					var newHandler = Delegate.Remove( oldHandler, value ) as EventHandler<RpcServerErrorEventArgs>;
+					currentHandler = Interlocked.CompareExchange( ref this._serverError, newHandler, oldHandler );
+				} while ( oldHandler != currentHandler );
+			}
+		}
+
+		protected virtual void OnServerError( RpcServerErrorEventArgs e )
+		{
+			if ( e == null )
+			{
+				throw new ArgumentNullException( "e" );
+			}
+
+			var handler = Interlocked.CompareExchange( ref this._serverError, null, null );
+			if ( handler != null )
+			{
+				handler( this, e );
+			}
+		}
+
+		internal void RaiseServerError( Exception exception )
+		{
+			this.OnServerError( new RpcServerErrorEventArgs( exception ) );
+		}
+
 		// TODO: auto-scaling
 		// _maximumConcurrency, _currentConcurrency, _minimumIdle, _maximumIdle
 

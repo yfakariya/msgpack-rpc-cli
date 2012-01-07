@@ -20,34 +20,37 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
 using System.Linq;
-using System.Net.Sockets;
-using System.Threading;
-using System.Net;
+using System.Text;
 
-namespace MsgPack.Rpc.Protocols
+namespace MsgPack.Rpc.Client.Protocols
 {
-	// TODO: Extract abstract class and implemnt UDP Transport.
-	/// <summary>
-	///		TCP binding of <see cref="IClinentTransport"/>.
-	/// </summary>
-	internal sealed class TcpClientTransport : ConnectionOrientedClientTransport
+	public sealed class TcpClientTransport : ClientTransport, ILeaseable<TcpClientTransport>
 	{
-		public TcpClientTransport( EndPoint remoteEndPoint, RpcTransportProtocol protocol, ClientEventLoop eventLoop, RpcClientOptions options )
-			: base( remoteEndPoint, protocol, eventLoop, options )
-		{
-			if ( protocol.ProtocolType != ProtocolType.Tcp )
-			{
-				throw new ArgumentException( "socket must be connected TCP socket.", "protocol" );
-			}
+		public TcpClientTransport( TcpClientTransportManager manager )
+			: base( manager ) { }
 
-			Contract.EndContractBlock();
-		}
-		
-		protected sealed override void SendCore( SendingContext context )
+		protected sealed override void SendCore( ClientRequestContext context )
 		{
-			this.EventLoop.Send( context );
+			if ( !this.BoundSocket.SendAsync( context ) )
+			{
+				context.SetCompletedSynchronously();
+				this.OnSent( context );
+			}
+		}
+
+		protected sealed override void ReceiveCore( ClientResponseContext context )
+		{
+			if ( !this.BoundSocket.ReceiveAsync( context ) )
+			{
+				context.SetCompletedSynchronously();
+				this.OnReceived( context );
+			}
+		}
+
+		void ILeaseable<TcpClientTransport>.SetLease( ILease<TcpClientTransport> lease )
+		{
+			base.SetLease( lease );
 		}
 	}
 }

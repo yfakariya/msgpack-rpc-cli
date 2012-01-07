@@ -37,13 +37,30 @@ namespace MsgPack.Rpc.Server.Protocols
 		public TcpServerTransportManager( RpcServer server )
 			: base( server )
 		{
+#if !API_SIGNATURE_TEST
 			base.SetTransportPool( server.Configuration.TcpTransportPoolProvider( () => new TcpServerTransport( this ), server.Configuration.CreateTcpTransportPoolConfiguration() ) );
+#endif
+
 			this._listeningContextPool = server.Configuration.ListeningContextPoolProvider( () => new ListeningContext(), server.Configuration.CreateListeningContextPoolConfiguration() );
-			this._listeningSocket = new Socket( AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp );
+			this._listeningSocket = 
+				new Socket( 
+					( server.Configuration.PreferIPv4 || !Socket.OSSupportsIPv6) ? AddressFamily.InterNetwork : AddressFamily.InterNetworkV6,
+					SocketType.Stream, 
+					ProtocolType.Tcp
+				);
+
+#if !API_SIGNATURE_TEST
 			var bindingEndPoint = this.Configuration.BindingEndPoint ?? NetworkEnvironment.GetDefaultEndPoint( server.Configuration.PortNumber );
+#else
+			var bindingEndPoint = this.Configuration.BindingEndPoint;
+#endif
 			this._listeningSocket.Bind( bindingEndPoint );
 			this._listeningSocket.Listen( server.Configuration.ListenBackLog );
+
+#if !API_SIGNATURE_TEST
 			Tracer.Protocols.TraceEvent( Tracer.EventType.StartListen, Tracer.EventId.StartListen, "Start listen. [ \"endPoint\" : \"{0}\", \"backLog\" : {1} ]", bindingEndPoint, server.Configuration.ListenBackLog );
+#endif
+
 			this.StartAccept();
 		}
 
@@ -76,7 +93,7 @@ namespace MsgPack.Rpc.Server.Protocols
 
 		private void OnCompleted( object sender, SocketAsyncEventArgs e )
 		{
-			if ( !this.HandleError( sender, e ) )
+			if ( !this.HandleSocketError( sender as Socket, e ) )
 			{
 				return;
 			}
@@ -92,6 +109,7 @@ namespace MsgPack.Rpc.Server.Protocols
 				}
 				default:
 				{
+#if !API_SIGNATURE_TEST
 					Tracer.Protocols.TraceEvent(
 						Tracer.EventType.UnexpectedLastOperation,
 						Tracer.EventId.UnexpectedLastOperation,
@@ -100,6 +118,7 @@ namespace MsgPack.Rpc.Server.Protocols
 						e.RemoteEndPoint,
 						e.LastOperation
 					);
+#endif
 					break;
 				}
 			}
@@ -119,7 +138,9 @@ namespace MsgPack.Rpc.Server.Protocols
 					return;
 				}
 
+#if !API_SIGNATURE_TEST
 				Tracer.Protocols.TraceEvent( Tracer.EventType.BeginAccept, Tracer.EventId.BeginAccept, "Wait for connection. [ \"LocalEndPoint\" : \"{0}\" ]", this._listeningSocket.LocalEndPoint );
+#endif
 
 				if ( !this._listeningSocket.AcceptAsync( context ) )
 				{
@@ -139,16 +160,18 @@ namespace MsgPack.Rpc.Server.Protocols
 
 		private void OnAcceptted( ListeningContext context )
 		{
-			Tracer.Protocols.TraceEvent( 
+#if !API_SIGNATURE_TEST
+			Tracer.Protocols.TraceEvent(
 				Tracer.EventType.AcceptInboundTcp,
-				Tracer.EventId.AcceptInboundTcp, 
-				"Accept. [ \"RemoteEndPoit\" : \"{0}\", \"LocalEndPoint\" : \"{1}\" ]", context.AcceptSocket.RemoteEndPoint, context.AcceptSocket.LocalEndPoint 
+				Tracer.EventId.AcceptInboundTcp,
+				"Accept. [ \"RemoteEndPoint\" : \"{0}\", \"LocalEndPoint\" : \"{1}\" ]", context.AcceptSocket.RemoteEndPoint, context.AcceptSocket.LocalEndPoint
 			);
+#endif
 
 			var transport = this.GetTransport( context.AcceptSocket );
 			context.AcceptSocket = null;
 			this.Accept( context );
-			this.ProcessRequet( transport );
+			transport.Receive( this.GetRequetContext( transport ) );
 		}
 	}
 }

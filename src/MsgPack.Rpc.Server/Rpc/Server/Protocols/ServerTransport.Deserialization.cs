@@ -231,6 +231,7 @@ namespace MsgPack.Rpc.Server.Protocols
 				return true;
 			}
 
+			// TODO: Without actual unpacking
 			context.ArgumentsBufferUnpacker = context.HeaderUnpacker.ReadSubtree();
 
 			if ( Int32.MaxValue < context.ArgumentsBufferUnpacker.ItemsCount )

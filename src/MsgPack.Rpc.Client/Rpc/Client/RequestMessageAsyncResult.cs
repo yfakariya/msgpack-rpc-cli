@@ -19,67 +19,43 @@
 #endregion -- License Terms --
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using MsgPack.Rpc.Protocols;
-using System.Diagnostics.Contracts;
 using System.Threading;
+using MsgPack.Rpc.Protocols;
+using MsgPack.Rpc.Client.Protocols;
 
-namespace MsgPack.Rpc
+namespace MsgPack.Rpc.Client
 {
 	/// <summary>
 	///		<see cref="IAsyncResult"/> implementation for async RPC.
 	/// </summary>
-	internal sealed class RequestMessageAsyncResult : MessageAsyncResult, IResponseHandler
+	internal sealed class RequestMessageAsyncResult : MessageAsyncResult
 	{
-		private ResponseMessage? _response;
+		private ClientResponseContext _responseContext;
 
-		/// <summary>
-		///		Get response message.
-		/// </summary>
-		/// <value>
-		///		Response message. If response message has not been set, then null.
-		/// </value>
-		public ResponseMessage? Response
+		public ClientResponseContext ResponseContext
 		{
-			get { return this._response; }
+			get { return this._responseContext; }
 		}
 
-		/// <summary>
-		///		Complete this invocation as success.
-		/// </summary>
-		/// <param name="response">
-		///		Replied response.
-		///	</param>
-		/// <param name="completedSynchronously">
-		///		When operation is completed same thread as initiater then true.
-		/// </param>
-		public void HandleResponse( ResponseMessage response, bool completedSynchronously )
+		public void OnCompleted( ClientResponseContext context, Exception exception, bool completedSynchronously )
 		{
-			try { }
-			finally
+			if ( exception != null )
 			{
-				this._response = response;
-				Thread.MemoryBarrier();
-				base.Complete( completedSynchronously );
+				base.OnError( exception, completedSynchronously );
+				return;
 			}
+
+			var error = ErrorInterpreter.UnpackError( context );
+			if ( !error.IsSuccess )
+			{
+				base.OnError( error.ToException(), completedSynchronously );
+				return;
+			}
+
+			Interlocked.Exchange( ref this._responseContext, context );
+			base.Complete( completedSynchronously );
 		}
 
-		/// <summary>
-		///		Complete this invocation as error.
-		/// </summary>
-		/// <param name="error">
-		///		Occurred RPC error.
-		///	</param>
-		/// <param name="completedSynchronously">
-		///		When operation is completed same thread as initiater then true.
-		/// </param>
-		public void HandleError( RpcErrorMessage error, bool completedSynchronously )
-		{
-			this.OnError( RpcException.FromRpcError( error ), completedSynchronously );
-		}
-		
 		public RequestMessageAsyncResult( Object owner, int messageId, AsyncCallback asyncCallback, object asyncState )
 			: base( owner, messageId, asyncCallback, asyncState ) { }
 	}

@@ -23,27 +23,25 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace MsgPack.Rpc
+namespace MsgPack.Rpc.Server
 {
-	// FIXME: Implement
-
-	/// <summary>
-	///		Provide basic features for all RPC proxy classes.
-	/// </summary>
-	class RpcProxy
+	public sealed class RpcServerErrorEventArgs : EventArgs
 	{
-		public static T Create<T>()
-			where T : class, new()
+		private readonly Exception _exception;
+
+		public Exception Exception
 		{
-			throw new NotImplementedException();
+			get { return this._exception; }
 		}
 
-		public static T Create<T>( params object[] arguments )
-			where T : class ,new()
+		public RpcServerErrorEventArgs( Exception exception )
 		{
-			throw new NotImplementedException();
+			if ( exception == null )
+			{
+				throw new ArgumentNullException( "exception" );
+			}
 
-			// Use real proxy. It is not so fast.
+			this._exception = exception;
 		}
 	}
 }

@@ -22,14 +22,14 @@ using System;
 using System.Collections.Concurrent;
 using System.Diagnostics.Contracts;
 using System.Globalization;
+using System.Net;
 using System.Threading.Tasks;
 using MsgPack.Rpc.Protocols;
-using System.Net;
+using MsgPack.Rpc.Client.Protocols;
 using System.Threading;
-using MsgPack.Collections;
-using MsgPack.Rpc.Serialization;
+using MsgPack.Serialization;
 
-namespace MsgPack.Rpc
+namespace MsgPack.Rpc.Client
 {
 	/// <summary>
 	///		Entry point of MessagePack-RPC client.
@@ -39,18 +39,18 @@ namespace MsgPack.Rpc
 	/// </remarks>
 	public sealed class RpcClient : IDisposable
 	{
-		private readonly ClientTransport _transport;
-
-		public ClientTransport Transport
+		// TODO: Configurable
+		private static int _messageIdGenerator;
+		private static int NextId()
 		{
-			get { return this._transport; }
+			return Interlocked.Increment( ref _messageIdGenerator );
 		}
 
-		// TODO: It is too big overhead of ConcurrentDictionary since concurrency not very high.
-		//		 If so, using Dictionary and Monitor might improve performance.
-		private readonly ConcurrentDictionary<int, RequestMessageAsyncResult> _responseAsyncResults;
+		private readonly SerializationContext _serializationContext;
+		private readonly ClientTransport _transport;
+		private TaskCompletionSource<object> _transportShutdownCompletionSource;
 
-		internal RpcClient( ClientTransport transport )
+		internal RpcClient( ClientTransport transport, SerializationContext serializationContext )
 		{
 			if ( transport == null )
 			{
@@ -60,44 +60,84 @@ namespace MsgPack.Rpc
 			Contract.EndContractBlock();
 
 			this._transport = transport;
-			this._responseAsyncResults = new ConcurrentDictionary<int, RequestMessageAsyncResult>();
+			this._serializationContext = serializationContext ?? new SerializationContext();
+		}
+		public static RpcClient Create( EndPoint targetEndPoint )
+		{
+			return Create( targetEndPoint, RpcClientConfiguration.Default );
 		}
 
-		public static RpcClient CreateTcp( EndPoint remoteEndPoint, ClientEventLoop eventLoop, RpcClientOptions options )
+		public static RpcClient Create( EndPoint targetEndPoint, RpcClientConfiguration configuration )
 		{
-			RpcTransportException failure = null;
-			var transport =
-				new TcpClientTransport(
-					remoteEndPoint,
-					options.ForceIPv4.GetValueOrDefault() ? RpcTransportProtocol.TcpIpV4 : RpcTransportProtocol.TcpIp,
-					eventLoop,
-					options
-				);
-			if ( failure != null )
+			return Create( targetEndPoint, configuration, new SerializationContext() );
+		}
+
+		public static RpcClient Create( EndPoint targetEndPoint, SerializationContext serializationContext )
+		{
+			return Create( targetEndPoint, RpcClientConfiguration.Default, serializationContext );
+		}
+
+		public static RpcClient Create( EndPoint targetEndPoint, RpcClientConfiguration configuration, SerializationContext serializationContext )
+		{
+			if ( targetEndPoint == null )
 			{
-				throw failure;
+				throw new ArgumentNullException( "targetEndPoint" );
 			}
 
-			return new RpcClient( transport );
+			if ( configuration == null )
+			{
+				throw new ArgumentNullException( "configuration" );
+			}
+
+			var manager = configuration.TransportManagerProvider( configuration );
+			var transport = manager.ConnectAsync( targetEndPoint ).Result;
+			return RpcClient.Create( transport, serializationContext );
 		}
 
-		public static RpcClient CreateUdp( EndPoint remoteEndPoint, ClientEventLoop eventLoop, RpcClientOptions options )
+		public static RpcClient Create( ClientTransport transport, SerializationContext serializationContext )
 		{
-			var transport =
-				new UdpClientTransport(
-					ClientServices.SocketFactory(
-						( options.ForceIPv4.GetValueOrDefault() ? RpcTransportProtocol.UdpIpV4 : RpcTransportProtocol.UdpIp ).CreateSocket()
-					),
-					remoteEndPoint,
-					eventLoop,
-					options
-				);
-			return new RpcClient( transport );
+			return new RpcClient( transport, serializationContext );
 		}
 
 		public void Dispose()
 		{
 			this._transport.Dispose();
+		}
+
+		// FIXME: Shutdown
+		public void Shutdown()
+		{
+			this.ShutdownAsync().Wait();
+		}
+
+		public Task ShutdownAsync()
+		{
+			if ( this._transportShutdownCompletionSource != null )
+			{
+				return null;
+			}
+
+			var taskCompletionSource = new TaskCompletionSource<object>();
+			if ( Interlocked.CompareExchange( ref this._transportShutdownCompletionSource, taskCompletionSource, null ) != null )
+			{
+				return null;
+			}
+
+			this._transport.ShutdownCompleted += this.OnTranportShutdownComplete;
+			this._transport.BeginShutdown();
+			taskCompletionSource.Task.Start();
+			return taskCompletionSource.Task;
+		}
+
+		private void OnTranportShutdownComplete( object sender, EventArgs e )
+		{
+			var taskCompletionSource = Interlocked.CompareExchange( ref this._transportShutdownCompletionSource, null, this._transportShutdownCompletionSource );
+			if ( taskCompletionSource != null )
+			{
+				var transport = sender as ClientTransport;
+				transport.ShutdownCompleted -= this.OnTranportShutdownComplete;
+				taskCompletionSource.SetResult( null );
+			}
 		}
 
 		public MessagePackObject? Call( string methodName, params object[] arguments )
@@ -112,48 +152,43 @@ namespace MsgPack.Rpc
 
 		public IAsyncResult BeginCall( string methodName, object[] arguments, AsyncCallback asyncCallback, object asyncState )
 		{
-			var messageId = MessageIdGenerator.Currrent.NextId();
+			var messageId = NextId();
 			var asyncResult = new RequestMessageAsyncResult( this, messageId, asyncCallback, asyncState );
 
-			bool isSent = false;
+			bool isSucceeded = false;
+			var context = this._transport.GetClientRequestContext();
 			try
 			{
-				try { }
-				finally
+				context.SetRequest( messageId, methodName, asyncResult.OnCompleted );
+				if ( arguments == null )
 				{
-					if ( !this._responseAsyncResults.TryAdd( messageId, asyncResult ) )
-					{
-						throw new InvalidOperationException( String.Format( CultureInfo.CurrentCulture, "Message ID '{0}' is used.", messageId ) );
-					}
-
-					this.Transport.Send(
-						MessageType.Request,
-						messageId,
-						methodName,
-						arguments ?? Arrays<object>.Empty,
-						( _, error, completedSynchronously ) =>
-						{
-							if ( error != null )
-							{
-								RequestMessageAsyncResult ar;
-								if ( this._responseAsyncResults.TryRemove( messageId, out ar ) )
-								{
-									ar.OnError( error, completedSynchronously );
-								}
-							}
-						},
-						asyncResult
-					);
-					isSent = true;
+					context.ArgumentsPacker.Pack( new MessagePackObject[ 0 ] );
 				}
+				else
+				{
+					context.ArgumentsPacker.PackArrayHeader( arguments.Length );
+					foreach ( var arg in arguments )
+					{
+						if ( arg == null )
+						{
+							context.ArgumentsPacker.PackNull();
+						}
+						else
+						{
+							this._serializationContext.GetSerializer( arg.GetType() ).PackTo( context.ArgumentsPacker, arg );
+						}
+					}
+				}
+
+				this._transport.Send( context );
+				isSucceeded = true;
 			}
 			finally
 			{
-				if ( !isSent )
+				if ( !isSucceeded )
 				{
-					// Remove response handler since sending is failed.
-					RequestMessageAsyncResult disposal;
-					this._responseAsyncResults.TryRemove( messageId, out disposal );
+					context.Clear();
+					context.ReturnLease();
 				}
 			}
 
@@ -163,25 +198,16 @@ namespace MsgPack.Rpc
 		public MessagePackObject EndCall( IAsyncResult asyncResult )
 		{
 			var requestAsyncResult = AsyncResult.Verify<RequestMessageAsyncResult>( asyncResult, this );
-
-			// Wait for completion
-			if ( !requestAsyncResult.IsCompleted )
-			{
-				asyncResult.AsyncWaitHandle.WaitOne();
-			}
-
-			var response = requestAsyncResult.Response;
 			requestAsyncResult.Finish();
-			Contract.Assume( response.HasValue );
-
-			// Fetch message
-			if ( response.Value.Error != null )
+			ClientResponseContext responseContext = requestAsyncResult.ResponseContext;
+			try
 			{
-				throw response.Value.Error;
+				return Unpacking.UnpackObject( responseContext.ResultBuffer );
 			}
-
-			// Return it.
-			return response.Value.ReturnValue;
+			finally
+			{
+				responseContext.Clear();
+			}
 		}
 
 		public void Notify( string methodName, params object[] arguments )
@@ -197,14 +223,44 @@ namespace MsgPack.Rpc
 		public IAsyncResult BeginNotify( string methodName, object[] arguments, AsyncCallback asyncCallback, object asyncState )
 		{
 			var asyncResult = new NotificationMessageAsyncResult( this, asyncCallback, asyncState );
-			this.Transport.Send(
-				MessageType.Notification,
-				null,
-				methodName,
-				arguments ?? Arrays<object>.Empty,
-				asyncResult.OnMessageSent,
-				asyncResult
-			);
+
+			bool isSucceeded = false;
+			var context = this._transport.GetClientRequestContext();
+			try
+			{
+				context.SetNotification( methodName, asyncResult.OnCompleted );
+				if ( arguments == null )
+				{
+					context.ArgumentsPacker.Pack( new MessagePackObject[ 0 ] );
+				}
+				else
+				{
+					context.ArgumentsPacker.PackArrayHeader( arguments.Length );
+					foreach ( var arg in arguments )
+					{
+						if ( arg == null )
+						{
+							context.ArgumentsPacker.PackNull();
+						}
+						else
+						{
+							this._serializationContext.GetSerializer( arg.GetType() ).PackTo( context.ArgumentsPacker, arg );
+						}
+					}
+				}
+
+				this._transport.Send( context );
+				isSucceeded = true;
+			}
+			finally
+			{
+				if ( !isSucceeded )
+				{
+					context.Clear();
+					context.ReturnLease();
+				}
+			}
+
 			return asyncResult;
 		}
 
@@ -212,25 +268,6 @@ namespace MsgPack.Rpc
 		{
 			var notificationAsyncResult = AsyncResult.Verify<MessageAsyncResult>( asyncResult, this );
 			notificationAsyncResult.Finish();
-		}
-
-		private sealed class CreateTcpAsyncResult : AsyncResult
-		{
-			public void OnConnected( ConnectingContext e, bool completedSynchronously )
-			{
-				Contract.Assume( e != null );
-				Contract.Assume( e.Client.SocketContext.ConnectSocket != null );
-				base.Complete( completedSynchronously );
-			}
-
-			public TcpClientTransport Transport
-			{
-				get;
-				set;
-			}
-
-			public CreateTcpAsyncResult( object owner, AsyncCallback asyncCallback, object asyncState )
-				: base( owner, asyncCallback, asyncState ) { }
 		}
 	}
 

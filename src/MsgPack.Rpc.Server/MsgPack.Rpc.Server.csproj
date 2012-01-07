@@ -81,12 +81,9 @@
     <Compile Include="Rpc\Server\Dispatch\ServiceInvokerEmitter.cs" />
     <Compile Include="Rpc\Server\Dispatch\ServiceInvokerGenerator.cs" />
     <Compile Include="Rpc\Server\Dispatch\ServiceTypeLocator.cs" />
-    <Compile Include="Rpc\Server\Protocols\Constants.cs" />
     <Compile Include="Rpc\Server\Protocols\ListeningContext.cs" />
-    <Compile Include="Rpc\Server\Protocols\NativeMessageType.cs" />
     <Compile Include="Rpc\Server\Protocols\RpcMessageReceivedEventArgs.cs" />
     <Compile Include="Rpc\Server\Protocols\ServerRequestContext.cs" />
-    <Compile Include="Rpc\Server\Protocols\ServerContext.cs" />
     <Compile Include="Rpc\Server\Protocols\ServerSocketError.cs" />
     <Compile Include="Rpc\Server\Protocols\ServerTransport.cs" />
     <Compile Include="Rpc\Server\Protocols\ServerTransport.Deserialization.cs" />
@@ -108,7 +105,9 @@
       <DependentUpon>RpcServerConfiguration.Properties.tt</DependentUpon>
     </Compile>
     <Compile Include="Rpc\Server\Protocols\ServerResponseContext.cs" />
+    <Compile Include="Rpc\Server\RpcServerErrorEventArgs.cs" />
     <Compile Include="Rpc\Server\Tracer.cs" />
+    <Compile Include="Rpc\Server\RpcClientErrorEventArgs.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\MsgPack.snk">

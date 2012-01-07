@@ -21,16 +21,29 @@
 using System;
 using System.Threading;
 
-namespace MsgPack.Rpc.Protocols
+namespace MsgPack.Rpc.Client.Protocols
 {
-	/// <summary>
-	///		<see cref="ClientEventLoopFactory"/> for <see cref="IOCompletionPortClientEventLoop"/>.
-	/// </summary>
-	public sealed class IOCompletionPortClientEventLoopFactory : ClientEventLoopFactory
+	partial class ClientTransport : ILeaseable<ClientTransport>
 	{
-		protected sealed override ClientEventLoop CreateCore( RpcClientOptions options, EventHandler<RpcTransportErrorEventArgs> errorHandler, CancellationTokenSource cancellationTokenSource )
+		private ILease<ClientTransport> _lease;
+
+		void ILeaseable<ClientTransport>.SetLease( ILease<ClientTransport> lease )
 		{
-			return new IOCompletionPortClientEventLoop( options, errorHandler, cancellationTokenSource );
+			this.SetLease( lease );
+		}
+
+		protected void SetLease( ILease<ClientTransport> lease )
+		{
+			this._lease = lease;
+		}
+
+		private void DisposeLease()
+		{
+			var lease = Interlocked.Exchange( ref this._lease, null );
+			if ( lease != null )
+			{
+				lease.Dispose();
+			}
 		}
 	}
 }

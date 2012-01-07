@@ -32,6 +32,35 @@ namespace MsgPack.Rpc.Server
 	partial class RpcServerConfiguration
 	{
 
+		private bool _preferIPv4 = false;
+		
+		/// <summary>
+		/// 	Gets or sets whether use IP v4 even when IP v6 is supported.
+		/// </summary>
+		/// <value>
+		/// 	<c>true</c>, use IP v4 anyway; otherwise, <c>false</c>. The default is <c>false</c>.
+		/// </value>
+		public bool PreferIPv4
+		{
+			get{ return this._preferIPv4; }
+			set
+			{
+				this.VerifyIsNotFrozen();
+				ValidatePreferIPv4( value );
+				this._preferIPv4 = value;
+			}
+		}
+		
+		/// <summary>
+		/// 	Resets the PreferIPv4 property value.
+		/// </summary>
+		public void ResetPreferIPv4()
+		{
+			this._preferIPv4 = false;
+		}
+		
+		static partial void ValidatePreferIPv4( bool value );
+
 		private int _minimumConnection = 2;
 		
 		/// <summary>
@@ -234,6 +263,64 @@ namespace MsgPack.Rpc.Server
 		}
 		
 		static partial void ValidatePortNumber( int value );
+
+		private TimeSpan? _executionTimeout = TimeSpan.FromSeconds( 110 );
+		
+		/// <summary>
+		/// 	Gets or sets the timeout value to execute server thread.
+		/// </summary>
+		/// <value>
+		/// 	The timeout value to execute server thread. The default is 110 seconds. <c>null<c> means inifinite timeout.
+		/// </value>
+		public TimeSpan? ExecutionTimeout
+		{
+			get{ return this._executionTimeout; }
+			set
+			{
+				this.VerifyIsNotFrozen();
+				ValidateExecutionTimeout( value );
+				this._executionTimeout = value;
+			}
+		}
+		
+		/// <summary>
+		/// 	Resets the ExecutionTimeout property value.
+		/// </summary>
+		public void ResetExecutionTimeout()
+		{
+			this._executionTimeout = TimeSpan.FromSeconds( 110 );
+		}
+		
+		static partial void ValidateExecutionTimeout( TimeSpan? value );
+
+		private TimeSpan? _hardExecutionTimeout = TimeSpan.FromSeconds( 20 );
+		
+		/// <summary>
+		/// 	Gets or sets the timeout value to abort server thread after graceful timeout is occurred.
+		/// </summary>
+		/// <value>
+		/// 	The timeout value to abort server thread after graceful timeout is occurred. The default is 20 seconds. <c>null<c> means inifinite timeout.
+		/// </value>
+		public TimeSpan? HardExecutionTimeout
+		{
+			get{ return this._hardExecutionTimeout; }
+			set
+			{
+				this.VerifyIsNotFrozen();
+				ValidateHardExecutionTimeout( value );
+				this._hardExecutionTimeout = value;
+			}
+		}
+		
+		/// <summary>
+		/// 	Resets the HardExecutionTimeout property value.
+		/// </summary>
+		public void ResetHardExecutionTimeout()
+		{
+			this._hardExecutionTimeout = TimeSpan.FromSeconds( 20 );
+		}
+		
+		static partial void ValidateHardExecutionTimeout( TimeSpan? value );
 
 		private Func<RpcServer, ServerTransportManager> _transportManagerProvider = ( server ) => new TcpServerTransportManager( server );
 		

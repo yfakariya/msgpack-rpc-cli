@@ -32,37 +32,19 @@ namespace MsgPack.Rpc.Server.Protocols
 
 		protected sealed override void ReceiveCore( ServerRequestContext context )
 		{
-			try
+			if ( !this.BoundSocket.ReceiveAsync( context ) )
 			{
-				if ( !context.AcceptSocket.ReceiveAsync( context ) )
-				{
-					this.OnReceived( context );
-				}
-			}
-			catch ( ObjectDisposedException )
-			{
-				if ( !this.IsDisposed )
-				{
-					throw;
-				}
+				context.SetCompletedSynchronously();
+				this.OnReceived( context );
 			}
 		}
 
 		protected sealed override void SendCore( ServerResponseContext context )
 		{
-			try
+			if ( !this.BoundSocket.SendAsync( context ) )
 			{
-				if ( !context.AcceptSocket.SendAsync( context ) )
-				{
-					this.OnSent( context );
-				}
-			}
-			catch ( ObjectDisposedException )
-			{
-				if ( !this.IsDisposed )
-				{
-					throw;
-				}
+				context.SetCompletedSynchronously();
+				this.OnSent( context );
 			}
 		}
 

@@ -19,14 +19,14 @@
 #endregion -- License Terms --
 
 using System;
-using System.IO;
-using System.Net.Sockets;
 using System.Diagnostics.Contracts;
+using System.IO;
+using MsgPack.Rpc.Protocols;
 using MsgPack.Serialization;
 
 namespace MsgPack.Rpc.Server.Protocols
 {
-	public sealed class ServerResponseContext : ServerContext, ILeaseable<ServerResponseContext>
+	public sealed class ServerResponseContext : MessageContext, ILeaseable<ServerResponseContext>
 	{
 		/// <summary>
 		///		Constant part of the response header.
@@ -120,6 +120,7 @@ namespace MsgPack.Rpc.Server.Protocols
 
 		internal void Serialize<T>( T returnValue, RpcErrorMessage error, MessagePackSerializer<T> returnValueSerializer )
 		{
+			// FIXME: Overwrite for error/timeout
 			if ( Tracer.Protocols.Switch.ShouldTrace( Tracer.EventType.SerializeResponse ) )
 			{
 				Tracer.Protocols.TraceEvent(
@@ -155,7 +156,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		internal void Prepare()
 		{
 			Contract.Assert( this.SendingBuffer[ 0 ].Array != null );
-
+			// FIXME: Should be copied from request context.
 			using ( var packer = Packer.Create( this._idBuffer, false ) )
 			{
 				packer.Pack( this.MessageId );
@@ -178,6 +179,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			this._returnDataPacker = Packer.Create( this._returnDataBuffer, false );
 			this._errorDataPacker.Dispose();
 			this._errorDataPacker = Packer.Create( this._errorDataBuffer, false );
+			this.MessageId = 0;
 			base.Clear();
 		}
 

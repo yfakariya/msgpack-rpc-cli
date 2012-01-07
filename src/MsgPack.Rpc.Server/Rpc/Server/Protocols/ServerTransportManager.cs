@@ -22,28 +22,17 @@ using System;
 using System.Net.Sockets;
 using System.Threading;
 using MsgPack.Rpc.Protocols;
+using System.Globalization;
 
 namespace MsgPack.Rpc.Server.Protocols
 {
 	public abstract class ServerTransportManager : IDisposable
 	{
-		private readonly WeakReference _serverReference;
+		private readonly RpcServer _server;
 
 		protected internal RpcServer Server
 		{
-			get
-			{
-				if ( this._serverReference.IsAlive )
-				{
-					try
-					{
-						return this._serverReference.Target as RpcServer;
-					}
-					catch ( InvalidOperationException ) { }
-				}
-
-				return null;
-			}
+			get { return this._server; }
 		}
 
 		private readonly ObjectPool<ServerRequestContext> _requestContextPool;
@@ -81,25 +70,51 @@ namespace MsgPack.Rpc.Server.Protocols
 			get { return this._isInShutdown; }
 		}
 
-		public event EventHandler<RpcTransportErrorEventArgs> Error;
+		private EventHandler<EventArgs> _shutdownCompleted;
 
-		protected virtual void OnError( RpcTransportErrorEventArgs e )
+		public event EventHandler<EventArgs> ShutdownCompleted
 		{
-			if ( e == null )
+			add
 			{
-				throw new ArgumentNullException( "e" );
+				EventHandler<EventArgs> oldHandler;
+				EventHandler<EventArgs> currentHandler = this._shutdownCompleted;
+				do
+				{
+					oldHandler = currentHandler;
+					var newHandler = Delegate.Combine( oldHandler, value ) as EventHandler<EventArgs>;
+					currentHandler = Interlocked.CompareExchange( ref this._shutdownCompleted, newHandler, oldHandler );
+				} while ( oldHandler != currentHandler );
 			}
-
-			this.OnErrorCore( e );
+			remove
+			{
+				EventHandler<EventArgs> oldHandler;
+				EventHandler<EventArgs> currentHandler = this._shutdownCompleted;
+				do
+				{
+					oldHandler = currentHandler;
+					var newHandler = Delegate.Remove( oldHandler, value ) as EventHandler<EventArgs>;
+					currentHandler = Interlocked.CompareExchange( ref this._shutdownCompleted, newHandler, oldHandler );
+				} while ( oldHandler != currentHandler );
+			}
 		}
 
-		internal void OnErrorCore( RpcTransportErrorEventArgs e )
+		protected virtual void OnShutdownCompleted()
 		{
-			var handler = this.Error;
+			var handler = Interlocked.CompareExchange( ref this._shutdownCompleted, null, null );
 			if ( handler != null )
 			{
-				handler( this, e );
+				handler( this, EventArgs.Empty );
 			}
+		}
+
+		internal void RaiseClientError( ServerRequestContext context, RpcErrorMessage rpcError )
+		{
+			this.Server.RaiseClientError( context, rpcError );
+		}
+
+		internal void RaiseServerError( Exception exception )
+		{
+			this.Server.RaiseServerError( exception );
 		}
 
 		protected ServerTransportManager( RpcServer server )
@@ -112,7 +127,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			this._configuration = server.Configuration;
 			this._requestContextPool = server.Configuration.RequestContextPoolProvider( () => new ServerRequestContext(), server.Configuration.CreateRequestContextPoolConfiguration() );
 			this._responseContextPool = server.Configuration.ResponseContextPoolProvider( () => new ServerResponseContext(), server.Configuration.CreateResponseContextPoolConfiguration() );
-			this._serverReference = new WeakReference( server );
+			this._server = server;
 		}
 
 		public void Dispose()
@@ -130,7 +145,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			this.OnDisposed( disposing );
 		}
 
-		protected virtual void OnDisposing( bool disposing ){}
+		protected virtual void OnDisposing( bool disposing ) { }
 		protected virtual void DisposeCore( bool disposing ) { }
 		protected virtual void OnDisposed( bool disposing ) { }
 
@@ -145,37 +160,52 @@ namespace MsgPack.Rpc.Server.Protocols
 			Thread.MemoryBarrier();
 		}
 
-		protected internal bool HandleError( object sender, SocketAsyncEventArgs e )
+		protected internal bool HandleSocketError( Socket socket, SocketAsyncEventArgs context )
 		{
-			bool? isError = e.SocketError.IsError();
+			if ( socket == null )
+			{
+				throw new ArgumentNullException( "socket" );
+			}
+
+			if ( context == null )
+			{
+				throw new ArgumentNullException( "e" );
+			}
+
+			bool? isError = context.SocketError.IsError();
 			if ( isError == null )
 			{
 				Tracer.Protocols.TraceEvent(
 					Tracer.EventType.IgnoreableError,
 					Tracer.EventId.IgnoreableError,
 					"Ignoreable error. [ \"Socket\" : 0x{0:x}, \"RemoteEndpoint\" : \"{1}\", \"LastOperation\" : \"{2}\", \"SocketError\" : \"{3}\", \"ErrorCode\" : 0x{4:x8} ]",
-					( sender as Socket ).Handle,
-					e.RemoteEndPoint,
-					e.LastOperation,
-					e.SocketError,
-					( int )e.SocketError
+					socket.Handle,
+					context.RemoteEndPoint,
+					context.LastOperation,
+					context.SocketError,
+					( int )context.SocketError
 				);
 				return true;
 			}
 			else if ( isError.GetValueOrDefault() )
 			{
+				var errorDetail =
+					String.Format(
+						CultureInfo.CurrentCulture,
+						"Socket error. [ \"Socket\" : 0x{0:x}, \"RemoteEndpoint\" : \"{1}\", \"LastOperation\" : \"{2}\", \"SocketError\" : \"{3}\", \"ErrorCode\" : 0x{4:x8} ]",
+						socket.Handle,
+						context.RemoteEndPoint,
+						context.LastOperation,
+						context.SocketError,
+						( int )context.SocketError
+					);
 				Tracer.Protocols.TraceEvent(
 					Tracer.EventType.SocketError,
 					Tracer.EventId.SocketError,
-					"Socket error. [ \"Socket\" : 0x{0:x}, \"RemoteEndpoint\" : \"{1}\", \"LastOperation\" : \"{2}\", \"SocketError\" : \"{3}\", \"ErrorCode\" : 0x{4:x8} ]",
-					( sender as Socket ).Handle,
-					e.RemoteEndPoint,
-					e.LastOperation,
-					e.SocketError,
-					( int )e.SocketError
+					errorDetail
 				);
 
-				this.OnErrorCore( new RpcTransportErrorEventArgs( e.LastOperation, e.SocketError ) );
+				this.RaiseServerError( new RpcTransportException( RpcError.TransportError, "Socket error.", errorDetail, new SocketException( ( int )context.SocketError ) ) );
 				return false;
 			}
 

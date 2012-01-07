@@ -1,0 +1,217 @@
+﻿<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ output extension=".cs" #>
+<#@ assembly Name="System.Core" #>
+<#@ import namespace="System" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ import namespace="System.Diagnostics" #>
+<#@ import namespace="System.Globalization" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#+
+//
+// MessagePack for CLI
+//
+// Copyright (C) 2010 FUJIWARA, Yusuke
+//
+//    Licensed under the Apache License, Version 2.0 (the "License");
+//    you may not use this file except in compliance with the License.
+//    You may obtain a copy of the License at
+//
+//        http://www.apache.org/licenses/LICENSE-2.0
+//
+//    Unless required by applicable law or agreed to in writing, software
+//    distributed under the License is distributed on an "AS IS" BASIS,
+//    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//    See the License for the specific language governing permissions and
+//    limitations under the License.
+//
+#>
+<#+
+public string Generate( string nameSpace, params TraceMessage[] messages )
+{
+	if( messages == null )
+	{
+		throw new ArgumentNullException( "message" );
+	}
+
+	const string indent = "\t";
+	var checker = new Dictionary<int ,KeyValuePair<int, string>>();
+	for( int i = 0; i < messages.Length; i++ )
+	{
+		KeyValuePair<int, string> existent;
+		if( checker.TryGetValue( messages[ i ].Id, out existent ) )
+		{
+			throw new InvalidOperationException(
+				String.Format( 
+					CultureInfo.CurrentCulture,
+					"Id of message '{0}' ( {{ Index: {1}, Label: \"{2}\" }} ) is duplicated. This ID is already appeared in {{ Index: {3}, Label: \"{4}\" }}.",
+					messages[ i ].Id,
+					i,
+					messages[ i ].Label,
+					existent.Key,
+					existent.Value
+				)
+			);
+		}
+		else
+		{
+			checker.Add( messages[ i ].Id, new KeyValuePair<int, string>( i, messages[ i ].Label ) );
+		}
+	}
+	
+	var buffer = new StringBuilder( 8192 );
+
+	buffer.Append(
+@"#region -- License Terms --
+//
+// MessagePack for CLI
+//
+// Copyright (C) 2010 FUJIWARA, Yusuke
+//
+//    Licensed under the Apache License, Version 2.0 (the ""License"");
+//    you may not use this file except in compliance with the License.
+//    You may obtain a copy of the License at
+//
+//        http://www.apache.org/licenses/LICENSE-2.0
+//
+//    Unless required by applicable law or agreed to in writing, software
+//    distributed under the License is distributed on an ""AS IS"" BASIS,
+//    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//    See the License for the specific language governing permissions and
+//    limitations under the License.
+//
+#endregion -- License Terms --
+
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+" 
+	);
+	
+	buffer.AppendLine();
+	buffer.Append( "namespace " ).Append( nameSpace ).AppendLine();
+	buffer.AppendLine( "{" );
+	
+	buffer.Append( indent ).AppendLine( "/// <summary>" );
+	buffer.Append( indent ).Append( "/// " ).Append( indent ).Append ("Defines trace for " ).Append( nameSpace ).AppendLine( " namespace." );
+	buffer.Append( indent ).AppendLine( "/// </summary>" );
+	
+	buffer.Append( indent ).Append( "public static partial class " ).Append( nameSpace.Replace( ".", String.Empty ) ).AppendLine( "Trace" );
+	buffer.Append( indent ).AppendLine( "{" );
+	
+	buffer.Append( indent ).Append( indent ).Append( "private static readonly TraceSource _source = new TraceSource( \"" ).Append( nameSpace ).Append( "\" );" ).AppendLine();
+	buffer.AppendLine();
+	
+	// _typeTable()
+	buffer.Append( indent ).Append( indent ).AppendLine( "private static readonly Dictionary<MessageId, TraceEventType> _typeTable = " );
+	buffer.Append( indent ).Append( indent ).Append( indent ).Append( "new Dictionary<MessageId, TraceEventType> ( " ).Append( messages.Length ).AppendLine( " )" );
+	buffer.Append( indent ).Append( indent ).Append( indent ).AppendLine( "{" );
+	foreach( var message in messages )
+	{
+		buffer.Append( indent ).Append( indent ).Append( indent ).Append( indent ).Append( "{ MessageId." ).Append( message.Label ).Append( ", TraceEventType." ).Append( message.EventType ).AppendLine( " }," );
+	}
+	buffer.Append( indent ).Append( indent ).Append( indent ).AppendLine( "};" );
+	buffer.AppendLine();
+	
+	// Source()
+	buffer.Append( indent ).Append( indent ).AppendLine( "/// <summary>" );
+	buffer.Append( indent ).Append( indent ).Append( "/// ").Append( indent ).Append( "Gets the <see cref=\"TraceSource\" />." ).AppendLine();
+	buffer.Append( indent ).Append( indent ).AppendLine( "/// </summary>" );
+	buffer.Append( indent ).Append( indent ).AppendLine( "/// <value>" );
+	buffer.Append( indent ).Append( indent ).Append( "/// ").Append( indent ).Append( "The <see cref=\"TraceSource\" />." ).AppendLine();
+	buffer.Append( indent ).Append( indent ).AppendLine( "/// </value>" );
+	buffer.Append( indent ).Append( indent ).Append( "public static TraceSource Source" ).AppendLine();
+	buffer.Append( indent ).Append( indent ).Append( "{" ).AppendLine();
+	buffer.Append( indent ).Append( indent ).Append( indent ).Append( "get { return _source; }" ).AppendLine();
+	buffer.Append( indent ).Append( indent ).Append( "}" ).AppendLine();
+	buffer.AppendLine();
+	
+	// ShouldTrace()
+	buffer.Append( indent ).Append( indent ).AppendLine( "/// <summary>" );
+	buffer.Append( indent ).Append( indent ).Append( "/// ").Append( indent ).Append( "Returns the value whether the specified message should be traced in current configuration." ).AppendLine();
+	buffer.Append( indent ).Append( indent ).AppendLine( "/// </summary>" );
+	buffer.Append( indent ).Append( indent ).AppendLine( "/// <param name=\"id\">" );
+	buffer.Append( indent ).Append( indent ).Append( "/// ").Append( indent ).Append( "<see cref=\"MessageId\" /> for the trace message." ).AppendLine();
+	buffer.Append( indent ).Append( indent ).AppendLine( "/// </param>" );
+	buffer.Append( indent ).Append( indent ).AppendLine( "/// <returns>" );
+	buffer.Append( indent ).Append( indent ).Append( "/// ").Append( indent ).Append( "<c>true</c> if the specified message should be traced; otherwise, <c>false</c>." ).AppendLine();
+	buffer.Append( indent ).Append( indent ).AppendLine( "/// </returns>" );
+	buffer.Append( indent ).Append( indent ).Append( "public static bool ShouldTrace ( MessageId id )" ).AppendLine();
+	buffer.Append( indent ).Append( indent ).Append( "{" ).AppendLine();
+	buffer.Append( indent ).Append( indent ).Append( indent ).Append( "return _source.Switch.ShouldTrace( _typeTable[ id ] );" ).AppendLine();
+	buffer.Append( indent ).Append( indent ).Append( "}" ).AppendLine();
+	buffer.AppendLine();
+	
+	// TraceEvent()
+	buffer.Append( indent ).Append( indent ).AppendLine( "/// <summary>" );
+	buffer.Append( indent ).Append( indent ).Append( "/// ").Append( indent ).Append( "Outputs the trace message for the interesting event." ).AppendLine();
+	buffer.Append( indent ).Append( indent ).AppendLine( "/// </summary>" );
+	buffer.Append( indent ).Append( indent ).AppendLine( "/// <param name=\"id\">" );
+	buffer.Append( indent ).Append( indent ).Append( "/// ").Append( indent ).Append( "<see cref=\"MessageId\" /> for the trace message." ).AppendLine();
+	buffer.Append( indent ).Append( indent ).AppendLine( "/// </param>" );
+	buffer.Append( indent ).Append( indent ).AppendLine( "/// <param name=\"format\">" );
+	buffer.Append( indent ).Append( indent ).Append( "/// ").Append( indent ).Append( "The format string of the descriptive message." ).AppendLine();
+	buffer.Append( indent ).Append( indent ).AppendLine( "/// </param>" );
+	buffer.Append( indent ).Append( indent ).AppendLine( "/// <param name=\"args\">" );
+	buffer.Append( indent ).Append( indent ).Append( "/// ").Append( indent ).Append( "The format arguments of the descriptive message." ).AppendLine();
+	buffer.Append( indent ).Append( indent ).AppendLine( "/// </param>" );
+	buffer.Append( indent ).Append( indent ).Append( "public static void TraceEvent ( MessageId id, string format, params object[] args )" ).AppendLine();
+	buffer.Append( indent ).Append( indent ).Append( "{" ).AppendLine();
+	buffer.Append( indent ).Append( indent ).Append( indent ).Append( "_source.TraceEvent( _typeTable[ id ], ( int )id, format, args );" ).AppendLine();
+	buffer.Append( indent ).Append( indent ).Append( "}" ).AppendLine();
+	buffer.AppendLine();
+	
+	// TraceData()
+	buffer.Append( indent ).Append( indent ).AppendLine( "/// <summary>" );
+	buffer.Append( indent ).Append( indent ).Append( "/// ").Append( indent ).Append( "Outputs the raw data for the interesting event." ).AppendLine();
+	buffer.Append( indent ).Append( indent ).AppendLine( "/// </summary>" );
+	buffer.Append( indent ).Append( indent ).AppendLine( "/// <param name=\"id\">" );
+	buffer.Append( indent ).Append( indent ).Append( "/// ").Append( indent ).Append( "<see cref=\"MessageId\" /> for the trace data." ).AppendLine();
+	buffer.Append( indent ).Append( indent ).AppendLine( "/// </param>" );
+	buffer.Append( indent ).Append( indent ).AppendLine( "/// <param name=\"data\">" );
+	buffer.Append( indent ).Append( indent ).Append( "/// ").Append( indent ).Append( "The raw data for this event." ).AppendLine();
+	buffer.Append( indent ).Append( indent ).AppendLine( "/// </param>" );
+	buffer.Append( indent ).Append( indent ).Append( "public static void TraceData ( MessageId id, string format, params object[] data )" ).AppendLine();
+	buffer.Append( indent ).Append( indent ).Append( "{" ).AppendLine();
+	buffer.Append( indent ).Append( indent ).Append( indent ).Append( "_source.TraceData( _typeTable[ id ], ( int )id, data );" ).AppendLine();
+	buffer.Append( indent ).Append( indent ).Append( "}" ).AppendLine();
+	buffer.AppendLine();
+	
+	// Short cuts
+	foreach( var message in messages )
+	{
+		buffer.Append( indent ).Append( indent ).AppendLine( "/// <summary>" );
+		buffer.Append( indent ).Append( indent ).Append( "/// ").Append( indent ).Append( "<see cref=\"MessageId\" /> of ." ).Append( message.Label ).Append( " (ID:" ).Append( message.Id ).Append( ") message." ).AppendLine();
+		buffer.Append( indent ).Append( indent ).AppendLine( "/// </summary>" );
+		buffer.Append( indent ).Append( indent ).Append( "public const MessageId " ).Append( message.Label ).Append( " = MessageId." ).Append( message.Label ).AppendLine( ";" );
+	}
+	
+	// MessageId
+	buffer.Append( indent ).Append( indent ).Append( "public enum MessageId" ).AppendLine();
+	buffer.Append( indent ).Append( indent ).Append( "{" ).AppendLine();
+	foreach( var message in messages )
+	{
+		buffer.Append( indent ).Append( indent ).Append( indent ).Append( message.Label ).Append( " = " ).Append( message.Id ).AppendLine( "," );
+	}
+	buffer.Append( indent ).Append( indent ).Append( "}" ).AppendLine();
+	
+	buffer.Append( indent ).AppendLine( "}" );
+	buffer.AppendLine( "}" );
+	
+	return buffer.ToString();
+}
+
+public struct TraceMessage
+{
+	public readonly String Label;
+	public readonly TraceEventType EventType;
+	public readonly int Id;
+	
+	public TraceMessage( string label, TraceEventType eventType, int id )
+	{
+		this.Label = label;
+		this.EventType = eventType;
+		this.Id = id;
+	}
+}
+#>

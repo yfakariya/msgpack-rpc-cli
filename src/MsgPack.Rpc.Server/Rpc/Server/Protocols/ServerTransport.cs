@@ -28,17 +28,23 @@ using MsgPack.Rpc.Protocols;
 
 namespace MsgPack.Rpc.Server.Protocols
 {
+	// FIXME: timeout -> close transport
 	/// <summary>
 	///		Encapselates underlying transport layer protocols and handle low level errors.
 	/// </summary>
-	public abstract partial class ServerTransport : IDisposable
+	public abstract partial class ServerTransport : IDisposable, IContextBoundableTransport
 	{
 		private Socket _boundSocket;
 
-		protected internal Socket BoundSocket
+		public Socket BoundSocket
 		{
 			get { return this._boundSocket; }
 			internal set { this._boundSocket = value; }
+		}
+
+		Socket IContextBoundableTransport.BoundSocket
+		{
+			get { return this.BoundSocket; }
 		}
 
 		private int _processing;
@@ -55,23 +61,11 @@ namespace MsgPack.Rpc.Server.Protocols
 			}
 		}
 
-		private readonly WeakReference _managerReference;
+		private readonly ServerTransportManager _manager;
 
 		protected internal ServerTransportManager Manager
 		{
-			get
-			{
-				if ( this._managerReference.IsAlive )
-				{
-					try
-					{
-						return this._managerReference.Target as ServerTransportManager;
-					}
-					catch ( InvalidOperationException ) { }
-				}
-
-				return null;
-			}
+			get { return this._manager; }
 		}
 
 		private readonly Dispatcher _dispatcher;
@@ -83,55 +77,37 @@ namespace MsgPack.Rpc.Server.Protocols
 			get { return this._isInShutdown; }
 		}
 
-		// TODO: Move to other layer e.g. Server.
-		/// <summary>
-		///		Occurs when request or notifiction mesage is received.
-		/// </summary>
-		public event EventHandler<RpcMessageReceivedEventArgs> MessageReceived;
+		private EventHandler<EventArgs> _shutdownCompleted;
 
-		/// <summary>
-		///		Raises the <see cref="E:MessageReceived"/> event.
-		/// </summary>
-		/// <param name="e">The <see cref="MsgPack.Rpc.Server.Protocols.RpcMessageReceivedEventArgs"/> instance containing the event data.</param>
-		/// <exception cref="ArgumentNullException">
-		///		<paramref name="e"/> is <c>null</c>.
-		/// </exception>
-		protected virtual void OnMessageReceived( RpcMessageReceivedEventArgs e )
+		internal event EventHandler<EventArgs> ShutdownCompleted
 		{
-			if ( e == null )
+			add
 			{
-				throw new ArgumentNullException( "e" );
+				EventHandler<EventArgs> oldHandler;
+				EventHandler<EventArgs> currentHandler = this._shutdownCompleted;
+				do
+				{
+					oldHandler = currentHandler;
+					var newHandler = Delegate.Combine( oldHandler, value ) as EventHandler<EventArgs>;
+					currentHandler = Interlocked.CompareExchange( ref this._shutdownCompleted, newHandler, oldHandler );
+				} while ( oldHandler != currentHandler );
 			}
-
-			this.OnMessageReceivedCore( e );
-		}
-
-		private void OnMessageReceivedCore( RpcMessageReceivedEventArgs e )
-		{
-			if ( Tracer.Protocols.Switch.ShouldTrace( Tracer.EventType.DispatchRequest ) )
+			remove
 			{
-				Tracer.Protocols.TraceEvent(
-					Tracer.EventType.DispatchRequest,
-					Tracer.EventId.DispatchRequest,
-					"Dispatch request. [ \"type\" : \"{0}\", \"id\" : {1}, \"method\" : \"{2}\" ]",
-					e.MessageType,
-					e.Id,
-					e.MethodName
-				);
-			}
-
-			var handler = this.MessageReceived;
-			if ( handler != null )
-			{
-				handler( this, e );
+				EventHandler<EventArgs> oldHandler;
+				EventHandler<EventArgs> currentHandler = this._shutdownCompleted;
+				do
+				{
+					oldHandler = currentHandler;
+					var newHandler = Delegate.Remove( oldHandler, value ) as EventHandler<EventArgs>;
+					currentHandler = Interlocked.CompareExchange( ref this._shutdownCompleted, newHandler, oldHandler );
+				} while ( oldHandler != currentHandler );
 			}
 		}
 
-		internal event EventHandler AllResponseSent;
-
-		protected virtual void OnAllResponseSent()
+		protected virtual void OnShutdownCompleted()
 		{
-			var handler = this.AllResponseSent;
+			var handler = Interlocked.CompareExchange( ref this._shutdownCompleted, null, null );
 			if ( handler != null )
 			{
 				handler( this, EventArgs.Empty );
@@ -142,13 +118,10 @@ namespace MsgPack.Rpc.Server.Protocols
 		{
 			if ( Interlocked.Decrement( ref this._processing ) == 0 )
 			{
-				try
-				{
-					this.OnAllResponseSent();
-				}
-				finally
+				if ( this._isInShutdown || this._isClientShutdowned )
 				{
 					this._boundSocket.Shutdown( SocketShutdown.Send );
+					this.OnShutdownCompleted();
 				}
 			}
 		}
@@ -160,14 +133,8 @@ namespace MsgPack.Rpc.Server.Protocols
 				throw new ArgumentNullException( "manager" );
 			}
 
-			var server = manager.Server;
-			if ( server == null )
-			{
-				throw new InvalidOperationException( "Cannot get RpcServer from the transport manager." );
-			}
-
-			this._managerReference = new WeakReference( manager );
-			this._dispatcher = server.Configuration.DispatcherProvider( server );
+			this._manager = manager;
+			this._dispatcher = manager.Server.Configuration.DispatcherProvider( manager.Server );
 		}
 
 		/// <summary>
@@ -230,36 +197,25 @@ namespace MsgPack.Rpc.Server.Protocols
 			this.BeginShutdown();
 			int? messageId = context.MessageType == MessageType.Request ? context.MessageId : default( int? );
 			var rpcError = new RpcErrorMessage( error, message, debugInformation );
-			this.HandleError( RpcTransportOperation.Deserialize, rpcError );
-			context.Clear();
 
-			this.SendError( messageId, rpcError );
-		}
-
-		internal void HandleError( RpcTransportOperation operation, RpcErrorMessage error )
-		{
-			this.HandleError( new RpcTransportErrorEventArgs( operation, error ) );
-		}
-
-		private void HandleError( RpcTransportErrorEventArgs e )
-		{
-			var rpcError =
-				e.RpcError
-				?? ( e.SocketErrorCode == null
-				? new RpcErrorMessage( RpcError.RemoteRuntimeError, RpcError.RemoteRuntimeError.DefaultMessage )
-				: e.SocketErrorCode.Value.ToServerRpcError() );
 			Tracer.Protocols.TraceEvent(
-				Tracer.EventType.ForRpcError( e.RpcError.Value.Error ),
-				Tracer.EventId.ForRpcError( e.RpcError.Value.Error ),
-				"Error. [ \"Message ID\" : {0}, \"Operation\" : \"{1}\", \"Error Code\" : {2}, \"Error ID\" : \"{3}\", \"Detail\" : \"{4}\" ]",
-				e.MessageId == null ? "null" : e.MessageId.Value.ToString(),
-				e.Operation,
-				rpcError.Error.ErrorCode,
-				rpcError.Error.Identifier,
+				Tracer.EventType.ForRpcError( error ),
+				Tracer.EventId.ForRpcError( error ),
+				"Deserialization error. [ \"Message ID\" : {0}, \"Error Code\" : {1}, \"Error ID\" : \"{2}\", \"Detail\" : \"{3}\" ]",
+				messageId == null ? "(null)" : messageId.ToString(),
+				error.ErrorCode,
+				error.Identifier,
 				rpcError.Detail.ToString()
 			);
 
-			this.Manager.OnErrorCore( e );
+			this.Manager.RaiseClientError( context, rpcError );
+			context.Clear();
+			this.SendError( messageId, rpcError );
+		}
+
+		private bool HandleSocketError( Socket socket, SocketAsyncEventArgs context )
+		{
+			return this.Manager.HandleSocketError( socket, context );
 		}
 
 		/// <summary>
@@ -267,11 +223,12 @@ namespace MsgPack.Rpc.Server.Protocols
 		/// </summary>
 		/// <param name="sender"><see cref="Socket"/>.</param>
 		/// <param name="e">Event data.</param>
-		internal void OnSocketOperationCompleted( object sender, SocketAsyncEventArgs e )
+		private void OnSocketOperationCompleted( object sender, SocketAsyncEventArgs e )
 		{
-			var context = ( ServerContext )e;
+			var socket = sender as Socket;
+			var context = e as MessageContext;
 
-			if ( !this.Manager.HandleError( sender, e ) )
+			if ( !this.HandleSocketError( socket, e ) )
 			{
 				return;
 			}
@@ -302,13 +259,18 @@ namespace MsgPack.Rpc.Server.Protocols
 						Tracer.EventType.UnexpectedLastOperation,
 						Tracer.EventId.UnexpectedLastOperation,
 						"Unexpected operation. [ \"sender.Handle\" : 0x{0}, \"remoteEndPoint\" : \"{1}\", \"lastOperation\" : \"{2}\" ]",
-						( ( Socket )sender ).Handle,
+						socket.Handle,
 						context.RemoteEndPoint,
 						context.LastOperation
 					);
 					break;
 				}
 			}
+		}
+
+		void IContextBoundableTransport.OnSocketOperationCompleted( object sender, SocketAsyncEventArgs e )
+		{
+			this.OnSocketOperationCompleted( sender, e );
 		}
 
 
@@ -347,8 +309,8 @@ namespace MsgPack.Rpc.Server.Protocols
 					Tracer.EventType.ReceiveCanceledDueToClientShutdown,
 					Tracer.EventId.ReceiveCanceledDueToClientShutdown,
 					"Cancel receive due to client shutdown. [ \"RemoteEndPoint\" : \"{0}\", \"LocalEndPoint\" : \"{1}\" ]",
-					context.AcceptSocket == null ? null : context.AcceptSocket.RemoteEndPoint,
-					context.AcceptSocket == null ? null : context.AcceptSocket.LocalEndPoint
+					this._boundSocket == null ? null : this._boundSocket.RemoteEndPoint,
+					this._boundSocket == null ? null : this._boundSocket.LocalEndPoint
 				);
 				return;
 			}
@@ -360,8 +322,8 @@ namespace MsgPack.Rpc.Server.Protocols
 					Tracer.EventType.ReceiveCanceledDueToServerShutdown,
 					Tracer.EventId.ReceiveCanceledDueToServerShutdown,
 					"Cancel receive due to server shutdown. [ \"RemoteEndPoint\" : \"{0}\", \"LocalEndPoint\" : \"{1}\" ]",
-					context.AcceptSocket == null ? null : context.AcceptSocket.RemoteEndPoint,
-					context.AcceptSocket == null ? null : context.AcceptSocket.LocalEndPoint
+					this._boundSocket == null ? null : this._boundSocket.RemoteEndPoint,
+					this._boundSocket == null ? null : this._boundSocket.LocalEndPoint
 				);
 				return;
 			}
@@ -375,16 +337,16 @@ namespace MsgPack.Rpc.Server.Protocols
 			{
 				// There might be dirty data due to client shutdown.
 				context.ReceivedData.Clear();
-				Array.Clear( context.ReceivingBuffer, 0, context.ReceivingBuffer.Length );
+				Array.Clear( context.CurrentReceivingBuffer, 0, context.CurrentReceivingBuffer.Length );
 
-				context.SetBuffer( context.ReceivingBuffer, 0, context.ReceivingBuffer.Length );
+				context.SetBuffer( context.CurrentReceivingBuffer, 0, context.CurrentReceivingBuffer.Length );
 
 				Tracer.Protocols.TraceEvent(
 					Tracer.EventType.BeginReceive,
 					Tracer.EventId.BeginReceive,
 					"Receive inbound data. [ \"RemoteEndPoint\" : \"{0}\", \"LocalEndPoint\" : \"{1}\" ]",
-					context.AcceptSocket == null ? null : context.AcceptSocket.RemoteEndPoint,
-					context.AcceptSocket == null ? null : context.AcceptSocket.LocalEndPoint
+					this._boundSocket == null ? null : this._boundSocket.RemoteEndPoint,
+					this._boundSocket == null ? null : this._boundSocket.LocalEndPoint
 				);
 				this.ReceiveCore( context );
 			}
@@ -430,13 +392,12 @@ namespace MsgPack.Rpc.Server.Protocols
 				Tracer.Protocols.TraceEvent(
 					Tracer.EventType.ReceiveInboundData,
 					Tracer.EventId.ReceiveInboundData,
-					"Receive request. [ \"Socket\" : 0x{0:x8}, \"LocalEndPoint\" : \"{1}\", \"RemoteEndPoint\" : \"{2}\", \"BytesTransfered\" : {3}, \"Available\" : {4} ]",
+					"Receive request. [ \"Socket\" : 0x{0:x8}, \"LocalEndPoint\" : \"{1}\", \"RemoteEndPoint\" : \"{2}\", \"BytesTransfered\" : {3} ]",
 					context.SessionId,
-					context.AcceptSocket.Handle,
-					context.AcceptSocket.LocalEndPoint,
-					context.AcceptSocket.RemoteEndPoint,
-					context.BytesTransferred,
-					context.AcceptSocket.ReceiveBufferSize
+					this._boundSocket.Handle,
+					this._boundSocket.LocalEndPoint,
+					this._boundSocket.RemoteEndPoint,
+					context.BytesTransferred
 				);
 			}
 
@@ -459,8 +420,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			}
 			else
 			{
-				context.ReceivedData.Add( new ArraySegment<byte>( context.ReceivingBuffer, context.Offset, context.BytesTransferred ) );
-				context.SetReceivingBufferOffset( context.BytesTransferred );
+				context.ShiftCurrentReceivingBuffer();
 			}
 
 			// FIXME: Quota
@@ -519,15 +479,7 @@ namespace MsgPack.Rpc.Server.Protocols
 				return;
 			}
 
-			var manager = this.Manager;
-			if ( manager == null )
-			{
-				// TODO: Logging
-				this.OnProcessFinished();
-				return;
-			}
-
-			var context = manager.ResponseContextPool.Borrow();
+			var context = this.Manager.ResponseContextPool.Borrow();
 			context.MessageId = messageId.Value;
 
 			context.Serialize<object>( null, rpcError, null );
@@ -610,11 +562,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			}
 			finally
 			{
-				var manager = this.Manager;
-				if ( manager != null )
-				{
-					manager.ReturnTransport( this );
-				}
+				this.Manager.ReturnTransport( this );
 			}
 		}
 	}

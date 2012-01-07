@@ -19,17 +19,28 @@
 #endregion -- License Terms --
 
 using System;
+using System.Net;
 
-namespace MsgPack.Rpc.Protocols
+namespace MsgPack.Rpc.Server
 {
-	// TODO: This should be abstract class for versioning.
-
-	/// <summary>
-	///		Define interface of Message ID generator.
-	/// </summary>
-	public interface IMessageIdGenerator
+	public sealed class RpcClientErrorEventArgs : EventArgs
 	{
-		int NextId();
-		void ReturnId( int disposal );
+		private readonly RpcErrorMessage _rpcError;
+
+		public RpcErrorMessage RpcError
+		{
+			get { return _rpcError; }
+		}
+
+		public EndPoint RemoteEndPoint { get; set; }
+
+		public long SessionId { get; set; }
+
+		public int? MessageId { get; set; }
+
+		public RpcClientErrorEventArgs( RpcErrorMessage rpcError )
+		{
+			this._rpcError = rpcError;
+		}
 	}
 }

@@ -19,62 +19,16 @@
 #endregion -- License Terms --
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Diagnostics.Contracts;
-using MsgPack.Rpc.Protocols;
-using System.Threading;
 
-namespace MsgPack.Rpc
+namespace MsgPack.Rpc.Client
 {
-	internal sealed class NotificationMessageAsyncResult : MessageAsyncResult, IResponseHandler
+	internal sealed class NotificationMessageAsyncResult : MessageAsyncResult
 	{
-
-		private ResponseMessage? _response;
-
-		/// <summary>
-		///		Complete this invocation as success.
-		/// </summary>
-		/// <param name="response">
-		///		Replied response.
-		///	</param>
-		/// <param name="completedSynchronously">
-		///		When operation is completed same thread as initiater then true.
-		/// </param>
-		public void HandleResponse( ResponseMessage response, bool completedSynchronously )
+		public void OnCompleted( Exception exception, bool completedSynchronously )
 		{
-			try { }
-			finally
+			if ( exception != null )
 			{
-				this._response = response;
-				Thread.MemoryBarrier();
-				base.Complete( completedSynchronously );
-			}
-		}
-
-		/// <summary>
-		///		Complete this invocation as error.
-		/// </summary>
-		/// <param name="error">
-		///		Occurred RPC error.
-		///	</param>
-		/// <param name="completedSynchronously">
-		///		When operation is completed same thread as initiater then true.
-		/// </param>
-		public void HandleError( RpcErrorMessage error, bool completedSynchronously )
-		{
-			this.OnError( RpcException.FromRpcError( error ), completedSynchronously );
-		}
-
-		public void OnMessageSent( SendingContext e, Exception error, bool completedSynchronously )
-		{
-			Contract.Assume( e != null );
-			Contract.Assume( e.MessageId == null );
-
-			if ( error != null )
-			{
-				base.OnError( error, completedSynchronously );
+				base.OnError( exception, completedSynchronously );
 			}
 			else
 			{

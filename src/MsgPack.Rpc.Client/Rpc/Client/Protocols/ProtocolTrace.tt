@@ -1,0 +1,59 @@
+﻿<#
+//
+// MessagePack for CLI
+//
+// Copyright (C) 2010 FUJIWARA, Yusuke
+//
+//    Licensed under the Apache License, Version 2.0 (the "License");
+//    you may not use this file except in compliance with the License.
+//    You may obtain a copy of the License at
+//
+//        http://www.apache.org/licenses/LICENSE-2.0
+//
+//    Unless required by applicable law or agreed to in writing, software
+//    distributed under the License is distributed on an "AS IS" BASIS,
+//    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//    See the License for the specific language governing permissions and
+//    limitations under the License.
+//
+#>
+<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ output extension=".cs" #>
+<#@ include file="..\..\..\..\Trace.ttinclude" #>
+<#@ assembly Name="System.Core" #>
+<#@ import namespace="System" #>
+<#@ import namespace="System.Diagnostics" #>
+<#
+/*
+ *  000x : Generic
+ *  010x : Socket
+ *	100x : Request generic
+ *  110x : Serialization
+ *  120x : Send
+ *  130x : Connect
+ *  200x : Response generic
+ *  210x : Deserialization
+ *  220x : Receive
+ */
+#>
+<#= Generate( "MsgPack.Rpc.Client.Protocols",
+	new TraceMessage( "DetectServerShutdown", TraceEventType.Information, 11 ),
+	new TraceMessage( "OrphanError", TraceEventType.Critical, 91 ),
+	new TraceMessage( "SocketError", TraceEventType.Warning, 101 ),
+	new TraceMessage( "IgnoreableError", TraceEventType.Verbose, 102 ),
+	new TraceMessage( "UnexpectedLastOperation", TraceEventType.Critical, 103 ),
+	new TraceMessage( "SerializeRequest", TraceEventType.Verbose, 1101 ),
+	new TraceMessage( "SendOutboundData", TraceEventType.Verbose, 1201 ),
+	new TraceMessage( "SentOutboundData", TraceEventType.Verbose, 1202 ),
+	new TraceMessage( "BeginConnect", TraceEventType.Verbose, 1301 ),
+	new TraceMessage( "EndConnect", TraceEventType.Verbose, 1302 ),
+	new TraceMessage( "DeserializeResponse", TraceEventType.Verbose, 2001 ),
+	new TraceMessage( "NeedRequestHeader", TraceEventType.Verbose, 2112 ),
+	new TraceMessage( "NeedMessageType", TraceEventType.Verbose, 2113 ),
+	new TraceMessage( "NeedMessageId", TraceEventType.Verbose, 2114 ),
+	new TraceMessage( "NeedError", TraceEventType.Verbose, 2115 ),
+	new TraceMessage( "NeedResult", TraceEventType.Verbose, 2116 ),
+	new TraceMessage( "DumpInvalidResponseHeader", TraceEventType.Verbose, 2130 ),
+	new TraceMessage( "BeginReceive", TraceEventType.Verbose, 2201 ),
+	new TraceMessage( "ReceiveInboundData", TraceEventType.Verbose,  2202 )
+) #>

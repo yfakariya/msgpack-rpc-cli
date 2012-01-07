@@ -1,4 +1,4 @@
-#region -- License Terms --
+﻿#region -- License Terms --
 //
 // MessagePack for CLI
 //
@@ -20,14 +20,16 @@
 
 using System;
 using System.Collections.Concurrent;
-using System.Net.Sockets;
 using System.Diagnostics.Contracts;
+using System.Net;
+using System.Net.Sockets;
 using System.Threading;
+using System.Threading.Tasks;
 
-namespace MsgPack.Rpc.Server.Protocols
+namespace MsgPack.Rpc.Client.Protocols
 {
-	public abstract class ServerTransportManager<TTransport> : ServerTransportManager
-		where TTransport : ServerTransport, ILeaseable<TTransport>
+	public abstract class ClientTransportManager<TTransport> : ClientTransportManager
+		where TTransport : ClientTransport, ILeaseable<TTransport>
 	{
 		private readonly ConcurrentDictionary<TTransport, object> _activeTransports;
 
@@ -35,14 +37,10 @@ namespace MsgPack.Rpc.Server.Protocols
 
 		private int _tranportIsInShutdown;
 
-		protected ServerTransportManager( RpcServer server )
-			: base( server )
+		protected ClientTransportManager( RpcClientConfiguration configuration )
+			: base( configuration )
 		{
-			this._activeTransports =
-				new ConcurrentDictionary<TTransport, object>(
-					server.Configuration.MinimumConnection,
-					server.Configuration.MaximumConnection
-				);
+			this._activeTransports = new ConcurrentDictionary<TTransport, object>();
 		}
 
 		protected void SetTransportPool( ObjectPool<TTransport> transportPool )
@@ -116,7 +114,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			return transport;
 		}
 
-		internal sealed override void ReturnTransport( ServerTransport transport )
+		internal sealed override void ReturnTransport( ClientTransport transport )
 		{
 			this.ReturnTransport( ( TTransport )transport );
 		}
@@ -146,8 +144,8 @@ namespace MsgPack.Rpc.Server.Protocols
 				this._transportPool.Return( transport );
 			}
 		}
-		
-		protected ServerRequestContext GetRequetContext( TTransport transport )
+
+		internal ClientRequestContext GetRequetContext( TTransport transport )
 		{
 			var requestContext = this.RequestContextPool.Borrow();
 			requestContext.SetTransport( transport );

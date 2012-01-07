@@ -1,4 +1,4 @@
-#region -- License Terms --
+﻿#region -- License Terms --
 //
 // MessagePack for CLI
 //
@@ -19,11 +19,16 @@
 #endregion -- License Terms --
 
 using System;
+using System.Net.Sockets;
 
-namespace MsgPack.Rpc.Server.Protocols
+namespace MsgPack.Rpc.Client.Protocols
 {
-	internal static class Constants
+	public static class ClientSocketError
 	{
-		public static readonly ArraySegment<byte> Nil = new ArraySegment<byte>( new byte[] { 0xC0 } ); // Nil
+		public static RpcErrorMessage ToClientRpcError( this SocketError socketError )
+		{
+			// FIXME : IMPL
+			return new RpcErrorMessage( RpcError.RemoteRuntimeError, "Unexpected socket error.", new SocketException( ( int )socketError ).Message );
+		}
 	}
 }

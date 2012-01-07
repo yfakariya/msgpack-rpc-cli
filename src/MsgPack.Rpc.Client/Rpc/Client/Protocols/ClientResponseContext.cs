@@ -24,21 +24,19 @@ using System.IO;
 using System.Linq;
 using MsgPack.Rpc.Protocols;
 
-namespace MsgPack.Rpc.Server.Protocols
+namespace MsgPack.Rpc.Client.Protocols
 {
-	public sealed class ServerRequestContext : MessageContext, ILeaseable<ServerRequestContext>
+	public sealed class ClientResponseContext : MessageContext, ILeaseable<ClientResponseContext>
 	{
 		/// <summary>
 		///		The initial process of the deserialization pipeline.
 		/// </summary>
-		private Func<ServerRequestContext, bool> _initialProcess;
+		private Func<ClientResponseContext, bool> _initialProcess;
 
 		/// <summary>
 		///		Next (that is, resuming) process on the deserialization pipeline.
 		/// </summary>
-		internal Func<ServerRequestContext, bool> NextProcess;
-
-
+		internal Func<ClientResponseContext, bool> NextProcess;
 
 		private byte[] _currentReceivingBuffer;
 
@@ -56,6 +54,11 @@ namespace MsgPack.Rpc.Server.Protocols
 		}
 
 		private int _currentReceivingBufferOffset;
+
+		internal int CurrentReceivingBufferOffset
+		{
+			get { return _currentReceivingBufferOffset; }
+		}
 
 		private readonly List<ArraySegment<byte>> _receivedData;
 
@@ -87,66 +90,42 @@ namespace MsgPack.Rpc.Server.Protocols
 		/// </summary>
 		internal Unpacker HeaderUnpacker;
 
+		internal long ErrorStartAt;
 
 		/// <summary>
-		///		Buffer to store binaries for arguments array for subsequent deserialization.
+		///		Subtree <see cref="Unpacker"/> to parse error value as opaque sequence.
 		/// </summary>
-		internal readonly MemoryStream ArgumentsBuffer;
+		internal ByteArraySegmentStream ErrorBuffer;
+
+		internal long ResultStartAt;
 
 		/// <summary>
-		///		<see cref="Packer"/> to re-pack to binaries of arguments for subsequent deserialization.
+		///		Subtree <see cref="Unpacker"/> to parse return value as opaque sequence.
 		/// </summary>
-		internal Packer ArgumentsBufferPacker;
-
-		/// <summary>
-		///		Subtree <see cref="Unpacker"/> to parse arguments array as opaque sequence.
-		/// </summary>
-		internal Unpacker ArgumentsBufferUnpacker;
-
-		/// <summary>
-		///		The count of declared method arguments.
-		/// </summary>
-		internal int ArgumentsCount;
-
-		/// <summary>
-		///		The count of unpacked method arguments.
-		/// </summary>
-		internal int UnpackedArgumentsCount;
+		internal ByteArraySegmentStream ResultBuffer;
 
 
 		/// <summary>
-		///		Unpacked Message Type part value.
+		///		<see cref="Stream"/> to dump corrupt response for the future manual recovery by humans.
 		/// </summary>
-		internal MessageType MessageType;
+		internal Stream DumpStream;
 
-		/// <summary>
-		///		Unpacked Method Name part value.
-		/// </summary>
-		internal string MethodName;
-
-		/// <summary>
-		///		<see cref="Unpacker"/> to deserialize arguments on the dispatcher.
-		/// </summary>
-		internal Unpacker ArgumentsUnpacker;
-
-		public ServerRequestContext()
+		public ClientResponseContext()
 		{
-			// TODO: Configurable
-			this.ArgumentsBuffer = new MemoryStream( 65536 );
 			// TODO: Configurable
 			this._currentReceivingBuffer = new byte[ 65536 ];
 			// TODO: ArrayDeque is preferred.
 			this._receivedData = new List<ArraySegment<byte>>( 1 );
 		}
 
-		internal void SetTransport( ServerTransport transport )
+		internal void SetTransport( ClientTransport transport )
 		{
-			this._initialProcess = transport.UnpackRequestHeader;
-			this.NextProcess = transport.UnpackRequestHeader;
+			this._initialProcess = transport.UnpackResponseHeader;
+			this.NextProcess = transport.UnpackResponseHeader;
 			base.SetTransport( transport );
 		}
 
-		private static bool InvalidFlow( ServerRequestContext context )
+		private static bool InvalidFlow( ClientResponseContext context )
 		{
 			throw new InvalidOperationException( "Invalid state transition." );
 		}
@@ -171,7 +150,6 @@ namespace MsgPack.Rpc.Server.Protocols
 		internal sealed override void Clear()
 		{
 			this.ClearBuffers();
-			this.ClearDispatchContext();
 			if ( this.UnpackingBuffer != null )
 			{
 				this.UnpackingBuffer.Dispose();
@@ -182,24 +160,10 @@ namespace MsgPack.Rpc.Server.Protocols
 		}
 
 		/// <summary>
-		///		Clears the buffers to deserialize message, which is not required to dispatch and invoke server method.
+		///		Clears the buffers to deserialize message.
 		/// </summary>
 		internal void ClearBuffers()
 		{
-			if ( this.ArgumentsBufferUnpacker != null )
-			{
-				this.ArgumentsBufferUnpacker.Dispose();
-				this.ArgumentsBufferUnpacker = null;
-			}
-
-			if ( this.ArgumentsBufferPacker != null )
-			{
-				this.ArgumentsBufferPacker.Dispose();
-				this.ArgumentsBufferPacker = null;
-			}
-
-			this.ArgumentsCount = 0;
-			this.UnpackedArgumentsCount = 0;
 			if ( this.HeaderUnpacker != null )
 			{
 				this.HeaderUnpacker.Dispose();
@@ -212,9 +176,29 @@ namespace MsgPack.Rpc.Server.Protocols
 				this.RootUnpacker = null;
 			}
 
+			this.ErrorStartAt = -1;
+			this.ResultStartAt = -1;
+			this.MessageId = 0;
+
 			if ( this.UnpackingBuffer != null )
 			{
 				this.TruncateUsedReceivedData();
+			}
+		}
+
+
+		internal void ClearDispatchContext()
+		{
+			if ( this.ErrorBuffer != null )
+			{
+				this.ErrorBuffer.Dispose();
+				this.ErrorBuffer = null;
+			}
+
+			if ( this.ResultBuffer != null )
+			{
+				this.ResultBuffer.Dispose();
+				this.ResultBuffer = null;
 			}
 		}
 
@@ -242,24 +226,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			}
 		}
 
-		/// <summary>
-		///		Clears the dispatch context information.
-		/// </summary>
-		internal void ClearDispatchContext()
-		{
-			this.MessageId = 0;
-			this.MethodName = null;
-			this.MessageType = MessageType.Response; // Invalid value.
-			if ( this.ArgumentsUnpacker != null )
-			{
-				this.ArgumentsUnpacker.Dispose();
-				this.ArgumentsUnpacker = null;
-			}
-
-			this.ArgumentsBuffer.SetLength( 0 );
-		}
-
-		void ILeaseable<ServerRequestContext>.SetLease( ILease<ServerRequestContext> lease )
+		void ILeaseable<ClientResponseContext>.SetLease( ILease<ClientResponseContext> lease )
 		{
 			base.SetLease( lease );
 		}

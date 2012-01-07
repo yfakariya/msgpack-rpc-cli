@@ -20,77 +20,53 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
 using System.Linq;
-using System.Net.Sockets;
+using System.Text;
 using System.Net;
-using MsgPack.Rpc.Serialization;
-using MsgPack.Collections;
 
-namespace MsgPack.Rpc.Protocols
+namespace MsgPack.Rpc.Client.Protocols
 {
-	// TODO: Extract abstract class and implemnt UDP Transport.
-	/// <summary>
-	///		TCP binding of <see cref="IClinentTransport"/>.
-	/// </summary>
-	internal sealed class UdpClientTransport : ClientTransport
+	public sealed class UdpClientTransport : ClientTransport, ILeaseable<UdpClientTransport>
 	{
-		private readonly EndPoint _remoteEndPoint;
-		private readonly RpcSocket _socket;
+		public EndPoint RemoteEndPoint { get; internal set; }
 
-		public UdpClientTransport( RpcSocket socket, EndPoint remoteEndPoint, ClientEventLoop eventLoop, RpcClientOptions options )
-			: base( socket == null ? RpcTransportProtocol.UdpIp : socket.Protocol, eventLoop, options )
+		public UdpClientTransport( UdpClientTransportManager manager ) : base( manager ) { }
+
+		public sealed override ClientRequestContext GetClientRequestContext()
 		{
-			if ( socket == null )
+			if ( this.RemoteEndPoint == null )
 			{
-				throw new ArgumentNullException( "socket" );
+				throw new InvalidOperationException( "RemoteEndPoint must be set. UdpClientTransport must be retrieved from UdpTClientransportManager.GetTransport." );
 			}
 
-			if ( socket.Protocol.ProtocolType != ProtocolType.Udp )
+			var result = base.GetClientRequestContext();
+			result.RemoteEndPoint = this.RemoteEndPoint;
+			return result;
+		}
+
+		protected sealed override void SendCore( ClientRequestContext context )
+		{
+			// Manager stores the socket which is dedicated socket to this transport in the AcceptSocket property.
+			if ( !this.BoundSocket.SendToAsync( context ) )
 			{
-				throw new ArgumentException( "socket must be connected TCP socket.", "socket" );
+				context.SetCompletedSynchronously();
+				this.OnSent( context );
 			}
+		}
 
-			if ( remoteEndPoint == null )
+		protected sealed override void ReceiveCore( ClientResponseContext context )
+		{
+			// Manager stores the socket which is dedicated socket to this transport in the AcceptSocket property.
+			if ( !this.BoundSocket.ReceiveFromAsync( context ) )
 			{
-				throw new ArgumentNullException( "remoteEndPoint" );
+				context.SetCompletedSynchronously();
+				this.OnReceived( context );
 			}
-
-			Contract.EndContractBlock();
-
-			this._socket = socket;
-			this._remoteEndPoint = remoteEndPoint;
 		}
 
-		protected sealed override void Dispose( bool disposing )
+		void ILeaseable<UdpClientTransport>.SetLease( ILease<UdpClientTransport> lease )
 		{
-			this._socket.Dispose();
-			base.Dispose( disposing );
+			base.SetLease( lease );
 		}
-
-		protected sealed override SendingContext CreateNewSendingContext( int? messageId, Action<SendingContext, Exception, bool> onMessageSent )
-		{
-			// TODO: cache buffer
-			return
-				new SendingContext(
-					new ClientSessionContext(
-						this,
-						this.Options,
-						this.EventLoop.CreateSocketContext( this._remoteEndPoint )
-					),
-					new RpcOutputBuffer( ChunkBuffer.CreateDefault( this.InitialSegmentCount, this.InitialSegmentSize ) ),
-					null,
-					onMessageSent
-				);
-		}
-		
-		protected sealed override void SendCore( SendingContext context )
-		{
-			this.EventLoop.SendTo( context );
-			throw new NotImplementedException();
-			//this.EventLoop.ReceiveFrom()
-		}
-
-		// FIXME: Dispose session context in OnDent
 	}
 }

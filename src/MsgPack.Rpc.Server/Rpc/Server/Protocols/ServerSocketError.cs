@@ -27,6 +27,7 @@ namespace MsgPack.Rpc.Server.Protocols
 	{
 		public static RpcErrorMessage ToServerRpcError( this SocketError socketError )
 		{
+			// FIXME : IMPL
 			return new RpcErrorMessage( RpcError.RemoteRuntimeError, "Unexpected socket error.", new SocketException( ( int )socketError ).Message );
 		}
 	}

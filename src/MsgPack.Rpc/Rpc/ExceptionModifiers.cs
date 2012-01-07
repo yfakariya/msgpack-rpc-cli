@@ -20,16 +20,11 @@
 
 using System;
 
-namespace MsgPack.Rpc.Server.Protocols
+namespace MsgPack.Rpc
 {
-	public sealed class UdpServerTransportManager : ServerTransportManager<UdpServerTransport>
+	internal sealed class ExceptionModifiers
 	{
-		public UdpServerTransportManager( RpcServer server )
-			: base( server )
-		{
-#if !API_SIGNATURE_TEST
-			base.SetTransportPool( server.Configuration.UdpTransportPoolProvider( () => new UdpServerTransport( this ), server.Configuration.CreateUdpTransportPoolConfiguration() ) );
-#endif
-		}
+		public static readonly ExceptionModifiers IsMatrioshkaInner = new ExceptionModifiers();
+		private ExceptionModifiers() { }
 	}
 }

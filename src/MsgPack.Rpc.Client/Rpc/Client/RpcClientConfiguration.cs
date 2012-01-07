@@ -1,4 +1,4 @@
-#region -- License Terms --
+﻿#region -- License Terms --
 //
 // MessagePack for CLI
 //
@@ -20,14 +20,13 @@
 
 using System;
 using System.Net;
-using MsgPack.Rpc.Server.Dispatch;
-using MsgPack.Rpc.Server.Protocols;
+using MsgPack.Rpc.Client.Protocols;
 
-namespace MsgPack.Rpc.Server
+namespace MsgPack.Rpc.Client
 {
-	public sealed partial class RpcServerConfiguration : FreezableObject
+	public sealed partial class RpcClientConfiguration : FreezableObject
 	{
-		private static readonly RpcServerConfiguration _default = new RpcServerConfiguration().Freeze();
+		private static readonly RpcClientConfiguration _default = new RpcClientConfiguration().Freeze();
 
 		/// <summary>
 		///		Gets the default frozen instance.
@@ -36,20 +35,15 @@ namespace MsgPack.Rpc.Server
 		///		The default frozen instance.
 		///		This value will not be <c>null</c>.
 		/// </value>
-		public static RpcServerConfiguration Default
+		public static RpcClientConfiguration Default
 		{
-			get { return RpcServerConfiguration._default; }
+			get { return RpcClientConfiguration._default; }
 		}
 
 		/// <summary>
-		/// Initializes a new instance of the <see cref="RpcServerConfiguration"/> class.
+		/// Initializes a new instance of the <see cref="RpcClientConfiguration"/> class.
 		/// </summary>
-		public RpcServerConfiguration() { }
-
-		public ObjectPoolConfiguration CreateListeningContextPoolConfiguration()
-		{
-			return new ObjectPoolConfiguration() { ExhausionPolicy = ExhausionPolicy.ThrowException, MaximumPooled = this.MaximumConnection, MinimumReserved = this.MinimumConnection };
-		}
+		public RpcClientConfiguration() { }
 
 		public ObjectPoolConfiguration CreateTcpTransportPoolConfiguration()
 		{
@@ -70,8 +64,8 @@ namespace MsgPack.Rpc.Server
 		{
 			return new ObjectPoolConfiguration() { ExhausionPolicy = ExhausionPolicy.BlockUntilAvailable, MaximumPooled = this.MaximumConcurrentRequest, MinimumReserved = this.MinimumConcurrentRequest };
 		}
-				
-		static partial void ValidateBindingEndPoint( EndPoint value )
+
+		static partial void ValidateRequestContextPoolProvider( Func<Func<ClientRequestContext>, ObjectPoolConfiguration, ObjectPool<ClientRequestContext>> value )
 		{
 			if ( value == null )
 			{
@@ -79,7 +73,7 @@ namespace MsgPack.Rpc.Server
 			}
 		}
 
-		static partial void ValidateListeningContextPoolProvider( Func<Func<ListeningContext>, ObjectPoolConfiguration, ObjectPool<ListeningContext>> value )
+		static partial void ValidateResponseContextPoolProvider( Func<Func<ClientResponseContext>, ObjectPoolConfiguration, ObjectPool<ClientResponseContext>> value )
 		{
 			if ( value == null )
 			{
@@ -87,23 +81,7 @@ namespace MsgPack.Rpc.Server
 			}
 		}
 
-		static partial void ValidateRequestContextPoolProvider( Func<Func<ServerRequestContext>, ObjectPoolConfiguration, ObjectPool<ServerRequestContext>> value )
-		{
-			if ( value == null )
-			{
-				throw new ArgumentNullException( "value" );
-			}
-		}
-
-		static partial void ValidateResponseContextPoolProvider( Func<Func<ServerResponseContext>, ObjectPoolConfiguration, ObjectPool<ServerResponseContext>> value )
-		{
-			if ( value == null )
-			{
-				throw new ArgumentNullException( "value" );
-			}
-		}
-
-		static partial void ValidateExecutionTimeout( TimeSpan? value )
+		static partial void ValidateConnectTimeout( TimeSpan? value )
 		{
 			if ( value != null && value.Value.Ticks < 0 )
 			{
@@ -111,7 +89,7 @@ namespace MsgPack.Rpc.Server
 			}
 		}
 
-		static partial void ValidateHardExecutionTimeout( TimeSpan? value )
+		static partial void ValidateWaitTimeout( TimeSpan? value )
 		{
 			if ( value != null && value.Value.Ticks < 0 )
 			{
@@ -119,7 +97,7 @@ namespace MsgPack.Rpc.Server
 			}
 		}
 
-		static partial void ValidateTransportManagerProvider( Func<RpcServer, ServerTransportManager> value )
+		static partial void ValidateTransportManagerProvider( Func<RpcClientConfiguration, ClientTransportManager> value )
 		{
 			if ( value == null )
 			{
@@ -127,7 +105,7 @@ namespace MsgPack.Rpc.Server
 			}
 		}
 
-		static partial void ValidateDispatcherProvider( Func<RpcServer, Dispatcher> value )
+		static partial void ValidateTcpTransportPoolProvider( Func<Func<TcpClientTransport>, ObjectPoolConfiguration, ObjectPool<TcpClientTransport>> value )
 		{
 			if ( value == null )
 			{
@@ -135,35 +113,11 @@ namespace MsgPack.Rpc.Server
 			}
 		}
 
-		static partial void ValidateServiceTypeLocatorProvider( Func<RpcServerConfiguration, ServiceTypeLocator> value )
+		static partial void ValidateUdpTransportPoolProvider( Func<Func<UdpClientTransport>, ObjectPoolConfiguration, ObjectPool<UdpClientTransport>> value )
 		{
 			if ( value == null )
 			{
 				throw new ArgumentNullException( "value" );
-			}
-		}
-
-		static partial void ValidateTcpTransportPoolProvider( Func<Func<TcpServerTransport>, ObjectPoolConfiguration, ObjectPool<TcpServerTransport>> value )
-		{
-			if ( value == null )
-			{
-				throw new ArgumentNullException( "value" );
-			}
-		}
-
-		static partial void ValidateUdpTransportPoolProvider( Func<Func<UdpServerTransport>, ObjectPoolConfiguration, ObjectPool<UdpServerTransport>> value )
-		{
-			if ( value == null )
-			{
-				throw new ArgumentNullException( "value" );
-			}
-		}
-
-		static partial void ValidateListenBackLog( int value )
-		{
-			if ( value < 0 )
-			{
-				throw new ArgumentOutOfRangeException( "ListenBackLog must not be negative.", "value" );
 			}
 		}
 
@@ -175,14 +129,6 @@ namespace MsgPack.Rpc.Server
 			}
 		}
 
-		static partial void ValidateMaximumConnection( int value )
-		{
-			if ( value < 1 )
-			{
-				throw new ArgumentOutOfRangeException( "MaximumConnection must not be negative nor 0.", "value" );
-			}
-		}
-
 		static partial void ValidateMinimumConcurrentRequest( int value )
 		{
 			if ( value < 0 )
@@ -191,19 +137,11 @@ namespace MsgPack.Rpc.Server
 			}
 		}
 
-		static partial void ValidateMinimumConnection( int value )
+		static partial void ValidateTargetEndPoint( EndPoint value )
 		{
-			if ( value < 0 )
+			if ( value == null )
 			{
-				throw new ArgumentOutOfRangeException( "MinimumConnection must not be negative.", "value" );
-			}
-		}
-
-		static partial void ValidatePortNumber( int value )
-		{
-			if ( value < 0 || UInt16.MaxValue < value )
-			{
-				throw new ArgumentOutOfRangeException( "PortNumber must be between 0 and 65,535.", "value" );
+				throw new ArgumentNullException( "value" );
 			}
 		}
 
@@ -213,9 +151,9 @@ namespace MsgPack.Rpc.Server
 		/// <returns>
 		///		The shallow copy of this instance.
 		/// </returns>
-		public RpcServerConfiguration Clone()
+		public RpcClientConfiguration Clone()
 		{
-			return this.CloneCore() as RpcServerConfiguration;
+			return this.CloneCore() as RpcClientConfiguration;
 		}
 
 		/// <summary>
@@ -224,9 +162,9 @@ namespace MsgPack.Rpc.Server
 		/// <returns>
 		///		This instance.
 		/// </returns>
-		public RpcServerConfiguration Freeze()
+		public RpcClientConfiguration Freeze()
 		{
-			return this.FreezeCore() as RpcServerConfiguration;
+			return this.FreezeCore() as RpcClientConfiguration;
 		}
 
 		/// <summary>
@@ -236,9 +174,9 @@ namespace MsgPack.Rpc.Server
 		/// This instance if it is already frozen.
 		/// Otherwise, frozen copy of this instance.
 		/// </returns>
-		public RpcServerConfiguration AsFrozen()
+		public RpcClientConfiguration AsFrozen()
 		{
-			return this.AsFrozenCore() as RpcServerConfiguration;
+			return this.AsFrozenCore() as RpcClientConfiguration;
 		}
 	}
 }

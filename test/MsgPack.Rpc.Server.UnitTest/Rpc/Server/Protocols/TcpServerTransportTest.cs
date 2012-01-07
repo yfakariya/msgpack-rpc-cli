@@ -187,7 +187,7 @@ namespace MsgPack.Rpc.Server.Protocols
 								Assert.That( args[ 1 ].IsTypeOf<Int64>().GetValueOrDefault() );
 								lock ( serverStatus )
 								{
-									serverStatus[ id ] = true;
+									serverStatus[ id.Value ] = true;
 								}
 
 								return args;
@@ -277,7 +277,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			}
 		}
 
-		private static RpcServer CreateServer( Func<int, MessagePackObject[], MessagePackObject> callback )
+		private static RpcServer CreateServer( Func<int?, MessagePackObject[], MessagePackObject> callback )
 		{
 			return
 				new RpcServer(
@@ -295,9 +295,9 @@ namespace MsgPack.Rpc.Server.Protocols
 
 		private sealed class CallbackDispatcher : Dispatcher
 		{
-			private readonly Func<int, MessagePackObject[], MessagePackObject> _callback;
+			private readonly Func<int?, MessagePackObject[], MessagePackObject> _callback;
 
-			public CallbackDispatcher( RpcServer server, Func<int, MessagePackObject[], MessagePackObject> callback )
+			public CallbackDispatcher( RpcServer server, Func<int?, MessagePackObject[], MessagePackObject> callback )
 				: base( server )
 			{
 				this._callback = callback;

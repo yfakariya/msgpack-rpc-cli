@@ -57,37 +57,49 @@
       <Link>Properties\CommonAssemblyInfo.Rpc.cs</Link>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Rpc\Client\ClientServices.cs">
-      <DependentUpon>ClientServices.tt</DependentUpon>
-    </Compile>
-    <Compile Include="Rpc\Client\Protocols\Structs.g.cs">
-      <SubType>Code</SubType>
+    <Compile Include="Rpc\Client\AsyncResult.cs" />
+    <Compile Include="Rpc\Client\ErrorInterpreter.cs" />
+    <Compile Include="Rpc\Client\FileSystem.cs" />
+    <Compile Include="Rpc\Client\MessageAsyncResult.cs" />
+    <Compile Include="Rpc\Client\NotificationMessageAsyncResult.cs" />
+    <Compile Include="Rpc\Client\Protocols\ClientTransport.cs" />
+    <Compile Include="Rpc\Client\Protocols\ClientTransportManager.cs" />
+    <Compile Include="Rpc\Client\Protocols\ClientTransportManager`1.cs" />
+    <Compile Include="Rpc\Client\Protocols\ClientResponseContext.cs" />
+    <Compile Include="Rpc\Client\Protocols\ClientRequestContext.cs" />
+    <Compile Include="Rpc\Client\Protocols\ProtocolTrace.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
-      <DependentUpon>Structs.g.tt</DependentUpon>
+      <DependentUpon>ProtocolTrace.tt</DependentUpon>
     </Compile>
+    <Compile Include="Rpc\Client\Protocols\ClientTransport.Deserialization.cs" />
+    <Compile Include="Rpc\Client\Protocols\ClientTransport.ILeaseable.cs" />
+    <Compile Include="Rpc\Client\Protocols\ClientSocketError.cs" />
+    <Compile Include="Rpc\Client\Protocols\ProtocolTrace.FromRpcError.cs" />
+    <Compile Include="Rpc\Client\Protocols\TcpClientTransport.cs" />
+    <Compile Include="Rpc\Client\Protocols\TcpClientTransportManager.cs" />
+    <Compile Include="Rpc\Client\Protocols\UdpClientTransport.cs" />
+    <Compile Include="Rpc\Client\Protocols\UdpClientTransportManager.cs" />
+    <Compile Include="Rpc\Client\RequestMessageAsyncResult.cs" />
     <Compile Include="Rpc\Client\RpcClient.cs" />
-    <Compile Include="Rpc\Client\RpcClientFactory.cs" />
-    <Compile Include="Rpc\Client\RpcClientOptions.cs">
-      <DependentUpon>RpcClientOptions.tt</DependentUpon>
+    <Compile Include="Rpc\Client\RpcClientConfiguration.cs" />
+    <Compile Include="Rpc\Client\RpcClientConfiguration.Properties.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>RpcClientConfiguration.Properties.tt</DependentUpon>
     </Compile>
-    <Compile Include="Rpc\Client\RpcProxy.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\MsgPack.snk">
       <Link>MsgPack.snk</Link>
     </None>
-    <None Include="Rpc\Client\ClientServices.tt">
+    <None Include="Rpc\Client\Protocols\ProtocolTrace.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
-      <LastGenOutput>ClientServices.cs</LastGenOutput>
+      <LastGenOutput>ProtocolTrace.cs</LastGenOutput>
     </None>
-    <None Include="Rpc\Client\Protocols\Structs.g.tt">
+    <None Include="Rpc\Client\RpcClientConfiguration.Properties.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
-      <LastGenOutput>Structs.g.cs</LastGenOutput>
-    </None>
-    <None Include="Rpc\Client\RpcClientOptions.tt">
-      <Generator>TextTemplatingFileGenerator</Generator>
-      <LastGenOutput>RpcClientOptions.cs</LastGenOutput>
+      <LastGenOutput>RpcClientConfiguration.Properties.cs</LastGenOutput>
     </None>
   </ItemGroup>
   <ItemGroup>

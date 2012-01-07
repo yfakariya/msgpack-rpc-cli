@@ -29,21 +29,23 @@ namespace MsgPack.Rpc.Server.Protocols
 	{
 		public UdpServerTransport( UdpServerTransportManager manager ) : base( manager ) { }
 
-		protected sealed override void ReceiveCore( ServerRequestContext context )
-		{
-			// Manager stores the socket which is dedicated socket to this transport in the AcceptSocket property.
-			if ( !context.AcceptSocket.ReceiveFromAsync( context ) )
-			{
-				this.OnReceived( context );
-			}
-		}
-
 		protected sealed override void SendCore( ServerResponseContext context )
 		{
 			// Manager stores the socket which is dedicated socket to this transport in the AcceptSocket property.
-			if ( !context.AcceptSocket.SendToAsync( context ) )
+			if ( !this.BoundSocket.SendToAsync( context ) )
 			{
+				context.SetCompletedSynchronously();
 				this.OnSent( context );
+			}
+		}
+
+		protected sealed override void ReceiveCore( ServerRequestContext context )
+		{
+			// Manager stores the socket which is dedicated socket to this transport in the AcceptSocket property.
+			if ( !this.BoundSocket.ReceiveFromAsync( context ) )
+			{
+				context.SetCompletedSynchronously();
+				this.OnReceived( context );
 			}
 		}
 

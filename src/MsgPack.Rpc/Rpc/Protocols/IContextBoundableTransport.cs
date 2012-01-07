@@ -1,4 +1,4 @@
-#region -- License Terms --
+﻿#region -- License Terms --
 //
 // MessagePack for CLI
 //
@@ -19,13 +19,17 @@
 #endregion -- License Terms --
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Net.Sockets;
 
-namespace MsgPack.Rpc.Server.Protocols
+namespace MsgPack.Rpc.Protocols
 {
-	internal static class NativeMessageType
+	internal interface IContextBoundableTransport
 	{
-		public static readonly ArraySegment<byte> Request = new ArraySegment<byte>( new byte[] { 0x00 } ); // PositiveFixNum 0
-		public static readonly ArraySegment<byte> Response = new ArraySegment<byte>( new byte[] { 0x01 } ); // PositiveFixNum 1
-		public static readonly ArraySegment<byte> Notify = new ArraySegment<byte>( new byte[] { 0x02 } ); // PositiveFixNum 2
+		Socket BoundSocket { get; }
+
+		void OnSocketOperationCompleted( object sender, SocketAsyncEventArgs e );
 	}
 }

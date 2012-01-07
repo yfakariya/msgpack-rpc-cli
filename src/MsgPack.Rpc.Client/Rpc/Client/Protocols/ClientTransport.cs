@@ -26,219 +26,601 @@ using System.Diagnostics.Contracts;
 using System.Collections.Concurrent;
 using System.Threading;
 using System.Globalization;
-using MsgPack.Rpc.Serialization;
-using MsgPack.Collections;
+using System.IO;
+using MsgPack.Rpc.Protocols;
+using System.Net;
+using System.Runtime.ExceptionServices;
 
-namespace MsgPack.Rpc.Protocols
+namespace MsgPack.Rpc.Client.Protocols
 {
+	// FIXME: timeout -> close transport
 	/// <summary>
 	///		Define interface of client protocol binding.
 	/// </summary>
-	public abstract class ClientTransport : IDisposable, ITransportReceiveHandler
+	public abstract partial class ClientTransport : IDisposable, IContextBoundableTransport
 	{
-		private const int _defaultSegmentSize = 32 * 1024;
-		private const int _defaultSegmentCount = 1;
+		private Socket _boundSocket;
 
-		protected int InitialSegmentSize
+		internal Socket BoundSocket
+		{
+			get { return this._boundSocket; }
+			set { this._boundSocket = value; }
+		}
+
+		Socket IContextBoundableTransport.BoundSocket
+		{
+			get { return this._boundSocket; }
+		}
+
+		private bool _isDisposed;
+
+		public bool IsDisposed
 		{
 			get
 			{
-				return this.Options == null ? _defaultSegmentSize : ( this.Options.BufferSegmentSize ?? _defaultSegmentSize );
+				return this._isDisposed;
 			}
 		}
 
-		protected int InitialSegmentCount
+		private readonly ConcurrentDictionary<int, Action<ClientResponseContext, Exception, bool>> _pendingRequestTable;
+		private readonly ConcurrentDictionary<long, Action<Exception, bool>> _pendingNotificationTable;
+
+		private readonly ClientTransportManager _manager;
+
+		protected internal ClientTransportManager Manager
 		{
-			get
+			get { return this._manager; }
+		}
+
+		private bool _isInShutdown;
+
+		public bool IsInShutdown
+		{
+			get { return this._isInShutdown; }
+		}
+
+		private bool _isServerShutdowned;
+
+		private EventHandler<EventArgs> _shutdownCompleted;
+
+		internal event EventHandler<EventArgs> ShutdownCompleted
+		{
+			add
 			{
-				return this.Options == null ? _defaultSegmentCount : ( this.Options.BufferSegmentCount ?? _defaultSegmentCount );
+				EventHandler<EventArgs> oldHandler;
+				EventHandler<EventArgs> currentHandler = this._shutdownCompleted;
+				do
+				{
+					oldHandler = currentHandler;
+					var newHandler = Delegate.Combine( oldHandler, value ) as EventHandler<EventArgs>;
+					currentHandler = Interlocked.CompareExchange( ref this._shutdownCompleted, newHandler, oldHandler );
+				} while ( oldHandler != currentHandler );
 			}
-		}
-
-		private readonly RequestMessageSerializer _requestSerializer;
-		private readonly ResponseMessageSerializer _responseSerializer;
-
-		private readonly ClientEventLoop _eventLoop;
-
-		protected ClientEventLoop EventLoop
-		{
-			get { return this._eventLoop; }
-		}
-
-		private readonly RpcClientOptions _options;
-
-		public RpcClientOptions Options
-		{
-			get { return this._options; }
-		}
-
-		private readonly CountdownEvent _sessionTableLatch = new CountdownEvent( 1 );
-		private readonly TimeSpan _drainTimeout;
-
-		private readonly ConcurrentDictionary<int, IResponseHandler> _sessionTable = new ConcurrentDictionary<int, IResponseHandler>();
-
-		private bool _disposed;
-
-		protected ClientTransport( RpcTransportProtocol protocol, ClientEventLoop eventLoop, RpcClientOptions options )
-		{
-			if ( eventLoop == null )
+			remove
 			{
-				throw new ArgumentNullException( "eventLoop" );
+				EventHandler<EventArgs> oldHandler;
+				EventHandler<EventArgs> currentHandler = this._shutdownCompleted;
+				do
+				{
+					oldHandler = currentHandler;
+					var newHandler = Delegate.Remove( oldHandler, value ) as EventHandler<EventArgs>;
+					currentHandler = Interlocked.CompareExchange( ref this._shutdownCompleted, newHandler, oldHandler );
+				} while ( oldHandler != currentHandler );
 			}
-
-			Contract.EndContractBlock();
-
-			this._eventLoop = eventLoop;
-			this._requestSerializer = ClientServices.RequestSerializerFactory.Create( protocol, options );
-			this._responseSerializer = ClientServices.ResponseDeserializerFactory.Create( protocol, options );
-			this._drainTimeout = options == null ? TimeSpan.FromSeconds( 3 ) : options.DrainTimeout ?? TimeSpan.FromSeconds( 3 );
-			this._options = options ?? new RpcClientOptions();
-			this._options.Freeze();
 		}
 
+		protected virtual void OnShutdownCompleted()
+		{
+			var handler = Interlocked.CompareExchange( ref this._shutdownCompleted, null, null );
+			if ( handler != null )
+			{
+				handler( this, EventArgs.Empty );
+			}
+		}
+
+		private void OnProcessFinished()
+		{
+			if ( this._isInShutdown )
+			{
+				if ( this._pendingNotificationTable.Count == 0 && this._pendingRequestTable.Count == 0 )
+				{
+					this._boundSocket.Shutdown( SocketShutdown.Receive );
+					this.OnShutdownCompleted();
+				}
+			}
+		}
+
+		protected ClientTransport( ClientTransportManager manager )
+		{
+			if ( manager == null )
+			{
+				throw new ArgumentNullException( "manager" );
+			}
+
+			this._manager = manager;
+			this._pendingRequestTable = new ConcurrentDictionary<int, Action<ClientResponseContext, Exception, bool>>();
+			this._pendingNotificationTable = new ConcurrentDictionary<long, Action<Exception, bool>>();
+		}
+
+		/// <summary>
+		///		Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
+		/// </summary>
 		public void Dispose()
 		{
 			this.Dispose( true );
 			GC.SuppressFinalize( this );
 		}
 
+		/// <summary>
+		///		Releases unmanaged and - optionally - managed resources.
+		/// </summary>
+		/// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
 		protected virtual void Dispose( bool disposing )
 		{
-			this.Drain();
-			this._disposed = true;
-		}
-
-		protected void Drain()
-		{
-			this._sessionTableLatch.Signal();
-			this._sessionTableLatch.Wait( this._drainTimeout, this.EventLoop.CancellationToken );
-		}
-
-		public void Send( MessageType type, int? messageId, String method, IList<object> arguments, Action<SendingContext, Exception, bool> onMessageSent, IResponseHandler responseHandler )
-		{
-			switch ( type )
+			if ( disposing )
 			{
-				case MessageType.Request:
-				case MessageType.Notification:
+				if ( !this.IsDisposed )
 				{
+					this.DisposeLease();
+					this._isDisposed = true;
+					Thread.MemoryBarrier();
+				}
+			}
+		}
+
+		private void VerifyIsNotDisposed()
+		{
+			if ( this.IsDisposed )
+			{
+				throw new ObjectDisposedException( this.ToString() );
+			}
+		}
+
+		public void BeginShutdown()
+		{
+			if ( !this._isInShutdown )
+			{
+				this._isInShutdown = true;
+				Thread.MemoryBarrier();
+				this._boundSocket.Shutdown( SocketShutdown.Send );
+			}
+		}
+
+		private void OnSocketOperationCompleted( object sender, SocketAsyncEventArgs e )
+		{
+			var socket = sender as Socket;
+			var context = e as MessageContext;
+
+			if ( !this.HandleSocketError( socket, context ) )
+			{
+				return;
+			}
+
+			switch ( context.LastOperation )
+			{
+				case SocketAsyncOperation.Send:
+				case SocketAsyncOperation.SendTo:
+				case SocketAsyncOperation.SendPackets:
+				{
+					var requestContext = context as ClientRequestContext;
+					Contract.Assert( requestContext != null );
+					this.OnSent( requestContext );
+					break;
+				}
+				case SocketAsyncOperation.Receive:
+				case SocketAsyncOperation.ReceiveFrom:
+				case SocketAsyncOperation.ReceiveMessageFrom:
+				{
+					var responseContext = context as ClientResponseContext;
+					Contract.Assert( responseContext != null );
+					this.OnReceived( responseContext );
 					break;
 				}
 				default:
 				{
-					throw new ArgumentOutOfRangeException( "type", type, "'type' must be 'Request' or 'Notificatiion'." );
+					MsgPackRpcClientProtocolsTrace.TraceEvent(
+						MsgPackRpcClientProtocolsTrace.UnexpectedLastOperation,
+						"Unexpected operation. [ \"sender.Handle\" : 0x{0}, \"remoteEndPoint\" : \"{1}\", \"lastOperation\" : \"{2}\" ]",
+						socket.Handle,
+						context.RemoteEndPoint,
+						context.LastOperation
+					);
+					break;
 				}
 			}
+		}
 
-			if ( method == null )
+		void IContextBoundableTransport.OnSocketOperationCompleted( object sender, SocketAsyncEventArgs e )
+		{
+			this.OnSocketOperationCompleted( sender, e );
+		}
+
+		private bool HandleSocketError( Socket socket, MessageContext context )
+		{
+			var rpcError = this.Manager.HandleSocketError( socket, context );
+			this.RaiseError( context.MessageId, context.SessionId, rpcError.Value, context.CompletedSynchronously );
+			return rpcError == null;
+		}
+
+		private void HandleDeserializationError( ClientResponseContext context, string message, Func<byte[]> invalidRequestHeaderProvider )
+		{
+			if ( invalidRequestHeaderProvider != null && MsgPackRpcClientProtocolsTrace.ShouldTrace( MsgPackRpcClientProtocolsTrace.DumpInvalidResponseHeader ) )
 			{
-				throw new ArgumentNullException( "method" );
+				var array = invalidRequestHeaderProvider();
+				MsgPackRpcClientProtocolsTrace.TraceData( MsgPackRpcClientProtocolsTrace.DumpInvalidResponseHeader, BitConverter.ToString( array ), array );
 			}
 
-			if ( String.IsNullOrWhiteSpace( method ) )
-			{
-				throw new ArgumentException( "'method' cannot be empty.", "method" );
-			}
+			var rpcError = new RpcErrorMessage( RpcError.RemoteRuntimeError, "Invalid stream.", message );
+			this.RaiseError( context.MessageId, context.SessionId, rpcError, context.CompletedSynchronously );
+			// TODO: configurable
+			// context.Clear();
+			context.NextProcess = this.DumpCorrupttedData;
+		}
 
-			if ( arguments == null )
+		private void RaiseError( int? messageId, long sessionId, RpcErrorMessage rpcError, bool completedSynchronously )
+		{
+			if ( messageId != null )
 			{
-				throw new ArgumentNullException( "arguments" );
-			}
-
-			if ( this._disposed )
-			{
-				throw new ObjectDisposedException( this.ToString() );
-			}
-
-			Contract.EndContractBlock();
-
-			var sendingContext = this.CreateNewSendingContext( messageId, onMessageSent );
-			RpcErrorMessage serializationError = this._requestSerializer.Serialize( messageId, method, arguments, sendingContext.SendingBuffer );
-			if ( !serializationError.IsSuccess )
-			{
-				throw new RpcTransportException( serializationError.Error, serializationError.Detail );
-			}
-
-			if ( messageId.HasValue )
-			{
-				try { }
+				Action<ClientResponseContext, Exception, bool> handler = null;
+				try
+				{
+					this._pendingRequestTable.TryRemove( messageId.Value, out handler );
+				}
 				finally
 				{
-					this._sessionTableLatch.AddCount();
-					if ( !this._sessionTable.TryAdd( messageId.Value, responseHandler ) )
+					if ( handler == null )
 					{
-						throw new InvalidOperationException(
-							String.Format( CultureInfo.CurrentCulture, "Message ID:{0} is already used.", messageId.Value )
-						);
+						this.HandleOrphan( messageId, sessionId, rpcError );
 					}
-				}
-			}
-
-			// Must set BufferList here.
-			sendingContext.SocketContext.BufferList = sendingContext.SendingBuffer.Chunks;
-			this.SendCore( sendingContext );
-		}
-
-		protected abstract SendingContext CreateNewSendingContext( int? messageId, Action<SendingContext, Exception, bool> onMessageSent );
-
-		protected abstract void SendCore( SendingContext context );
-
-		void ITransportReceiveHandler.OnReceive( ReceivingContext context )
-		{
-			ResponseMessage result;
-			// FIXME: Feeding deserliaztion.
-			//	If data is not enough, Deserialize return null.
-			//  So this method return false, caller(EventLoop) retrieve more data.
-			//  Feeding callback is NOT straight forward.
-			var error = this._responseSerializer.Deserialize( context.ReceivingBuffer, out result );
-			this.OnReceiveCore( context, result, error );
-		}
-
-		ChunkBuffer ITransportReceiveHandler.GetBufferForReceive( SendingContext context )
-		{
-			return this.GetBufferForReceiveCore( context );
-		}
-
-		protected virtual ChunkBuffer GetBufferForReceiveCore( SendingContext context )
-		{
-			// Reuse sending buffer.
-			return context.SendingBuffer.Chunks;
-		}
-
-		ChunkBuffer ITransportReceiveHandler.ReallocateReceivingBuffer( ChunkBuffer oldBuffer, long requestedLength, ReceivingContext context )
-		{
-			return this.ReallocateReceivingBufferCore( oldBuffer, requestedLength, context );
-		}
-
-		protected virtual ChunkBuffer ReallocateReceivingBufferCore( ChunkBuffer oldBuffer, long requestedLength, ReceivingContext context )
-		{
-			return ChunkBuffer.CreateDefault( context.SessionContext.Options.BufferSegmentCount ?? 1, context.SessionContext.Options.BufferSegmentSize ?? ChunkBuffer.DefaultSegmentSize );
-		}
-
-		protected virtual void OnReceiveCore( ReceivingContext context, ResponseMessage response, RpcErrorMessage error )
-		{
-			IResponseHandler handler;
-			bool removed;
-			try { }
-			finally
-			{
-				removed = this._sessionTable.TryRemove( response.MessageId, out handler );
-				this._sessionTableLatch.Signal();
-			}
-
-			if ( removed )
-			{
-				if ( error.IsSuccess )
-				{
-					handler.HandleResponse( response, false );
-				}
-				else
-				{
-					handler.HandleError( error, false );
+					else
+					{
+						handler( null, rpcError.ToException(), completedSynchronously );
+					}
 				}
 			}
 			else
 			{
-				// TODO: trace unrecognized receive message.
+				Action<Exception, bool> handler = null;
+				try
+				{
+					this._pendingNotificationTable.TryRemove( sessionId, out handler );
+				}
+				finally
+				{
+					if ( handler == null )
+					{
+						this.HandleOrphan( messageId, sessionId, rpcError );
+					}
+					else
+					{
+						handler( rpcError.ToException(), completedSynchronously );
+					}
+				}
+			}
+		}
+
+		private void HandleOrphan( ClientResponseContext context )
+		{
+			this.HandleOrphan( context.MessageId, context.SessionId, ErrorInterpreter.UnpackError( context ) );
+		}
+
+		private void HandleOrphan( int? messageId, long sessionId, RpcErrorMessage rpcError )
+		{
+			MsgPackRpcClientProtocolsTrace.TraceEvent(
+				MsgPackRpcClientProtocolsTrace.OrphanError,
+				"Cannot notify error for MessageID:{0}, SessionID:{1}. This may indicate runtime problem. Error details: {2}",
+				messageId == null ? "(null)" : messageId.Value.ToString(),
+				sessionId,
+				rpcError
+			);
+		}
+
+		private void DumpRequestData( DateTimeOffset sessionStartedAt, EndPoint destination, long sessionId, MessageType type, int? messageId, IList<ArraySegment<byte>> requestData )
+		{
+			using ( var stream = OpenDumpStream( sessionStartedAt, destination, sessionId, type, messageId ) )
+			{
+				foreach ( var segment in requestData )
+				{
+					stream.Write( segment.Array, segment.Offset, segment.Count );
+				}
+
+				stream.Flush();
+			}
+		}
+
+		private static Stream OpenDumpStream( DateTimeOffset sessionStartedAt, EndPoint destination, long sessionId, MessageType type, int? messageId )
+		{
+			// TODO: configurable
+#if !SILVERLIGHT
+			return
+				new FileStream(
+					Path.Combine(
+						Environment.GetFolderPath( Environment.SpecialFolder.LocalApplicationData ),
+						"MsgPack",
+						"v" + typeof( ClientTransport ).Assembly.GetName().Version,
+						"Client",
+						"Dump",
+						String.Format( CultureInfo.InvariantCulture, "{0:o}-{1}-{2}-{3}{4}.dat", sessionStartedAt, FileSystem.EscapeInvalidPathChars( destination.ToString(), "_" ), sessionId, type, messageId == null ? String.Empty : "-" + messageId )
+					),
+					FileMode.Append,
+					FileAccess.Write,
+					FileShare.Read,
+					64 * 1024,
+					FileOptions.None
+				);
+#else
+			return Stream.Null;
+#endif
+		}
+
+		public virtual ClientRequestContext GetClientRequestContext()
+		{
+			var context = this.Manager.RequestContextPool.Borrow();
+			context.SetTransport( this );
+			context.RenewSessionId();
+			return context;
+		}
+
+		public void Send( ClientRequestContext context )
+		{
+			if ( context == null )
+			{
+				throw new ArgumentNullException( "context" );
+			}
+
+			if ( context.BoundTransport != this )
+			{
+				throw new ArgumentException( "Context is not bound to this object.", "context" );
+			}
+
+			this.VerifyIsNotDisposed();
+
+			if ( this.IsInShutdown )
+			{
+				throw new InvalidOperationException( "This transport is in shutdown." );
+			}
+
+			if ( this._isServerShutdowned )
+			{
+				throw new RpcErrorMessage( RpcError.TransportError, "Server did shutdown socket.", null ).ToException();
+			}
+
+			context.Prepare();
+
+			if ( context.MessageType == MessageType.Request )
+			{
+				if ( !this._pendingRequestTable.TryAdd( context.MessageId.Value, context.RequestCompletionCallback ) )
+				{
+					throw new InvalidOperationException( String.Format( CultureInfo.CurrentCulture, "Message ID '{0}' is already used.", context.MessageId ) );
+				}
+			}
+			else
+			{
+				if ( !this._pendingNotificationTable.TryAdd( context.SessionId, context.NotificationComplectionCallback ) )
+				{
+					throw new InvalidOperationException( String.Format( CultureInfo.CurrentCulture, "Session ID '{0}' is already used.", context.MessageId ) );
+				}
+			}
+
+			if ( MsgPackRpcClientProtocolsTrace.ShouldTrace( MsgPackRpcClientProtocolsTrace.SendOutboundData ) )
+			{
+				MsgPackRpcClientProtocolsTrace.TraceEvent(
+					MsgPackRpcClientProtocolsTrace.SendOutboundData,
+					"Send request/notification. [ \"SessionID\" : {0}, \"Type\" : \"{1}\", \"MessageID\" : {2}, \"Method\" : \"{3}\", \"RemoteEndPoint\" : {4}, \"BytesTransferring\" : {5} ]",
+					context.SessionId,
+					context.RemoteEndPoint,
+					context.SendingBuffer.Sum( segment => ( long )segment.Count )
+				);
+			}
+
+			this.SendCore( context );
+		}
+
+		/// <summary>
+		///		Performs protocol specific asynchronous 'Send' operation.
+		/// </summary>
+		/// <param name="context">Context information.</param>
+		protected abstract void SendCore( ClientRequestContext context );
+
+		/// <summary>
+		///		Called when asynchronous 'Send' operation is completed.
+		/// </summary>
+		/// <param name="context">Context information.</param>
+		/// <returns>
+		///		<c>true</c>, if the subsequent request is already received;
+		///		<c>false</c>, otherwise.
+		/// </returns>
+		///	<exception cref="InvalidOperationException">
+		///		This instance is not in 'Sending' state.
+		///	</exception>
+		///	<exception cref="ObjectDisposedException">
+		///		This instance is disposed.
+		///	</exception>
+		protected virtual void OnSent( ClientRequestContext context )
+		{
+			if ( MsgPackRpcClientProtocolsTrace.ShouldTrace( MsgPackRpcClientProtocolsTrace.SentOutboundData ) )
+			{
+				MsgPackRpcClientProtocolsTrace.TraceEvent(
+					MsgPackRpcClientProtocolsTrace.SentOutboundData,
+						"Sent request/notification. [ \"SessionID\" : {0}, \"Type\" : \"{1}\", \"MessageID\" : {2}, \"Method\" : \"{3}\", \"RemoteEndPoint\" : {4}, \"BytesTransferred\" : {5} ]",
+						context.SessionId,
+						context.RemoteEndPoint,
+						context.BytesTransferred
+					);
+			}
+
+			context.Clear();
+			try
+			{
+				try
+				{
+					if ( context.MessageType == MessageType.Notification )
+					{
+						Action<Exception, bool> handler = null;
+						try
+						{
+							this._pendingNotificationTable.TryRemove( context.SessionId, out handler );
+						}
+						finally
+						{
+							if ( handler != null )
+							{
+								handler( null, context.CompletedSynchronously );
+							}
+						}
+					}
+				}
+				finally
+				{
+					this.OnProcessFinished();
+				}
+			}
+			finally
+			{
+				this.Manager.ReturnTransport( this );
+			}
+		}
+
+
+		/// <summary>
+		///		Receives byte stream from remote end point.
+		/// </summary>
+		/// <param name="context">Context information.</param>
+		///	<exception cref="InvalidOperationException">
+		///		This instance is not in 'Idle' state.
+		///	</exception>
+		///	<exception cref="ObjectDisposedException">
+		///		This instance is disposed.
+		///	</exception>
+		private void Receive( ClientResponseContext context )
+		{
+			if ( context == null )
+			{
+				throw new ArgumentNullException( "context" );
+			}
+
+			if ( context.BoundTransport != this )
+			{
+				throw new ArgumentException( "Context is not bound to this object.", "context" );
+			}
+
+			this.VerifyIsNotDisposed();
+
+			this.PrivateReceive( context );
+		}
+
+		private void PrivateReceive( ClientResponseContext context )
+		{
+			// First, drain last received request.
+			if ( context.ReceivedData.Any( segment => 0 < segment.Count ) )
+			{
+				this.DrainRemainingReceivedData( context );
+			}
+			else
+			{
+				// There might be dirty data due to client shutdown.
+				context.ReceivedData.Clear();
+				Array.Clear( context.CurrentReceivingBuffer, 0, context.CurrentReceivingBuffer.Length );
+
+				context.SetBuffer( context.CurrentReceivingBuffer, 0, context.CurrentReceivingBuffer.Length );
+
+				MsgPackRpcClientProtocolsTrace.TraceEvent(
+					MsgPackRpcClientProtocolsTrace.BeginReceive,
+					"Receive inbound data. [ \"RemoteEndPoint\" : \"{0}\", \"LocalEndPoint\" : \"{1}\" ]",
+					this._boundSocket == null ? null : this._boundSocket.RemoteEndPoint,
+					this._boundSocket == null ? null : this._boundSocket.LocalEndPoint
+				);
+				this.ReceiveCore( context );
+			}
+		}
+
+		private void DrainRemainingReceivedData( ClientResponseContext context )
+		{
+			// Process remaining binaries. This pipeline recursively call this method on other thread.
+			if ( !context.NextProcess( context ) )
+			{
+				// Draining was not ended. Try to take next bytes.
+				this.PrivateReceive( context );
+			}
+
+			// This method must be called on other thread on the above pipeline, so exit this thread.
+		}
+
+		/// <summary>
+		///		Performs protocol specific asynchronous 'Receive' operation.
+		/// </summary>
+		/// <param name="context">Context information.</param>
+		protected abstract void ReceiveCore( ClientResponseContext context );
+
+		/// <summary>
+		///		Called when asynchronous 'Receive' operation is completed.
+		/// </summary>
+		/// <param name="context">Context information.</param>
+		///	<exception cref="InvalidOperationException">
+		///		This instance is not in 'Idle' nor 'Receiving' state.
+		///	</exception>
+		///	<exception cref="ObjectDisposedException">
+		///		This instance is disposed.
+		///	</exception>
+		protected virtual void OnReceived( ClientResponseContext context )
+		{
+			if ( context == null )
+			{
+				throw new ArgumentNullException( "context" );
+			}
+
+			if ( MsgPackRpcClientProtocolsTrace.ShouldTrace( MsgPackRpcClientProtocolsTrace.ReceiveInboundData ) )
+			{
+				MsgPackRpcClientProtocolsTrace.TraceEvent(
+					MsgPackRpcClientProtocolsTrace.ReceiveInboundData,
+					"Receive request. [ \"Socket\" : 0x{0:x8}, \"LocalEndPoint\" : \"{1}\", \"RemoteEndPoint\" : \"{2}\", \"BytesTransfered\" : {3} ]",
+					context.SessionId,
+					this._boundSocket.Handle,
+					this._boundSocket.LocalEndPoint,
+					this._boundSocket.RemoteEndPoint,
+					context.BytesTransferred
+				);
+			}
+
+			if ( context.BytesTransferred == 0 )
+			{
+				// recv() returns 0 when the server socket shutdown gracefully.
+				MsgPackRpcClientProtocolsTrace.TraceEvent(
+					MsgPackRpcClientProtocolsTrace.DetectServerShutdown,
+					"Server shutdown current socket. [ \"RemoteEndPoint\" : \"{0}\" ]",
+					context.RemoteEndPoint
+				);
+
+				this._isServerShutdowned = true;
+				if ( !context.ReceivedData.Any( segment => 0 < segment.Count ) )
+				{
+					// There are not data to handle.
+					context.Clear();
+					return;
+				}
+			}
+			else
+			{
+				context.ShiftCurrentReceivingBuffer();
+			}
+
+			// FIXME: Quota
+			if ( MsgPackRpcClientProtocolsTrace.ShouldTrace( MsgPackRpcClientProtocolsTrace.DeserializeResponse ) )
+			{
+				MsgPackRpcClientProtocolsTrace.TraceEvent(
+					MsgPackRpcClientProtocolsTrace.DeserializeResponse,
+					"Deserialize response. [ \"SessionID\" : {0}, \"Length\" : {1} ]",
+					context.SessionId,
+					context.ReceivedData.Sum( item => ( long )item.Count )
+				);
+			}
+
+			// Go deserialization pipeline.
+			if ( !context.NextProcess( context ) )
+			{
+				// Wait to arrive more data from client.
+				this.ReceiveCore( context );
+				return;
 			}
 		}
 	}

@@ -23,6 +23,7 @@ using System.Diagnostics;
 
 namespace MsgPack.Rpc.Server
 {
+	// FIXME: Restructuring like Client.
 	internal static class Tracer
 	{
 		private static readonly TraceSource _server = new TraceSource( "MsgPack.Rpc.Server" );
