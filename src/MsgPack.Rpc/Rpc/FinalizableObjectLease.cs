@@ -30,7 +30,7 @@ namespace MsgPack.Rpc
 	/// </summary>
 	/// <typeparam name="T">
 	/// </typeparam>
-	internal sealed class FinalizableObjectLease<T> : ObjectLease<T>
+	public sealed class FinalizableObjectLease<T> : ObjectLease<T>
 			where T : class
 	{
 		private Action<T> _returning;

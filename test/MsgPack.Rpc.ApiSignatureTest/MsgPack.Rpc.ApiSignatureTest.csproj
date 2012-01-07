@@ -1,0 +1,107 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>8.0.30703</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{25D5A3B3-14B4-4BD3-836A-EC212CC21648}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>MsgPack.Rpc.ApiSignatureTest</RootNamespace>
+    <AssemblyName>MsgPack.Rpc.ApiSignatureTest</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>TRACE;DEBUG;API_SIGNATURE_TEST</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <NoWarn>0436</NoWarn>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE;API_SIGNATURE_TEST</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="MsgPack">
+      <HintPath>..\..\lib\MsgPack.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\..\src\msgpack.rpc.server\rpc\server\dispatch\DefaultServiceTypeLocator.cs">
+      <Link>Rpc\Server\Dispatch\DefaultServiceTypeLocator.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\msgpack.rpc.server\rpc\server\dispatch\LocatorBasedDispatcher.cs">
+      <Link>Rpc\Server\Dispatch\LocatorBasedDispatcher.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\msgpack.rpc.server\rpc\server\protocols\TcpServerTransport.cs">
+      <Link>Rpc\Server\Protocols\TcpServerTransport.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\msgpack.rpc.server\rpc\server\protocols\TcpServerTransportManager.cs">
+      <Link>Rpc\Server\Protocols\TcpServerTransportManager.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\msgpack.rpc.server\rpc\server\protocols\UdpServerTransport.cs">
+      <Link>Rpc\Server\Protocols\UdpServerTransport.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\msgpack.rpc.server\rpc\server\protocols\UdpServerTransportManager.cs">
+      <Link>Rpc\Server\Protocols\UdpServerTransportManager.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\MsgPack.Rpc\Rpc\FinalizableObjectLease.cs">
+      <Link>Rpc\FinalizableObjectLease.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\MsgPack.Rpc\Rpc\ForgettableObjectLease.cs">
+      <Link>Rpc\ForgettableObjectLease.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\MsgPack.Rpc\Rpc\OnTheFlyObjectPool.cs">
+      <Link>Rpc\OnTheFlyObjectPool.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\MsgPack.Rpc\Rpc\StandardObjectPool.cs">
+      <Link>Rpc\StandardObjectPool.cs</Link>
+    </Compile>
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="ReadMe.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\MsgPack.Rpc.Client\MsgPack.Rpc.Client.csproj">
+      <Project>{39C460F9-9BE8-4497-AC2F-09C3A66D8D12}</Project>
+      <Name>MsgPack.Rpc.Client</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\src\MsgPack.Rpc.Server\MsgPack.Rpc.Server.csproj">
+      <Project>{58547F06-05A0-4BBE-B07D-00CDB172CC5F}</Project>
+      <Name>MsgPack.Rpc.Server</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\src\MsgPack.Rpc\MsgPack.Rpc.csproj">
+      <Project>{77ABC1A9-0719-47AD-B2E1-0B12E49E3CD2}</Project>
+      <Name>MsgPack.Rpc</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Rpc\Client\" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

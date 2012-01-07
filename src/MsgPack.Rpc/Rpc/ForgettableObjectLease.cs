@@ -29,7 +29,7 @@ namespace MsgPack.Rpc
 	/// <typeparam name="T">
 	///		The type of the leased object.
 	/// </typeparam>
-	internal sealed class ForgettableObjectLease<T> : ObjectLease<T>
+	public sealed class ForgettableObjectLease<T> : ObjectLease<T>
 			where T : class
 	{
 		/// <summary>

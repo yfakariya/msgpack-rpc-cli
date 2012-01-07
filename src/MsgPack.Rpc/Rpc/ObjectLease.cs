@@ -33,7 +33,7 @@ namespace MsgPack.Rpc
 	/// <remarks>
 	///		This class is thread-safe, but the derived type might not be thread-safe.
 	/// </remarks>
-	internal abstract class ObjectLease<T> : ILease<T>
+	public abstract class ObjectLease<T> : ILease<T>
 			where T : class
 	{
 		private bool _isDisposed;
