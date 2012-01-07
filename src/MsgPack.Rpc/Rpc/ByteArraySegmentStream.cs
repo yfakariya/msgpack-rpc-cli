@@ -30,11 +30,6 @@ namespace MsgPack.Rpc
 	{
 		private readonly IList<ArraySegment<byte>> _segments;
 
-		public IList<ArraySegment<byte>> GetBuffer()
-		{
-			return this._segments;
-		}
-
 		private int _segmentIndex;
 		private int _offsetInCurrentSegment;
 
@@ -184,6 +179,59 @@ namespace MsgPack.Rpc
 					this._position++;
 				}
 			}
+		}
+
+		public IList<ArraySegment<byte>> GetBuffer()
+		{
+			return this._segments;
+		}
+
+		public IList<ArraySegment<byte>> GetBuffer( long start, long length )
+		{
+			if ( start < 0 )
+			{
+				throw new ArgumentOutOfRangeException( "start" );
+			}
+
+			if ( length < 0 )
+			{
+				throw new ArgumentOutOfRangeException( "length" );
+			}
+
+			var result = new List<ArraySegment<byte>>( this._segments.Count );
+			long taken = 0;
+			long toBeSkipped = start;
+			foreach ( var segment in this._segments )
+			{
+				int skipped = 0;
+				if ( toBeSkipped > 0 )
+				{
+					if ( segment.Count <= toBeSkipped )
+					{
+						toBeSkipped -= segment.Count;
+						continue;
+					}
+
+					skipped = unchecked( ( int )toBeSkipped );
+					toBeSkipped = 0;
+				}
+
+				int available = segment.Count - skipped;
+				long required = length - taken;
+				if ( required <= available )
+				{
+					taken += required;
+					result.Add( new ArraySegment<byte>( segment.Array, segment.Offset + skipped, unchecked( ( int )required ) ) );
+					break;
+				}
+				else
+				{
+					taken += available;
+					result.Add( new ArraySegment<byte>( segment.Array, segment.Offset + skipped, available ) );
+				}
+			}
+
+			return result;
 		}
 
 		public byte[] ToArray()

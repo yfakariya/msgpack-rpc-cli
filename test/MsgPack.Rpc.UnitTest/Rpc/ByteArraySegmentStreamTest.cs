@@ -20,10 +20,9 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using NUnit.Framework;
 using System.IO;
+using System.Linq;
+using NUnit.Framework;
 
 namespace MsgPack.Rpc
 {
@@ -215,6 +214,196 @@ namespace MsgPack.Rpc
 			}
 		}
 
+		[Test]
+		public void TestGetBuffer_Int64_Int64_Empty_Empty()
+		{
+			using ( var target = new ByteArraySegmentStream( new ArraySegment<byte>[ 0 ] ) )
+			{
+				var result = target.GetBuffer( 0, 1 );
+				Assert.That( result, Is.Not.Null.And.Empty );
+			}
+		}
+
+		[Test]
+		public void TestGetBuffer_Int64_Int64_1Byte_AsIs()
+		{
+			using ( var target = CreateForGetBuffer() )
+			{
+				var result = target.GetBuffer( 0, 1 );
+				Assert.That( result.SelectMany( segment => segment.AsEnumerable() ).ToArray(), Is.EqualTo( new byte[] { 12 } ) );
+			}
+		}
+
+		[Test]
+		public void TestGetBuffer_Int64_Int64_1Segment_Full_AsIs()
+		{
+			using ( var target = CreateForGetBuffer() )
+			{
+				var result = target.GetBuffer( 0, 3 );
+				Assert.That( result.SelectMany( segment => segment.AsEnumerable() ).ToArray(), Is.EqualTo( new byte[] { 12, 13, 14 } ) );
+			}
+		}
+
+		[Test]
+		public void TestGetBuffer_Int64_Int64_2Segments_Full_AsIs()
+		{
+			using ( var target = CreateForGetBuffer() )
+			{
+				var result = target.GetBuffer( 0, 6 );
+				Assert.That( result.SelectMany( segment => segment.AsEnumerable() ).ToArray(), Is.EqualTo( new byte[] { 12, 13, 14, 22, 23, 24 } ) );
+			}
+		}
+
+		[Test]
+		public void TestGetBuffer_Int64_Int64_2Of4Segments_Full_AsIs()
+		{
+			using ( var target = CreateForGetBuffer() )
+			{
+				var result = target.GetBuffer( 3, 6 );
+				Assert.That( result.SelectMany( segment => segment.AsEnumerable() ).ToArray(), Is.EqualTo( new byte[] { 22, 23, 24, 32, 33, 34 } ) );
+			}
+		}
+
+		[Test]
+		public void TestGetBuffer_Int64_Int64_1Segment_HeadToIntermediate_AsIs()
+		{
+			using ( var target = CreateForGetBuffer() )
+			{
+				var result = target.GetBuffer( 0, 2 );
+				Assert.That( result.SelectMany( segment => segment.AsEnumerable() ).ToArray(), Is.EqualTo( new byte[] { 12, 13 } ) );
+			}
+		}
+
+		[Test]
+		public void TestGetBuffer_Int64_Int64_2Segments_HeadToIntermediate_AsIs()
+		{
+			using ( var target = CreateForGetBuffer() )
+			{
+				var result = target.GetBuffer( 0, 5 );
+				Assert.That( result.SelectMany( segment => segment.AsEnumerable() ).ToArray(), Is.EqualTo( new byte[] { 12, 13, 14, 22, 23 } ) );
+			}
+		}
+
+		[Test]
+		public void TestGetBuffer_Int64_Int64_2Of4Segments_HeadToIntermediate_AsIs()
+		{
+			using ( var target = CreateForGetBuffer() )
+			{
+				var result = target.GetBuffer( 3, 5 );
+				Assert.That( result.SelectMany( segment => segment.AsEnumerable() ).ToArray(), Is.EqualTo( new byte[] { 22, 23, 24, 32, 33 } ) );
+			}
+		}
+
+		[Test]
+		public void TestGetBuffer_Int64_Int64_1Segment_IntermediateToTail_AsIs()
+		{
+			using ( var target = CreateForGetBuffer() )
+			{
+				var result = target.GetBuffer( 10, 2 );
+				Assert.That( result.SelectMany( segment => segment.AsEnumerable() ).ToArray(), Is.EqualTo( new byte[] { 43, 44 } ) );
+			}
+		}
+
+		[Test]
+		public void TestGetBuffer_Int64_Int64_2Segments_IntermediateToTail_AsIs()
+		{
+			using ( var target = CreateForGetBuffer() )
+			{
+				var result = target.GetBuffer( 7, 5 );
+				Assert.That( result.SelectMany( segment => segment.AsEnumerable() ).ToArray(), Is.EqualTo( new byte[] { 33, 34, 42, 43, 44 } ) );
+			}
+		}
+
+		[Test]
+		public void TestGetBuffer_Int64_Int64_2Of4Segments_IntermediateToTail_AsIs()
+		{
+			using ( var target = CreateForGetBuffer() )
+			{
+				var result = target.GetBuffer( 4, 8 );
+				Assert.That( result.SelectMany( segment => segment.AsEnumerable() ).ToArray(), Is.EqualTo( new byte[] { 23, 24, 32, 33, 34, 42, 43, 44 } ) );
+			}
+		}
+
+		[Test]
+		public void TestGetBuffer_Int64_Int64_1Segment_IntermediateToIntermediate_AsIs()
+		{
+			using ( var target = CreateForGetBuffer() )
+			{
+				var result = target.GetBuffer( 1, 1 );
+				Assert.That( result.SelectMany( segment => segment.AsEnumerable() ), Is.EqualTo( new byte[] { 13 } ) );
+			}
+		}
+
+		[Test]
+		public void TestGetBuffer_Int64_Int64_2Segments_IntermediateToIntermediate_AsIs()
+		{
+			using ( var target = CreateForGetBuffer() )
+			{
+				var result = target.GetBuffer( 1, 4 );
+				Assert.That( result.SelectMany( segment => segment.AsEnumerable() ).ToArray(), Is.EqualTo( new byte[] { 13, 14, 22, 23 } ) );
+			}
+		}
+
+		[Test]
+		public void TestGetBuffer_Int64_Int64_2Of4Segments_IntermediateToIntermediate_AsIs()
+		{
+			using ( var target = CreateForGetBuffer() )
+			{
+				var result = target.GetBuffer( 4, 4 );
+				Assert.That( result.SelectMany( segment => segment.AsEnumerable() ).ToArray(), Is.EqualTo( new byte[] { 23, 24, 32, 33 } ) );
+			}
+		}
+
+		[Test]
+		[ExpectedException( typeof( ArgumentOutOfRangeException ) )]
+		public void TestGetBuffer_Int64_Int64_StartIsNegative()
+		{
+			using ( var target = CreateForGetBuffer() )
+			{
+				var dummy = target.GetBuffer( -1, 1 );
+			}
+		}
+
+		[Test]
+		[ExpectedException( typeof( ArgumentOutOfRangeException ) )]
+		public void TestGetBuffer_Int64_Int64_LengthIsNegative()
+		{
+			using ( var target = CreateForGetBuffer() )
+			{
+				var dummy = target.GetBuffer( 0, -1 );
+			}
+		}
+
+		[Test]
+		public void TestGetBuffer_Int64_Int64_StartIsTooLarge_Empty()
+		{
+			using ( var target = CreateForGetBuffer() )
+			{
+				var result = target.GetBuffer( target.Length, 1 );
+				Assert.That( result.SelectMany( segment => segment.AsEnumerable() ), Is.Empty );
+			}
+		}
+
+		[Test]
+		public void TestGetBuffer_Int64_Int64_LengthIsZero_Empty()
+		{
+			using ( var target = CreateForGetBuffer() )
+			{
+				var result = target.GetBuffer( 0, 0 );
+				Assert.That( result.SelectMany( segment => segment.AsEnumerable() ), Is.Empty );
+			}
+		}
+
+		[Test]
+		public void TestGetBuffer_Int64_Int64_LengthIsTooLarge_AsLargeAsPossible()
+		{
+			using ( var target = CreateForGetBuffer() )
+			{
+				var result = target.GetBuffer( 0, target.Length + 1 );
+				Assert.That( result.SelectMany( segment => segment.AsEnumerable() ).ToArray(), Is.EqualTo( target.ToArray() ) );
+			}
+		}
+
 		private static ArraySegment<byte>[] CreateData()
 		{
 			return
@@ -224,6 +413,20 @@ namespace MsgPack.Rpc
 					new ArraySegment<byte>( new byte[] { 21, 22, 23, 24, 25 }, 1, 3 ),
 					new ArraySegment<byte>( new byte[] { 31, 32, 33, 34, 35 }, 1, 3 ),
 				};
+		}
+
+		private static ByteArraySegmentStream CreateForGetBuffer()
+		{
+			return
+				new ByteArraySegmentStream(
+					new ArraySegment<byte>[]
+					{
+						new ArraySegment<byte>( new byte[] { 11, 12, 13, 14, 15 }, 1, 3 ),
+						new ArraySegment<byte>( new byte[] { 21, 22, 23, 24, 25 }, 1, 3 ),
+						new ArraySegment<byte>( new byte[] { 31, 32, 33, 34, 35 }, 1, 3 ),
+						new ArraySegment<byte>( new byte[] { 41, 42, 43, 44, 45 }, 1, 3 ),
+					}
+				);
 		}
 	}
 }
