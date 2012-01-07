@@ -61,6 +61,11 @@
     <Compile Include="Rpc\Server\Dispatch\Dispatcher.cs" />
     <Compile Include="Rpc\Server\Dispatch\AsyncServiceInvoker`1.cs" />
     <Compile Include="Rpc\Server\Dispatch\DefaultServiceTypeLocator.cs" />
+    <Compile Include="Rpc\Server\Dispatch\DispatchTrace.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>DispatchTrace.tt</DependentUpon>
+    </Compile>
     <Compile Include="Rpc\Server\Dispatch\FileBasedServiceTypeLocator.cs" />
     <Compile Include="Rpc\Server\Dispatch\IAsyncServiceInvoker.cs" />
     <Compile Include="Rpc\Server\Dispatch\InvocationHelper.cs" />
@@ -82,6 +87,12 @@
     <Compile Include="Rpc\Server\Dispatch\ServiceInvokerGenerator.cs" />
     <Compile Include="Rpc\Server\Dispatch\ServiceTypeLocator.cs" />
     <Compile Include="Rpc\Server\Protocols\ListeningContext.cs" />
+    <Compile Include="Rpc\Server\Protocols\ProtocolTrace.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>ProtocolTrace.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Rpc\Server\Protocols\ProtocolTrace.FromRpcError.cs" />
     <Compile Include="Rpc\Server\Protocols\RpcMessageReceivedEventArgs.cs" />
     <Compile Include="Rpc\Server\Protocols\ServerRequestContext.cs" />
     <Compile Include="Rpc\Server\Protocols\ServerSocketError.cs" />
@@ -106,16 +117,32 @@
     </Compile>
     <Compile Include="Rpc\Server\Protocols\ServerResponseContext.cs" />
     <Compile Include="Rpc\Server\RpcServerErrorEventArgs.cs" />
-    <Compile Include="Rpc\Server\Tracer.cs" />
     <Compile Include="Rpc\Server\RpcClientErrorEventArgs.cs" />
+    <Compile Include="Rpc\Server\ServerTrace.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>ServerTrace.tt</DependentUpon>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\MsgPack.snk">
       <Link>MsgPack.snk</Link>
     </None>
+    <None Include="Rpc\Server\Dispatch\DispatchTrace.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>DispatchTrace.cs</LastGenOutput>
+    </None>
+    <None Include="Rpc\Server\Protocols\ProtocolTrace.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>ProtocolTrace.cs</LastGenOutput>
+    </None>
     <None Include="Rpc\Server\RpcServerConfiguration.Properties.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>RpcServerConfiguration.Properties.cs</LastGenOutput>
+    </None>
+    <None Include="Rpc\Server\ServerTrace.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>ServerTrace.cs</LastGenOutput>
     </None>
   </ItemGroup>
   <ItemGroup>

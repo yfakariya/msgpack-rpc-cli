@@ -94,12 +94,11 @@ namespace MsgPack.Rpc.Server.Dispatch
 		{
 			if ( error.IsSuccess )
 			{
-				if ( Tracer.Server.Switch.ShouldTrace( Tracer.EventType.OperationSucceeded ) )
+				if ( MsgPackRpcServerDispatchTrace.ShouldTrace( MsgPackRpcServerDispatchTrace.OperationSucceeded ) )
 				{
 					// FIXME: Formatting
-					Tracer.Server.TraceEvent(
-						Tracer.EventType.OperationSucceeded,
-						Tracer.EventId.OperationSucceeded,
+					MsgPackRpcServerDispatchTrace.TraceEvent(
+						MsgPackRpcServerDispatchTrace.OperationSucceeded,
 						"Operation succeeded. [ \"SessionId\" : {0}, \"MessageType\" : \"{1}\", \"MessageID\" : {2}, \"OperationID\" : \"{3}\", \"Result\" : \"{4}\" ]",
 						sessionId,
 						messageType,
@@ -111,9 +110,8 @@ namespace MsgPack.Rpc.Server.Dispatch
 			}
 			else
 			{
-				Tracer.Server.TraceEvent(
-					Tracer.EventType.OperationFailed,
-					Tracer.EventId.OperationFailed,
+				MsgPackRpcServerDispatchTrace.TraceEvent(
+					MsgPackRpcServerDispatchTrace.OperationFailed,
 					"Operation failed. [ \"SessionId\" : {0}, \"MessageType\" : \"{1}\", \"MessageID\" : {2}, \"OperationID\" : \"{3}\", \"Error\" : \"{4}\" ]",
 					sessionId,
 					messageType,

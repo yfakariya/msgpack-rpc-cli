@@ -179,6 +179,7 @@ namespace MsgPack.Rpc.Server
 			return new TcpServerTransportManager( this );
 		}
 
+		// FIXME : Prohibit reuse.
 		public bool Start()
 		{
 			var currentDispatcher = Interlocked.CompareExchange( ref this._dispatcher, this._configuration.DispatcherProvider( this ), null );
@@ -187,12 +188,17 @@ namespace MsgPack.Rpc.Server
 				return false;
 			}
 
-			Tracer.Server.TraceEvent( Tracer.EventType.StartServer, Tracer.EventId.StartServer, "Start server. Configuration:[{0}]", this._configuration );
+			MsgPackRpcServerTrace.TraceEvent( 
+				MsgPackRpcServerTrace.StartServer,
+				"Start server. Configuration:[{0}]", 
+				this._configuration 
+			);
 
 			this._transportManager = this._configuration.TransportManagerProvider( this );
 			return true;
 		}
 
+		// FIXME: Change to Dispose 
 		public bool Stop()
 		{
 			var currentDispatcher = Interlocked.Exchange( ref this._dispatcher, null );
@@ -208,6 +214,12 @@ namespace MsgPack.Rpc.Server
 				this._transportManager = null;
 			}
 
+			// TODO: ID
+			MsgPackRpcServerTrace.TraceEvent(
+				MsgPackRpcServerTrace.StopServer,
+				"Stop server. Configuration:[{0}]",
+				this._configuration
+			);
 			return true;
 		}
 	}

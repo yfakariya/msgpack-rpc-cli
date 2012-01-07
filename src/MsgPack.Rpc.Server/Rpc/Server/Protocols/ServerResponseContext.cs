@@ -121,11 +121,10 @@ namespace MsgPack.Rpc.Server.Protocols
 		internal void Serialize<T>( T returnValue, RpcErrorMessage error, MessagePackSerializer<T> returnValueSerializer )
 		{
 			// FIXME: Overwrite for error/timeout
-			if ( Tracer.Protocols.Switch.ShouldTrace( Tracer.EventType.SerializeResponse ) )
+			if ( MsgPackRpcServerProtocolsTrace.ShouldTrace( MsgPackRpcServerProtocolsTrace.SerializeResponse ) )
 			{
-				Tracer.Protocols.TraceEvent(
-					Tracer.EventType.SerializeResponse,
-					Tracer.EventId.SerializeResponse,
+				MsgPackRpcServerProtocolsTrace.TraceEvent(
+					MsgPackRpcServerProtocolsTrace.SerializeResponse,
 					"Serialize response. [ \"error\" : \"{0}\", \"returnValue\" : \"{1}\" ]",
 					error,
 					returnValue

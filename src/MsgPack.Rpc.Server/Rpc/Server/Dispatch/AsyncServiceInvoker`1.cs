@@ -106,11 +106,11 @@ namespace MsgPack.Rpc.Server.Dispatch
 			var arguments = requestContext.ArgumentsUnpacker;
 
 			Trace.CorrelationManager.StartLogicalOperation();
-			if ( Tracer.Dispatch.Switch.ShouldTrace( Tracer.EventType.OperationStart ) )
+			if ( MsgPackRpcServerDispatchTrace.ShouldTrace( MsgPackRpcServerDispatchTrace.OperationStart ) )
 			{
-				Tracer.Dispatch.TraceData(
-					Tracer.EventType.OperationStart,
-					Tracer.EventId.OperationStart,
+				MsgPackRpcServerDispatchTrace.TraceData(
+					MsgPackRpcServerDispatchTrace.OperationStart,
+					"Operation starting.",
 					responseContext == null ? MessageType.Notification : MessageType.Request,
 					messageId,
 					this._operationId

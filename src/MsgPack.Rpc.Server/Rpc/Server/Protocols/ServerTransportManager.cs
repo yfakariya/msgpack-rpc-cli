@@ -175,9 +175,8 @@ namespace MsgPack.Rpc.Server.Protocols
 			bool? isError = context.SocketError.IsError();
 			if ( isError == null )
 			{
-				Tracer.Protocols.TraceEvent(
-					Tracer.EventType.IgnoreableError,
-					Tracer.EventId.IgnoreableError,
+				MsgPackRpcServerProtocolsTrace.TraceEvent(
+					MsgPackRpcServerProtocolsTrace.IgnoreableError,
 					"Ignoreable error. [ \"Socket\" : 0x{0:x}, \"RemoteEndpoint\" : \"{1}\", \"LastOperation\" : \"{2}\", \"SocketError\" : \"{3}\", \"ErrorCode\" : 0x{4:x8} ]",
 					socket.Handle,
 					context.RemoteEndPoint,
@@ -199,9 +198,8 @@ namespace MsgPack.Rpc.Server.Protocols
 						context.SocketError,
 						( int )context.SocketError
 					);
-				Tracer.Protocols.TraceEvent(
-					Tracer.EventType.SocketError,
-					Tracer.EventId.SocketError,
+				MsgPackRpcServerProtocolsTrace.TraceEvent(
+					MsgPackRpcServerProtocolsTrace.SocketError,
 					errorDetail
 				);
 

@@ -20,6 +20,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Linq;
 
 namespace MsgPack.Rpc.Server.Protocols
 {
@@ -28,26 +29,30 @@ namespace MsgPack.Rpc.Server.Protocols
 	/// </summary>
 	internal sealed class DebugTraceSourceSetting : IDisposable
 	{
-		private readonly SourceLevels _originalLevels;
-		private readonly TraceListener[] _originalListeners;
-		private readonly TraceSource _traceSource;
+		private readonly SourceLevels[] _originalLevels;
+		private readonly TraceListener[][] _originalListeners;
+		private readonly TraceSource[] _traceSources;
 
 		/// <summary>
 		///		Enable debug trace.
 		/// </summary>
-		/// <param name="source">Target <see cref="TraceSource"/>.</param>
 		/// <param name="isDebug"><c>true</c> to enable debug trace; <c>false</c>, otherwise.</param>
-		public DebugTraceSourceSetting( TraceSource source, bool isDebug )
+		/// <param name="sources">Target <see cref="TraceSource"/>.</param>
+		public DebugTraceSourceSetting( bool isDebug, params TraceSource[] sources )
 		{
-			this._traceSource = source;
-			this._originalLevels = source.Switch.Level;
+			this._traceSources = sources.Clone() as TraceSource[];
+			this._originalLevels = sources.Select( x => x.Switch.Level ).ToArray();
 			if ( isDebug )
 			{
-				this._originalListeners = new TraceListener[ source.Listeners.Count ];
-				source.Listeners.CopyTo( this._originalListeners, 0 );
-				source.Switch.Level = SourceLevels.All;
-				source.Listeners.Clear();
-				source.Listeners.Add( new ConsoleTraceListener() { TraceOutputOptions = TraceOptions.DateTime | TraceOptions.Timestamp | TraceOptions.ThreadId } );
+				this._originalListeners = new TraceListener[ sources.Length ][];
+				for ( int i = 0; i < sources.Length; i++ )
+				{
+					this._originalListeners[ i ] = new TraceListener[ sources[ i ].Listeners.Count ];
+					sources[ i ].Listeners.CopyTo( this._originalListeners[ i ], 0 );
+					sources[ i ].Switch.Level = SourceLevels.All;
+					sources[ i ].Listeners.Clear();
+					sources[ i ].Listeners.Add( new ConsoleTraceListener() { TraceOutputOptions = TraceOptions.DateTime | TraceOptions.Timestamp | TraceOptions.ThreadId } );
+				}
 			}
 			else
 			{
@@ -62,9 +67,12 @@ namespace MsgPack.Rpc.Server.Protocols
 		{
 			if ( this._originalListeners != null )
 			{
-				this._traceSource.Listeners.Clear();
-				this._traceSource.Listeners.AddRange( this._originalListeners );
-				this._traceSource.Switch.Level = this._originalLevels;
+				for ( int i = 0; i < this._traceSources.Length; i++ )
+				{
+					this._traceSources[ i ].Listeners.Clear();
+					this._traceSources[ i ].Listeners.AddRange( this._originalListeners[ i ] );
+					this._traceSources[ i ].Switch.Level = this._originalLevels[ i ];
+				}
 			}
 		}
 	}

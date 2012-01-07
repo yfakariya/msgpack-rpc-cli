@@ -52,7 +52,11 @@ namespace MsgPack.Rpc.Server.Protocols
 
 			if ( !context.RootUnpacker.Read() )
 			{
-				Tracer.Protocols.TraceEvent( Tracer.EventType.NeedRequestHeader, Tracer.EventId.NeedRequestHeader, "Array header is needed. [ \"SessionId\" : {0} ]", context.SessionId );
+				MsgPackRpcServerProtocolsTrace.TraceEvent( 
+					MsgPackRpcServerProtocolsTrace.NeedRequestHeader, 
+					"Array header is needed. [ \"SessionId\" : {0} ]", 
+					context.SessionId 
+				);
 				return false;
 			}
 
@@ -93,7 +97,11 @@ namespace MsgPack.Rpc.Server.Protocols
 		{
 			if ( !context.HeaderUnpacker.Read() )
 			{
-				Tracer.Protocols.TraceEvent( Tracer.EventType.NeedMessageType, Tracer.EventId.NeedMessageType, "Message Type is needed. [ \"SessionId\" : {0} ]", context.SessionId );
+				MsgPackRpcServerProtocolsTrace.TraceEvent( 
+					MsgPackRpcServerProtocolsTrace.NeedMessageType,
+					"Message Type is needed. [ \"SessionId\" : {0} ]",
+					context.SessionId 
+				);
 				return false;
 			}
 
@@ -149,7 +157,11 @@ namespace MsgPack.Rpc.Server.Protocols
 		{
 			if ( !context.HeaderUnpacker.Read() )
 			{
-				Tracer.Protocols.TraceEvent( Tracer.EventType.NeedMessageId, Tracer.EventId.NeedMessageId, "Message ID is needed. [ \"SessionId\" : {0} ]", context.SessionId );
+				MsgPackRpcServerProtocolsTrace.TraceEvent( 
+					MsgPackRpcServerProtocolsTrace.NeedMessageId, 
+					"Message ID is needed. [ \"SessionId\" : {0} ]", 
+					context.SessionId 
+				);
 				return false;
 			}
 
@@ -183,7 +195,11 @@ namespace MsgPack.Rpc.Server.Protocols
 		{
 			if ( !context.HeaderUnpacker.Read() )
 			{
-				Tracer.Protocols.TraceEvent( Tracer.EventType.NeedMethodName, Tracer.EventId.NeedMethodName, "Method Name is needed. [ \"SessionId\" : {0} ]", context.SessionId );
+				MsgPackRpcServerProtocolsTrace.TraceEvent( 
+					MsgPackRpcServerProtocolsTrace.NeedMethodName,
+					"Method Name is needed. [ \"SessionId\" : {0} ]",
+					context.SessionId 
+				);
 				return false;
 			}
 
@@ -217,7 +233,11 @@ namespace MsgPack.Rpc.Server.Protocols
 		{
 			if ( !context.HeaderUnpacker.Read() )
 			{
-				Tracer.Protocols.TraceEvent( Tracer.EventType.NeedArgumentsArrayHeader, Tracer.EventId.NeedArgumentsArrayHeader, "Arguments array header is needed. [ \"SessionId\" : {0} ]", context.SessionId );
+				MsgPackRpcServerProtocolsTrace.TraceEvent( 
+					MsgPackRpcServerProtocolsTrace.NeedArgumentsArrayHeader, 
+					"Arguments array header is needed. [ \"SessionId\" : {0} ]",
+					context.SessionId 
+				);
 				return false;
 			}
 
@@ -268,7 +288,13 @@ namespace MsgPack.Rpc.Server.Protocols
 			{
 				if ( !context.ArgumentsBufferUnpacker.Read() )
 				{
-					Tracer.Protocols.TraceEvent( Tracer.EventType.NeedArgumentsElement, Tracer.EventId.NeedArgumentsElement, "Arguments array element is needed. {0}/{1}  [ \"SessionId\" : {2} ]", context.UnpackedArgumentsCount, context.ArgumentsCount, context.SessionId );
+					MsgPackRpcServerProtocolsTrace.TraceEvent( 
+						MsgPackRpcServerProtocolsTrace.NeedArgumentsElement,
+						"Arguments array element is needed. {0}/{1}  [ \"SessionId\" : {2} ]",
+						context.UnpackedArgumentsCount, 
+						context.ArgumentsCount, 
+						context.SessionId 
+					);
 					return false;
 				}
 

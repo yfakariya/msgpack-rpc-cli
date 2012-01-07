@@ -58,7 +58,12 @@ namespace MsgPack.Rpc.Server.Protocols
 			this._listeningSocket.Listen( server.Configuration.ListenBackLog );
 
 #if !API_SIGNATURE_TEST
-			Tracer.Protocols.TraceEvent( Tracer.EventType.StartListen, Tracer.EventId.StartListen, "Start listen. [ \"endPoint\" : \"{0}\", \"backLog\" : {1} ]", bindingEndPoint, server.Configuration.ListenBackLog );
+			MsgPackRpcServerProtocolsTrace.TraceEvent(
+				MsgPackRpcServerProtocolsTrace.StartListen, 
+				"Start listen. [ \"endPoint\" : \"{0}\", \"backLog\" : {1} ]",
+				bindingEndPoint, 
+				server.Configuration.ListenBackLog
+			);
 #endif
 
 			this.StartAccept();
@@ -110,9 +115,8 @@ namespace MsgPack.Rpc.Server.Protocols
 				default:
 				{
 #if !API_SIGNATURE_TEST
-					Tracer.Protocols.TraceEvent(
-						Tracer.EventType.UnexpectedLastOperation,
-						Tracer.EventId.UnexpectedLastOperation,
+					MsgPackRpcServerProtocolsTrace.TraceEvent(
+						MsgPackRpcServerProtocolsTrace.UnexpectedLastOperation,
 						"Unexpected operation. [ \"Soekct\" : 0x{0}, \"RemoteEndPoint\" : \"{1}\", \"LastOperation\" : \"{2}\" ]",
 						( ( Socket )sender ).Handle,
 						e.RemoteEndPoint,
@@ -139,7 +143,11 @@ namespace MsgPack.Rpc.Server.Protocols
 				}
 
 #if !API_SIGNATURE_TEST
-				Tracer.Protocols.TraceEvent( Tracer.EventType.BeginAccept, Tracer.EventId.BeginAccept, "Wait for connection. [ \"LocalEndPoint\" : \"{0}\" ]", this._listeningSocket.LocalEndPoint );
+				MsgPackRpcServerProtocolsTrace.TraceEvent( 
+					MsgPackRpcServerProtocolsTrace.BeginAccept, 
+					"Wait for connection. [ \"LocalEndPoint\" : \"{0}\" ]",
+					this._listeningSocket.LocalEndPoint
+				);
 #endif
 
 				if ( !this._listeningSocket.AcceptAsync( context ) )
@@ -161,10 +169,11 @@ namespace MsgPack.Rpc.Server.Protocols
 		private void OnAcceptted( ListeningContext context )
 		{
 #if !API_SIGNATURE_TEST
-			Tracer.Protocols.TraceEvent(
-				Tracer.EventType.AcceptInboundTcp,
-				Tracer.EventId.AcceptInboundTcp,
-				"Accept. [ \"RemoteEndPoint\" : \"{0}\", \"LocalEndPoint\" : \"{1}\" ]", context.AcceptSocket.RemoteEndPoint, context.AcceptSocket.LocalEndPoint
+			MsgPackRpcServerProtocolsTrace.TraceEvent(
+				MsgPackRpcServerProtocolsTrace.EndAccept,
+				"Accept. [ \"RemoteEndPoint\" : \"{0}\", \"LocalEndPoint\" : \"{1}\" ]", 
+				context.AcceptSocket.RemoteEndPoint, 
+				context.AcceptSocket.LocalEndPoint
 			);
 #endif
 

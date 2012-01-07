@@ -133,9 +133,8 @@ namespace MsgPack.Rpc.Server
 		private static void HandleSendFailure( Task previous, Tuple<RpcServer, long, int?> sessionState )
 		{
 			var exception = previous.Exception;
-			Tracer.Dispatch.TraceEvent(
-				Tracer.EventType.ErrorWhenSendResponse,
-				Tracer.EventId.ErrorWhenSendResponse,
+			MsgPackRpcServerProtocolsTrace.TraceEvent(
+				MsgPackRpcServerProtocolsTrace.ErrorWhenSendResponse,
 				"Failed to send response. [ \"SessionID\" : {0}, \"MessageID\" : {1}, \"Error\" : \"{2}\" ]",
 				sessionState.Item2,
 				sessionState.Item3,

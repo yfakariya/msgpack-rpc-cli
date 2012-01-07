@@ -57,7 +57,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		[SetUp]
 		public void SetUp()
 		{
-			this._debugTrace = new DebugTraceSourceSetting( Tracer.Protocols, _traceEnabled );
+			this._debugTrace = new DebugTraceSourceSetting( _traceEnabled , MsgPackRpcServerTrace.Source, MsgPackRpcServerProtocolsTrace.Source );
 		}
 
 		[TearDown]

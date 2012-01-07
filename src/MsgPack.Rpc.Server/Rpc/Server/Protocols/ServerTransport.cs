@@ -183,10 +183,10 @@ namespace MsgPack.Rpc.Server.Protocols
 
 		private void HandleDeserializationError( ServerRequestContext context, string message, Func<byte[]> invalidRequestHeaderProvider )
 		{
-			if ( invalidRequestHeaderProvider != null && Tracer.Protocols.Switch.ShouldTrace( Tracer.EventType.DumpInvalidRequestHeader ) )
+			if ( invalidRequestHeaderProvider != null && MsgPackRpcServerProtocolsTrace.ShouldTrace( MsgPackRpcServerProtocolsTrace.DumpInvalidRequestHeader ) )
 			{
 				var array = invalidRequestHeaderProvider();
-				Tracer.Protocols.TraceData( Tracer.EventType.DumpInvalidRequestHeader, Tracer.EventId.DumpInvalidRequestHeader, BitConverter.ToString( array ), array );
+				MsgPackRpcServerProtocolsTrace.TraceData( MsgPackRpcServerProtocolsTrace.DumpInvalidRequestHeader, BitConverter.ToString( array ), array );
 			}
 
 			this.HandleDeserializationError( context, RpcError.MessageRefusedError, "Invalid stream.", message, invalidRequestHeaderProvider );
@@ -198,9 +198,8 @@ namespace MsgPack.Rpc.Server.Protocols
 			int? messageId = context.MessageType == MessageType.Request ? context.MessageId : default( int? );
 			var rpcError = new RpcErrorMessage( error, message, debugInformation );
 
-			Tracer.Protocols.TraceEvent(
-				Tracer.EventType.ForRpcError( error ),
-				Tracer.EventId.ForRpcError( error ),
+			MsgPackRpcServerProtocolsTrace.TraceRpcError( 
+				error,
 				"Deserialization error. [ \"Message ID\" : {0}, \"Error Code\" : {1}, \"Error ID\" : \"{2}\", \"Detail\" : \"{3}\" ]",
 				messageId == null ? "(null)" : messageId.ToString(),
 				error.ErrorCode,
@@ -255,9 +254,8 @@ namespace MsgPack.Rpc.Server.Protocols
 				}
 				default:
 				{
-					Tracer.Protocols.TraceEvent(
-						Tracer.EventType.UnexpectedLastOperation,
-						Tracer.EventId.UnexpectedLastOperation,
+					MsgPackRpcServerProtocolsTrace.TraceEvent(
+						MsgPackRpcServerProtocolsTrace.UnexpectedLastOperation,
 						"Unexpected operation. [ \"sender.Handle\" : 0x{0}, \"remoteEndPoint\" : \"{1}\", \"lastOperation\" : \"{2}\" ]",
 						socket.Handle,
 						context.RemoteEndPoint,
@@ -305,9 +303,8 @@ namespace MsgPack.Rpc.Server.Protocols
 		{
 			if ( this._isClientShutdowned )
 			{
-				Tracer.Protocols.TraceEvent(
-					Tracer.EventType.ReceiveCanceledDueToClientShutdown,
-					Tracer.EventId.ReceiveCanceledDueToClientShutdown,
+				MsgPackRpcServerProtocolsTrace.TraceEvent(
+					MsgPackRpcServerProtocolsTrace.ReceiveCanceledDueToClientShutdown,
 					"Cancel receive due to client shutdown. [ \"RemoteEndPoint\" : \"{0}\", \"LocalEndPoint\" : \"{1}\" ]",
 					this._boundSocket == null ? null : this._boundSocket.RemoteEndPoint,
 					this._boundSocket == null ? null : this._boundSocket.LocalEndPoint
@@ -318,9 +315,8 @@ namespace MsgPack.Rpc.Server.Protocols
 			if ( this.IsInShutdown )
 			{
 				// Subsequent receival cannot be processed now.
-				Tracer.Protocols.TraceEvent(
-					Tracer.EventType.ReceiveCanceledDueToServerShutdown,
-					Tracer.EventId.ReceiveCanceledDueToServerShutdown,
+				MsgPackRpcServerProtocolsTrace.TraceEvent(
+					MsgPackRpcServerProtocolsTrace.ReceiveCanceledDueToServerShutdown,
 					"Cancel receive due to server shutdown. [ \"RemoteEndPoint\" : \"{0}\", \"LocalEndPoint\" : \"{1}\" ]",
 					this._boundSocket == null ? null : this._boundSocket.RemoteEndPoint,
 					this._boundSocket == null ? null : this._boundSocket.LocalEndPoint
@@ -341,9 +337,8 @@ namespace MsgPack.Rpc.Server.Protocols
 
 				context.SetBuffer( context.CurrentReceivingBuffer, 0, context.CurrentReceivingBuffer.Length );
 
-				Tracer.Protocols.TraceEvent(
-					Tracer.EventType.BeginReceive,
-					Tracer.EventId.BeginReceive,
+				MsgPackRpcServerProtocolsTrace.TraceEvent(
+					MsgPackRpcServerProtocolsTrace.BeginReceive,
 					"Receive inbound data. [ \"RemoteEndPoint\" : \"{0}\", \"LocalEndPoint\" : \"{1}\" ]",
 					this._boundSocket == null ? null : this._boundSocket.RemoteEndPoint,
 					this._boundSocket == null ? null : this._boundSocket.LocalEndPoint
@@ -387,11 +382,10 @@ namespace MsgPack.Rpc.Server.Protocols
 				throw new ArgumentNullException( "context" );
 			}
 
-			if ( Tracer.Protocols.Switch.ShouldTrace( Tracer.EventType.ReceiveInboundData ) )
+			if ( MsgPackRpcServerProtocolsTrace.ShouldTrace( MsgPackRpcServerProtocolsTrace.ReceiveInboundData ) )
 			{
-				Tracer.Protocols.TraceEvent(
-					Tracer.EventType.ReceiveInboundData,
-					Tracer.EventId.ReceiveInboundData,
+				MsgPackRpcServerProtocolsTrace.TraceEvent(
+					MsgPackRpcServerProtocolsTrace.ReceiveInboundData,
 					"Receive request. [ \"Socket\" : 0x{0:x8}, \"LocalEndPoint\" : \"{1}\", \"RemoteEndPoint\" : \"{2}\", \"BytesTransfered\" : {3} ]",
 					context.SessionId,
 					this._boundSocket.Handle,
@@ -404,9 +398,8 @@ namespace MsgPack.Rpc.Server.Protocols
 			if ( context.BytesTransferred == 0 )
 			{
 				// recv() returns 0 when the client socket shutdown gracefully.
-				Tracer.Protocols.TraceEvent(
-					Tracer.EventType.DetectClientShutdown,
-					Tracer.EventId.DetectClientShutdown,
+				MsgPackRpcServerProtocolsTrace.TraceEvent(
+					MsgPackRpcServerProtocolsTrace.DetectClientShutdown,
 					"Client shutdown current socket. [ \"RemoteEndPoint\" : \"{0}\" ]",
 					context.RemoteEndPoint
 				);
@@ -424,11 +417,10 @@ namespace MsgPack.Rpc.Server.Protocols
 			}
 
 			// FIXME: Quota
-			if ( Tracer.Protocols.Switch.ShouldTrace( Tracer.EventType.DeserializeRequest ) )
+			if ( MsgPackRpcServerProtocolsTrace.ShouldTrace( MsgPackRpcServerProtocolsTrace.DeserializeRequest ) )
 			{
-				Tracer.Protocols.TraceEvent(
-					Tracer.EventType.DeserializeRequest,
-					Tracer.EventId.DeserializeRequest,
+				MsgPackRpcServerProtocolsTrace.TraceEvent(
+					MsgPackRpcServerProtocolsTrace.DeserializeRequest,
 					"Deserialize request. [ \"SessionID\" : {0}, \"Length\" : {1} ]",
 					context.SessionId,
 					context.ReceivedData.Sum( item => ( long )item.Count )
@@ -506,11 +498,10 @@ namespace MsgPack.Rpc.Server.Protocols
 		{
 			context.Prepare();
 
-			if ( Tracer.Protocols.Switch.ShouldTrace( Tracer.EventType.SendOutboundData ) )
+			if ( MsgPackRpcServerProtocolsTrace.ShouldTrace( MsgPackRpcServerProtocolsTrace.SendOutboundData ) )
 			{
-				Tracer.Protocols.TraceEvent(
-					Tracer.EventType.SendOutboundData,
-					Tracer.EventId.SendOutboundData,
+				MsgPackRpcServerProtocolsTrace.TraceEvent(
+					MsgPackRpcServerProtocolsTrace.SendOutboundData,
 					"Send response. [ \"SessionID\" : {0}, \"RemoteEndPoint\" : {1}, \"BytesTransferring\" : {2} ]",
 					context.SessionId,
 					context.RemoteEndPoint,
@@ -543,11 +534,10 @@ namespace MsgPack.Rpc.Server.Protocols
 		///	</exception>
 		protected virtual void OnSent( ServerResponseContext context )
 		{
-			if ( Tracer.Protocols.Switch.ShouldTrace( Tracer.EventType.SentOutboundData ) )
+			if ( MsgPackRpcServerProtocolsTrace.ShouldTrace( MsgPackRpcServerProtocolsTrace.SentOutboundData ) )
 			{
-				Tracer.Protocols.TraceEvent(
-						Tracer.EventType.SentOutboundData,
-						Tracer.EventId.SentOutboundData,
+				MsgPackRpcServerProtocolsTrace.TraceEvent(
+						MsgPackRpcServerProtocolsTrace.SentOutboundData,
 						"Sent response. [ \"SessionID\" : {0}, \"RemoteEndPoint\" : \"{1}\", \"BytesTransferred\" : {2} ]",
 						context.SessionId,
 						context.RemoteEndPoint,
