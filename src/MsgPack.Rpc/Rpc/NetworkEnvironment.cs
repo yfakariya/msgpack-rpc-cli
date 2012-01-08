@@ -28,7 +28,7 @@ namespace MsgPack.Rpc
 {
 	internal static class NetworkEnvironment
 	{
-		internal static EndPoint GetDefaultEndPoint( int port )
+		internal static EndPoint GetDefaultEndPoint( int port, bool preferIPv4 )
 		{
 			var iface = NetworkInterface.GetAllNetworkInterfaces().FirstOrDefault();
 			if ( iface != null )
@@ -49,7 +49,7 @@ namespace MsgPack.Rpc
 				if ( ipProperties.UnicastAddresses.Any() )
 				{
 					UnicastIPAddressInformation address = null;
-					if ( canUseIPv6 )
+					if ( canUseIPv6 && !preferIPv4 )
 					{
 						address = ipProperties.UnicastAddresses.FirstOrDefault( item => item.Address.AddressFamily == AddressFamily.InterNetworkV6 );
 					}
@@ -65,7 +65,8 @@ namespace MsgPack.Rpc
 					}
 				}
 			}
-			return new IPEndPoint( IPAddress.Loopback, port );
+
+			return new IPEndPoint( preferIPv4 ? IPAddress.Any : IPAddress.IPv6Any, port );
 		}
 	}
 }
