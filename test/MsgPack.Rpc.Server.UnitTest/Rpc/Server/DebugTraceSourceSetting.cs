@@ -40,7 +40,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		/// <param name="sources">Target <see cref="TraceSource"/>.</param>
 		public DebugTraceSourceSetting( bool isDebug, params TraceSource[] sources )
 		{
-			this._traceSources = sources.Clone() as TraceSource[];
+			this._traceSources = sources;
 			this._originalLevels = sources.Select( x => x.Switch.Level ).ToArray();
 			if ( isDebug )
 			{

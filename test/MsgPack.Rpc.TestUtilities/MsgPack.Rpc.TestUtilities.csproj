@@ -5,11 +5,11 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{80AB610B-24E0-4853-AE24-0FFBBC5DD584}</ProjectGuid>
+    <ProjectGuid>{99672076-5AE7-448A-A827-0BD37F182AD9}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>MsgPack</RootNamespace>
-    <AssemblyName>MsgPack.Rpc.Server.UnitTest</AssemblyName>
+    <AssemblyName>MsgPack.Rpc.TestUtilities</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -40,12 +40,6 @@
     <Reference Include="MsgPack">
       <HintPath>..\..\lib\MsgPack.dll</HintPath>
     </Reference>
-    <Reference Include="nunit.core">
-      <HintPath>..\..\lib\nunit.core.dll</HintPath>
-    </Reference>
-    <Reference Include="nunit.framework">
-      <HintPath>..\..\lib\nunit.framework.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -55,15 +49,21 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\..\src\CommonAssemblyInfo.cs">
+      <Link>Properties\CommonAssemblyInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\CommonAssemblyInfo.Rpc.cs">
+      <Link>Properties\CommonAssemblyInfo.Rpc.cs</Link>
+    </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Rpc\Server\DebugTraceSourceSetting.cs" />
-    <Compile Include="Rpc\Server\Protocols\TcpServerTransportTest.cs" />
-    <Compile Include="Rpc\Server\Protocols\UdpServerTransportTest.cs" />
-    <Compile Include="Rpc\Server\RpcServerTest.cs" />
-    <Compile Include="Rpc\Server\Protocols\_SetUpFixture.cs" />
-    <Compile Include="Rpc\Server\_SetUpFixture.cs" />
+    <Compile Include="Rpc\Server\CallbackServer.cs" />
+    <Compile Include="Rpc\Server\Dispatch\CallbackDispatcher.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\src\MsgPack.Rpc.Client\MsgPack.Rpc.Client.csproj">
+      <Project>{39C460F9-9BE8-4497-AC2F-09C3A66D8D12}</Project>
+      <Name>MsgPack.Rpc.Client</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\src\MsgPack.Rpc.Server\MsgPack.Rpc.Server.csproj">
       <Project>{58547F06-05A0-4BBE-B07D-00CDB172CC5F}</Project>
       <Name>MsgPack.Rpc.Server</Name>
@@ -72,23 +72,13 @@
       <Project>{77ABC1A9-0719-47AD-B2E1-0B12E49E3CD2}</Project>
       <Name>MsgPack.Rpc</Name>
     </ProjectReference>
-    <ProjectReference Include="..\MsgPack.Rpc.TestUtilities\MsgPack.Rpc.TestUtilities.csproj">
-      <Project>{99672076-5AE7-448A-A827-0BD37F182AD9}</Project>
-      <Name>MsgPack.Rpc.TestUtilities</Name>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\src\MsgPack.snk">
       <Link>MsgPack.snk</Link>
     </None>
-    <None Include="App.config" />
   </ItemGroup>
-  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <PropertyGroup>
-    <PostBuildEvent>
-    </PostBuildEvent>
-  </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

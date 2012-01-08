@@ -20,26 +20,18 @@
 
 using System;
 using System.Diagnostics;
-using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
-using System.Threading.Tasks;
 using NUnit.Framework;
 
 namespace MsgPack.Rpc.Server.Protocols
 {
 	// TODOs
-	// Parallel Return -> Implements queue in session layer. And use dedicated SocketAsyncEventArgs (_sendingContext).
-	//		-> Serialize -> Session Queue -> Server WatchDog -> Transport
-	// Dispatcher -> Shim generator (from NLiblet), Lookup, Invoker
 	// Error test
 	// Refactor move deserialization from transport to session.
 
 	// Client:
-	//   Transport -- Send/Receive, Header deserialization, EventLoop
-	//   SessionManager -- SessionTable, ErrorHandler
-	//   Client -- sync API, serialization/deserialization
 	//   IDL
 
 	// Others
@@ -51,7 +43,6 @@ namespace MsgPack.Rpc.Server.Protocols
 	{
 		// TODO: Error packet test.
 		private const bool _traceEnabled = true;
-		private const int _portNumber = 57319;
 		private DebugTraceSourceSetting _debugTrace;
 
 		[SetUp]
@@ -76,13 +67,13 @@ namespace MsgPack.Rpc.Server.Protocols
 				using ( var waitHandle = new ManualResetEventSlim() )
 				{
 					using ( var server =
-						CreateServer(
+						CallbackServer.Create(
 							( id, args ) =>
 							{
 								try
 								{
-									Assert.That( args[ 0 ] == message );
-									Assert.That( args[ 1 ].IsTypeOf<Int64>().GetValueOrDefault() );
+									Assert.That( args[ 0 ] == message, args[ 0 ].ToString() );
+									Assert.That( args[ 1 ].IsTypeOf<Int64>().GetValueOrDefault(), args[ 1 ].ToString() );
 									isOk = true;
 									return args;
 								}
@@ -122,7 +113,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		{
 			using ( var client = new TcpClient() )
 			{
-				client.Connect( new IPEndPoint( IPAddress.Loopback, _portNumber ) );
+				client.Connect( new IPEndPoint( IPAddress.Loopback, CallbackServer.PortNumber ) );
 
 				var now = MessagePackConvert.FromDateTime( DateTime.Now );
 
@@ -178,7 +169,7 @@ namespace MsgPack.Rpc.Server.Protocols
 				string message = "Hello, world";
 				using ( var waitHandle = new CountdownEvent( count ) )
 				using ( var server =
-					CreateServer(
+					CallbackServer.Create(
 						( id, args ) =>
 						{
 							try
@@ -221,7 +212,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		{
 			using ( var client = new TcpClient() )
 			{
-				client.Connect( new IPEndPoint( IPAddress.Loopback, _portNumber ) );
+				client.Connect( new IPEndPoint( IPAddress.Loopback, CallbackServer.PortNumber ) );
 
 				var now = MessagePackConvert.FromDateTime( DateTime.Now );
 				bool[] resposeStatus = new bool[ count ];
@@ -276,71 +267,5 @@ namespace MsgPack.Rpc.Server.Protocols
 				}
 			}
 		}
-
-		private static RpcServer CreateServer( Func<int?, MessagePackObject[], MessagePackObject> callback )
-		{
-			return
-				new RpcServer(
-					new RpcServerConfiguration()
-					{
-						BindingEndPoint = new IPEndPoint( IPAddress.Any, _portNumber ),
-						MinimumConcurrentRequest = 1,
-						MaximumConcurrentRequest = 10,
-						MinimumConnection = 1,
-						MaximumConnection = 1,
-						DispatcherProvider = server => new CallbackDispatcher( server, callback )
-					}
-				);
-		}
-
-		private sealed class CallbackDispatcher : Dispatcher
-		{
-			private readonly Func<int?, MessagePackObject[], MessagePackObject> _callback;
-
-			public CallbackDispatcher( RpcServer server, Func<int?, MessagePackObject[], MessagePackObject> callback )
-				: base( server )
-			{
-				this._callback = callback;
-			}
-
-			protected sealed override Func<ServerRequestContext, ServerResponseContext, System.Threading.Tasks.Task> Dispatch( string methodName )
-			{
-				return
-					( requestContext, responseContext ) =>
-					{
-						MessagePackObject[] args;
-						if ( requestContext.ArgumentsUnpacker.Read() )
-						{
-							args = requestContext.ArgumentsUnpacker.ToArray();
-						}
-						else
-						{
-							args = new MessagePackObject[ 0 ];
-						}
-
-						var messageId = requestContext.MessageId;
-
-						return
-							Task.Factory.StartNew(
-								() =>
-								{
-									MessagePackObject returnValue;
-									try
-									{
-										returnValue = this._callback( messageId, args );
-									}
-									catch ( Exception exception )
-									{
-										base.SetException( responseContext, exception );
-										return;
-									}
-
-									base.SetReturnValue( responseContext, returnValue );
-								}
-							);
-					};
-			}
-		}
-
 	}
 }
