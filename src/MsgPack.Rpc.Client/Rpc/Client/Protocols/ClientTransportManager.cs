@@ -168,9 +168,10 @@ namespace MsgPack.Rpc.Client.Protocols
 
 			MsgPackRpcClientProtocolsTrace.TraceEvent(
 				MsgPackRpcClientProtocolsTrace.SocketError,
-				"Socket error. [ \"Socket\" : 0x{0:x}, \"RemoteEndpoint\" : \"{1}\", \"LastOperation\" : \"{2}\", \"SocketError\" : \"{3}\", \"ErrorCode\" : 0x{4:x8} ]",
+				"Socket error. {{ \"Socket\" : 0x{0:X}, \"RemoteEndpoint\" : \"{1}\", \"LocalEndpoint\" : \"{2}\", \"LastOperation\" : \"{3}\", \"SocketError\" : \"{4}\", \"ErrorCode\" : 0x{5:X} }}",
 				socket.Handle,
-				context.RemoteEndPoint,
+				socket.RemoteEndPoint,
+				socket.LocalEndPoint,
 				context.LastOperation,
 				context.SocketError,
 				( int )context.SocketError

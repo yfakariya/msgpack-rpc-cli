@@ -49,18 +49,28 @@ namespace MsgPack.Rpc.Server.Protocols
 					ProtocolType.Tcp
 				);
 
-#if !API_SIGNATURE_TEST
-			var bindingEndPoint = this.Configuration.BindingEndPoint ?? NetworkEnvironment.GetDefaultEndPoint( server.Configuration.PortNumber );
-#else
 			var bindingEndPoint = this.Configuration.BindingEndPoint;
+#if !API_SIGNATURE_TEST
+			if ( bindingEndPoint == null )
+			{
+				bindingEndPoint = NetworkEnvironment.GetDefaultEndPoint( server.Configuration.PortNumber, server.Configuration.PreferIPv4 );
+				MsgPackRpcServerProtocolsTrace.TraceEvent(
+					MsgPackRpcServerProtocolsTrace.DefaultEndPoint,
+					"Default end point is selected. {{ \"EndPoint\" : \"{0}\", \"PreferIPv4\" : {1}, \"OSSupportsIPv6\" : {2} }}",
+					bindingEndPoint,
+					server.Configuration.PreferIPv4,
+					Socket.OSSupportsIPv6
+				);
+			}
 #endif
 			this._listeningSocket.Bind( bindingEndPoint );
 			this._listeningSocket.Listen( server.Configuration.ListenBackLog );
 
 #if !API_SIGNATURE_TEST
 			MsgPackRpcServerProtocolsTrace.TraceEvent(
-				MsgPackRpcServerProtocolsTrace.StartListen, 
-				"Start listen. [ \"endPoint\" : \"{0}\", \"backLog\" : {1} ]",
+				MsgPackRpcServerProtocolsTrace.StartListen,
+				"Start listen. {{ \"Socket\" : 0x{0:X}, \"EndPoint\" : \"{1}\", \"ListenBackLog\" : {2} }}",
+				this._listeningSocket.Handle,
 				bindingEndPoint, 
 				server.Configuration.ListenBackLog
 			);
@@ -115,11 +125,13 @@ namespace MsgPack.Rpc.Server.Protocols
 				default:
 				{
 #if !API_SIGNATURE_TEST
+					var socket = sender as Socket;
 					MsgPackRpcServerProtocolsTrace.TraceEvent(
 						MsgPackRpcServerProtocolsTrace.UnexpectedLastOperation,
-						"Unexpected operation. [ \"Soekct\" : 0x{0}, \"RemoteEndPoint\" : \"{1}\", \"LastOperation\" : \"{2}\" ]",
-						( ( Socket )sender ).Handle,
-						e.RemoteEndPoint,
+						"Unexpected operation. {{ \"Socket\" : 0x{0:X}, \"RemoteEndPoint\" : \"{1}\", \"LocalEndPoint\" : \"{2}\", \"LastOperation\" : \"{3}\" }}",
+						socket.Handle,
+						socket.RemoteEndPoint,
+						socket.LocalEndPoint,
 						e.LastOperation
 					);
 #endif
@@ -144,8 +156,9 @@ namespace MsgPack.Rpc.Server.Protocols
 
 #if !API_SIGNATURE_TEST
 				MsgPackRpcServerProtocolsTrace.TraceEvent( 
-					MsgPackRpcServerProtocolsTrace.BeginAccept, 
-					"Wait for connection. [ \"LocalEndPoint\" : \"{0}\" ]",
+					MsgPackRpcServerProtocolsTrace.BeginAccept,
+					"Wait for connection. {{ \"Socket\" : 0x{0:X}, \"LocalEndPoint\" : \"{1}\" }}",
+					this._listeningSocket.Handle,
 					this._listeningSocket.LocalEndPoint
 				);
 #endif
@@ -171,7 +184,8 @@ namespace MsgPack.Rpc.Server.Protocols
 #if !API_SIGNATURE_TEST
 			MsgPackRpcServerProtocolsTrace.TraceEvent(
 				MsgPackRpcServerProtocolsTrace.EndAccept,
-				"Accept. [ \"RemoteEndPoint\" : \"{0}\", \"LocalEndPoint\" : \"{1}\" ]", 
+				"Accept. {{ \"Socket\" : 0x{0:X}, \"RemoteEndPoint\" : \"{1}\", \"LocalEndPoint\" : \"{2}\" }}", 
+				context.AcceptSocket.Handle,
 				context.AcceptSocket.RemoteEndPoint, 
 				context.AcceptSocket.LocalEndPoint
 			);

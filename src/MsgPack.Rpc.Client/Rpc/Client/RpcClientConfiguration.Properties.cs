@@ -21,6 +21,7 @@
 using System;
 using System.Diagnostics.Contracts;
 using System.Net;
+using System.Text;
 using MsgPack.Rpc.Client.Protocols;
 
 namespace MsgPack.Rpc.Client
@@ -30,7 +31,6 @@ namespace MsgPack.Rpc.Client
 
 	partial class RpcClientConfiguration
 	{
-
 		private bool _preferIPv4 = false;
 		
 		/// <summary>
@@ -349,5 +349,83 @@ namespace MsgPack.Rpc.Client
 		}
 		
 		static partial void ValidateUdpTransportPoolProvider( Func<Func<UdpClientTransport>, ObjectPoolConfiguration, ObjectPool<UdpClientTransport>> value );
+
+		/// <summary>
+		/// 	Returns a string that represents the current object.
+		/// </summary>
+		/// <returns>
+		/// 	A string that represents the current object.
+		/// </returns>
+		public sealed override string ToString()
+		{
+			var buffer = new StringBuilder( 1024 );
+
+			buffer.Append( "\"PreferIPv4\" : " );
+			ToString( this.PreferIPv4, buffer );
+			buffer.Append( ", " );
+			buffer.Append( "\"MinimumConcurrentRequest\" : " );
+			ToString( this.MinimumConcurrentRequest, buffer );
+			buffer.Append( ", " );
+			buffer.Append( "\"MaximumConcurrentRequest\" : " );
+			ToString( this.MaximumConcurrentRequest, buffer );
+			buffer.Append( ", " );
+			buffer.Append( "\"TargetEndPoint\" : " );
+			ToString( this.TargetEndPoint, buffer );
+			buffer.Append( ", " );
+			buffer.Append( "\"ConnectTimeout\" : " );
+			ToString( this.ConnectTimeout, buffer );
+			buffer.Append( ", " );
+			buffer.Append( "\"WaitTimeout\" : " );
+			ToString( this.WaitTimeout, buffer );
+			buffer.Append( ", " );
+			buffer.Append( "\"TransportManagerProvider\" : " );
+			ToString( this.TransportManagerProvider, buffer );
+			buffer.Append( ", " );
+			buffer.Append( "\"RequestContextPoolProvider\" : " );
+			ToString( this.RequestContextPoolProvider, buffer );
+			buffer.Append( ", " );
+			buffer.Append( "\"ResponseContextPoolProvider\" : " );
+			ToString( this.ResponseContextPoolProvider, buffer );
+			buffer.Append( ", " );
+			buffer.Append( "\"TcpTransportPoolProvider\" : " );
+			ToString( this.TcpTransportPoolProvider, buffer );
+			buffer.Append( ", " );
+			buffer.Append( "\"UdpTransportPoolProvider\" : " );
+			ToString( this.UdpTransportPoolProvider, buffer );
+
+			return buffer.ToString();
+		}
+		
+		private static void ToString<T>( T value, StringBuilder buffer )
+		{
+			if( value == null )
+			{
+				buffer.Append( "null" );
+			}
+
+			switch( Type.GetTypeCode( typeof( T ) ) )
+			{
+				case TypeCode.Boolean:
+				case TypeCode.Byte:
+				case TypeCode.Double:
+				case TypeCode.Int16:
+				case TypeCode.Int32:
+				case TypeCode.Int64:
+				case TypeCode.SByte:
+				case TypeCode.Single:
+				case TypeCode.UInt16:
+				case TypeCode.UInt32:
+				case TypeCode.UInt64:
+				{
+					buffer.Append( value.ToString() );
+					break;
+				}
+				default:
+				{
+					buffer.Append( '"' ).Append( value.ToString() ).Append( '"' );
+					break;
+				}
+			}
+		}
 	}
 }

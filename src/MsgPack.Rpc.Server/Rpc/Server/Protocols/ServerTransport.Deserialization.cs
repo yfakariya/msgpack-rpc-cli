@@ -53,8 +53,8 @@ namespace MsgPack.Rpc.Server.Protocols
 			if ( !context.RootUnpacker.Read() )
 			{
 				MsgPackRpcServerProtocolsTrace.TraceEvent( 
-					MsgPackRpcServerProtocolsTrace.NeedRequestHeader, 
-					"Array header is needed. [ \"SessionId\" : {0} ]", 
+					MsgPackRpcServerProtocolsTrace.NeedRequestHeader,
+					"Array header is needed. {{ \"SessionID\" : {0} }}", 
 					context.SessionId 
 				);
 				return false;
@@ -99,7 +99,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			{
 				MsgPackRpcServerProtocolsTrace.TraceEvent( 
 					MsgPackRpcServerProtocolsTrace.NeedMessageType,
-					"Message Type is needed. [ \"SessionId\" : {0} ]",
+					"Message Type is needed. {{ \"SessionID\" : {0} }}",
 					context.SessionId 
 				);
 				return false;
@@ -158,8 +158,8 @@ namespace MsgPack.Rpc.Server.Protocols
 			if ( !context.HeaderUnpacker.Read() )
 			{
 				MsgPackRpcServerProtocolsTrace.TraceEvent( 
-					MsgPackRpcServerProtocolsTrace.NeedMessageId, 
-					"Message ID is needed. [ \"SessionId\" : {0} ]", 
+					MsgPackRpcServerProtocolsTrace.NeedMessageId,
+					"Message ID is needed. {{ \"SessionID\" : {0} }}", 
 					context.SessionId 
 				);
 				return false;
@@ -197,7 +197,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			{
 				MsgPackRpcServerProtocolsTrace.TraceEvent( 
 					MsgPackRpcServerProtocolsTrace.NeedMethodName,
-					"Method Name is needed. [ \"SessionId\" : {0} ]",
+					"Method Name is needed. {{ \"SessionID\" : {0} }}",
 					context.SessionId 
 				);
 				return false;
@@ -234,8 +234,8 @@ namespace MsgPack.Rpc.Server.Protocols
 			if ( !context.HeaderUnpacker.Read() )
 			{
 				MsgPackRpcServerProtocolsTrace.TraceEvent( 
-					MsgPackRpcServerProtocolsTrace.NeedArgumentsArrayHeader, 
-					"Arguments array header is needed. [ \"SessionId\" : {0} ]",
+					MsgPackRpcServerProtocolsTrace.NeedArgumentsArrayHeader,
+					"Arguments array header is needed. {{ \"SessionID\" : {0} }}",
 					context.SessionId 
 				);
 				return false;
@@ -290,7 +290,7 @@ namespace MsgPack.Rpc.Server.Protocols
 				{
 					MsgPackRpcServerProtocolsTrace.TraceEvent( 
 						MsgPackRpcServerProtocolsTrace.NeedArgumentsElement,
-						"Arguments array element is needed. {0}/{1}  [ \"SessionId\" : {2} ]",
+						"Arguments array element is needed. {0}/{1}  {{ \"SessionID\" : {2} }}",
 						context.UnpackedArgumentsCount, 
 						context.ArgumentsCount, 
 						context.SessionId 

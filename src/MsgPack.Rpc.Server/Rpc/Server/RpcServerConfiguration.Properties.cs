@@ -21,6 +21,7 @@
 using System;
 using System.Diagnostics.Contracts;
 using System.Net;
+using System.Text;
 using MsgPack.Rpc.Server.Dispatch;
 using MsgPack.Rpc.Server.Protocols;
 
@@ -31,7 +32,6 @@ namespace MsgPack.Rpc.Server
 
 	partial class RpcServerConfiguration
 	{
-
 		private bool _preferIPv4 = false;
 		
 		/// <summary>
@@ -60,7 +60,6 @@ namespace MsgPack.Rpc.Server
 		}
 		
 		static partial void ValidatePreferIPv4( bool value );
-
 		private int _minimumConnection = 2;
 		
 		/// <summary>
@@ -89,7 +88,6 @@ namespace MsgPack.Rpc.Server
 		}
 		
 		static partial void ValidateMinimumConnection( int value );
-
 		private int _maximumConnection = 100;
 		
 		/// <summary>
@@ -118,7 +116,6 @@ namespace MsgPack.Rpc.Server
 		}
 		
 		static partial void ValidateMaximumConnection( int value );
-
 		private int _minimumConcurrentRequest = 2;
 		
 		/// <summary>
@@ -147,7 +144,6 @@ namespace MsgPack.Rpc.Server
 		}
 		
 		static partial void ValidateMinimumConcurrentRequest( int value );
-
 		private int _maximumConcurrentRequest = 10;
 		
 		/// <summary>
@@ -176,7 +172,6 @@ namespace MsgPack.Rpc.Server
 		}
 		
 		static partial void ValidateMaximumConcurrentRequest( int value );
-
 		private EndPoint _bindingEndPoint = null;
 		
 		/// <summary>
@@ -205,7 +200,6 @@ namespace MsgPack.Rpc.Server
 		}
 		
 		static partial void ValidateBindingEndPoint( EndPoint value );
-
 		private int _listenBackLog = 100;
 		
 		/// <summary>
@@ -234,7 +228,6 @@ namespace MsgPack.Rpc.Server
 		}
 		
 		static partial void ValidateListenBackLog( int value );
-
 		private int _portNumber = 10912;
 		
 		/// <summary>
@@ -263,7 +256,6 @@ namespace MsgPack.Rpc.Server
 		}
 		
 		static partial void ValidatePortNumber( int value );
-
 		private TimeSpan? _executionTimeout = TimeSpan.FromSeconds( 110 );
 		
 		/// <summary>
@@ -292,7 +284,6 @@ namespace MsgPack.Rpc.Server
 		}
 		
 		static partial void ValidateExecutionTimeout( TimeSpan? value );
-
 		private TimeSpan? _hardExecutionTimeout = TimeSpan.FromSeconds( 20 );
 		
 		/// <summary>
@@ -321,7 +312,6 @@ namespace MsgPack.Rpc.Server
 		}
 		
 		static partial void ValidateHardExecutionTimeout( TimeSpan? value );
-
 		private Func<RpcServer, ServerTransportManager> _transportManagerProvider = ( server ) => new TcpServerTransportManager( server );
 		
 		/// <summary>
@@ -350,7 +340,6 @@ namespace MsgPack.Rpc.Server
 		}
 		
 		static partial void ValidateTransportManagerProvider( Func<RpcServer, ServerTransportManager> value );
-
 		private Func<RpcServer, Dispatcher> _dispatcherProvider = ( server ) => new LocatorBasedDispatcher( server );
 		
 		/// <summary>
@@ -379,7 +368,6 @@ namespace MsgPack.Rpc.Server
 		}
 		
 		static partial void ValidateDispatcherProvider( Func<RpcServer, Dispatcher> value );
-
 		private Func<RpcServerConfiguration, ServiceTypeLocator> _serviceTypeLocatorProvider = ( config ) => new DefaultServiceTypeLocator();
 		
 		/// <summary>
@@ -408,7 +396,6 @@ namespace MsgPack.Rpc.Server
 		}
 		
 		static partial void ValidateServiceTypeLocatorProvider( Func<RpcServerConfiguration, ServiceTypeLocator> value );
-
 		private Func<Func<ServerRequestContext>, ObjectPoolConfiguration, ObjectPool<ServerRequestContext>> _requestContextPoolProvider = ( factory, configuration ) => new StandardObjectPool<ServerRequestContext>( factory, configuration );
 		
 		/// <summary>
@@ -437,7 +424,6 @@ namespace MsgPack.Rpc.Server
 		}
 		
 		static partial void ValidateRequestContextPoolProvider( Func<Func<ServerRequestContext>, ObjectPoolConfiguration, ObjectPool<ServerRequestContext>> value );
-
 		private Func<Func<ServerResponseContext>, ObjectPoolConfiguration, ObjectPool<ServerResponseContext>> _responseContextPoolProvider = ( factory, configuration ) => new StandardObjectPool<ServerResponseContext>( factory, configuration );
 		
 		/// <summary>
@@ -466,7 +452,6 @@ namespace MsgPack.Rpc.Server
 		}
 		
 		static partial void ValidateResponseContextPoolProvider( Func<Func<ServerResponseContext>, ObjectPoolConfiguration, ObjectPool<ServerResponseContext>> value );
-
 		private Func<Func<ListeningContext>, ObjectPoolConfiguration, ObjectPool<ListeningContext>> _listeningContextPoolProvider = ( factory, configuration ) => new StandardObjectPool<ListeningContext>( factory, configuration );
 		
 		/// <summary>
@@ -495,7 +480,6 @@ namespace MsgPack.Rpc.Server
 		}
 		
 		static partial void ValidateListeningContextPoolProvider( Func<Func<ListeningContext>, ObjectPoolConfiguration, ObjectPool<ListeningContext>> value );
-
 		private Func<Func<TcpServerTransport>, ObjectPoolConfiguration, ObjectPool<TcpServerTransport>> _tcpTransportPoolProvider = ( factory, configuration ) => new StandardObjectPool<TcpServerTransport>( factory, configuration );
 		
 		/// <summary>
@@ -524,7 +508,6 @@ namespace MsgPack.Rpc.Server
 		}
 		
 		static partial void ValidateTcpTransportPoolProvider( Func<Func<TcpServerTransport>, ObjectPoolConfiguration, ObjectPool<TcpServerTransport>> value );
-
 		private Func<Func<UdpServerTransport>, ObjectPoolConfiguration, ObjectPool<UdpServerTransport>> _udpTransportPoolProvider = ( factory, configuration ) => new StandardObjectPool<UdpServerTransport>( factory, configuration );
 		
 		/// <summary>
@@ -553,5 +536,107 @@ namespace MsgPack.Rpc.Server
 		}
 		
 		static partial void ValidateUdpTransportPoolProvider( Func<Func<UdpServerTransport>, ObjectPoolConfiguration, ObjectPool<UdpServerTransport>> value );
+		/// <summary>
+		/// 	Returns a string that represents the current object.
+		/// </summary>
+		/// <returns>
+		/// 	A string that represents the current object.
+		/// </returns>
+		public sealed override string ToString()
+		{
+			var buffer = new StringBuilder( 2048 );
+
+			buffer.Append( "\"PreferIPv4\" : " );
+			ToString( this.PreferIPv4, buffer );
+			buffer.Append( ", " );
+			buffer.Append( "\"MinimumConnection\" : " );
+			ToString( this.MinimumConnection, buffer );
+			buffer.Append( ", " );
+			buffer.Append( "\"MaximumConnection\" : " );
+			ToString( this.MaximumConnection, buffer );
+			buffer.Append( ", " );
+			buffer.Append( "\"MinimumConcurrentRequest\" : " );
+			ToString( this.MinimumConcurrentRequest, buffer );
+			buffer.Append( ", " );
+			buffer.Append( "\"MaximumConcurrentRequest\" : " );
+			ToString( this.MaximumConcurrentRequest, buffer );
+			buffer.Append( ", " );
+			buffer.Append( "\"BindingEndPoint\" : " );
+			ToString( this.BindingEndPoint, buffer );
+			buffer.Append( ", " );
+			buffer.Append( "\"ListenBackLog\" : " );
+			ToString( this.ListenBackLog, buffer );
+			buffer.Append( ", " );
+			buffer.Append( "\"PortNumber\" : " );
+			ToString( this.PortNumber, buffer );
+			buffer.Append( ", " );
+			buffer.Append( "\"ExecutionTimeout\" : " );
+			ToString( this.ExecutionTimeout, buffer );
+			buffer.Append( ", " );
+			buffer.Append( "\"HardExecutionTimeout\" : " );
+			ToString( this.HardExecutionTimeout, buffer );
+			buffer.Append( ", " );
+			buffer.Append( "\"TransportManagerProvider\" : " );
+			ToString( this.TransportManagerProvider, buffer );
+			buffer.Append( ", " );
+			buffer.Append( "\"DispatcherProvider\" : " );
+			ToString( this.DispatcherProvider, buffer );
+			buffer.Append( ", " );
+			buffer.Append( "\"ServiceTypeLocatorProvider\" : " );
+			ToString( this.ServiceTypeLocatorProvider, buffer );
+			buffer.Append( ", " );
+			buffer.Append( "\"RequestContextPoolProvider\" : " );
+			ToString( this.RequestContextPoolProvider, buffer );
+			buffer.Append( ", " );
+			buffer.Append( "\"ResponseContextPoolProvider\" : " );
+			ToString( this.ResponseContextPoolProvider, buffer );
+			buffer.Append( ", " );
+			buffer.Append( "\"ListeningContextPoolProvider\" : " );
+			ToString( this.ListeningContextPoolProvider, buffer );
+			buffer.Append( ", " );
+			buffer.Append( "\"TcpTransportPoolProvider\" : " );
+			ToString( this.TcpTransportPoolProvider, buffer );
+			buffer.Append( ", " );
+			buffer.Append( "\"UdpTransportPoolProvider\" : " );
+			ToString( this.UdpTransportPoolProvider, buffer );
+
+			return buffer.ToString();
+		}
+		
+		private static void ToString<T>( T value, StringBuilder buffer )
+		{
+			if( value == null )
+			{
+				buffer.Append( "null" );
+			}
+
+			switch( Type.GetTypeCode( typeof( T ) ) )
+			{
+				case TypeCode.Boolean:
+				{
+					buffer.Append( value.ToString().ToLowerInvariant() );
+					break;
+				}
+				case TypeCode.Byte:
+				case TypeCode.Double:
+				case TypeCode.Int16:
+				case TypeCode.Int32:
+				case TypeCode.Int64:
+				case TypeCode.SByte:
+				case TypeCode.Single:
+				case TypeCode.UInt16:
+				case TypeCode.UInt32:
+				case TypeCode.UInt64:
+				{
+					buffer.Append( value.ToString() );
+					break;
+				}
+				default:
+				{
+					buffer.Append( '"' ).Append( value.ToString() ).Append( '"' );
+					break;
+				}
+			}
+		}
 	}
 }

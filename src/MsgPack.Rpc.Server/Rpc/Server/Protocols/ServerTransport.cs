@@ -198,13 +198,11 @@ namespace MsgPack.Rpc.Server.Protocols
 			int? messageId = context.MessageType == MessageType.Request ? context.MessageId : default( int? );
 			var rpcError = new RpcErrorMessage( error, message, debugInformation );
 
-			MsgPackRpcServerProtocolsTrace.TraceRpcError( 
+			MsgPackRpcServerProtocolsTrace.TraceRpcError(
 				error,
-				"Deserialization error. [ \"Message ID\" : {0}, \"Error Code\" : {1}, \"Error ID\" : \"{2}\", \"Detail\" : \"{3}\" ]",
+				"Deserialization error. {{ \"Message ID\" : {0}, \"Error\" : {1} }}",
 				messageId == null ? "(null)" : messageId.ToString(),
-				error.ErrorCode,
-				error.Identifier,
-				rpcError.Detail.ToString()
+				rpcError
 			);
 
 			this.Manager.RaiseClientError( context, rpcError );
@@ -256,9 +254,10 @@ namespace MsgPack.Rpc.Server.Protocols
 				{
 					MsgPackRpcServerProtocolsTrace.TraceEvent(
 						MsgPackRpcServerProtocolsTrace.UnexpectedLastOperation,
-						"Unexpected operation. [ \"sender.Handle\" : 0x{0}, \"remoteEndPoint\" : \"{1}\", \"lastOperation\" : \"{2}\" ]",
+						"Unexpected operation. {{ \"Socket\" : 0x{0:X}, \"RemoteEndPoint\" : \"{1}\", \"LocalEndPoint\" : \"{2}\", \"LastOperation\" : \"{3}\" }}",
 						socket.Handle,
-						context.RemoteEndPoint,
+						socket.RemoteEndPoint,
+						socket.LocalEndPoint,
 						context.LastOperation
 					);
 					break;
@@ -305,7 +304,8 @@ namespace MsgPack.Rpc.Server.Protocols
 			{
 				MsgPackRpcServerProtocolsTrace.TraceEvent(
 					MsgPackRpcServerProtocolsTrace.ReceiveCanceledDueToClientShutdown,
-					"Cancel receive due to client shutdown. [ \"RemoteEndPoint\" : \"{0}\", \"LocalEndPoint\" : \"{1}\" ]",
+					"Cancel receive due to client shutdown. {{ \"Socket\" : 0x{0:X} \"RemoteEndPoint\" : \"{1}\", \"LocalEndPoint\" : \"{2}\" }}",
+					this._boundSocket == null ? IntPtr.Zero : this._boundSocket.Handle,
 					this._boundSocket == null ? null : this._boundSocket.RemoteEndPoint,
 					this._boundSocket == null ? null : this._boundSocket.LocalEndPoint
 				);
@@ -317,7 +317,8 @@ namespace MsgPack.Rpc.Server.Protocols
 				// Subsequent receival cannot be processed now.
 				MsgPackRpcServerProtocolsTrace.TraceEvent(
 					MsgPackRpcServerProtocolsTrace.ReceiveCanceledDueToServerShutdown,
-					"Cancel receive due to server shutdown. [ \"RemoteEndPoint\" : \"{0}\", \"LocalEndPoint\" : \"{1}\" ]",
+					"Cancel receive due to server shutdown. {{ \"Socket\" : 0x{0:X}, \"RemoteEndPoint\" : \"{1}\", \"LocalEndPoint\" : \"{2}\" }}",
+					this._boundSocket == null ? IntPtr.Zero : this._boundSocket.Handle,
 					this._boundSocket == null ? null : this._boundSocket.RemoteEndPoint,
 					this._boundSocket == null ? null : this._boundSocket.LocalEndPoint
 				);
@@ -339,7 +340,8 @@ namespace MsgPack.Rpc.Server.Protocols
 
 				MsgPackRpcServerProtocolsTrace.TraceEvent(
 					MsgPackRpcServerProtocolsTrace.BeginReceive,
-					"Receive inbound data. [ \"RemoteEndPoint\" : \"{0}\", \"LocalEndPoint\" : \"{1}\" ]",
+					"Receive inbound data. {{  \"Socket\" : 0x{0:X}, \"RemoteEndPoint\" : \"{1}\", \"LocalEndPoint\" : \"{2}\" }}",
+					this._boundSocket == null ? IntPtr.Zero : this._boundSocket.Handle,
 					this._boundSocket == null ? null : this._boundSocket.RemoteEndPoint,
 					this._boundSocket == null ? null : this._boundSocket.LocalEndPoint
 				);
@@ -386,11 +388,11 @@ namespace MsgPack.Rpc.Server.Protocols
 			{
 				MsgPackRpcServerProtocolsTrace.TraceEvent(
 					MsgPackRpcServerProtocolsTrace.ReceiveInboundData,
-					"Receive request. [ \"Socket\" : 0x{0:x8}, \"LocalEndPoint\" : \"{1}\", \"RemoteEndPoint\" : \"{2}\", \"BytesTransfered\" : {3} ]",
+					"Receive request. {{ \"SessionID\" : {0}, \"Socket\" : 0x{1:X}, \"RemoteEndPoint\" : \"{2}\", \"LocalEndPoint\" : \"{3}\", \"BytesTransfered\" : {4} }}",
 					context.SessionId,
-					this._boundSocket.Handle,
-					this._boundSocket.LocalEndPoint,
-					this._boundSocket.RemoteEndPoint,
+					this._boundSocket == null ? IntPtr.Zero : this._boundSocket.Handle,
+					this._boundSocket == null ? null : this._boundSocket.RemoteEndPoint,
+					this._boundSocket == null ? null : this._boundSocket.LocalEndPoint,
 					context.BytesTransferred
 				);
 			}
@@ -400,8 +402,10 @@ namespace MsgPack.Rpc.Server.Protocols
 				// recv() returns 0 when the client socket shutdown gracefully.
 				MsgPackRpcServerProtocolsTrace.TraceEvent(
 					MsgPackRpcServerProtocolsTrace.DetectClientShutdown,
-					"Client shutdown current socket. [ \"RemoteEndPoint\" : \"{0}\" ]",
-					context.RemoteEndPoint
+					"Client shutdown current socket. {{ \"Socket\" : 0x{0:X}, \"RemoteEndPoint\" : \"{1}\", \"LocalEndPoint\" : \"{2}\" }}",
+					this._boundSocket == null ? IntPtr.Zero : this._boundSocket.Handle,
+					this._boundSocket == null ? null : this._boundSocket.RemoteEndPoint,
+					this._boundSocket == null ? null : this._boundSocket.LocalEndPoint
 				);
 				this._isClientShutdowned = true;
 				if ( !context.ReceivedData.Any( segment => 0 < segment.Count ) )
@@ -421,7 +425,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			{
 				MsgPackRpcServerProtocolsTrace.TraceEvent(
 					MsgPackRpcServerProtocolsTrace.DeserializeRequest,
-					"Deserialize request. [ \"SessionID\" : {0}, \"Length\" : {1} ]",
+					"Deserialize request. {{ \"SessionID\" : {0}, \"Length\" : {1} }}",
 					context.SessionId,
 					context.ReceivedData.Sum( item => ( long )item.Count )
 				);
@@ -502,9 +506,11 @@ namespace MsgPack.Rpc.Server.Protocols
 			{
 				MsgPackRpcServerProtocolsTrace.TraceEvent(
 					MsgPackRpcServerProtocolsTrace.SendOutboundData,
-					"Send response. [ \"SessionID\" : {0}, \"RemoteEndPoint\" : {1}, \"BytesTransferring\" : {2} ]",
+					"Send response. {{ \"SessionID\" : {0}, \"Socket\" : 0x{1:X}, \"RemoteEndPoint\" : \"{2}\", \"LocalEndPoint\" : \"{3}\", \"BytesTransferring\" : {4} }}",
 					context.SessionId,
-					context.RemoteEndPoint,
+					this._boundSocket == null ? IntPtr.Zero : this._boundSocket.Handle,
+					this._boundSocket == null ? null : this._boundSocket.RemoteEndPoint,
+					this._boundSocket == null ? null : this._boundSocket.LocalEndPoint,
 					context.SendingBuffer.Sum( segment => ( long )segment.Count )
 				);
 			}
@@ -538,9 +544,11 @@ namespace MsgPack.Rpc.Server.Protocols
 			{
 				MsgPackRpcServerProtocolsTrace.TraceEvent(
 						MsgPackRpcServerProtocolsTrace.SentOutboundData,
-						"Sent response. [ \"SessionID\" : {0}, \"RemoteEndPoint\" : \"{1}\", \"BytesTransferred\" : {2} ]",
+						"Sent response. {{ \"SessionID\" : {0}, \"Socket\" : 0x{1:X}, \"RemoteEndPoint\" : \"{2}\", \"LocalEndPoint\" : \"{3}\", \"BytesTransferred\" : {4} }}",
 						context.SessionId,
-						context.RemoteEndPoint,
+						this._boundSocket == null ? IntPtr.Zero : this._boundSocket.Handle,
+						this._boundSocket == null ? null : this._boundSocket.RemoteEndPoint,
+						this._boundSocket == null ? null : this._boundSocket.LocalEndPoint,
 						context.BytesTransferred
 					);
 			}

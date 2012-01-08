@@ -159,7 +159,7 @@ namespace MsgPack.Rpc
 			}
 			else
 			{
-				return String.Format( CultureInfo.CurrentCulture, "{0}({1}):{2}", this._error.Identifier, this._error.ErrorCode, this._detail.IsNil ? "(nil)" : this._detail );
+				return String.Format( CultureInfo.CurrentCulture, "{{ \"ID\" : \"{0}\", \"Code\" : {1}, \"Detail\" : {2} }}", this._error.Identifier, this._error.ErrorCode, this._detail );
 			}
 		}
 

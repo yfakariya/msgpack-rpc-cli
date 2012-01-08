@@ -52,7 +52,7 @@ namespace MsgPack.Rpc.Client.Protocols
 
 			if ( !context.RootUnpacker.Read() )
 			{
-				MsgPackRpcClientProtocolsTrace.TraceEvent( MsgPackRpcClientProtocolsTrace.NeedRequestHeader, "Array header is needed. [ \"SessionId\" : {0} ]", context.SessionId );
+				MsgPackRpcClientProtocolsTrace.TraceEvent( MsgPackRpcClientProtocolsTrace.NeedRequestHeader, "Array header is needed. {{ \"SessionID\" : {0} }}", context.SessionId );
 				return false;
 			}
 
@@ -93,7 +93,7 @@ namespace MsgPack.Rpc.Client.Protocols
 		{
 			if ( !context.HeaderUnpacker.Read() )
 			{
-				MsgPackRpcClientProtocolsTrace.TraceEvent( MsgPackRpcClientProtocolsTrace.NeedMessageType, "Message Type is needed. [ \"SessionId\" : {0} ]", context.SessionId );
+				MsgPackRpcClientProtocolsTrace.TraceEvent( MsgPackRpcClientProtocolsTrace.NeedMessageType, "Message Type is needed. {{ \"SessionID\" : {0} }}", context.SessionId );
 				return false;
 			}
 
@@ -136,7 +136,7 @@ namespace MsgPack.Rpc.Client.Protocols
 		{
 			if ( !context.HeaderUnpacker.Read() )
 			{
-				MsgPackRpcClientProtocolsTrace.TraceEvent( MsgPackRpcClientProtocolsTrace.NeedMessageId, "Message ID is needed. [ \"SessionId\" : {0} ]", context.SessionId );
+				MsgPackRpcClientProtocolsTrace.TraceEvent( MsgPackRpcClientProtocolsTrace.NeedMessageId, "Message ID is needed. {{ \"SessionID\" : {0} }}", context.SessionId );
 				return false;
 			}
 
@@ -177,7 +177,7 @@ namespace MsgPack.Rpc.Client.Protocols
 			var skipped = context.HeaderUnpacker.Skip();
 			if ( skipped == null )
 			{
-				MsgPackRpcClientProtocolsTrace.TraceEvent( MsgPackRpcClientProtocolsTrace.NeedError, "Error value is needed. [ \"SessionId\" : {0} ]", context.SessionId );
+				MsgPackRpcClientProtocolsTrace.TraceEvent( MsgPackRpcClientProtocolsTrace.NeedError, "Error value is needed. {{ \"SessionID\" : {0} }}", context.SessionId );
 				return false;
 			}
 
@@ -206,7 +206,7 @@ namespace MsgPack.Rpc.Client.Protocols
 			var skipped = context.HeaderUnpacker.Skip();
 			if ( skipped == null )
 			{
-				MsgPackRpcClientProtocolsTrace.TraceEvent( MsgPackRpcClientProtocolsTrace.NeedResult, "Result value is needed. [ \"SessionId\" : {0} ]", context.SessionId );
+				MsgPackRpcClientProtocolsTrace.TraceEvent( MsgPackRpcClientProtocolsTrace.NeedResult, "Result value is needed. {{ \"SessionID\" : {0} }}", context.SessionId );
 				return false;
 			}
 

@@ -82,9 +82,10 @@ namespace MsgPack.Rpc.Client.Protocols
 #if !API_SIGNATURE_TEST
 					MsgPackRpcClientProtocolsTrace.TraceEvent(
 						MsgPackRpcClientProtocolsTrace.UnexpectedLastOperation,
-						"Unexpected operation. [ \"Soekct\" : 0x{0}, \"RemoteEndPoint\" : \"{1}\", \"LastOperation\" : \"{2}\" ]",
-						( ( Socket )sender ).Handle,
-						e.RemoteEndPoint,
+						"Unexpected operation. {{ \"Socket\" : 0x{0:X}, \"RemoteEndPoint\" : \"{1}\", \"LocalEndPoint\" : \"{2}\", \"LastOperation\" : \"{3}\" }}",
+						socket.Handle,
+						socket.RemoteEndPoint,
+						socket.LocalEndPoint,
 						e.LastOperation
 					);
 #endif
@@ -99,7 +100,10 @@ namespace MsgPack.Rpc.Client.Protocols
 #if !API_SIGNATURE_TEST
 			MsgPackRpcClientProtocolsTrace.TraceEvent(
 				MsgPackRpcClientProtocolsTrace.EndConnect,
-				"Connected. [ \"RemoteEndPoint\" : \"{0}\", \"LocalEndPoint\" : \"{1}\" ]", context.ConnectSocket.RemoteEndPoint, context.ConnectSocket.LocalEndPoint
+				"Connected. {{ \"Socket\" : 0x{0:X}, \"RemoteEndPoint\" : \"{1}\", \"LocalEndPoint\" : \"{2}\" }}", 
+				context.ConnectSocket.Handle,
+				context.ConnectSocket.RemoteEndPoint, 
+				context.ConnectSocket.LocalEndPoint
 			);
 #endif
 

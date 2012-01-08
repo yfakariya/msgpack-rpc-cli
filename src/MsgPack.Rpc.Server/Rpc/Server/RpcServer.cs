@@ -190,7 +190,7 @@ namespace MsgPack.Rpc.Server
 
 			MsgPackRpcServerTrace.TraceEvent( 
 				MsgPackRpcServerTrace.StartServer,
-				"Start server. Configuration:[{0}]", 
+				"Start server. {{ \"Configuration\" : {0} }}", 
 				this._configuration 
 			);
 
@@ -217,7 +217,7 @@ namespace MsgPack.Rpc.Server
 			// TODO: ID
 			MsgPackRpcServerTrace.TraceEvent(
 				MsgPackRpcServerTrace.StopServer,
-				"Stop server. Configuration:[{0}]",
+				"Stop server. {{ \"Configuration\" : {0} }}",
 				this._configuration
 			);
 			return true;

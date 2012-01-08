@@ -99,7 +99,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 					// FIXME: Formatting
 					MsgPackRpcServerDispatchTrace.TraceEvent(
 						MsgPackRpcServerDispatchTrace.OperationSucceeded,
-						"Operation succeeded. [ \"SessionId\" : {0}, \"MessageType\" : \"{1}\", \"MessageID\" : {2}, \"OperationID\" : \"{3}\", \"Result\" : \"{4}\" ]",
+						"Operation succeeded. {{ \"SessionId\" : {0}, \"MessageType\" : \"{1}\", \"MessageID\" : {2}, \"OperationID\" : \"{3}\", \"Result\" : \"{4}\" }}",
 						sessionId,
 						messageType,
 						messageId,
@@ -112,7 +112,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 			{
 				MsgPackRpcServerDispatchTrace.TraceEvent(
 					MsgPackRpcServerDispatchTrace.OperationFailed,
-					"Operation failed. [ \"SessionId\" : {0}, \"MessageType\" : \"{1}\", \"MessageID\" : {2}, \"OperationID\" : \"{3}\", \"Error\" : \"{4}\" ]",
+					"Operation failed. {{ \"SessionId\" : {0}, \"MessageType\" : \"{1}\", \"MessageID\" : {2}, \"OperationID\" : \"{3}\", \"Error\" : {4} }}",
 					sessionId,
 					messageType,
 					messageId,

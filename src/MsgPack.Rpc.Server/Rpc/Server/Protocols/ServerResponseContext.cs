@@ -125,7 +125,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			{
 				MsgPackRpcServerProtocolsTrace.TraceEvent(
 					MsgPackRpcServerProtocolsTrace.SerializeResponse,
-					"Serialize response. [ \"error\" : \"{0}\", \"returnValue\" : \"{1}\" ]",
+					"Serialize response. {{ \"Error\" : {0}, \"ReturnValue\" : \"{1}\" }}",
 					error,
 					returnValue
 				);

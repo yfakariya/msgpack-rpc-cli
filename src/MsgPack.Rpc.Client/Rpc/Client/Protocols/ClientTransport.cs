@@ -220,9 +220,10 @@ namespace MsgPack.Rpc.Client.Protocols
 				{
 					MsgPackRpcClientProtocolsTrace.TraceEvent(
 						MsgPackRpcClientProtocolsTrace.UnexpectedLastOperation,
-						"Unexpected operation. [ \"sender.Handle\" : 0x{0}, \"remoteEndPoint\" : \"{1}\", \"lastOperation\" : \"{2}\" ]",
+						"Unexpected operation. {{ \"Socket\" : 0x{0:X}, \"RemoteEndPoint\" : \"{1}\", \"LocalEndPoint\" : \"{2}\", \"LastOperation\" : \"{3}\" }}",
 						socket.Handle,
-						context.RemoteEndPoint,
+						socket.RemoteEndPoint,
+						socket.LocalEndPoint,
 						context.LastOperation
 					);
 					break;
@@ -308,9 +309,12 @@ namespace MsgPack.Rpc.Client.Protocols
 		{
 			MsgPackRpcClientProtocolsTrace.TraceEvent(
 				MsgPackRpcClientProtocolsTrace.OrphanError,
-				"Cannot notify error for MessageID:{0}, SessionID:{1}. This may indicate runtime problem. Error details: {2}",
+				"Cannot notify error for MessageID:{0}, SessionID:{1}. This may indicate runtime problem. {{ \"Socket\" : 0x{2:X}, \"RemoteEndPoint\" : \"{3}\", \"LocalEndPoint\" : \"{4}\", \"SessionID\" :{1], \"MessageID\" : {0}, \"Error\" : {5} }}",
 				messageId == null ? "(null)" : messageId.Value.ToString(),
 				sessionId,
+				this._boundSocket == null ? IntPtr.Zero : this._boundSocket.Handle,
+				this._boundSocket == null ? null : this._boundSocket.RemoteEndPoint,
+				this._boundSocket == null ? null : this._boundSocket.LocalEndPoint,
 				rpcError
 			);
 		}
@@ -406,9 +410,14 @@ namespace MsgPack.Rpc.Client.Protocols
 			{
 				MsgPackRpcClientProtocolsTrace.TraceEvent(
 					MsgPackRpcClientProtocolsTrace.SendOutboundData,
-					"Send request/notification. [ \"SessionID\" : {0}, \"Type\" : \"{1}\", \"MessageID\" : {2}, \"Method\" : \"{3}\", \"RemoteEndPoint\" : {4}, \"BytesTransferring\" : {5} ]",
+					"Send request/notification. {{ \"SessionID\" : {0}, \"Socket\" : 0x{1:X}, \"RemoteEndPoint\" : \"{2}\", \"LocalEndPoint\" : \"{3}\", \"Type\" : \"{4}\", \"MessageID\" : {5}, \"Method\" : \"{6}\", \"BytesTransferring\" : {7} }}",
 					context.SessionId,
-					context.RemoteEndPoint,
+					this._boundSocket == null ? IntPtr.Zero : this._boundSocket.Handle,
+					this._boundSocket == null ? null : this._boundSocket.RemoteEndPoint,
+					this._boundSocket == null ? null : this._boundSocket.LocalEndPoint,
+					context.MessageType,
+					context.MessageId,
+					context.MethodName,
 					context.SendingBuffer.Sum( segment => ( long )segment.Count )
 				);
 			}
@@ -442,9 +451,14 @@ namespace MsgPack.Rpc.Client.Protocols
 			{
 				MsgPackRpcClientProtocolsTrace.TraceEvent(
 					MsgPackRpcClientProtocolsTrace.SentOutboundData,
-						"Sent request/notification. [ \"SessionID\" : {0}, \"Type\" : \"{1}\", \"MessageID\" : {2}, \"Method\" : \"{3}\", \"RemoteEndPoint\" : {4}, \"BytesTransferred\" : {5} ]",
+						"Sent request/notification. {{ \"SessionID\" : {0}, \"Socket\" : 0x{1:X}, \"RemoteEndPoint\" : \"{2}\", \"LocalEndPoint\" : \"{3}\", \"Type\" : \"{4}\", \"MessageID\" : {5}, \"Method\" : \"{6}\", \"BytesTransferred\" : {7} }}",
 						context.SessionId,
-						context.RemoteEndPoint,
+						this._boundSocket == null ? IntPtr.Zero : this._boundSocket.Handle,
+						this._boundSocket == null ? null : this._boundSocket.RemoteEndPoint,
+						this._boundSocket == null ? null : this._boundSocket.LocalEndPoint,
+						context.MessageType,
+						context.MessageId,
+						context.MethodName,
 						context.BytesTransferred
 					);
 			}
@@ -526,7 +540,8 @@ namespace MsgPack.Rpc.Client.Protocols
 
 				MsgPackRpcClientProtocolsTrace.TraceEvent(
 					MsgPackRpcClientProtocolsTrace.BeginReceive,
-					"Receive inbound data. [ \"RemoteEndPoint\" : \"{0}\", \"LocalEndPoint\" : \"{1}\" ]",
+					"Receive inbound data. {{  \"Socket\" : 0x{0:X}, \"RemoteEndPoint\" : \"{1}\", \"LocalEndPoint\" : \"{2}\" }}",
+					this._boundSocket == null ? IntPtr.Zero : this._boundSocket.Handle,
 					this._boundSocket == null ? null : this._boundSocket.RemoteEndPoint,
 					this._boundSocket == null ? null : this._boundSocket.LocalEndPoint
 				);
@@ -573,11 +588,11 @@ namespace MsgPack.Rpc.Client.Protocols
 			{
 				MsgPackRpcClientProtocolsTrace.TraceEvent(
 					MsgPackRpcClientProtocolsTrace.ReceiveInboundData,
-					"Receive request. [ \"Socket\" : 0x{0:x8}, \"LocalEndPoint\" : \"{1}\", \"RemoteEndPoint\" : \"{2}\", \"BytesTransfered\" : {3} ]",
+					"Receive request. {{ \"SessionID\" : {0}, \"Socket\" : 0x{1:X}, \"RemoteEndPoint\" : \"{2}\", \"LocalEndPoint\" : \"{3}\", \"BytesTransfered\" : {4} }}",
 					context.SessionId,
-					this._boundSocket.Handle,
-					this._boundSocket.LocalEndPoint,
-					this._boundSocket.RemoteEndPoint,
+					this._boundSocket == null ? IntPtr.Zero : this._boundSocket.Handle,
+					this._boundSocket == null ? null : this._boundSocket.RemoteEndPoint,
+					this._boundSocket == null ? null : this._boundSocket.LocalEndPoint,
 					context.BytesTransferred
 				);
 			}
@@ -587,8 +602,10 @@ namespace MsgPack.Rpc.Client.Protocols
 				// recv() returns 0 when the server socket shutdown gracefully.
 				MsgPackRpcClientProtocolsTrace.TraceEvent(
 					MsgPackRpcClientProtocolsTrace.DetectServerShutdown,
-					"Server shutdown current socket. [ \"RemoteEndPoint\" : \"{0}\" ]",
-					context.RemoteEndPoint
+					"Server shutdown current socket. {{ \"Socket\" : 0x{0:X}, \"RemoteEndPoint\" : \"{1}\", \"LocalEndPoint\" : \"{2}\" }}",
+					this._boundSocket == null ? IntPtr.Zero : this._boundSocket.Handle,
+					this._boundSocket == null ? null : this._boundSocket.RemoteEndPoint,
+					this._boundSocket == null ? null : this._boundSocket.LocalEndPoint
 				);
 
 				this._isServerShutdowned = true;
@@ -609,7 +626,7 @@ namespace MsgPack.Rpc.Client.Protocols
 			{
 				MsgPackRpcClientProtocolsTrace.TraceEvent(
 					MsgPackRpcClientProtocolsTrace.DeserializeResponse,
-					"Deserialize response. [ \"SessionID\" : {0}, \"Length\" : {1} ]",
+					"Deserialize response. {{ \"SessionID\" : {0}, \"Length\" : {1} }}",
 					context.SessionId,
 					context.ReceivedData.Sum( item => ( long )item.Count )
 				);

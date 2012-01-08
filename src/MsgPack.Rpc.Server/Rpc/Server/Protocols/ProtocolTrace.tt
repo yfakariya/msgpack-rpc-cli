@@ -41,6 +41,7 @@
 	new TraceMessage( "SocketError", TraceEventType.Warning, 101 ),
 	new TraceMessage( "IgnoreableError", TraceEventType.Verbose, 102 ),
 	new TraceMessage( "UnexpectedLastOperation", TraceEventType.Critical, 103 ),
+	new TraceMessage( "DefaultEndPoint", TraceEventType.Information, 104 ),
 	new TraceMessage( "BeginReceive", TraceEventType.Verbose, 1001 ),
 	new TraceMessage( "ReceiveInboundData", TraceEventType.Verbose,  1002 ),
 	new TraceMessage( "ReceiveCanceledDueToClientShutdown", TraceEventType.Verbose, 1003 ),

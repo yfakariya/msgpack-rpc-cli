@@ -135,7 +135,7 @@ namespace MsgPack.Rpc.Server
 			var exception = previous.Exception;
 			MsgPackRpcServerProtocolsTrace.TraceEvent(
 				MsgPackRpcServerProtocolsTrace.ErrorWhenSendResponse,
-				"Failed to send response. [ \"SessionID\" : {0}, \"MessageID\" : {1}, \"Error\" : \"{2}\" ]",
+				"Failed to send response. {{ \"SessionID\" : {0}, \"MessageID\" : {1}, \"Error\" : {2} }}",
 				sessionState.Item2,
 				sessionState.Item3,
 				exception
