@@ -19,17 +19,16 @@
 #endregion -- License Terms --
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Sockets;
-using System.Diagnostics.Contracts;
 using System.Collections.Concurrent;
-using System.Threading;
+using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Globalization;
 using System.IO;
-using MsgPack.Rpc.Protocols;
+using System.Linq;
 using System.Net;
-using System.Runtime.ExceptionServices;
+using System.Net.Sockets;
+using System.Threading;
+using MsgPack.Rpc.Protocols;
 
 namespace MsgPack.Rpc.Client.Protocols
 {

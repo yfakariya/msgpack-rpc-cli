@@ -20,8 +20,8 @@
 
 using System;
 using System.Collections.Concurrent;
-using System.Net.Sockets;
 using System.Diagnostics.Contracts;
+using System.Net.Sockets;
 using System.Threading;
 
 namespace MsgPack.Rpc.Server.Protocols
