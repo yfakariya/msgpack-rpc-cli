@@ -19,8 +19,7 @@
 #endregion -- License Terms --
 
 using System;
-using System.Collections.Generic;
-using System.Diagnostics.Contracts;
+using System.Globalization;
 using System.Net.Sockets;
 using System.Threading;
 
@@ -102,20 +101,16 @@ namespace MsgPack.Rpc.Protocols
 			get { return this._boundTransport; }
 		}
 
-		private EventHandler<SocketAsyncEventArgs> _boundEventHandler;
-
 		internal virtual void SetTransport( IContextBoundableTransport transport )
 		{
 			this.AcceptSocket = transport.BoundSocket;
-			Contract.Assert( this._boundEventHandler == null, "Bounded: " + this._boundEventHandler );
-			if ( this._boundEventHandler != null )
+			var oldBoundTransport = Interlocked.CompareExchange( ref this._boundTransport, transport, null );
+			if ( oldBoundTransport != null )
 			{
-				this.Completed -= this._boundEventHandler;
+				throw new InvalidOperationException( String.Format( CultureInfo.CurrentCulture, "This context is already bounded to '{0}'(Socket: 0x{1:X}).", transport.GetType(), transport.BoundSocket == null ? IntPtr.Zero : transport.BoundSocket.Handle ) );
 			}
 
-			this._boundEventHandler = transport.OnSocketOperationCompleted;
-			this.Completed += this._boundEventHandler;
-			this._boundTransport = transport;
+			this.Completed += transport.OnSocketOperationCompleted;
 		}
 
 		protected MessageContext() { }
@@ -131,18 +126,18 @@ namespace MsgPack.Rpc.Protocols
 			try { }
 			finally
 			{
-				if ( this._boundEventHandler != null )
+				var boundTransport = Interlocked.Exchange( ref this._boundTransport, null );
+				if ( boundTransport != null )
 				{
-					this.Completed -= this._boundEventHandler;
-					this._boundTransport = null;
+					this.Completed -= boundTransport.OnSocketOperationCompleted;
 				}
 
 				this._completedSynchronously = false;
 
-				if ( this._asLease != null )
+				var asLease = Interlocked.Exchange( ref this._asLease, null );
+				if ( asLease != null )
 				{
-					this._asLease.Dispose();
-					this._asLease = null;
+					asLease.Dispose();
 				}
 			}
 		}
