@@ -65,10 +65,10 @@ namespace MsgPack.Rpc.Protocols
 		///		The message id. 
 		///		This value will be undefined for the notification message.
 		/// </value>
-		internal int? MessageId
+		public int? MessageId
 		{
 			get;
-			set;
+			internal set;
 		}
 
 		private bool _completedSynchronously;

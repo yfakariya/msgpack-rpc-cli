@@ -124,10 +124,16 @@ namespace MsgPack.Rpc.Server.Protocols
 		/// </summary>
 		internal string MethodName;
 
+		private Unpacker _argumentsUnpacker;
+
 		/// <summary>
 		///		<see cref="Unpacker"/> to deserialize arguments on the dispatcher.
 		/// </summary>
-		internal Unpacker ArgumentsUnpacker;
+		public Unpacker ArgumentsUnpacker
+		{
+			get { return this._argumentsUnpacker; }
+			internal set { this._argumentsUnpacker = value; }
+		}
 
 		public ServerRequestContext()
 		{
@@ -250,10 +256,10 @@ namespace MsgPack.Rpc.Server.Protocols
 			this.MessageId = 0;
 			this.MethodName = null;
 			this.MessageType = MessageType.Response; // Invalid value.
-			if ( this.ArgumentsUnpacker != null )
+			if ( this._argumentsUnpacker != null )
 			{
-				this.ArgumentsUnpacker.Dispose();
-				this.ArgumentsUnpacker = null;
+				this._argumentsUnpacker.Dispose();
+				this._argumentsUnpacker = null;
 			}
 
 			this.ArgumentsBuffer.SetLength( 0 );
