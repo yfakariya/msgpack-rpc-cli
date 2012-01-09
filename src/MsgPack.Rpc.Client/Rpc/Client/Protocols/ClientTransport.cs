@@ -40,10 +40,10 @@ namespace MsgPack.Rpc.Client.Protocols
 	{
 		private Socket _boundSocket;
 
-		internal Socket BoundSocket
+		public Socket BoundSocket
 		{
 			get { return this._boundSocket; }
-			set { this._boundSocket = value; }
+			internal set { this._boundSocket = value; }
 		}
 
 		Socket IContextBoundableTransport.BoundSocket
