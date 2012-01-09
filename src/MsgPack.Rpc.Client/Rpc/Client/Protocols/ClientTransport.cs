@@ -520,23 +520,9 @@ namespace MsgPack.Rpc.Client.Protocols
 		///	</exception>
 		private void Receive( ClientResponseContext context )
 		{
-			if ( context == null )
-			{
-				throw new ArgumentNullException( "context" );
-			}
+			Contract.Assert( context != null );
+			Contract.Assert( context.BoundTransport == this, "Context is not bound to this object." );
 
-			if ( context.BoundTransport != this )
-			{
-				throw new ArgumentException( "Context is not bound to this object.", "context" );
-			}
-
-			this.VerifyIsNotDisposed();
-
-			this.PrivateReceive( context );
-		}
-
-		private void PrivateReceive( ClientResponseContext context )
-		{
 			// First, drain last received request.
 			if ( context.ReceivedData.Any( segment => 0 < segment.Count ) )
 			{
@@ -567,7 +553,7 @@ namespace MsgPack.Rpc.Client.Protocols
 			if ( !context.NextProcess( context ) )
 			{
 				// Draining was not ended. Try to take next bytes.
-				this.PrivateReceive( context );
+				this.Receive( context );
 			}
 
 			// This method must be called on other thread on the above pipeline, so exit this thread.
