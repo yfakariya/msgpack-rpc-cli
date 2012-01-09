@@ -41,18 +41,22 @@ namespace MsgPack.Rpc.Client.Protocols
 			TaskCompletionSource<ClientTransport> source = new TaskCompletionSource<ClientTransport>();
 			var context = new SocketAsyncEventArgs();
 			context.RemoteEndPoint = targetEndPoint;
-			var socket =
-				new Socket(
-					( this.Configuration.PreferIPv4 || !Socket.OSSupportsIPv6 ) ? AddressFamily.InterNetwork : AddressFamily.InterNetworkV6,
-					SocketType.Stream,
-					ProtocolType.Tcp
-				);
 			context.UserToken = source;
 			context.Completed += this.OnCompleted;
 
-			if ( !socket.ConnectAsync( context ) )
+#if !API_SIGNATURE_TEST
+			MsgPackRpcClientProtocolsTrace.TraceEvent(
+				MsgPackRpcClientProtocolsTrace.BeginConnect,
+				"Connecting. {{ \"EndPoint\" : \"{0}\", \"AddressFamily\" : {1}, \"PreferIPv4\" : {2}, \"OSSupportsIPv6\" : {3} }}",
+				targetEndPoint,
+				targetEndPoint.AddressFamily,
+				this.Configuration.PreferIPv4,
+				Socket.OSSupportsIPv6
+			);
+#endif
+			if ( !Socket.ConnectAsync( SocketType.Stream, ProtocolType.Tcp, context ) )
 			{
-				this.OnCompleted( socket, context );
+				this.OnCompleted( null, context );
 			}
 
 			return source.Task;
