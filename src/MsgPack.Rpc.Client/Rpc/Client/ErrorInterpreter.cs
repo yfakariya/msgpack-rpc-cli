@@ -43,6 +43,11 @@ namespace MsgPack.Rpc.Client
 				error = new MessagePackObject( context.ErrorBuffer.GetBuffer( 0, _unknownErrorQuota ).SelectMany( segment => segment.AsEnumerable() ).ToArray() );
 			}
 
+			if ( error.IsNil )
+			{
+				return RpcErrorMessage.Success;
+			}
+
 			RpcError errorIdentifier;
 			if ( error.IsTypeOf<string>().GetValueOrDefault() )
 			{
