@@ -104,14 +104,9 @@ namespace MsgPack.Rpc.Server.Protocols
 				throw new InvalidOperationException( "Transport pool must be set via SetTransportPool()." );
 			}
 
-			TTransport transport;
-			try { }
-			finally
-			{
-				transport = this._transportPool.Borrow();
-				transport.BoundSocket = bindingSocket;
-				this._activeTransports.TryAdd( transport, null );
-			}
+			TTransport transport = GetTransportCore();
+			transport.BoundSocket = bindingSocket;
+			this._activeTransports.TryAdd( transport, null );
 
 			return transport;
 		}
@@ -138,13 +133,9 @@ namespace MsgPack.Rpc.Server.Protocols
 				throw new InvalidOperationException( "Transport pool must be set via SetTransportPool()." );
 			}
 
-			try { }
-			finally
-			{
-				object dummy;
-				this._activeTransports.TryRemove( transport, out dummy );
-				this._transportPool.Return( transport );
-			}
+			object dummy;
+			this._activeTransports.TryRemove( transport, out dummy );
+			this.ReturnTransportCore( transport );
 		}
 		
 		protected ServerRequestContext GetRequetContext( TTransport transport )
