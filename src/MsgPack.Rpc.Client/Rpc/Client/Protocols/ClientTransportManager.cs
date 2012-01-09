@@ -175,12 +175,22 @@ namespace MsgPack.Rpc.Client.Protocols
 				return null;
 			}
 
+			EndPoint remoteEndPoint = null;
+			try
+			{
+				if( socket != null )
+				{
+					remoteEndPoint = socket.RemoteEndPoint;
+				}
+			}
+			catch ( SocketException ) { }
+
 			MsgPackRpcClientProtocolsTrace.TraceEvent(
 				MsgPackRpcClientProtocolsTrace.SocketError,
 				"Socket error. {{ \"Socket\" : 0x{0:X}, \"RemoteEndpoint\" : \"{1}\", \"LocalEndpoint\" : \"{2}\", \"LastOperation\" : \"{3}\", \"SocketError\" : \"{4}\", \"ErrorCode\" : 0x{5:X} }}",
-				socket.Handle,
-				socket.RemoteEndPoint,
-				socket.LocalEndPoint,
+				socket == null ? IntPtr.Zero : socket.Handle,
+				remoteEndPoint,
+				socket == null ? null : socket.LocalEndPoint,
 				context.LastOperation,
 				context.SocketError,
 				( int )context.SocketError
