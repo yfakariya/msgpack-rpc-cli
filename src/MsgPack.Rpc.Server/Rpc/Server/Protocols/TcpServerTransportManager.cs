@@ -42,6 +42,7 @@ namespace MsgPack.Rpc.Server.Protocols
 #endif
 
 			this._listeningContextPool = server.Configuration.ListeningContextPoolProvider( () => new ListeningContext(), server.Configuration.CreateListeningContextPoolConfiguration() );
+			var addressFamily = ( server.Configuration.PreferIPv4 || !Socket.OSSupportsIPv6) ? AddressFamily.InterNetwork : AddressFamily.InterNetworkV6;
 			this._listeningSocket = 
 				new Socket( 
 					( server.Configuration.PreferIPv4 || !Socket.OSSupportsIPv6) ? AddressFamily.InterNetwork : AddressFamily.InterNetworkV6,
@@ -56,8 +57,9 @@ namespace MsgPack.Rpc.Server.Protocols
 				bindingEndPoint = NetworkEnvironment.GetDefaultEndPoint( server.Configuration.PortNumber, server.Configuration.PreferIPv4 );
 				MsgPackRpcServerProtocolsTrace.TraceEvent(
 					MsgPackRpcServerProtocolsTrace.DefaultEndPoint,
-					"Default end point is selected. {{ \"EndPoint\" : \"{0}\", \"PreferIPv4\" : {1}, \"OSSupportsIPv6\" : {2} }}",
+					"Default end point is selected. {{ \"EndPoint\" : \"{0}\", \"AddressFamily\" : {1}, \"PreferIPv4\" : {2}, \"OSSupportsIPv6\" : {3} }}",
 					bindingEndPoint,
+					addressFamily,
 					server.Configuration.PreferIPv4,
 					Socket.OSSupportsIPv6
 				);
