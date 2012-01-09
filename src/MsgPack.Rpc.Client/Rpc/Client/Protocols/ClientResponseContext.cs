@@ -180,7 +180,6 @@ namespace MsgPack.Rpc.Client.Protocols
 
 			this.ErrorStartAt = -1;
 			this.ResultStartAt = -1;
-			this.MessageId = 0;
 
 			if ( this.UnpackingBuffer != null )
 			{
@@ -202,6 +201,8 @@ namespace MsgPack.Rpc.Client.Protocols
 				this.ResultBuffer.Dispose();
 				this.ResultBuffer = null;
 			}
+
+			this.MessageId = 0;
 		}
 
 		/// <summary>
