@@ -65,7 +65,7 @@ namespace MsgPack.Rpc.Client.Protocols
 		private void OnCompleted( object sender, SocketAsyncEventArgs e )
 		{
 			var socket = sender as Socket;
-			var taskCompletionSource = e.UserToken as TaskCompletionSource<TcpClientTransport>;
+			var taskCompletionSource = e.UserToken as TaskCompletionSource<ClientTransport>;
 
 
 			var error = this.HandleSocketError( socket, e );
@@ -100,7 +100,7 @@ namespace MsgPack.Rpc.Client.Protocols
 			}
 		}
 
-		private void OnConnected( SocketAsyncEventArgs context, TaskCompletionSource<TcpClientTransport> taskCompletionSource )
+		private void OnConnected( SocketAsyncEventArgs context, TaskCompletionSource<ClientTransport> taskCompletionSource )
 		{
 #if !API_SIGNATURE_TEST
 			MsgPackRpcClientProtocolsTrace.TraceEvent(
