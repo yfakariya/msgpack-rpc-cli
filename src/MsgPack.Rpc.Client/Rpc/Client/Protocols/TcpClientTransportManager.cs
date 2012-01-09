@@ -67,8 +67,7 @@ namespace MsgPack.Rpc.Client.Protocols
 			var socket = sender as Socket;
 			var taskCompletionSource = e.UserToken as TaskCompletionSource<ClientTransport>;
 
-
-			var error = this.HandleSocketError( socket, e );
+			var error = this.HandleSocketError( e.ConnectSocket ?? socket, e );
 			if ( error != null )
 			{
 				taskCompletionSource.SetException( error.Value.ToException() );
@@ -105,9 +104,9 @@ namespace MsgPack.Rpc.Client.Protocols
 #if !API_SIGNATURE_TEST
 			MsgPackRpcClientProtocolsTrace.TraceEvent(
 				MsgPackRpcClientProtocolsTrace.EndConnect,
-				"Connected. {{ \"Socket\" : 0x{0:X}, \"RemoteEndPoint\" : \"{1}\", \"LocalEndPoint\" : \"{2}\" }}", 
+				"Connected. {{ \"Socket\" : 0x{0:X}, \"RemoteEndPoint\" : \"{1}\", \"LocalEndPoint\" : \"{2}\" }}",
 				context.ConnectSocket.Handle,
-				context.ConnectSocket.RemoteEndPoint, 
+				context.ConnectSocket.RemoteEndPoint,
 				context.ConnectSocket.LocalEndPoint
 			);
 #endif
