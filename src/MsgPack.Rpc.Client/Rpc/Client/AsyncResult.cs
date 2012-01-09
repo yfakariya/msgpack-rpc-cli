@@ -34,6 +34,7 @@ namespace MsgPack.Rpc
 		private const int _completed = 0x100;
 		private const int _completedSynchronously = 0x101;
 		private const int _finished = 0x2;
+		private const int _neverSet = unchecked( ( int )0x80000000 );
 
 		private readonly object _owner;
 
@@ -196,6 +197,15 @@ namespace MsgPack.Rpc
 			{
 				Interlocked.Exchange( ref this._error, error );
 				this.Complete( completedSynchronously );
+			}
+		}
+
+		public void WaitForCompletion()
+		{
+			var current = Interlocked.CompareExchange( ref this._state, _neverSet, _neverSet );
+			if ( ( current & _completed ) == 0 )
+			{
+				this.AsyncWaitHandle.WaitOne();
 			}
 		}
 

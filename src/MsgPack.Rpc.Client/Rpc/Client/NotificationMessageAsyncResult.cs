@@ -34,6 +34,12 @@ namespace MsgPack.Rpc.Client
 			{
 				base.Complete( completedSynchronously );
 			}
+
+			var callback = this.AsyncCallback;
+			if ( callback != null )
+			{
+				callback( this );
+			}
 		}
 
 		/// <summary>

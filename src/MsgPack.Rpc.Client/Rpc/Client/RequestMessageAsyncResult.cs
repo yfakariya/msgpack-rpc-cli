@@ -42,18 +42,26 @@ namespace MsgPack.Rpc.Client
 			if ( exception != null )
 			{
 				base.OnError( exception, completedSynchronously );
-				return;
 			}
-
-			var error = ErrorInterpreter.UnpackError( context );
-			if ( !error.IsSuccess )
+			else
 			{
-				base.OnError( error.ToException(), completedSynchronously );
-				return;
+				var error = ErrorInterpreter.UnpackError( context );
+				if ( !error.IsSuccess )
+				{
+					base.OnError( error.ToException(), completedSynchronously );
+				}
+				else
+				{
+					Interlocked.Exchange( ref this._responseContext, context );
+					base.Complete( completedSynchronously );
+				}
 			}
 
-			Interlocked.Exchange( ref this._responseContext, context );
-			base.Complete( completedSynchronously );
+			var callback = this.AsyncCallback;
+			if ( callback != null )
+			{
+				callback( this );
+			}
 		}
 
 		public RequestMessageAsyncResult( Object owner, int messageId, AsyncCallback asyncCallback, object asyncState )
