@@ -37,6 +37,15 @@ namespace MsgPack.Rpc.Client.Protocols
 
 		private int _tranportIsInShutdown;
 
+		/// <summary>
+		///		Initializes a new instance of the <see cref="ClientTransportManager{T}"/> class.
+		/// </summary>
+		/// <param name="configuration">
+		///		The <see cref="RpcClientConfiguration"/> which contains various configuration information.
+		/// </param>
+		/// <exception cref="ArgumentNullException">
+		///		<paramref name="configuration"/> is <c>null</c>.
+		/// </exception>
 		protected ClientTransportManager( RpcClientConfiguration configuration )
 			: base( configuration )
 		{

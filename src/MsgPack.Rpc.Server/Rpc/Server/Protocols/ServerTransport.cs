@@ -126,6 +126,13 @@ namespace MsgPack.Rpc.Server.Protocols
 			}
 		}
 
+		/// <summary>
+		///		Initializes a new instance of the <see cref="ServerTransport"/> class.
+		/// </summary>
+		/// <param name="manager">The manager which will manage this instance.</param>
+		/// <exception cref="ArgumentNullException">
+		///		<paramref name="manager"/> is <c>null</c>.
+		/// </exception>
 		protected ServerTransport( ServerTransportManager manager )
 		{
 			if ( manager == null )

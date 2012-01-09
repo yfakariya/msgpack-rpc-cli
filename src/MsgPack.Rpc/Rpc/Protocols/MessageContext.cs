@@ -25,6 +25,7 @@ using System.Threading;
 
 namespace MsgPack.Rpc.Protocols
 {
+	// FIXME: MessageContext should be decoupled from SocketAsyncEventArgs. Use UserToken instead.
 	/// <summary>
 	///		Represents context information of asynchronous MesagePack-RPC operation.
 	/// </summary>

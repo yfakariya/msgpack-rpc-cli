@@ -117,6 +117,13 @@ namespace MsgPack.Rpc.Server.Protocols
 			this.Server.RaiseServerError( exception );
 		}
 
+		/// <summary>
+		/// Initializes a new instance of the <see cref="ServerTransportManager"/> class.
+		/// </summary>
+		/// <param name="server">The server which will host this instance.</param>
+		/// <exception cref="ArgumentNullException">
+		///		<paramref name="server"/> is <c>null</c>.
+		/// </exception>
 		protected ServerTransportManager( RpcServer server )
 		{
 			if ( server == null )
