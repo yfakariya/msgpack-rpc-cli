@@ -19,25 +19,129 @@
 #endregion -- License Terms --
 
 using System;
+using System.Globalization;
 using System.Net;
 using MsgPack.Rpc.Server.Dispatch;
-using System.Net.Sockets;
 
 namespace MsgPack.Rpc.Server
 {
-	public static class CallbackServer
+	/// <summary>
+	///		Wraps <see cref="RpcServer"/> with <see cref="CallbackDispatcher"/> and
+	///		decouple Server assembly from the caller (typically test code).
+	/// </summary>
+	public sealed class CallbackServer : IDisposable
 	{
+		/// <summary>
+		///		The default port number.
+		/// </summary>
 		public const int PortNumber = 57319;
 
-		public static RpcServer Create( Func<int?, MessagePackObject[], MessagePackObject> callback )
+		private readonly RpcServer _server;
+
+		/// <summary>
+		///		Gets the bound end point to the server.
+		/// </summary>
+		/// <value>
+		///		The bound end point to the server.
+		/// </value>
+		public EndPoint BoundEndPoint
+		{
+			get { return this._server.Configuration.BindingEndPoint; }
+		}
+
+		/// <summary>
+		///		Occurs when a error is occurred on this server.
+		/// </summary>
+		public event EventHandler<CallbackServerErrorEventArgs> Error;
+
+		private void OnClientError( object sender, RpcClientErrorEventArgs e )
+		{
+			this.OnError( new CallbackServerErrorEventArgs( e.RpcError.ToException(), true ) );
+		}
+
+		private void OnServerError( object sender, RpcServerErrorEventArgs e )
+		{
+			this.OnError( new CallbackServerErrorEventArgs( e.Exception, false ) );
+		}
+
+		private void OnError( CallbackServerErrorEventArgs e )
+		{
+			var handler = this.Error;
+			if ( handler != null )
+			{
+				handler( this, e );
+			}
+		}
+
+		private CallbackServer( RpcServer server )
+		{
+			this._server = server;
+			server.ClientError += this.OnClientError;
+			server.ServerError += this.OnServerError;
+			this._server.Start();
+		}
+
+		/// <summary>
+		///		Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
+		/// </summary>
+		public void Dispose()
+		{
+			if ( !this._server.Stop() )
+			{
+				return;
+			}
+
+			this._server.ClientError -= this.OnClientError;
+			this._server.ServerError -= this.OnServerError;
+			this._server.Dispose();
+		}
+
+		/// <summary>
+		///		Creates a <see cref="CallbackServer"/> for any IP and <see cref="PortNumber"/>.
+		/// </summary>
+		/// <param name="callback">The callback.</param>
+		/// <returns>
+		///		The <see cref="CallbackServer"/> for any IP and <see cref="PortNumber"/>.
+		/// </returns>
+		/// <exception cref="ArgumentNullException">
+		///		<paramref name="callback"/> is <c>null</c>.
+		/// </exception>
+		public static CallbackServer Create( Func<int?, MessagePackObject[], MessagePackObject> callback )
 		{
 			return Create( callback, new IPEndPoint( IPAddress.Any, PortNumber ), true );
 		}
 
-		public static RpcServer Create( Func<int?, MessagePackObject[], MessagePackObject> callback, EndPoint endPoint, bool preferIPv4 )
+		/// <summary>
+		///		Creates a <see cref="CallbackServer"/> with specified <see cref="EndPoint"/>.
+		/// </summary>
+		/// <param name="callback">The callback.</param>
+		/// <param name="endPoint">
+		///		The <see cref="EndPoint"/> to be bound.
+		/// </param>
+		/// <param name="preferIPv4">
+		///		<c>true</c> if use IP v4; otherwise, <c>false</c>.
+		/// </param>
+		/// <returns>
+		///		The <see cref="CallbackServer"/> with specified <see cref="EndPoint"/>.
+		/// </returns>
+		/// <exception cref="ArgumentNullException">
+		///		<paramref name="callback"/> is <c>null</c>.
+		///		Or, <paramref name="endPoint"/> is <c>null</c>.
+		/// </exception>
+		public static CallbackServer Create( Func<int?, MessagePackObject[], MessagePackObject> callback, EndPoint endPoint, bool preferIPv4 )
 		{
+			if ( callback == null )
+			{
+				throw new ArgumentNullException( "callback" );
+			}
+
+			if ( endPoint == null )
+			{
+				throw new ArgumentNullException( "endPoint" );
+			}
+			
 			return
-				new RpcServer(
+				Create(
 					new RpcServerConfiguration()
 					{
 						PreferIPv4 = preferIPv4,
@@ -49,6 +153,41 @@ namespace MsgPack.Rpc.Server
 						DispatcherProvider = server => new CallbackDispatcher( server, callback )
 					}
 				);
+		}
+
+		/// <summary>
+		///		Creates a <see cref="CallbackServer"/> with specified <see cref="RpcServerConfiguration"/>.
+		/// </summary>
+		/// <param name="configuration">The <see cref="RpcServerConfiguration"/>.</param>
+		/// <returns>
+		///		The <see cref="CallbackServer"/> with specified <see cref="RpcServerConfiguration"/>.
+		/// </returns>
+		/// <exception cref="ArgumentNullException">
+		///		<paramref name="configuration"/> is <c>null</c>.
+		/// </exception>
+		/// <exception cref="ArgumentException">
+		///		<paramref name="configuration"/> is not a <see cref="RpcServerConfiguration"/>.
+		/// </exception>
+		public static CallbackServer Create( object configuration )
+		{
+			if ( configuration == null )
+			{
+				throw new ArgumentNullException( "configuration" );
+			}
+
+			var realConfiguration = configuration as RpcServerConfiguration;
+
+			if ( realConfiguration == null )
+			{
+				throw new ArgumentException( String.Format( CultureInfo.CurrentCulture, "Configuration is not an '{0}' type.", typeof( RpcServerConfiguration ) ), "configuration" );
+			}
+
+			return Create( realConfiguration );
+		}
+
+		private static CallbackServer Create( RpcServerConfiguration configuration )
+		{
+			return new CallbackServer( new RpcServer( configuration ) );
 		}
 
 	}

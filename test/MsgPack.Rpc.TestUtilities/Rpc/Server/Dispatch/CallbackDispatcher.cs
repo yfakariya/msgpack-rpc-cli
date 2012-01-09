@@ -26,11 +26,19 @@ using MsgPack.Serialization;
 
 namespace MsgPack.Rpc.Server.Dispatch
 {
+	/// <summary>
+	///		Callback based <see cref="Dispacther"/> implementation for testing purposes.
+	/// </summary>
 	public sealed class CallbackDispatcher : Dispatcher
 	{
 		private static readonly SerializationContext _serializationContext = new SerializationContext();
 		private readonly Func<int?, MessagePackObject[], MessagePackObject> _callback;
 
+		/// <summary>
+		/// Initializes a new instance of the <see cref="CallbackDispatcher"/> class.
+		/// </summary>
+		/// <param name="server">The server.</param>
+		/// <param name="callback">The callback.</param>
 		public CallbackDispatcher( RpcServer server, Func<int?, MessagePackObject[], MessagePackObject> callback )
 			: base( server )
 		{
@@ -39,6 +47,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 
 		protected sealed override Func<ServerRequestContext, ServerResponseContext, Task> Dispatch( string methodName )
 		{
+			// Ignore methodName
 			return
 				( requestContext, responseContext ) =>
 				{
