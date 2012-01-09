@@ -115,12 +115,17 @@ namespace MsgPack.Rpc.Client.Protocols
 			try { }
 			finally
 			{
-				transport = this._transportPool.Borrow();
+				transport = this.GetTransportCore();
 				transport.BoundSocket = bindingSocket;
 				this._activeTransports.TryAdd( transport, null );
 			}
 
 			return transport;
+		}
+
+		protected virtual TTransport GetTransportCore()
+		{
+			return this._transportPool.Borrow();
 		}
 
 		internal sealed override void ReturnTransport( ClientTransport transport )
@@ -150,8 +155,13 @@ namespace MsgPack.Rpc.Client.Protocols
 			{
 				object dummy;
 				this._activeTransports.TryRemove( transport, out dummy );
-				this._transportPool.Return( transport );
+				ReturnTransportCore( transport );
 			}
+		}
+
+		protected virtual void ReturnTransportCore( TTransport transport )
+		{
+			this._transportPool.Return( transport );
 		}
 
 		internal ClientRequestContext GetRequetContext( TTransport transport )
