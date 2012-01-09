@@ -544,7 +544,8 @@ namespace MsgPack.Rpc.Server
 		/// </returns>
 		public sealed override string ToString()
 		{
-			var buffer = new StringBuilder( 2048 );
+			var buffer = new StringBuilder( 4096 );
+			buffer.Append( "{ " );
 
 			buffer.Append( "\"PreferIPv4\" : " );
 			ToString( this.PreferIPv4, buffer );
@@ -600,6 +601,7 @@ namespace MsgPack.Rpc.Server
 			buffer.Append( "\"UdpTransportPoolProvider\" : " );
 			ToString( this.UdpTransportPoolProvider, buffer );
 
+			buffer.Append( " }" );
 			return buffer.ToString();
 		}
 		
@@ -608,6 +610,20 @@ namespace MsgPack.Rpc.Server
 			if( value == null )
 			{
 				buffer.Append( "null" );
+			}
+			
+			if( typeof( Delegate ).IsAssignableFrom( typeof( T ) ) )
+			{
+				var asDelegate = ( Delegate )( object )value;
+				buffer.Append( "\"Type='" ).Append( asDelegate.Method.DeclaringType );
+
+				if( asDelegate.Target != null )
+				{
+					buffer.Append( "', Instance='" ).Append( asDelegate.Target );
+				}
+
+				buffer.Append( "', Method='" ).Append( asDelegate.Method ).Append( "'\"" );
+				return;
 			}
 
 			switch( Type.GetTypeCode( typeof( T ) ) )

@@ -212,7 +212,7 @@ foreach( Property __property in __properties )
 		public sealed override string ToString()
 		{
 			var buffer = new StringBuilder( <#= EstimateToStringSize( __properties ) #> );
-
+			buffer.Append( "{ " );
 <#
 bool isFirstProperty = true;
 foreach( Property __property in __properties )
@@ -234,6 +234,7 @@ foreach( Property __property in __properties )
 }
 #>
 
+			buffer.Append( " }" );
 			return buffer.ToString();
 		}
 		
@@ -242,6 +243,20 @@ foreach( Property __property in __properties )
 			if( value == null )
 			{
 				buffer.Append( "null" );
+			}
+			
+			if( typeof( Delegate ).IsAssignableFrom( typeof( T ) ) )
+			{
+				var asDelegate = ( Delegate )( object )value;
+				buffer.Append( "\"Type='" ).Append( asDelegate.Method.DeclaringType );
+
+				if( asDelegate.Target != null )
+				{
+					buffer.Append( "', Instance='" ).Append( asDelegate.Target );
+				}
+
+				buffer.Append( "', Method='" ).Append( asDelegate.Method ).Append( "'\"" );
+				return;
 			}
 
 			switch( Type.GetTypeCode( typeof( T ) ) )
@@ -311,7 +326,7 @@ private static int EstimateToStringSize( IEnumerable<Property> properties )
 		else if( property.Type.StartsWith( "Action" ) || property.Type.StartsWith( "Func" ) )
 		{
 			// Delegates
-			result += 64;
+			result += 320;
 		}
 		else
 		{
