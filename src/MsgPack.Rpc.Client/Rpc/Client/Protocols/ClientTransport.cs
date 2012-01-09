@@ -21,6 +21,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.Globalization;
 using System.IO;
@@ -319,13 +320,14 @@ namespace MsgPack.Rpc.Client.Protocols
 		{
 			MsgPackRpcClientProtocolsTrace.TraceEvent(
 				MsgPackRpcClientProtocolsTrace.OrphanError,
-				"Cannot notify error for MessageID:{0}, SessionID:{1}. This may indicate runtime problem. {{ \"Socket\" : 0x{2:X}, \"RemoteEndPoint\" : \"{3}\", \"LocalEndPoint\" : \"{4}\", \"SessionID\" :{1], \"MessageID\" : {0}, \"Error\" : {5} }}",
+				"Cannot notify error for MessageID:{0}, SessionID:{1}. This may indicate runtime problem. {{ \"Socket\" : 0x{2:X}, \"RemoteEndPoint\" : \"{3}\", \"LocalEndPoint\" : \"{4}\", \"SessionID\" :{1}, \"MessageID\" : {0}, \"Error\" : {5}, \"CallStack\" : \"{6}\" }}",
 				messageId == null ? "(null)" : messageId.Value.ToString(),
 				sessionId,
 				this._boundSocket == null ? IntPtr.Zero : this._boundSocket.Handle,
 				this._boundSocket == null ? null : this._boundSocket.RemoteEndPoint,
 				this._boundSocket == null ? null : this._boundSocket.LocalEndPoint,
-				rpcError
+				rpcError,
+				new StackTrace( 0, true )
 			);
 		}
 
