@@ -495,6 +495,13 @@ namespace MsgPack.Rpc.Client.Protocols
 							}
 						}
 					}
+					else
+					{
+						var responseContext = this.Manager.ResponseContextPool.Borrow();
+						responseContext.SetTransport( this );
+						responseContext.SessionId = context.SessionId;
+						this.Receive( responseContext );
+					}
 				}
 				finally
 				{
