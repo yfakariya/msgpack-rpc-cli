@@ -89,12 +89,6 @@ namespace MsgPack.Rpc.Server.Protocols
 			base.DisposeCore( disposing );
 		}
 
-		protected sealed override void BeginShutdownCore()
-		{
-			base.BeginShutdownCore();
-			this._listeningSocket.Shutdown( SocketShutdown.Both );
-		}
-
 		private void StartAccept()
 		{
 			var concurrency = this.Configuration.MinimumConnection;
