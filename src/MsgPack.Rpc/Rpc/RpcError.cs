@@ -260,7 +260,7 @@ namespace MsgPack.Rpc
 				_unexpectedErrorCode,
 				"Unexpected RPC error is occurred.",
 				typeof( UnexpcetedRpcException ),
-				null
+				( error, data ) => new RpcException( error, data )
 			);
 
 		private static readonly Dictionary<string, RpcError> _identifierDictionary = new Dictionary<string, RpcError>();
