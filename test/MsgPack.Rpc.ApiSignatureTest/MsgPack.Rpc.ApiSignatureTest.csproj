@@ -44,6 +44,18 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\..\src\MsgPack.Rpc.Client\Rpc\Client\Protocols\TcpClientTransport.cs">
+      <Link>Rpc\Client\Protocols\TcpClientTransport.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\MsgPack.Rpc.Client\Rpc\Client\Protocols\TcpClientTransportManager.cs">
+      <Link>Rpc\Client\Protocols\TcpClientTransportManager.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\MsgPack.Rpc.Client\Rpc\Client\Protocols\UdpClientTransport.cs">
+      <Link>Rpc\Client\Protocols\UdpClientTransport.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\MsgPack.Rpc.Client\Rpc\Client\Protocols\UdpClientTransportManager.cs">
+      <Link>Rpc\Client\Protocols\UdpClientTransportManager.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\msgpack.rpc.server\rpc\server\dispatch\DefaultServiceTypeLocator.cs">
       <Link>Rpc\Server\Dispatch\DefaultServiceTypeLocator.cs</Link>
     </Compile>
@@ -93,9 +105,7 @@
       <Name>MsgPack.Rpc</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Rpc\Client\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
