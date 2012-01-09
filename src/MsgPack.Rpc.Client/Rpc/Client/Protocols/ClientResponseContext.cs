@@ -116,6 +116,8 @@ namespace MsgPack.Rpc.Client.Protocols
 			this._currentReceivingBuffer = new byte[ 65536 ];
 			// TODO: ArrayDeque is preferred.
 			this._receivedData = new List<ArraySegment<byte>>( 1 );
+			this.ErrorStartAt = -1;
+			this.ResultStartAt = -1;
 		}
 
 		internal void SetTransport( ClientTransport transport )
