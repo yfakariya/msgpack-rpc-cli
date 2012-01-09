@@ -231,29 +231,29 @@ namespace MsgPack.Rpc.Client.Protocols
 
 			try
 			{
+				Action<ClientResponseContext, Exception, bool> handler = null;
 				try
 				{
-					Action<ClientResponseContext, Exception, bool> handler = null;
-					try
-					{
-						this._pendingRequestTable.TryRemove( context.MessageId.Value, out handler );
-					}
-					finally
-					{
-						// Best effort to rescue from ThreadAbortException...
-						if ( handler != null )
-						{
-							handler( context, null, context.CompletedSynchronously );
-						}
-						else
-						{
-							this.HandleOrphan( context );
-						}
-					}
+					this._pendingRequestTable.TryRemove( context.MessageId.Value, out handler );
 				}
 				finally
 				{
-					context.ClearDispatchContext();
+					// Best effort to rescue from ThreadAbortException...
+					if ( handler != null )
+					{
+						handler( context, null, context.CompletedSynchronously );
+					}
+					else
+					{
+						try
+						{
+							this.HandleOrphan( context );
+						}
+						finally
+						{
+							context.Clear();
+						}
+					}
 				}
 			}
 			finally
