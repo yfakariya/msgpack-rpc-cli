@@ -40,6 +40,7 @@ namespace MsgPack.Rpc.Client.Protocols
 		{
 			TaskCompletionSource<ClientTransport> source = new TaskCompletionSource<ClientTransport>();
 			var context = new SocketAsyncEventArgs();
+			context.RemoteEndPoint = targetEndPoint;
 			var socket =
 				new Socket(
 					( this.Configuration.PreferIPv4 || !Socket.OSSupportsIPv6 ) ? AddressFamily.InterNetwork : AddressFamily.InterNetworkV6,
@@ -47,13 +48,13 @@ namespace MsgPack.Rpc.Client.Protocols
 					ProtocolType.Tcp
 				);
 			context.UserToken = source;
+			context.Completed += this.OnCompleted;
 
 			if ( !socket.ConnectAsync( context ) )
 			{
 				this.OnCompleted( socket, context );
 			}
 
-			source.Task.Start( TaskScheduler.Default );
 			return source.Task;
 		}
 
