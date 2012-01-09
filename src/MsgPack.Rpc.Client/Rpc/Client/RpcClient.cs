@@ -197,8 +197,9 @@ namespace MsgPack.Rpc.Client
 		public MessagePackObject EndCall( IAsyncResult asyncResult )
 		{
 			var requestAsyncResult = AsyncResult.Verify<RequestMessageAsyncResult>( asyncResult, this );
+			requestAsyncResult.WaitForCompletion();
 			requestAsyncResult.Finish();
-			ClientResponseContext responseContext = requestAsyncResult.ResponseContext;
+			var responseContext = requestAsyncResult.ResponseContext;
 			try
 			{
 				return Unpacking.UnpackObject( responseContext.ResultBuffer );
@@ -266,6 +267,7 @@ namespace MsgPack.Rpc.Client
 		public void EndNotify( IAsyncResult asyncResult )
 		{
 			var notificationAsyncResult = AsyncResult.Verify<MessageAsyncResult>( asyncResult, this );
+			notificationAsyncResult.WaitForCompletion();
 			notificationAsyncResult.Finish();
 		}
 	}
