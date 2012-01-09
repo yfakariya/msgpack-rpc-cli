@@ -62,7 +62,7 @@ namespace MsgPack.Rpc.Client.Protocols
 				return context.NextProcess( context );
 			}
 
-			if ( context.RootUnpacker.ItemsCount != 3 && context.RootUnpacker.ItemsCount != 4 )
+			if ( context.RootUnpacker.ItemsCount != 4 )
 			{
 				this.HandleDeserializationError(
 					context,
