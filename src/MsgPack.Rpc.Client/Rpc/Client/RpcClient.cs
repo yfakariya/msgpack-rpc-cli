@@ -125,7 +125,6 @@ namespace MsgPack.Rpc.Client
 
 			this._transport.ShutdownCompleted += this.OnTranportShutdownComplete;
 			this._transport.BeginShutdown();
-			taskCompletionSource.Task.Start();
 			return taskCompletionSource.Task;
 		}
 
