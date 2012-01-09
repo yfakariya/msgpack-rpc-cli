@@ -43,13 +43,6 @@ namespace MsgPack.Rpc.Server.Protocols
 
 			this._listeningContextPool = server.Configuration.ListeningContextPoolProvider( () => new ListeningContext(), server.Configuration.CreateListeningContextPoolConfiguration() );
 			var addressFamily = ( server.Configuration.PreferIPv4 || !Socket.OSSupportsIPv6) ? AddressFamily.InterNetwork : AddressFamily.InterNetworkV6;
-			this._listeningSocket = 
-				new Socket( 
-					( server.Configuration.PreferIPv4 || !Socket.OSSupportsIPv6) ? AddressFamily.InterNetwork : AddressFamily.InterNetworkV6,
-					SocketType.Stream, 
-					ProtocolType.Tcp
-				);
-
 			var bindingEndPoint = this.Configuration.BindingEndPoint;
 #if !API_SIGNATURE_TEST
 			if ( bindingEndPoint == null )
@@ -65,6 +58,13 @@ namespace MsgPack.Rpc.Server.Protocols
 				);
 			}
 #endif
+			this._listeningSocket =
+				new Socket(
+					bindingEndPoint.AddressFamily,
+					SocketType.Stream,
+					ProtocolType.Tcp
+				);
+
 			this._listeningSocket.Bind( bindingEndPoint );
 			this._listeningSocket.Listen( server.Configuration.ListenBackLog );
 
