@@ -215,17 +215,28 @@ namespace MsgPack.Rpc
 		public void Finish()
 		{
 			Contract.Assert( this._state != _initialized );
-			int oldValue = this._state;
-			int newValue = this._state | _finished;
-			while ( Interlocked.CompareExchange( ref this._state, newValue, oldValue ) != oldValue )
+			try
 			{
-				oldValue = this._state;
-				newValue = oldValue | _finished;
-			}
+				int oldValue = this._state;
+				int newValue = this._state | _finished;
+				while ( Interlocked.CompareExchange( ref this._state, newValue, oldValue ) != oldValue )
+				{
+					oldValue = this._state;
+					newValue = oldValue | _finished;
+				}
 
-			if ( this._error != null )
+				if ( this._error != null )
+				{
+					throw this._error;
+				}
+			}
+			finally
 			{
-				throw this._error;
+				var waitHandle = Interlocked.Exchange( ref this._asyncWaitHandle, null );
+				if ( waitHandle != null )
+				{
+					waitHandle.Dispose();
+				}
 			}
 		}
 
