@@ -245,7 +245,11 @@ namespace MsgPack.Rpc.Client.Protocols
 		private bool HandleSocketError( Socket socket, MessageContext context )
 		{
 			var rpcError = this.Manager.HandleSocketError( socket, context );
-			this.RaiseError( context.MessageId, context.SessionId, rpcError.Value, context.CompletedSynchronously );
+			if ( rpcError != null )
+			{
+				this.RaiseError( context.MessageId, context.SessionId, rpcError.Value, context.CompletedSynchronously );
+			}
+
 			return rpcError == null;
 		}
 
