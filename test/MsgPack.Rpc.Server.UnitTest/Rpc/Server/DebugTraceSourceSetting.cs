@@ -22,7 +22,7 @@ using System;
 using System.Diagnostics;
 using System.Linq;
 
-namespace MsgPack.Rpc.Server.Protocols
+namespace MsgPack.Rpc.Server
 {
 	/// <summary>
 	///		Enable and reset trace source settings.

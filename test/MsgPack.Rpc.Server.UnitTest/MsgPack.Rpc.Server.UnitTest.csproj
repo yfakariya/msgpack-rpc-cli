@@ -57,9 +57,7 @@
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Rpc\Server\DebugTraceSourceSetting.cs" />
-    <Compile Include="Rpc\Server\Protocols\TcpServerTransportTest.cs" />
-    <Compile Include="Rpc\Server\Protocols\UdpServerTransportTest.cs" />
-    <Compile Include="Rpc\Server\RpcServerTest.cs" />
+    <Compile Include="Rpc\Server\PreTest.cs" />
     <Compile Include="Rpc\Server\Protocols\_SetUpFixture.cs" />
     <Compile Include="Rpc\Server\_SetUpFixture.cs" />
   </ItemGroup>
@@ -81,7 +79,9 @@
     <None Include="..\..\src\MsgPack.snk">
       <Link>MsgPack.snk</Link>
     </None>
-    <None Include="App.config" />
+    <None Include="App.config">
+      <SubType>Designer</SubType>
+    </None>
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

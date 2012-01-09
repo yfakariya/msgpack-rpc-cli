@@ -24,8 +24,10 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using NUnit.Framework;
+using MsgPack.Rpc.Server.Protocols;
+using MsgPack.Rpc.Server.Dispatch;
 
-namespace MsgPack.Rpc.Server.Protocols
+namespace MsgPack.Rpc.Server
 {
 	// TODOs
 	// Error test
@@ -36,10 +38,12 @@ namespace MsgPack.Rpc.Server.Protocols
 
 	// Others
 	//   UDP
-	//   Client SocketPool
 	//   
+	/// <summary>
+	///		Prototype test.
+	/// </summary>
 	[TestFixture]
-	public class TcpServerTransportTest
+	public class PreTest
 	{
 		// TODO: Error packet test.
 		private const bool _traceEnabled = true;
@@ -48,7 +52,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		[SetUp]
 		public void SetUp()
 		{
-			this._debugTrace = new DebugTraceSourceSetting( _traceEnabled , MsgPackRpcServerTrace.Source, MsgPackRpcServerProtocolsTrace.Source );
+			this._debugTrace = new DebugTraceSourceSetting( _traceEnabled, MsgPackRpcServerTrace.Source, MsgPackRpcServerProtocolsTrace.Source );
 		}
 
 		[TearDown]
@@ -68,25 +72,26 @@ namespace MsgPack.Rpc.Server.Protocols
 				{
 					using ( var server =
 						CallbackServer.Create(
-							( id, args ) =>
-							{
-								try
+							CreateConfiguration(
+								host => new TcpServerTransportManager( host ),
+								( id, args ) =>
 								{
-									Assert.That( args[ 0 ] == message, args[ 0 ].ToString() );
-									Assert.That( args[ 1 ].IsTypeOf<Int64>().GetValueOrDefault(), args[ 1 ].ToString() );
-									isOk = true;
-									return args;
+									try
+									{
+										Assert.That( args[ 0 ] == message, args[ 0 ].ToString() );
+										Assert.That( args[ 1 ].IsTypeOf<Int64>().GetValueOrDefault(), args[ 1 ].ToString() );
+										isOk = true;
+										return args;
+									}
+									finally
+									{
+										waitHandle.Set();
+									}
 								}
-								finally
-								{
-									waitHandle.Set();
-								}
-							}
+							)
 						)
 					)
-					using ( var manager = new TcpServerTransportManager( server ) )
 					{
-
 						TestEchoRequestCore( ref isOk, waitHandle, message );
 
 						waitHandle.Reset();
@@ -170,27 +175,29 @@ namespace MsgPack.Rpc.Server.Protocols
 				using ( var waitHandle = new CountdownEvent( count ) )
 				using ( var server =
 					CallbackServer.Create(
-						( id, args ) =>
-						{
-							try
+						CreateConfiguration(
+							host => new TcpServerTransportManager( host ),
+							( id, args ) =>
 							{
-								Assert.That( args[ 0 ] == message );
-								Assert.That( args[ 1 ].IsTypeOf<Int64>().GetValueOrDefault() );
-								lock ( serverStatus )
+								try
 								{
-									serverStatus[ id.Value ] = true;
-								}
+									Assert.That( args[ 0 ] == message );
+									Assert.That( args[ 1 ].IsTypeOf<Int64>().GetValueOrDefault() );
+									lock ( serverStatus )
+									{
+										serverStatus[ id.Value ] = true;
+									}
 
-								return args;
+									return args;
+								}
+								finally
+								{
+									waitHandle.Signal();
+								}
 							}
-							finally
-							{
-								waitHandle.Signal();
-							}
-						}
+						)
 					)
 				)
-				using ( var manager = new TcpServerTransportManager( server ) )
 				{
 					TestEchoRequestContinuousCore( serverStatus, waitHandle, count, message );
 
@@ -266,6 +273,25 @@ namespace MsgPack.Rpc.Server.Protocols
 					Assert.That( resposeStatus, Is.All.True );
 				}
 			}
+		}
+
+		private static RpcServerConfiguration CreateConfiguration(
+			Func<RpcServer, ServerTransportManager> transportManagerProvider,
+			Func<int?, MessagePackObject[], MessagePackObject> callback
+		)
+		{
+			return
+				new RpcServerConfiguration()
+				{
+					PreferIPv4 = true,
+					BindingEndPoint = new IPEndPoint( IPAddress.Any, 57319 ),
+					MinimumConcurrentRequest = 1,
+					MaximumConcurrentRequest = 10,
+					MinimumConnection = 1,
+					MaximumConnection = 1,
+					TransportManagerProvider = transportManagerProvider,
+					DispatcherProvider = server => new CallbackDispatcher( server, callback )
+				};
 		}
 	}
 }
