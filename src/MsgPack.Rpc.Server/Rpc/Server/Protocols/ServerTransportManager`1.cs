@@ -35,6 +35,13 @@ namespace MsgPack.Rpc.Server.Protocols
 
 		private int _tranportIsInShutdown;
 
+		/// <summary>
+		/// Initializes a new instance of the <see cref="ServerTransportManager{T}"/> class.
+		/// </summary>
+		/// <param name="server">The server which will host this instance.</param>
+		/// <exception cref="ArgumentNullException">
+		///		<paramref name="server"/> is <c>null</c>.
+		/// </exception>
 		protected ServerTransportManager( RpcServer server )
 			: base( server )
 		{
@@ -111,6 +118,11 @@ namespace MsgPack.Rpc.Server.Protocols
 			return transport;
 		}
 
+		protected virtual TTransport GetTransportCore()
+		{
+			return this._transportPool.Borrow();
+		}
+
 		internal sealed override void ReturnTransport( ServerTransport transport )
 		{
 			this.ReturnTransport( ( TTransport )transport );
@@ -137,7 +149,12 @@ namespace MsgPack.Rpc.Server.Protocols
 			this._activeTransports.TryRemove( transport, out dummy );
 			this.ReturnTransportCore( transport );
 		}
-		
+
+		protected virtual void ReturnTransportCore( TTransport transport )
+		{
+			this._transportPool.Return( transport );
+		}
+
 		protected ServerRequestContext GetRequetContext( TTransport transport )
 		{
 			var requestContext = this.RequestContextPool.Borrow();
