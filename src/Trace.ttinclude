@@ -29,6 +29,11 @@
 <#+
 public string Generate( string nameSpace, params TraceMessage[] messages )
 {
+	return this.Generate( nameSpace, nameSpace.Replace( ".", String.Empty ) + "Trace", messages );
+}
+
+public string Generate( string nameSpace, string className, params TraceMessage[] messages )
+{
 	if( messages == null )
 	{
 		throw new ArgumentNullException( "message" );
@@ -96,7 +101,7 @@ using System.Diagnostics;
 	buffer.Append( indent ).Append( "/// " ).Append( indent ).Append ("Defines trace for " ).Append( nameSpace ).AppendLine( " namespace." );
 	buffer.Append( indent ).AppendLine( "/// </summary>" );
 	
-	buffer.Append( indent ).Append( "public static partial class " ).Append( nameSpace.Replace( ".", String.Empty ) ).AppendLine( "Trace" );
+	buffer.Append( indent ).Append( "public static partial class " ).AppendLine( className );
 	buffer.Append( indent ).AppendLine( "{" );
 	
 	buffer.Append( indent ).Append( indent ).Append( "private static readonly TraceSource _source = new TraceSource( \"" ).Append( nameSpace ).Append( "\" );" ).AppendLine();
@@ -171,7 +176,7 @@ using System.Diagnostics;
 	buffer.Append( indent ).Append( indent ).AppendLine( "/// <param name=\"data\">" );
 	buffer.Append( indent ).Append( indent ).Append( "/// ").Append( indent ).Append( "The raw data for this event." ).AppendLine();
 	buffer.Append( indent ).Append( indent ).AppendLine( "/// </param>" );
-	buffer.Append( indent ).Append( indent ).Append( "public static void TraceData ( MessageId id, string format, params object[] data )" ).AppendLine();
+	buffer.Append( indent ).Append( indent ).Append( "public static void TraceData ( MessageId id, params object[] data )" ).AppendLine();
 	buffer.Append( indent ).Append( indent ).Append( "{" ).AppendLine();
 	buffer.Append( indent ).Append( indent ).Append( indent ).Append( "_source.TraceData( _typeTable[ id ], ( int )id, data );" ).AppendLine();
 	buffer.Append( indent ).Append( indent ).Append( "}" ).AppendLine();
