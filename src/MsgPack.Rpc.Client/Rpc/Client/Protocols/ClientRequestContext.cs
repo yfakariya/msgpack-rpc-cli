@@ -22,8 +22,6 @@ using System;
 using System.Diagnostics.Contracts;
 using System.IO;
 using MsgPack.Rpc.Protocols;
-using MsgPack.Serialization;
-using System.Globalization;
 
 namespace MsgPack.Rpc.Client.Protocols
 {
