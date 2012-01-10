@@ -68,6 +68,7 @@
     <Compile Include="Rpc\MessagePackRpcMethodAttribute.cs" />
     <Compile Include="Rpc\MessagePackRpcServiceContractAttribute.cs" />
     <Compile Include="Rpc\NetworkEnvironment.cs" />
+    <Compile Include="Rpc\ObjectPool`1.cs" />
     <Compile Include="Rpc\ObjectPoolConfiguration.cs" />
     <Compile Include="Rpc\ObjectPoolConfiguration.Properties.cs">
       <AutoGen>True</AutoGen>
@@ -126,6 +127,13 @@
     <Compile Include="Rpc\RpcTimeoutException.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Rpc\StandardObjectPoolTrace.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>StandardObjectPoolTrace.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Rpc\StandardObjectPoolTrace.Extension.cs" />
+    <Compile Include="Rpc\StandardObjectPool`1.cs" />
     <Compile Include="Rpc\UnexpcetedRpcException.cs">
       <SubType>Code</SubType>
     </Compile>
@@ -138,8 +146,11 @@
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>ObjectPoolConfiguration.Properties.cs</LastGenOutput>
     </None>
+    <None Include="Rpc\StandardObjectPoolTrace.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>StandardObjectPoolTrace.cs</LastGenOutput>
+    </None>
   </ItemGroup>
-  <ItemGroup />
   <ItemGroup>
     <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
   </ItemGroup>

@@ -91,7 +91,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 		/// <param name="data">
 		/// 	The raw data for this event.
 		/// </param>
-		public static void TraceData ( MessageId id, string format, params object[] data )
+		public static void TraceData ( MessageId id, params object[] data )
 		{
 			_source.TraceData( _typeTable[ id ], ( int )id, data );
 		}
