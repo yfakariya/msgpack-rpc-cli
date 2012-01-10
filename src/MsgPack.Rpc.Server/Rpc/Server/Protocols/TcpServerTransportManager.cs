@@ -73,7 +73,7 @@ namespace MsgPack.Rpc.Server.Protocols
 				MsgPackRpcServerProtocolsTrace.StartListen,
 				"Start listen. {{ \"Socket\" : 0x{0:X}, \"EndPoint\" : \"{1}\", \"ListenBackLog\" : {2} }}",
 				this._listeningSocket.Handle,
-				bindingEndPoint, 
+				bindingEndPoint,
 				server.Configuration.ListenBackLog
 			);
 #endif
@@ -151,7 +151,7 @@ namespace MsgPack.Rpc.Server.Protocols
 				}
 
 #if !API_SIGNATURE_TEST
-				MsgPackRpcServerProtocolsTrace.TraceEvent( 
+				MsgPackRpcServerProtocolsTrace.TraceEvent(
 					MsgPackRpcServerProtocolsTrace.BeginAccept,
 					"Wait for connection. {{ \"Socket\" : 0x{0:X}, \"LocalEndPoint\" : \"{1}\" }}",
 					this._listeningSocket.Handle,
@@ -180,9 +180,9 @@ namespace MsgPack.Rpc.Server.Protocols
 #if !API_SIGNATURE_TEST
 			MsgPackRpcServerProtocolsTrace.TraceEvent(
 				MsgPackRpcServerProtocolsTrace.EndAccept,
-				"Accept. {{ \"Socket\" : 0x{0:X}, \"RemoteEndPoint\" : \"{1}\", \"LocalEndPoint\" : \"{2}\" }}", 
+				"Accept. {{ \"Socket\" : 0x{0:X}, \"RemoteEndPoint\" : \"{1}\", \"LocalEndPoint\" : \"{2}\" }}",
 				context.AcceptSocket.Handle,
-				context.AcceptSocket.RemoteEndPoint, 
+				context.AcceptSocket.RemoteEndPoint,
 				context.AcceptSocket.LocalEndPoint
 			);
 #endif

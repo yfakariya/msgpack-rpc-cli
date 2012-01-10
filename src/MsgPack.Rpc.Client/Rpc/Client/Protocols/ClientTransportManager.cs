@@ -180,7 +180,7 @@ namespace MsgPack.Rpc.Client.Protocols
 			EndPoint remoteEndPoint = null;
 			try
 			{
-				if( socket != null )
+				if ( socket != null )
 				{
 					remoteEndPoint = socket.RemoteEndPoint;
 				}
