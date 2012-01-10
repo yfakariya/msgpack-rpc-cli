@@ -68,6 +68,7 @@
     <Compile Include="Rpc\MessagePackRpcMethodAttribute.cs" />
     <Compile Include="Rpc\MessagePackRpcServiceContractAttribute.cs" />
     <Compile Include="Rpc\NetworkEnvironment.cs" />
+    <Compile Include="Rpc\ObjectPoolCorruptedException.cs" />
     <Compile Include="Rpc\ObjectPool`1.cs" />
     <Compile Include="Rpc\ObjectPoolConfiguration.cs" />
     <Compile Include="Rpc\ObjectPoolConfiguration.Properties.cs">
