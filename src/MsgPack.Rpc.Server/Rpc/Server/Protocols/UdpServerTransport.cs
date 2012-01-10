@@ -25,7 +25,7 @@ namespace MsgPack.Rpc.Server.Protocols
 	/// <summary>
 	///		<see cref="ServerTransport"/> implementation for UDP/IP.
 	/// </summary>
-	public sealed class UdpServerTransport : ServerTransport, ILeaseable<UdpServerTransport>
+	public sealed class UdpServerTransport : ServerTransport
 	{
 		public UdpServerTransport( UdpServerTransportManager manager ) : base( manager ) { }
 
@@ -47,11 +47,6 @@ namespace MsgPack.Rpc.Server.Protocols
 				context.SetCompletedSynchronously();
 				this.OnReceived( context );
 			}
-		}
-
-		void ILeaseable<UdpServerTransport>.SetLease( ILease<UdpServerTransport> lease )
-		{
-			base.SetLease( lease );
 		}
 	}
 }

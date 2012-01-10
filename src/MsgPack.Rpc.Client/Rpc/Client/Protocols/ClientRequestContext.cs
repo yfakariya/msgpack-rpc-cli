@@ -25,7 +25,7 @@ using MsgPack.Rpc.Protocols;
 
 namespace MsgPack.Rpc.Client.Protocols
 {
-	public sealed class ClientRequestContext : MessageContext, ILeaseable<ClientRequestContext>
+	public sealed class ClientRequestContext : MessageContext
 	{
 		/// <summary>
 		///		Constant part of the request header.
@@ -248,11 +248,6 @@ namespace MsgPack.Rpc.Client.Protocols
 			this._requestCompletionCallback = null;
 			this._notificationComplectionCallback = null;
 			base.Clear();
-		}
-
-		void ILeaseable<ClientRequestContext>.SetLease( ILease<ClientRequestContext> lease )
-		{
-			base.SetLease( lease );
 		}
 	}
 }

@@ -26,7 +26,7 @@ using System.Net;
 
 namespace MsgPack.Rpc.Client.Protocols
 {
-	public sealed class UdpClientTransport : ClientTransport, ILeaseable<UdpClientTransport>
+	public sealed class UdpClientTransport : ClientTransport
 	{
 		public EndPoint RemoteEndPoint { get; internal set; }
 
@@ -62,11 +62,6 @@ namespace MsgPack.Rpc.Client.Protocols
 				context.SetCompletedSynchronously();
 				this.OnReceived( context );
 			}
-		}
-
-		void ILeaseable<UdpClientTransport>.SetLease( ILease<UdpClientTransport> lease )
-		{
-			base.SetLease( lease );
 		}
 	}
 }

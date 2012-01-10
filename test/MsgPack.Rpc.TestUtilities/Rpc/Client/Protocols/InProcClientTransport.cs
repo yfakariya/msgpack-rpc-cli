@@ -25,7 +25,7 @@ namespace MsgPack.Rpc.Client.Protocols
 	/// <summary>
 	///		Implements <see cref="ClientTransport"/> with in-proc method invocation.
 	/// </summary>
-	public sealed class InProcClientTransport : ClientTransport, ILeaseable<InProcClientTransport>
+	public sealed class InProcClientTransport : ClientTransport
 	{
 		private readonly InProcClientTransportManager _manager;
 
@@ -56,11 +56,6 @@ namespace MsgPack.Rpc.Client.Protocols
 					this.OnReceived( context );
 				}
 			);
-		}
-
-		void ILeaseable<InProcClientTransport>.SetLease( ILease<InProcClientTransport> lease )
-		{
-			base.SetLease( lease );
 		}
 	}
 }

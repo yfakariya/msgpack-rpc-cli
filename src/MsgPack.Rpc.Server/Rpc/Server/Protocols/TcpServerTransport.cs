@@ -25,7 +25,7 @@ namespace MsgPack.Rpc.Server.Protocols
 	/// <summary>
 	///		<see cref="ServerTransport"/> implementation for TCP/IP.
 	/// </summary>
-	public sealed class TcpServerTransport : ServerTransport, ILeaseable<TcpServerTransport>
+	public sealed class TcpServerTransport : ServerTransport
 	{
 		public TcpServerTransport( TcpServerTransportManager manager )
 			: base( manager ) { }
@@ -46,11 +46,6 @@ namespace MsgPack.Rpc.Server.Protocols
 				context.SetCompletedSynchronously();
 				this.OnSent( context );
 			}
-		}
-
-		void ILeaseable<TcpServerTransport>.SetLease( ILease<TcpServerTransport> lease )
-		{
-			base.SetLease( lease );
 		}
 	}
 }

@@ -29,7 +29,7 @@ using System.Threading.Tasks;
 namespace MsgPack.Rpc.Client.Protocols
 {
 	public abstract class ClientTransportManager<TTransport> : ClientTransportManager
-		where TTransport : ClientTransport, ILeaseable<TTransport>
+		where TTransport : ClientTransport
 	{
 		private readonly ConcurrentDictionary<TTransport, object> _activeTransports;
 

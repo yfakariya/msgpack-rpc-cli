@@ -27,7 +27,7 @@ using System.Threading;
 namespace MsgPack.Rpc.Server.Protocols
 {
 	public abstract class ServerTransportManager<TTransport> : ServerTransportManager
-		where TTransport : ServerTransport, ILeaseable<TTransport>
+		where TTransport : ServerTransport
 	{
 		private readonly ConcurrentDictionary<TTransport, object> _activeTransports;
 

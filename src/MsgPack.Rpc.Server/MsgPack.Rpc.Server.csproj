@@ -98,7 +98,6 @@
     <Compile Include="Rpc\Server\Protocols\ServerSocketError.cs" />
     <Compile Include="Rpc\Server\Protocols\ServerTransport.cs" />
     <Compile Include="Rpc\Server\Protocols\ServerTransport.Deserialization.cs" />
-    <Compile Include="Rpc\Server\Protocols\ServerTransport.ILeaseable.cs" />
     <Compile Include="Rpc\Server\Protocols\ServerTransportManager.cs" />
     <Compile Include="Rpc\Server\Protocols\ServerTransportManager`1.cs" />
     <Compile Include="Rpc\Server\Protocols\TcpServerTransport.cs" />

@@ -637,5 +637,39 @@ namespace MsgPack.Rpc.Client.Protocols
 				return;
 			}
 		}
+
+		public void ReturnContext( ClientRequestContext context )
+		{
+			if ( context == null )
+			{
+				throw new ArgumentNullException( "context" );
+			}
+
+			if ( !Object.ReferenceEquals( context.BoundTransport, this ) )
+			{
+				throw new InvalidOperationException( "Context is not bound to this transport." );
+			}
+
+			Contract.EndContractBlock();
+
+			this._manager.RequestContextPool.Return( context );
+		}
+
+		public void ReturnContext( ClientResponseContext context )
+		{
+			if ( context == null )
+			{
+				throw new ArgumentNullException( "context" );
+			}
+
+			if ( !Object.ReferenceEquals( context.BoundTransport, this ) )
+			{
+				throw new InvalidOperationException( "Context is not bound to this transport." );
+			}
+
+			Contract.EndContractBlock();
+
+			this._manager.ResponseContextPool.Return( context );
+		}
 	}
 }

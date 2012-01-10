@@ -26,7 +26,7 @@ namespace MsgPack.Rpc.Server.Protocols
 	/// <summary>
 	///		Implements <see cref="ServerTransport"/> with in-proc method invocation.
 	/// </summary>
-	public sealed class InProcServerTransport : ServerTransport, ILeaseable<InProcServerTransport>
+	public sealed class InProcServerTransport : ServerTransport
 	{
 		private readonly InProcServerTransportManager _manager;
 
@@ -56,11 +56,6 @@ namespace MsgPack.Rpc.Server.Protocols
 				this.OnSent( context );
 				task.Wait( this._manager.CancellationToken );
 			}
-		}
-
-		void ILeaseable<InProcServerTransport>.SetLease( ILease<InProcServerTransport> lease )
-		{
-			base.SetLease( lease );
 		}
 	}
 }

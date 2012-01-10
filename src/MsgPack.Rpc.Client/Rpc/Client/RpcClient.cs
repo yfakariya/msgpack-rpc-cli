@@ -187,7 +187,7 @@ namespace MsgPack.Rpc.Client
 				if ( !isSucceeded )
 				{
 					context.Clear();
-					context.ReturnLease();
+					this._transport.ReturnContext( context );
 				}
 			}
 
@@ -257,7 +257,7 @@ namespace MsgPack.Rpc.Client
 				if ( !isSucceeded )
 				{
 					context.Clear();
-					context.ReturnLease();
+					this._transport.ReturnContext( context );
 				}
 			}
 

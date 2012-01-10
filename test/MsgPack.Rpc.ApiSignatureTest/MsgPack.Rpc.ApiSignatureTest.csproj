@@ -74,17 +74,11 @@
     <Compile Include="..\..\src\msgpack.rpc.server\rpc\server\protocols\UdpServerTransportManager.cs">
       <Link>Rpc\Server\Protocols\UdpServerTransportManager.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\MsgPack.Rpc\Rpc\FinalizableObjectLease.cs">
-      <Link>Rpc\FinalizableObjectLease.cs</Link>
+    <Compile Include="..\..\src\MsgPack.Rpc\Rpc\OnTheFlyObjectPool`1.cs">
+      <Link>Rpc\OnTheFlyObjectPool`1.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\MsgPack.Rpc\Rpc\ForgettableObjectLease.cs">
-      <Link>Rpc\ForgettableObjectLease.cs</Link>
-    </Compile>
-    <Compile Include="..\..\src\MsgPack.Rpc\Rpc\OnTheFlyObjectPool.cs">
-      <Link>Rpc\OnTheFlyObjectPool.cs</Link>
-    </Compile>
-    <Compile Include="..\..\src\MsgPack.Rpc\Rpc\StandardObjectPool.cs">
-      <Link>Rpc\StandardObjectPool.cs</Link>
+    <Compile Include="..\..\src\MsgPack.Rpc\Rpc\StandardObjectPool`1.cs">
+      <Link>Rpc\StandardObjectPool`1.cs</Link>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

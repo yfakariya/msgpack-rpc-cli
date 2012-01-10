@@ -26,7 +26,7 @@ using MsgPack.Rpc.Protocols;
 
 namespace MsgPack.Rpc.Server.Protocols
 {
-	public sealed class ServerRequestContext : MessageContext, ILeaseable<ServerRequestContext>
+	public sealed class ServerRequestContext : MessageContext
 	{
 		/// <summary>
 		///		The initial process of the deserialization pipeline.
@@ -263,11 +263,6 @@ namespace MsgPack.Rpc.Server.Protocols
 			}
 
 			this.ArgumentsBuffer.SetLength( 0 );
-		}
-
-		void ILeaseable<ServerRequestContext>.SetLease( ILease<ServerRequestContext> lease )
-		{
-			base.SetLease( lease );
 		}
 	}
 }

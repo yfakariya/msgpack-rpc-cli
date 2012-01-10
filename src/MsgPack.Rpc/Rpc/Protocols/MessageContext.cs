@@ -29,7 +29,7 @@ namespace MsgPack.Rpc.Protocols
 	/// <summary>
 	///		Represents context information of asynchronous MesagePack-RPC operation.
 	/// </summary>
-	public abstract class MessageContext : SocketAsyncEventArgs, ILeaseable<MessageContext>
+	public abstract class MessageContext : SocketAsyncEventArgs
 	{
 		private static long _lastSessionId;
 
@@ -83,18 +83,6 @@ namespace MsgPack.Rpc.Protocols
 			this._completedSynchronously = true;
 		}
 
-		private ILease<MessageContext> _asLease;
-
-		void ILeaseable<MessageContext>.SetLease( ILease<MessageContext> lease )
-		{
-			this.SetLease( lease );
-		}
-
-		protected void SetLease( ILease<MessageContext> lease )
-		{
-			this._asLease = lease;
-		}
-
 		private IContextBoundableTransport _boundTransport;
 
 		internal IContextBoundableTransport BoundTransport
@@ -122,30 +110,15 @@ namespace MsgPack.Rpc.Protocols
 			this._sessionStartedAt = DateTimeOffset.Now;
 		}
 
-		internal void ReturnLease()
-		{
-			try { }
-			finally
-			{
-				var boundTransport = Interlocked.Exchange( ref this._boundTransport, null );
-				if ( boundTransport != null )
-				{
-					this.Completed -= boundTransport.OnSocketOperationCompleted;
-				}
-
-				this._completedSynchronously = false;
-
-				var asLease = Interlocked.Exchange( ref this._asLease, null );
-				if ( asLease != null )
-				{
-					asLease.Dispose();
-				}
-			}
-		}
-
 		internal virtual void Clear()
 		{
-			this.ReturnLease();
+			var boundTransport = Interlocked.Exchange( ref this._boundTransport, null );
+			if ( boundTransport != null )
+			{
+				this.Completed -= boundTransport.OnSocketOperationCompleted;
+			}
+
+			this._completedSynchronously = false;
 		}
 	}
 }

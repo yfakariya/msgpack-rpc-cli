@@ -73,7 +73,6 @@
       <DependentUpon>ProtocolTrace.tt</DependentUpon>
     </Compile>
     <Compile Include="Rpc\Client\Protocols\ClientTransport.Deserialization.cs" />
-    <Compile Include="Rpc\Client\Protocols\ClientTransport.ILeaseable.cs" />
     <Compile Include="Rpc\Client\Protocols\ClientSocketError.cs" />
     <Compile Include="Rpc\Client\Protocols\ProtocolTrace.FromRpcError.cs" />
     <Compile Include="Rpc\Client\Protocols\TcpClientTransport.cs" />

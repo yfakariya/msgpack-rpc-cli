@@ -25,7 +25,7 @@ using System.Text;
 
 namespace MsgPack.Rpc.Client.Protocols
 {
-	public sealed class TcpClientTransport : ClientTransport, ILeaseable<TcpClientTransport>
+	public sealed class TcpClientTransport : ClientTransport
 	{
 		public TcpClientTransport( TcpClientTransportManager manager )
 			: base( manager ) { }
@@ -46,11 +46,6 @@ namespace MsgPack.Rpc.Client.Protocols
 				context.SetCompletedSynchronously();
 				this.OnReceived( context );
 			}
-		}
-
-		void ILeaseable<TcpClientTransport>.SetLease( ILease<TcpClientTransport> lease )
-		{
-			base.SetLease( lease );
 		}
 	}
 }

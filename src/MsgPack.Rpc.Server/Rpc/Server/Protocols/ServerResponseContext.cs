@@ -26,7 +26,7 @@ using MsgPack.Serialization;
 
 namespace MsgPack.Rpc.Server.Protocols
 {
-	public sealed class ServerResponseContext : MessageContext, ILeaseable<ServerResponseContext>
+	public sealed class ServerResponseContext : MessageContext
 	{
 		/// <summary>
 		///		Constant part of the response header.
@@ -180,11 +180,6 @@ namespace MsgPack.Rpc.Server.Protocols
 			this._errorDataPacker = Packer.Create( this._errorDataBuffer, false );
 			this.MessageId = 0;
 			base.Clear();
-		}
-
-		void ILeaseable<ServerResponseContext>.SetLease( ILease<ServerResponseContext> lease )
-		{
-			base.SetLease( lease );
 		}
 	}
 }

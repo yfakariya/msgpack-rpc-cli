@@ -27,28 +27,8 @@ namespace MsgPack.Rpc.Server.Protocols
 	/// <summary>
 	///		Holds context information of TCP socket listening.
 	/// </summary>
-	public sealed class ListeningContext : SocketAsyncEventArgs, ILeaseable<ListeningContext>
+	public sealed partial class ListeningContext : SocketAsyncEventArgs
 	{
-		private ILease<ListeningContext> _lease;
-
-		void ILeaseable<ListeningContext>.SetLease( ILease<ListeningContext> lease )
-		{
-			this._lease = lease;
-		}
-
 		public ListeningContext() { }
-
-		internal void Return()
-		{
-			try { }
-			finally
-			{
-				var lease = Interlocked.Exchange( ref this._lease, null );
-				if ( lease != null )
-				{
-					lease.Dispose();
-				}
-			}
-		}
 	}
 }
