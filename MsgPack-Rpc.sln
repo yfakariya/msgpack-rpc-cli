@@ -7,6 +7,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "common", "common", "{3FC557
 	ProjectSection(SolutionItems) = preProject
 		src\CommonAssemblyInfo.cs = src\CommonAssemblyInfo.cs
 		src\CommonAssemblyInfo.Rpc.cs = src\CommonAssemblyInfo.Rpc.cs
+		src\Configuration.ttinclude = src\Configuration.ttinclude
 		lib\StructCS.ttinclude = lib\StructCS.ttinclude
 		src\Trace.ttinclude = src\Trace.ttinclude
 	EndProjectSection
