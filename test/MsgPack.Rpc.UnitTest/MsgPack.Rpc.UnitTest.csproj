@@ -58,12 +58,17 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Rpc\ArraySegmentExtensionTests.cs" />
     <Compile Include="Rpc\ByteArraySegmentStreamTest.cs" />
+    <Compile Include="Rpc\StandardObjectPoolTest.cs" />
     <Compile Include="Rpc\_SetUpFixture.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\MsgPack.Rpc\MsgPack.Rpc.csproj">
       <Project>{77ABC1A9-0719-47AD-B2E1-0B12E49E3CD2}</Project>
       <Name>MsgPack.Rpc</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\MsgPack.Rpc.TestUtilities\MsgPack.Rpc.TestUtilities.csproj">
+      <Project>{99672076-5AE7-448A-A827-0BD37F182AD9}</Project>
+      <Name>MsgPack.Rpc.TestUtilities</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
