@@ -52,14 +52,11 @@ namespace MsgPack.Rpc.Client.Protocols
 			get { return this._boundSocket; }
 		}
 
-		private bool _isDisposed;
+		private int _isDisposed;
 
 		public bool IsDisposed
 		{
-			get
-			{
-				return this._isDisposed;
-			}
+			get { return Interlocked.CompareExchange( ref this._isDisposed, 0, 0 ) != 0; }
 		}
 
 		private readonly ConcurrentDictionary<int, Action<ClientResponseContext, Exception, bool>> _pendingRequestTable;
@@ -166,12 +163,7 @@ namespace MsgPack.Rpc.Client.Protocols
 		{
 			if ( disposing )
 			{
-				if ( !this.IsDisposed )
-				{
-					this.DisposeLease();
-					this._isDisposed = true;
-					Thread.MemoryBarrier();
-				}
+				Interlocked.Exchange( ref this._isDisposed, 1);
 			}
 		}
 

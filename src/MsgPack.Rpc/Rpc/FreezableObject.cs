@@ -29,7 +29,7 @@ namespace MsgPack.Rpc
 	/// </summary>
 	public abstract class FreezableObject : IFreezable, ICloneable
 	{
-		private bool _isFrozen;
+		private int _isFrozen;
 
 		/// <summary>
 		///		Gets a value indicating whether this instance is frozen.
@@ -39,7 +39,7 @@ namespace MsgPack.Rpc
 		/// </value>
 		public bool IsFrozen
 		{
-			get { return this._isFrozen; }
+			get { return Interlocked.CompareExchange( ref this._isFrozen, 0, 0 ) != 0; }
 		}
 
 		/// <summary>
@@ -55,7 +55,7 @@ namespace MsgPack.Rpc
 		/// </exception>
 		protected void VerifyIsNotFrozen()
 		{
-			if ( this._isFrozen )
+			if ( this.IsFrozen )
 			{
 				throw new InvalidOperationException( "This instance is frozen." );
 			}
@@ -80,11 +80,7 @@ namespace MsgPack.Rpc
 		/// </returns>
 		protected virtual FreezableObject FreezeCore()
 		{
-			if ( !this._isFrozen )
-			{
-				this._isFrozen = true;
-				Thread.MemoryBarrier();
-			}
+			Interlocked.Exchange( ref this._isFrozen, 1 );
 
 			return this;
 		}

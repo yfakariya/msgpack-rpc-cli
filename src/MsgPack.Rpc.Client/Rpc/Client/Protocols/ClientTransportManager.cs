@@ -53,18 +53,18 @@ namespace MsgPack.Rpc.Client.Protocols
 			get { return this._configuration; }
 		}
 
-		private bool _isDisposed;
+		private int _isDisposed;
 
 		protected bool IsDisposed
 		{
-			get { return this._isDisposed; }
+			get { return Interlocked.CompareExchange( ref this._isDisposed, 0, 0 ) != 0; }
 		}
 
-		private bool _isInShutdown;
+		private int _isInShutdown;
 
 		public bool IsInShutdown
 		{
-			get { return this._isInShutdown; }
+			get { return Interlocked.CompareExchange( ref this._isInShutdown, 0, 0 ) != 0; }
 		}
 
 		private EventHandler<EventArgs> _shutdownCompleted;
@@ -133,10 +133,13 @@ namespace MsgPack.Rpc.Client.Protocols
 
 		protected void Dispose( bool disposing )
 		{
-			this._isDisposed = true;
-			Thread.MemoryBarrier();
 			this.OnDisposing( disposing );
-			this.DisposeCore( disposing );
+
+			if ( Interlocked.CompareExchange( ref this._isDisposed, 1, 0 ) == 0 )
+			{
+				this.DisposeCore( disposing );
+			}
+
 			this.OnDisposed( disposing );
 		}
 
@@ -151,8 +154,7 @@ namespace MsgPack.Rpc.Client.Protocols
 
 		protected virtual void BeginShutdownCore()
 		{
-			this._isInShutdown = true;
-			Thread.MemoryBarrier();
+			Interlocked.Exchange( ref this._isInShutdown, 1 );
 		}
 
 		public Task<ClientTransport> ConnectAsync( EndPoint targetEndPoint )

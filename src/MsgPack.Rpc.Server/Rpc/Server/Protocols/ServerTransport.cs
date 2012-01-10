@@ -49,16 +49,18 @@ namespace MsgPack.Rpc.Server.Protocols
 
 		private int _processing;
 
-		private bool _isClientShutdowned;
+		private int _isClientShutdowned;
 
-		private bool _isDisposed;
+		public bool IsClientShutdowned
+		{
+			get { return Interlocked.CompareExchange( ref this._isClientShutdowned, 0, 0 ) != 0; }
+		}
+
+		private int _isDisposed;
 
 		public bool IsDisposed
 		{
-			get
-			{
-				return this._isDisposed;
-			}
+			get { return Interlocked.CompareExchange( ref this._isDisposed, 0, 0 ) != 0; }
 		}
 
 		private readonly ServerTransportManager _manager;
@@ -70,11 +72,11 @@ namespace MsgPack.Rpc.Server.Protocols
 
 		private readonly Dispatcher _dispatcher;
 
-		private bool _isInShutdown;
+		private int _isInShutdown;
 
 		public bool IsInShutdown
 		{
-			get { return this._isInShutdown; }
+			get { return Interlocked.CompareExchange( ref this._isInShutdown, 0, 0 ) != 0; }
 		}
 
 		private EventHandler<EventArgs> _shutdownCompleted;
@@ -118,7 +120,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		{
 			if ( Interlocked.Decrement( ref this._processing ) == 0 )
 			{
-				if ( this._isInShutdown || this._isClientShutdowned )
+				if ( this.IsInShutdown || this.IsClientShutdowned )
 				{
 					this._boundSocket.Shutdown( SocketShutdown.Send );
 					this.OnShutdownCompleted();
@@ -161,21 +163,14 @@ namespace MsgPack.Rpc.Server.Protocols
 		{
 			if ( disposing )
 			{
-				if ( !this.IsDisposed )
-				{
-					this.DisposeLease();
-					this._isDisposed = true;
-					Thread.MemoryBarrier();
-				}
+				Interlocked.Exchange( ref this._isDisposed, 1 );
 			}
 		}
 
 		public void BeginShutdown()
 		{
-			if ( !this._isInShutdown )
+			if ( Interlocked.CompareExchange( ref this._isInShutdown, 1, 0 ) == 0 )
 			{
-				this._isInShutdown = true;
-				Thread.MemoryBarrier();
 				this._boundSocket.Shutdown( SocketShutdown.Receive );
 			}
 		}
@@ -307,7 +302,7 @@ namespace MsgPack.Rpc.Server.Protocols
 
 		private void PrivateReceive( ServerRequestContext context )
 		{
-			if ( this._isClientShutdowned )
+			if ( this.IsClientShutdowned )
 			{
 				MsgPackRpcServerProtocolsTrace.TraceEvent(
 					MsgPackRpcServerProtocolsTrace.ReceiveCanceledDueToClientShutdown,
@@ -414,7 +409,7 @@ namespace MsgPack.Rpc.Server.Protocols
 					this._boundSocket == null ? null : this._boundSocket.RemoteEndPoint,
 					this._boundSocket == null ? null : this._boundSocket.LocalEndPoint
 				);
-				this._isClientShutdowned = true;
+				Interlocked.Exchange( ref this._isClientShutdowned, 1 );
 				if ( !context.ReceivedData.Any( segment => 0 < segment.Count ) )
 				{
 					// There are not data to handle.
@@ -441,7 +436,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			// Go deserialization pipeline.
 			if ( !context.NextProcess( context ) )
 			{
-				if ( this._isClientShutdowned )
+				if ( this.IsClientShutdowned )
 				{
 					// Client no longer send any additional data, so reset state.
 					// TODO: Tracing
