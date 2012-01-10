@@ -24,32 +24,48 @@ using System.Runtime.Serialization;
 namespace MsgPack.Rpc
 {
 	// TODO: Move to NLiblet
-
 	/// <summary>
-	///		Occurs when the object pool with <see cref="ExhausionPolicy.ThrowException"/> is empty at borrowing.
+	///		Throwsn when the object pool with <see cref="ExhausionPolicy.ThrowException"/> is empty at borrowing.
 	/// </summary>
 	public sealed class ObjectPoolEmptyException : Exception
 	{
 		/// <summary>
-		/// Initializes a new instance of the <see cref="ObjectPoolEmptyException"/> class.
+		///		Initializes a new instance of the <see cref="ObjectPoolEmptyException"/> class with a default message.
 		/// </summary>
-		public ObjectPoolEmptyException() : base( "The object pool is empty." ) { }
+		public ObjectPoolEmptyException() : this( null ) { }
 
 		/// <summary>
-		/// Initializes a new instance of the <see cref="ObjectPoolEmptyException"/> class.
+		///		Initializes a new instance of the <see cref="ObjectPoolEmptyException"/> class with a specified error message. 
 		/// </summary>
-		/// <param name="message">The message.</param>
-		public ObjectPoolEmptyException( string message ) : base( message ) { }
+		/// <param name="message">The message to describe the error.</param>
+		public ObjectPoolEmptyException( string message ) : this( message, null ) { }
 
 		/// <summary>
-		/// Initializes a new instance of the <see cref="ObjectPoolEmptyException"/> class.
+		///		Initializes a new instance of the <see cref="ObjectPoolEmptyException"/> class with a specified error message and a reference to the inner exception that is the cause of this exception. 
 		/// </summary>
-		/// <param name="message">The message.</param>
-		/// <param name="innerException">The inner exception.</param>
-		public ObjectPoolEmptyException( string message, Exception innerException ) : base( message, innerException ) { }
+		/// <param name="message">The message to describe the error.</param>
+		/// <param name="inner">
+		///		The exception that is the cause of the current exception, or <c>null</c> if no inner exception is specified.
+		/// </param>
+		public ObjectPoolEmptyException( string message, Exception innerException ) : base( message ?? "The object pool is empty.", innerException ) { }
 
 #if !SILVERLIGHT
-		private ObjectPoolEmptyException( SerializationInfo info, StreamingContext context ) : base( info, context ) { }
+		/// <summary>
+		///		Initializes a new instance of the <see cref="ObjectPoolEmptyException"/> class with serialized data.
+		/// </summary>
+		/// <param name="info">
+		///		The <see cref="T:System.Runtime.Serialization.SerializationInfo"/> that holds the serialized object data about the exception being thrown.
+		///	</param>
+		/// <param name="context">
+		///		The <see cref="T:System.Runtime.Serialization.StreamingContext"/> that contains contextual information about the source or destination.
+		///	</param>
+		/// <exception cref="T:System.ArgumentNullException">
+		///		<paramref name="info"/> is <c>null</c>.
+		/// </exception>
+		/// <exception cref="T:System.Runtime.Serialization.SerializationException">
+		///		THe class name is <c>null</c>,
+		///		or <see cref="P:System.Exception.HResult"/> is zero.
+		///	</exception>		private ObjectPoolEmptyException( SerializationInfo info, StreamingContext context ) : base( info, context ) { }
 #endif
 	}
 }
