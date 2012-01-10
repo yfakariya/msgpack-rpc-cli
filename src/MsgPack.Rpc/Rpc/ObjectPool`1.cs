@@ -19,6 +19,7 @@
 #endregion -- License Terms --
 
 using System;
+using System.Diagnostics.Contracts;
 
 namespace MsgPack.Rpc
 {
@@ -29,8 +30,9 @@ namespace MsgPack.Rpc
 	/// <typeparam name="T">
 	///		The type of objects to be pooled.
 	/// </typeparam>
+	[ContractClass( typeof( ObjectPoolContracts<> ) )]
 	public abstract class ObjectPool<T> : IDisposable
-		where T : class, ILeaseable<T>
+		where T : class
 	{
 		/// <summary>
 		///		Initializes a new instance of the <see cref="ObjectPool&lt;T&gt;"/> class.
@@ -69,10 +71,9 @@ namespace MsgPack.Rpc
 		/// </returns>
 		public T Borrow()
 		{
-			var result = this.BorrowCore();
-			var lease = this.Lease( result );
-			result.SetLease( lease );
-			return result;
+			Contract.Ensures( Contract.Result<T>() != null );
+
+			return this.BorrowCore();
 		}
 
 		/// <summary>
@@ -83,15 +84,6 @@ namespace MsgPack.Rpc
 		///		This value cannot be <c>null</c>.
 		/// </returns>
 		protected abstract T BorrowCore();
-
-		/// <summary>
-		///		Leases the specified item.
-		/// </summary>
-		/// <param name="result">The item to be returned from the <see cref="Borrow()"/> method.</param>
-		/// <returns>
-		///		<see cref="ILease{T}"/> for the <paramref name="result"/>.
-		/// </returns>
-		protected abstract ILease<T> Lease( T result );
 
 		/// <summary>
 		///		Returns the specified borrowed item.
@@ -107,6 +99,8 @@ namespace MsgPack.Rpc
 				throw new ArgumentNullException( "value" );
 			}
 
+			Contract.EndContractBlock();
+
 			this.ReturnCore( value );
 		}
 
@@ -115,5 +109,23 @@ namespace MsgPack.Rpc
 		/// </summary>
 		/// <param name="value">The borrowed item. This value will not be <c>null</c>.</param>
 		protected abstract void ReturnCore( T value );
+	}
+
+	[ContractClassFor( typeof( ObjectPool<> ) )]
+	internal abstract class ObjectPoolContracts<T> : ObjectPool<T>
+		where T : class
+	{
+		private ObjectPoolContracts() { }
+
+		protected sealed override T BorrowCore()
+		{
+			Contract.Ensures( Contract.Result<T>() != null );
+			return default( T );
+		}
+
+		protected sealed override void ReturnCore( T value )
+		{
+			Contract.Requires( value != null );
+		}
 	}
 }

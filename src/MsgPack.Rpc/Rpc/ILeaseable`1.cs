@@ -24,28 +24,25 @@ namespace MsgPack.Rpc
 {
 	// TODO: Move to NLiblet
 	/// <summary>
-	///		The dummy implementation of the <see cref="ObjectLease{T}"/> for <see cref="OnTheFlyObjectPool{T}"/>.
+	///		<strong>This type is intended to be used by the infrastructure. Do not use directly from the application.</strong>
+	///		Defines common interface the object which can be leased from <see cref="ObjectPool{T}"/>.
 	/// </summary>
 	/// <typeparam name="T">
-	///		The type of the leased object.
+	///		The type of the leasing object.
 	/// </typeparam>
-	public sealed class ForgettableObjectLease<T> : ObjectLease<T>
-			where T : class
+	public interface ILeaseable<T>
 	{
 		/// <summary>
-		///		Initializes a new instance of the <see cref="ForgettableObjectLease&lt;T&gt;"/> class.
+		///		<strong>This member is intended to be used by the infrastructure. Do not use directly from the application.</strong>
+		///		Sets the <see cref="ILease{T}"/> to handle graceful returning.
 		/// </summary>
-		/// <param name="initialValue">The initial value.</param>
-		public ForgettableObjectLease( T initialValue ) : base( initialValue ) { }
-
-		/// <summary>
-		/// Releases unmanaged and - optionally - managed resources
-		/// </summary>
-		/// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
-		protected sealed override void Dispose( bool disposing )
-		{
-			base.Dispose( disposing );
-			// nop.
-		}
+		/// <param name="lease">
+		///		The <see cref="ILease{T}"/> to handle graceful returning.
+		///		The pool will pass <c>null</c> for this parameter when the object is returned to pool.
+		/// </param>
+		/// <exception cref="InvalidOperationException">
+		///		This instance is already leased.
+		/// </exception>
+		void SetLease( ILease<T> lease );
 	}
 }

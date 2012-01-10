@@ -19,6 +19,7 @@
 #endregion -- License Terms --
 
 using System;
+using System.Threading;
 
 namespace MsgPack.Rpc
 {
@@ -26,11 +27,18 @@ namespace MsgPack.Rpc
 	/// <summary>
 	///		The basic implementation of the <see cref="ILeaseable{T}"/>.
 	/// </summary>
-	public abstract class Leaseable : ILeaseable<Leaseable>, IDisposable
+	public abstract class Leaseable<T> : ILeaseable<Leaseable<T>>, IDisposable
+		where T : class
 	{
-		private ILease<Leaseable> _lease;
+		private ILease<Leaseable<T>> _lease;
 
-		void ILeaseable<Leaseable>.SetLease( ILease<Leaseable> lease )
+		// Test purposes only.
+		internal bool IsLeased
+		{
+			get { return this._lease != null; }
+		}
+
+		void ILeaseable<Leaseable<T>>.SetLease( ILease<Leaseable<T>> lease )
 		{
 			this.SetLease( lease );
 		}
@@ -42,9 +50,12 @@ namespace MsgPack.Rpc
 		///		The <see cref="ILease{T}"/> to handle graceful returning.
 		///		The pool will pass <c>null</c> for this parameter when the object is returned to pool.
 		/// </param>
-		protected void SetLease( ILease<Leaseable> lease )
+		protected void SetLease( ILease<Leaseable<T>> lease )
 		{
-			this._lease = lease;
+			if ( Interlocked.CompareExchange( ref this._lease, lease, null ) != null )
+			{
+				throw new InvalidOperationException( "Already leased." );
+			}
 		}
 
 		/// <summary>
@@ -76,7 +87,11 @@ namespace MsgPack.Rpc
 		/// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
 		protected virtual void Dispose( bool disposing )
 		{
-			this._lease.Dispose();
+			var lease = Interlocked.Exchange( ref this._lease, null );
+			if ( lease != null && disposing )
+			{
+				lease.Dispose();
+			}
 		}
 	}
 }

@@ -19,6 +19,7 @@
 #endregion -- License Terms --
 
 using System;
+using System.Diagnostics.Contracts;
 
 namespace MsgPack.Rpc
 {
@@ -27,46 +28,51 @@ namespace MsgPack.Rpc
 	///		The dummy implementation of the <see cref="ObjectPool{T}"/> for mainly testing purposes.
 	/// </summary>
 	/// <typeparam name="T">
-	///		The type of the 'pooled' objects.
+	///		The type of objects to be pooled.
 	/// </typeparam>
 	/// <remarks>
 	///		This object actually does not pool any objects, simply creates and returns <typeparamref name="T"/> type instances.
 	/// </remarks>
 	internal sealed class OnTheFlyObjectPool<T> : ObjectPool<T>
-			where T : class, ILeaseable<T>
+		where T : class
 	{
 		private readonly Func<T> _factory;
 
 		/// <summary>
 		///		Initializes a new instance of the <see cref="OnTheFlyObjectPool&lt;T&gt;"/> class.
 		/// </summary>
-		/// <param name="factory">The factory delegate to create <typeparamref name="T"/> type instance.</param>
+		/// <param name="factory">
+		///		The factory delegate to create <typeparamref name="T"/> type instance.
+		///	</param>
+		/// <param name="configuration">
+		///		The <see cref="ObjectPoolConfiguration"/> which contains various settings of this object pool.
+		/// </param>
 		/// <exception cref="ArgumentNullException">
-		///		<paramref name="factory"/> is <c>null</c>.
+		///		<paramref name="internalResourceFactory"/> is <c>null</c>.
+		///		Or, <paramref name="externalObjectFactory"/> is <c>null</c>.
 		/// </exception>
-		public OnTheFlyObjectPool( Func<T> factory )
+		public OnTheFlyObjectPool( Func<T> factory, ObjectPoolConfiguration configuration )
 		{
 			if ( factory == null )
 			{
 				throw new ArgumentNullException( "factory" );
 			}
 
+			Contract.EndContractBlock();
+
 			this._factory = factory;
 		}
 
 		protected sealed override T BorrowCore()
 		{
-			return this._factory();
-		}
-
-		protected sealed override ILease<T> Lease( T result )
-		{
-			return new ForgettableObjectLease<T>( result );
+			var result = this._factory();
+			Contract.Assume( result != null );
+			return result;
 		}
 
 		protected sealed override void ReturnCore( T value )
 		{
-			// nop
+			// nop.
 		}
 	}
 }

@@ -63,18 +63,11 @@
     <Compile Include="Rpc\ExceptionExtensions.cs" />
     <Compile Include="Rpc\ExceptionModifiers.cs" />
     <Compile Include="Rpc\ExhausionPolicy.cs" />
-    <Compile Include="Rpc\FinalizableObjectLease.cs" />
-    <Compile Include="Rpc\ForgettableObjectLease.cs" />
     <Compile Include="Rpc\FreezableObject.cs" />
     <Compile Include="Rpc\IFreezable.cs" />
-    <Compile Include="Rpc\ILease.cs" />
-    <Compile Include="Rpc\ILeaseable.cs" />
-    <Compile Include="Rpc\Leaseable.cs" />
     <Compile Include="Rpc\MessagePackRpcMethodAttribute.cs" />
     <Compile Include="Rpc\MessagePackRpcServiceContractAttribute.cs" />
     <Compile Include="Rpc\NetworkEnvironment.cs" />
-    <Compile Include="Rpc\ObjectLease.cs" />
-    <Compile Include="Rpc\ObjectPool.cs" />
     <Compile Include="Rpc\ObjectPoolConfiguration.cs" />
     <Compile Include="Rpc\ObjectPoolConfiguration.Properties.cs">
       <AutoGen>True</AutoGen>
@@ -82,7 +75,7 @@
       <DependentUpon>ObjectPoolConfiguration.Properties.tt</DependentUpon>
     </Compile>
     <Compile Include="Rpc\ObjectPoolEmptyException.cs" />
-    <Compile Include="Rpc\OnTheFlyObjectPool.cs" />
+    <Compile Include="Rpc\OnTheFlyObjectPool`1.cs" />
     <Compile Include="Rpc\Protocols\IContextBoundableTransport.cs" />
     <Compile Include="Rpc\Protocols\MessageContext.cs" />
     <Compile Include="Rpc\RpcIdentifierUtility.cs" />
@@ -133,7 +126,6 @@
     <Compile Include="Rpc\RpcTimeoutException.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Rpc\StandardObjectPool.cs" />
     <Compile Include="Rpc\UnexpcetedRpcException.cs">
       <SubType>Code</SubType>
     </Compile>

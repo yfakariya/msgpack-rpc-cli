@@ -19,48 +19,30 @@
 #endregion -- License Terms --
 
 using System;
-using System.Runtime.CompilerServices;
-using System.Threading;
 
 namespace MsgPack.Rpc
 {
 	// TODO: Move to NLiblet
 	/// <summary>
-	///		The simple implementation of the <see cref="ObjectLease{T}"/>.
+	///		The dummy implementation of the <see cref="ObjectLease{T}"/> for <see cref="OnTheFlyObjectPool{T}"/>.
 	/// </summary>
-	/// <typeparam name="T">
+	/// <typeparam name="TExternal">
+	///		The type of privately leased object which holds expensive resource.
 	/// </typeparam>
-	public sealed class FinalizableObjectLease<T> : ObjectLease<T>
-			where T : class
+	/// <remarks>
+	///		This class is thread-safe, but the derived type might not be thread-safe.
+	/// </remarks>
+	public sealed class ForgettableObjectLease<TExternal, TInternal> : ObjectLease<TExternal, TInternal>
+		where TExternal : class
+		where TInternal : class
 	{
-		private Action<T> _returning;
-
-		public FinalizableObjectLease( T initialValue, Action<T> returning )
-			: base( null )
-		{
-			if ( returning == null )
-			{
-				GC.SuppressFinalize( this );
-				throw new ArgumentNullException( "returning" );
-			}
-
-			RuntimeHelpers.PrepareConstrainedRegions();
-			try { }
-			finally
-			{
-				this._returning = returning;
-				this.Value = initialValue;
-			}
-		}
-
 		/// <summary>
-		/// Releases unmanaged resources and performs other cleanup operations before the
-		/// <see cref="FinalizableObjectLease&lt;T&gt;"/> is reclaimed by garbage collection.
+		///		Initializes a new instance of the <see cref="ForgettableObjectLease&lt;T&gt;"/> class.
 		/// </summary>
-		~FinalizableObjectLease()
-		{
-			this.Dispose( false );
-		}
+		/// <param name="externalValue">The exposed value.</param>
+		/// <param name="initialInternalValue">The initial internal value.</param>
+		public ForgettableObjectLease( TExternal externalValue, TInternal initialInternalValue )
+			: base( externalValue, initialInternalValue ) { }
 
 		/// <summary>
 		/// Releases unmanaged and - optionally - managed resources
@@ -68,18 +50,8 @@ namespace MsgPack.Rpc
 		/// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
 		protected sealed override void Dispose( bool disposing )
 		{
-			try { }
-			finally
-			{
-				var returning = Interlocked.Exchange( ref this._returning, null );
-				if ( returning != null )
-				{
-					var value = this.Value;
-					this.Value = null;
-					returning( value );
-					base.Dispose( disposing );
-				}
-			}
+			base.Dispose( disposing );
+			// nop.
 		}
 	}
 }

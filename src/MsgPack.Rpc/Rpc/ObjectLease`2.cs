@@ -27,17 +27,41 @@ namespace MsgPack.Rpc
 	/// <summary>
 	///		Basic implementation of <see cref="ILease{T}"/>.
 	/// </summary>
-	/// <typeparam name="T">
-	///		The type of leased object.
+	/// <typeparam name="TExternal">
+	///		The type of publicly exposed object which wraps internal resource.
+	/// </typeparam>
+	/// <typeparam name="TExternal">
+	///		The type of privately leased object which holds expensive resource.
 	/// </typeparam>
 	/// <remarks>
 	///		This class is thread-safe, but the derived type might not be thread-safe.
 	/// </remarks>
-	public abstract class ObjectLease<T> : ILease<T>
-			where T : class
+	public abstract class ObjectLease<TExternal, TInternal> : ILease<TExternal>
+		where TExternal : class
+		where TInternal : class
 	{
-		private bool _isDisposed;
-		private T _value;
+		private int _isDisposed;
+
+		// Testing purposes.
+		internal bool IsDisposed
+		{
+			get { return Interlocked.CompareExchange( ref this._isDisposed, 0, 0 ) != 0; }
+		}
+
+		private TExternal _value;
+
+		/// <summary>
+		///		Gets the leased object itself.
+		/// </summary>
+		/// <value>
+		///		The leased object itself.
+		/// </value>
+		public TExternal Value
+		{
+			get { return this._value; }
+		}
+
+		private TInternal _internalValue;
 
 		/// <summary>
 		///		Gets the leased object itself.
@@ -51,27 +75,29 @@ namespace MsgPack.Rpc
 		/// <remarks>
 		///		The derived type can set this value via setter.
 		/// </remarks>
-		public T Value
+		public TInternal InternalValue
 		{
 			get
 			{
 				this.VerifyIsNotDisposed();
-				return this._value;
+				return this._internalValue;
 			}
 			protected set
 			{
 				this.VerifyIsNotDisposed();
-				Interlocked.Exchange( ref this._value, value );
+				Interlocked.Exchange( ref this._internalValue, value );
 			}
 		}
 
 		/// <summary>
 		///		Initializes a new instance of the <see cref="ObjectLease&lt;T&gt;"/> class.
 		/// </summary>
-		/// <param name="initialValue">The initial value.</param>
-		protected ObjectLease( T initialValue )
+		/// <param name="externalValue">The exposed value.</param>
+		/// <param name="initialInternalValue">The initial internal value.</param>
+		protected ObjectLease( TExternal externalValue, TInternal initialInternalValue )
 		{
-			this._value = initialValue;
+			this._value = externalValue;
+			this._internalValue = initialInternalValue;
 		}
 
 		/// <summary>
@@ -91,16 +117,12 @@ namespace MsgPack.Rpc
 		///	</param>
 		protected virtual void Dispose( bool disposing )
 		{
-			if ( !this._isDisposed )
-			{
-				this._isDisposed = true;
-				Thread.MemoryBarrier();
-			}
+			Interlocked.Exchange( ref this._isDisposed, 1 );
 		}
 
 		private void VerifyIsNotDisposed()
 		{
-			if ( this._isDisposed )
+			if ( Interlocked.CompareExchange( ref this._isDisposed, 0, 0 ) != 0 )
 			{
 				throw new ObjectDisposedException( this.GetType().FullName );
 			}
