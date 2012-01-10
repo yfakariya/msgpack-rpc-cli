@@ -46,54 +46,6 @@ namespace MsgPack.Rpc
 		/// </summary>
 		public ObjectPoolConfiguration() { }
 
-		static partial void ValidateBorrowTimeout( TimeSpan? value )
-		{
-			if ( value != null && value.Value.Ticks < 0 )
-			{
-				throw new ArgumentOutOfRangeException( "BorrowTimeout must not be negative.", "value" );
-			}
-		}
-
-		static partial void ValidateEvitionInterval( TimeSpan? value )
-		{
-			if ( value != null && value.Value.Ticks < 0 )
-			{
-				throw new ArgumentOutOfRangeException( "EvitionInterval must not be negative.", "value" );
-			}
-		}
-
-		static partial void ValidateMaximumPooled( int? value )
-		{
-			if ( value != null && value.Value < 1 )
-			{
-				throw new ArgumentOutOfRangeException( "MaximumPooled must not be negative or zero.", "value" );
-			}
-		}
-
-		static partial void ValidateMinimumReserved( int value )
-		{
-			if ( value < 0 )
-			{
-				throw new ArgumentOutOfRangeException( "MinimumReserved must not be negative.", "value" );
-			}
-		}
-
-		static partial void ValidateExhausionPolicy( ExhausionPolicy value )
-		{
-			switch ( value )
-			{
-				case ExhausionPolicy.BlockUntilAvailable:
-				case ExhausionPolicy.ThrowException:
-				{
-					return;
-				}
-				default:
-				{
-					throw new ArgumentOutOfRangeException( "value" );
-				}
-			}
-		}
-
 		/// <summary>
 		///		Clones all of the fields of this instance.
 		/// </summary>

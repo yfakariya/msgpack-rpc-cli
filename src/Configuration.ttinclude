@@ -1,0 +1,441 @@
+﻿<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ output extension=".cs" #>
+<#@ assembly Name="System.Core" #>
+<#@ import namespace="System" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ import namespace="System.Globalization" #>
+<#@ import namespace="System.Text" #>
+<#+
+//
+// MessagePack for CLI
+//
+// Copyright (C) 2010 FUJIWARA, Yusuke
+//
+//    Licensed under the Apache License, Version 2.0 (the "License");
+//    you may not use this file except in compliance with the License.
+//    You may obtain a copy of the License at
+//
+//        http://www.apache.org/licenses/LICENSE-2.0
+//
+//    Unless required by applicable law or agreed to in writing, software
+//    distributed under the License is distributed on an "AS IS" BASIS,
+//    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//    See the License for the specific language governing permissions and
+//    limitations under the License.
+//
+#>
+<#+
+// TODO Resource
+private const string _stringArgumentCannotBeBlank = "\"Argument cannot be blank.\"";
+private const string _stringArgumentCannotBeEmpty = "\"Argument cannot be empty string.\"";
+private const string _collectionArgumentCannotBeEmpty = "\"Argument does not contain any elements.\"";
+private const string _enumArgumentMustBeDefined = "\"Argument must be valid enum value of '{{0}}' type.\"";
+private const string _numericArgumentCannotBeNegative = "\"Argument cannot be negative number.\"";
+private const string _numericArgumentCannotBeZero = "\"Argument cannot be zero.\"";
+private const string _numericArgumentMustBePositive = "\"Argument must be positive number.\"";
+
+public string Generate( string nameSpace, string typeName, params Property[] properties )
+{
+	var buffer = new StringBuilder( 32 * 1024 );
+	buffer.AppendFormat(
+		CultureInfo.InvariantCulture,
+@"
+namespace {0}
+{{
+	// This file generated from {1}.tt T4Template.
+	// Do not modify this file. Edit {1}.tt instead.
+
+	partial class {1}
+	{{", 
+		nameSpace,
+		typeName
+	).AppendLine();
+
+	var remarks = new StringBuilder();
+	var precondition = new StringBuilder();
+	var postcondition = new StringBuilder();
+	
+	foreach( Property property in properties )
+	{
+		remarks.Clear();
+		precondition.Clear();
+		postcondition.Clear();
+
+		if( property.Remarks != null )
+		{
+			remarks.Append(
+@"		/// <remarks>"
+			).AppendLine();
+
+			foreach( var line in property.Remarks )
+			{
+				remarks.Append(
+@"		/// 	"
+				).Append( line ).AppendLine();
+			}
+
+			remarks.Append(
+@"		/// </remarks>"
+			).AppendLine();
+		}
+		
+		bool isConditionPhase = true;
+		foreach( var expression in CreateConstraintExpressions( property.Precondition, property.Type, true ) )
+		{
+			if( precondition.Length == 0 )
+			{
+				precondition.AppendLine();
+			}
+			
+			if( isConditionPhase )
+			{
+				precondition.Append( @"				if ( !( " ).AppendFormat( CultureInfo.InvariantCulture, expression, "value" ).Append( " ) )" ).AppendLine();
+			}
+			else
+			{
+				precondition.AppendLine( @"				{" );
+				precondition.Append( @"					" ).AppendFormat( CultureInfo.InvariantCulture, expression, "value" ).AppendLine();
+				precondition.AppendLine( @"				}" );
+			}
+			
+			isConditionPhase = !isConditionPhase;
+		}
+		
+		if( precondition.Length > 0 )
+		{
+			precondition.Append( @"				Contract.EndContractBlock();" ).AppendLine();
+		}
+		
+		foreach( var expression in CreateConstraintExpressions( property.Postcondition, property.Type, false ) )
+		{
+			if( postcondition.Length == 0 )
+			{
+				postcondition.AppendLine();
+			}
+			
+			postcondition.Append( @"				Contract.Ensures( " ).AppendFormat( CultureInfo.InvariantCulture, expression, "Contract.Result<" + property.Type + ">()" ).Append( " );" ).AppendLine();
+		}
+		
+		// FIXME: Precondition, Postcondition, Remarks
+		buffer.AppendFormat(
+			CultureInfo.InvariantCulture,
+@"		private {0} _{1} = {2};
+		
+		/// <summary>
+		/// 	{3}
+		/// </summary>
+		/// <value>
+		/// 	{4}
+		/// </value>{5}
+		public {0} {6}
+		{{
+			get
+			{{{8}
+				return this._{1};
+			}}
+			set
+			{{{7}
+				this.VerifyIsNotFrozen();
+				var coerced = value;
+				Coerce{6}Value( ref coerced );
+				this._{1} = coerced;
+			}}
+		}}
+		
+		/// <summary>
+		/// 	Resets the {6} property value.
+		/// </summary>
+		public void Reset{6}()
+		{{
+			this._{1} = {2};
+		}}
+		
+		static partial void Coerce{6}Value( ref {0} value );
+
+",
+			property.Type,
+			ToFieldName( property.Name ),
+			property.Default,
+			property.Summary,
+			property.Value,
+			remarks,
+			property.Name,
+			precondition,
+			postcondition
+		);
+	}
+	
+	buffer.AppendFormat(
+		CultureInfo.InvariantCulture,
+@"		/// <summary>
+		/// 	Returns a string that represents the current object.
+		/// </summary>
+		/// <returns>
+		/// 	A string that represents the current object.
+		/// </returns>
+		public sealed override string ToString()
+		{{
+			var buffer = new StringBuilder( {0} );
+			buffer.Append( ""{{ "" );
+",
+		EstimateToStringSize( properties )
+	);
+
+	bool isFirstProperty = true;
+	foreach( Property property in properties )
+	{
+		if( !isFirstProperty )
+		{
+			buffer.Append( @"			buffer.Append( "", "" );" ).AppendLine();
+		}
+		else
+		{
+			isFirstProperty = false;
+		}
+
+		buffer.AppendFormat( @"			buffer.Append( ""\""" ).Append( property.Name ).Append( @"\"" : "" );" ).AppendLine();
+		buffer.AppendFormat( @"			ToString( this." ).Append( property.Name ).Append( @", buffer );" ).AppendLine();
+	}
+
+	buffer.Append(
+@"			buffer.Append( "" }"" );
+			return buffer.ToString();
+		}
+		
+		private static void ToString<T>( T value, StringBuilder buffer )
+		{
+			if( value == null )
+			{
+				buffer.Append( ""null"" );
+			}
+			
+			if( typeof( Delegate ).IsAssignableFrom( typeof( T ) ) )
+			{
+				var asDelegate = ( Delegate )( object )value;
+				buffer.Append( ""\""Type='"" ).Append( asDelegate.Method.DeclaringType );
+
+				if( asDelegate.Target != null )
+				{
+					buffer.Append( ""', Instance='"" ).Append( asDelegate.Target );
+				}
+
+				buffer.Append( ""', Method='"" ).Append( asDelegate.Method ).Append( ""'\"""" );
+				return;
+			}
+
+			switch( Type.GetTypeCode( typeof( T ) ) )
+			{
+				case TypeCode.Boolean:
+				{
+					buffer.Append( value.ToString().ToLowerInvariant() );
+					break;
+				}
+				case TypeCode.Byte:
+				case TypeCode.Double:
+				case TypeCode.Int16:
+				case TypeCode.Int32:
+				case TypeCode.Int64:
+				case TypeCode.SByte:
+				case TypeCode.Single:
+				case TypeCode.UInt16:
+				case TypeCode.UInt32:
+				case TypeCode.UInt64:
+				{
+					buffer.Append( value.ToString() );
+					break;
+				}
+				default:
+				{
+					buffer.Append( '""' ).Append( value.ToString() ).Append( '""' );
+					break;
+				}
+			}
+		}
+	}
+}" 
+	).AppendLine();
+	
+	return buffer.ToString();
+}
+
+private static string ToFieldName( string value )
+{
+	return Char.ToLowerInvariant( value[ 0 ] ) + value.Substring( 1 );
+}
+
+private static int EstimateToStringSize( IEnumerable<Property> properties )
+{
+	int result = 4; // "{ " + " }"
+	foreach( var property in properties )
+	{
+		result += 7; // quote for name, " : ", ", ".
+		result += property.Name.Length;
+		if( Char.IsLower( property.Type[ 0 ] ) )
+		{
+			// Primitive, most of them are 1-5 degits, "true", "false".
+			result += 4;
+		}
+		else if( property.Type.Equals( "String", StringComparison.OrdinalIgnoreCase ) )
+		{
+			// Strings
+			result += 32;
+		}
+		else if( property.Type.Equals( "Uri", StringComparison.OrdinalIgnoreCase ) )
+		{
+			// Uri
+			result += 64;
+		}
+		else if( property.Type.Equals( "Version", StringComparison.OrdinalIgnoreCase ) )
+		{
+			// Version
+			result += 12;
+		}
+		else if( property.Type.Equals( "EndPoint", StringComparison.OrdinalIgnoreCase ) )
+		{
+			// EndPoint
+			result += 24;
+		}
+		else if( property.Type.StartsWith( "Action" ) || property.Type.StartsWith( "Func" ) )
+		{
+			// Delegates
+			result += 320;
+		}
+		else
+		{
+			// Enums, complex objects...
+			result += 16;
+		}
+	}
+
+	// Ceil to next 2^N integer.
+	return ( int )Math.Pow( 2, Math.Ceiling( Math.Log( result, 2 ) ) );
+}
+
+private static IEnumerable<string> CreateConstraintExpressions( Constraints constraints, string typeName, bool includesException )
+{
+	bool isNullable = typeName.EndsWith( "?", StringComparison.Ordinal );
+	
+	if ( ( constraints & Constraints.NotNull ) == Constraints.NotNull )
+	{
+		yield return "{0} != null";
+		if ( includesException )
+		{
+			yield return "throw new ArgumentNullException( \"{0}\" );";
+		}
+	}
+	
+	if ( ( constraints & Constraints.NotBlank ) == Constraints.NotBlank )
+	{
+		yield return "!String.IsNullOrWhitespace( {0} )";
+		if ( includesException )
+		{
+			yield return "throw new ArgumentException( " + _stringArgumentCannotBeBlank + " \"{0}\" );";
+		}
+	}
+	else if ( ( constraints & Constraints.NotEmpty ) == Constraints.NotEmpty )
+	{
+		if( isNullable )
+		{
+			yield return "{0}.Value.Any()";
+		}
+		else
+		{
+			yield return "{0}.Any()";
+		}
+		
+		if ( includesException )
+		{
+			yield return "throw new ArgumentException( " + ( typeName.Equals( "String", StringComparison.OrdinalIgnoreCase ) ? _stringArgumentCannotBeEmpty : _collectionArgumentCannotBeEmpty ) + " \"{0}\" );";
+		}
+	}
+	
+	var prefix = ( constraints & Constraints.AllowNull ) == Constraints.AllowNull ? "{0} == null || " : String.Empty;
+
+	if ( ( constraints & Constraints.OnlyDefined ) == Constraints.OnlyDefined )
+	{
+		yield return "Enum.IsDefined( typeof( " + typeName + " ), {0} )";
+		if ( includesException )
+		{
+			yield return "throw new ArgumentOutOfRangeException( \"{0}\", String.Format( CultureInfo.CurrentCulture, " + _enumArgumentMustBeDefined + ", typeof( " + typeName + " ) ) );";
+		}
+	}
+	else if ( ( constraints & Constraints.OnlyPositive ) == Constraints.OnlyPositive )
+	{
+	
+		if( isNullable )
+		{
+			yield return prefix + "{0}.Value > default( " + typeName.Remove( typeName.Length - 1 ) + " )";
+		}
+		else
+		{
+			yield return prefix + "{0} > default( " + typeName + " )";
+		}
+		
+		if ( includesException )
+		{
+			yield return "throw new ArgumentOutOfRangeException( \"{0}\", " + _numericArgumentMustBePositive + " );";
+		}
+	}
+	else if ( ( constraints & Constraints.NotZero ) == Constraints.NotZero )
+	{
+		if( isNullable )
+		{
+			yield return prefix + "{0}.Value != default( " + typeName.Remove( typeName.Length - 1 ) + " )";
+		}
+		else
+		{
+			yield return prefix + "{0} != default( " + typeName + " )";
+		}
+		
+		if ( includesException )
+		{
+			yield return "throw new ArgumentOutOfRangeException( \"{0}\", " + _numericArgumentCannotBeZero + " );";
+		}
+	}
+	else if ( ( constraints & Constraints.NotNegative ) == Constraints.NotNegative )
+	{
+		if( isNullable )
+		{
+			yield return prefix + "{0}.Value >= default( " + typeName.Remove( typeName.Length - 1 ) + " )";
+		}
+		else
+		{
+			yield return prefix + "{0} >= default( " + typeName + " )";
+		}
+		
+		if ( includesException )
+		{
+			yield return "throw new ArgumentOutOfRangeException( \"{0}\", " + _numericArgumentCannotBeNegative + " );";
+		}
+	}
+}
+
+[Flags]
+public enum Constraints
+{
+	None = 0,
+	NotNull = 0x1,
+	NotEmpty = 0x2,
+	NotNullNorEmpty = NotNull | NotEmpty,
+	NotBlank = NotNullNorEmpty | 0x4,
+	NotNegative = 0x100,
+	NullOrNotNegative = NotNegative | AllowNull,
+	NotZero = 0x200,
+	OnlyPositive = NotNegative | NotZero,
+	NullOrPositive = OnlyPositive | AllowNull,
+	OnlyDefined = 0x10000,
+	AllowNull = unchecked( ( int )0x8000000 )
+}
+
+public class Property
+{
+	public string Name;
+	public string Type;
+	public string Summary;
+	public string Value;
+	public string[] Remarks;
+	public string Default;
+	public Constraints Precondition;
+	public Constraints Postcondition;
+}
+#>

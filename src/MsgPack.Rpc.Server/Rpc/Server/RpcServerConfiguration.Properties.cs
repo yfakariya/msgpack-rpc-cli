@@ -1,4 +1,5 @@
-﻿#region -- License Terms --
+﻿
+#region -- License Terms --
 //
 // MessagePack for CLI
 //
@@ -20,6 +21,8 @@
 
 using System;
 using System.Diagnostics.Contracts;
+using System.Globalization;
+using System.Linq;
 using System.Net;
 using System.Text;
 using MsgPack.Rpc.Server.Dispatch;
@@ -42,12 +45,16 @@ namespace MsgPack.Rpc.Server
 		/// </value>
 		public bool PreferIPv4
 		{
-			get{ return this._preferIPv4; }
+			get
+			{
+				return this._preferIPv4;
+			}
 			set
 			{
 				this.VerifyIsNotFrozen();
-				ValidatePreferIPv4( value );
-				this._preferIPv4 = value;
+				var coerced = value;
+				CoercePreferIPv4Value( ref coerced );
+				this._preferIPv4 = coerced;
 			}
 		}
 		
@@ -59,7 +66,8 @@ namespace MsgPack.Rpc.Server
 			this._preferIPv4 = false;
 		}
 		
-		static partial void ValidatePreferIPv4( bool value );
+		static partial void CoercePreferIPv4Value( ref bool value );
+
 		private int _minimumConnection = 2;
 		
 		/// <summary>
@@ -70,12 +78,24 @@ namespace MsgPack.Rpc.Server
 		/// </value>
 		public int MinimumConnection
 		{
-			get{ return this._minimumConnection; }
+			get
+			{
+				Contract.Ensures( Contract.Result<int>() >= default( int ) );
+
+				return this._minimumConnection;
+			}
 			set
 			{
+				if ( !( value >= default( int ) ) )
+				{
+					throw new ArgumentOutOfRangeException( "value", "Argument cannot be negative number." );
+				}
+				Contract.EndContractBlock();
+
 				this.VerifyIsNotFrozen();
-				ValidateMinimumConnection( value );
-				this._minimumConnection = value;
+				var coerced = value;
+				CoerceMinimumConnectionValue( ref coerced );
+				this._minimumConnection = coerced;
 			}
 		}
 		
@@ -87,7 +107,8 @@ namespace MsgPack.Rpc.Server
 			this._minimumConnection = 2;
 		}
 		
-		static partial void ValidateMinimumConnection( int value );
+		static partial void CoerceMinimumConnectionValue( ref int value );
+
 		private int _maximumConnection = 100;
 		
 		/// <summary>
@@ -98,12 +119,24 @@ namespace MsgPack.Rpc.Server
 		/// </value>
 		public int MaximumConnection
 		{
-			get{ return this._maximumConnection; }
+			get
+			{
+				Contract.Ensures( Contract.Result<int>() > default( int ) );
+
+				return this._maximumConnection;
+			}
 			set
 			{
+				if ( !( value > default( int ) ) )
+				{
+					throw new ArgumentOutOfRangeException( "value", "Argument must be positive number." );
+				}
+				Contract.EndContractBlock();
+
 				this.VerifyIsNotFrozen();
-				ValidateMaximumConnection( value );
-				this._maximumConnection = value;
+				var coerced = value;
+				CoerceMaximumConnectionValue( ref coerced );
+				this._maximumConnection = coerced;
 			}
 		}
 		
@@ -115,7 +148,8 @@ namespace MsgPack.Rpc.Server
 			this._maximumConnection = 100;
 		}
 		
-		static partial void ValidateMaximumConnection( int value );
+		static partial void CoerceMaximumConnectionValue( ref int value );
+
 		private int _minimumConcurrentRequest = 2;
 		
 		/// <summary>
@@ -126,12 +160,24 @@ namespace MsgPack.Rpc.Server
 		/// </value>
 		public int MinimumConcurrentRequest
 		{
-			get{ return this._minimumConcurrentRequest; }
+			get
+			{
+				Contract.Ensures( Contract.Result<int>() >= default( int ) );
+
+				return this._minimumConcurrentRequest;
+			}
 			set
 			{
+				if ( !( value >= default( int ) ) )
+				{
+					throw new ArgumentOutOfRangeException( "value", "Argument cannot be negative number." );
+				}
+				Contract.EndContractBlock();
+
 				this.VerifyIsNotFrozen();
-				ValidateMinimumConcurrentRequest( value );
-				this._minimumConcurrentRequest = value;
+				var coerced = value;
+				CoerceMinimumConcurrentRequestValue( ref coerced );
+				this._minimumConcurrentRequest = coerced;
 			}
 		}
 		
@@ -143,7 +189,8 @@ namespace MsgPack.Rpc.Server
 			this._minimumConcurrentRequest = 2;
 		}
 		
-		static partial void ValidateMinimumConcurrentRequest( int value );
+		static partial void CoerceMinimumConcurrentRequestValue( ref int value );
+
 		private int _maximumConcurrentRequest = 10;
 		
 		/// <summary>
@@ -154,12 +201,24 @@ namespace MsgPack.Rpc.Server
 		/// </value>
 		public int MaximumConcurrentRequest
 		{
-			get{ return this._maximumConcurrentRequest; }
+			get
+			{
+				Contract.Ensures( Contract.Result<int>() > default( int ) );
+
+				return this._maximumConcurrentRequest;
+			}
 			set
 			{
+				if ( !( value > default( int ) ) )
+				{
+					throw new ArgumentOutOfRangeException( "value", "Argument must be positive number." );
+				}
+				Contract.EndContractBlock();
+
 				this.VerifyIsNotFrozen();
-				ValidateMaximumConcurrentRequest( value );
-				this._maximumConcurrentRequest = value;
+				var coerced = value;
+				CoerceMaximumConcurrentRequestValue( ref coerced );
+				this._maximumConcurrentRequest = coerced;
 			}
 		}
 		
@@ -171,7 +230,8 @@ namespace MsgPack.Rpc.Server
 			this._maximumConcurrentRequest = 10;
 		}
 		
-		static partial void ValidateMaximumConcurrentRequest( int value );
+		static partial void CoerceMaximumConcurrentRequestValue( ref int value );
+
 		private EndPoint _bindingEndPoint = null;
 		
 		/// <summary>
@@ -182,12 +242,24 @@ namespace MsgPack.Rpc.Server
 		/// </value>
 		public EndPoint BindingEndPoint
 		{
-			get{ return this._bindingEndPoint; }
+			get
+			{
+				Contract.Ensures( Contract.Result<EndPoint>() != null );
+
+				return this._bindingEndPoint;
+			}
 			set
 			{
+				if ( !( value != null ) )
+				{
+					throw new ArgumentNullException( "value" );
+				}
+				Contract.EndContractBlock();
+
 				this.VerifyIsNotFrozen();
-				ValidateBindingEndPoint( value );
-				this._bindingEndPoint = value;
+				var coerced = value;
+				CoerceBindingEndPointValue( ref coerced );
+				this._bindingEndPoint = coerced;
 			}
 		}
 		
@@ -199,7 +271,8 @@ namespace MsgPack.Rpc.Server
 			this._bindingEndPoint = null;
 		}
 		
-		static partial void ValidateBindingEndPoint( EndPoint value );
+		static partial void CoerceBindingEndPointValue( ref EndPoint value );
+
 		private int _listenBackLog = 100;
 		
 		/// <summary>
@@ -210,12 +283,24 @@ namespace MsgPack.Rpc.Server
 		/// </value>
 		public int ListenBackLog
 		{
-			get{ return this._listenBackLog; }
+			get
+			{
+				Contract.Ensures( Contract.Result<int>() >= default( int ) );
+
+				return this._listenBackLog;
+			}
 			set
 			{
+				if ( !( value >= default( int ) ) )
+				{
+					throw new ArgumentOutOfRangeException( "value", "Argument cannot be negative number." );
+				}
+				Contract.EndContractBlock();
+
 				this.VerifyIsNotFrozen();
-				ValidateListenBackLog( value );
-				this._listenBackLog = value;
+				var coerced = value;
+				CoerceListenBackLogValue( ref coerced );
+				this._listenBackLog = coerced;
 			}
 		}
 		
@@ -227,35 +312,8 @@ namespace MsgPack.Rpc.Server
 			this._listenBackLog = 100;
 		}
 		
-		static partial void ValidateListenBackLog( int value );
-		private int _portNumber = 10912;
-		
-		/// <summary>
-		/// 	Gets or sets the listening port number.
-		/// </summary>
-		/// <value>
-		/// 	The listening port number. The default is 10912.
-		/// </value>
-		public int PortNumber
-		{
-			get{ return this._portNumber; }
-			set
-			{
-				this.VerifyIsNotFrozen();
-				ValidatePortNumber( value );
-				this._portNumber = value;
-			}
-		}
-		
-		/// <summary>
-		/// 	Resets the PortNumber property value.
-		/// </summary>
-		public void ResetPortNumber()
-		{
-			this._portNumber = 10912;
-		}
-		
-		static partial void ValidatePortNumber( int value );
+		static partial void CoerceListenBackLogValue( ref int value );
+
 		private TimeSpan? _executionTimeout = TimeSpan.FromSeconds( 110 );
 		
 		/// <summary>
@@ -266,12 +324,24 @@ namespace MsgPack.Rpc.Server
 		/// </value>
 		public TimeSpan? ExecutionTimeout
 		{
-			get{ return this._executionTimeout; }
+			get
+			{
+				Contract.Ensures( Contract.Result<TimeSpan?>() == null || Contract.Result<TimeSpan?>().Value > default( TimeSpan ) );
+
+				return this._executionTimeout;
+			}
 			set
 			{
+				if ( !( value == null || value.Value > default( TimeSpan ) ) )
+				{
+					throw new ArgumentOutOfRangeException( "value", "Argument must be positive number." );
+				}
+				Contract.EndContractBlock();
+
 				this.VerifyIsNotFrozen();
-				ValidateExecutionTimeout( value );
-				this._executionTimeout = value;
+				var coerced = value;
+				CoerceExecutionTimeoutValue( ref coerced );
+				this._executionTimeout = coerced;
 			}
 		}
 		
@@ -283,7 +353,8 @@ namespace MsgPack.Rpc.Server
 			this._executionTimeout = TimeSpan.FromSeconds( 110 );
 		}
 		
-		static partial void ValidateExecutionTimeout( TimeSpan? value );
+		static partial void CoerceExecutionTimeoutValue( ref TimeSpan? value );
+
 		private TimeSpan? _hardExecutionTimeout = TimeSpan.FromSeconds( 20 );
 		
 		/// <summary>
@@ -294,12 +365,24 @@ namespace MsgPack.Rpc.Server
 		/// </value>
 		public TimeSpan? HardExecutionTimeout
 		{
-			get{ return this._hardExecutionTimeout; }
+			get
+			{
+				Contract.Ensures( Contract.Result<TimeSpan?>() == null || Contract.Result<TimeSpan?>().Value >= default( TimeSpan ) );
+
+				return this._hardExecutionTimeout;
+			}
 			set
 			{
+				if ( !( value == null || value.Value >= default( TimeSpan ) ) )
+				{
+					throw new ArgumentOutOfRangeException( "value", "Argument cannot be negative number." );
+				}
+				Contract.EndContractBlock();
+
 				this.VerifyIsNotFrozen();
-				ValidateHardExecutionTimeout( value );
-				this._hardExecutionTimeout = value;
+				var coerced = value;
+				CoerceHardExecutionTimeoutValue( ref coerced );
+				this._hardExecutionTimeout = coerced;
 			}
 		}
 		
@@ -311,7 +394,8 @@ namespace MsgPack.Rpc.Server
 			this._hardExecutionTimeout = TimeSpan.FromSeconds( 20 );
 		}
 		
-		static partial void ValidateHardExecutionTimeout( TimeSpan? value );
+		static partial void CoerceHardExecutionTimeoutValue( ref TimeSpan? value );
+
 		private Func<RpcServer, ServerTransportManager> _transportManagerProvider = ( server ) => new TcpServerTransportManager( server );
 		
 		/// <summary>
@@ -322,12 +406,24 @@ namespace MsgPack.Rpc.Server
 		/// </value>
 		public Func<RpcServer, ServerTransportManager> TransportManagerProvider
 		{
-			get{ return this._transportManagerProvider; }
+			get
+			{
+				Contract.Ensures( Contract.Result<Func<RpcServer, ServerTransportManager>>() != null );
+
+				return this._transportManagerProvider;
+			}
 			set
 			{
+				if ( !( value != null ) )
+				{
+					throw new ArgumentNullException( "value" );
+				}
+				Contract.EndContractBlock();
+
 				this.VerifyIsNotFrozen();
-				ValidateTransportManagerProvider( value );
-				this._transportManagerProvider = value;
+				var coerced = value;
+				CoerceTransportManagerProviderValue( ref coerced );
+				this._transportManagerProvider = coerced;
 			}
 		}
 		
@@ -339,7 +435,8 @@ namespace MsgPack.Rpc.Server
 			this._transportManagerProvider = ( server ) => new TcpServerTransportManager( server );
 		}
 		
-		static partial void ValidateTransportManagerProvider( Func<RpcServer, ServerTransportManager> value );
+		static partial void CoerceTransportManagerProviderValue( ref Func<RpcServer, ServerTransportManager> value );
+
 		private Func<RpcServer, Dispatcher> _dispatcherProvider = ( server ) => new LocatorBasedDispatcher( server );
 		
 		/// <summary>
@@ -350,12 +447,24 @@ namespace MsgPack.Rpc.Server
 		/// </value>
 		public Func<RpcServer, Dispatcher> DispatcherProvider
 		{
-			get{ return this._dispatcherProvider; }
+			get
+			{
+				Contract.Ensures( Contract.Result<Func<RpcServer, Dispatcher>>() != null );
+
+				return this._dispatcherProvider;
+			}
 			set
 			{
+				if ( !( value != null ) )
+				{
+					throw new ArgumentNullException( "value" );
+				}
+				Contract.EndContractBlock();
+
 				this.VerifyIsNotFrozen();
-				ValidateDispatcherProvider( value );
-				this._dispatcherProvider = value;
+				var coerced = value;
+				CoerceDispatcherProviderValue( ref coerced );
+				this._dispatcherProvider = coerced;
 			}
 		}
 		
@@ -367,7 +476,8 @@ namespace MsgPack.Rpc.Server
 			this._dispatcherProvider = ( server ) => new LocatorBasedDispatcher( server );
 		}
 		
-		static partial void ValidateDispatcherProvider( Func<RpcServer, Dispatcher> value );
+		static partial void CoerceDispatcherProviderValue( ref Func<RpcServer, Dispatcher> value );
+
 		private Func<RpcServerConfiguration, ServiceTypeLocator> _serviceTypeLocatorProvider = ( config ) => new DefaultServiceTypeLocator();
 		
 		/// <summary>
@@ -378,12 +488,24 @@ namespace MsgPack.Rpc.Server
 		/// </value>
 		public Func<RpcServerConfiguration, ServiceTypeLocator> ServiceTypeLocatorProvider
 		{
-			get{ return this._serviceTypeLocatorProvider; }
+			get
+			{
+				Contract.Ensures( Contract.Result<Func<RpcServerConfiguration, ServiceTypeLocator>>() != null );
+
+				return this._serviceTypeLocatorProvider;
+			}
 			set
 			{
+				if ( !( value != null ) )
+				{
+					throw new ArgumentNullException( "value" );
+				}
+				Contract.EndContractBlock();
+
 				this.VerifyIsNotFrozen();
-				ValidateServiceTypeLocatorProvider( value );
-				this._serviceTypeLocatorProvider = value;
+				var coerced = value;
+				CoerceServiceTypeLocatorProviderValue( ref coerced );
+				this._serviceTypeLocatorProvider = coerced;
 			}
 		}
 		
@@ -395,7 +517,8 @@ namespace MsgPack.Rpc.Server
 			this._serviceTypeLocatorProvider = ( config ) => new DefaultServiceTypeLocator();
 		}
 		
-		static partial void ValidateServiceTypeLocatorProvider( Func<RpcServerConfiguration, ServiceTypeLocator> value );
+		static partial void CoerceServiceTypeLocatorProviderValue( ref Func<RpcServerConfiguration, ServiceTypeLocator> value );
+
 		private Func<Func<ServerRequestContext>, ObjectPoolConfiguration, ObjectPool<ServerRequestContext>> _requestContextPoolProvider = ( factory, configuration ) => new StandardObjectPool<ServerRequestContext>( factory, configuration );
 		
 		/// <summary>
@@ -406,12 +529,24 @@ namespace MsgPack.Rpc.Server
 		/// </value>
 		public Func<Func<ServerRequestContext>, ObjectPoolConfiguration, ObjectPool<ServerRequestContext>> RequestContextPoolProvider
 		{
-			get{ return this._requestContextPoolProvider; }
+			get
+			{
+				Contract.Ensures( Contract.Result<Func<Func<ServerRequestContext>, ObjectPoolConfiguration, ObjectPool<ServerRequestContext>>>() != null );
+
+				return this._requestContextPoolProvider;
+			}
 			set
 			{
+				if ( !( value != null ) )
+				{
+					throw new ArgumentNullException( "value" );
+				}
+				Contract.EndContractBlock();
+
 				this.VerifyIsNotFrozen();
-				ValidateRequestContextPoolProvider( value );
-				this._requestContextPoolProvider = value;
+				var coerced = value;
+				CoerceRequestContextPoolProviderValue( ref coerced );
+				this._requestContextPoolProvider = coerced;
 			}
 		}
 		
@@ -423,7 +558,8 @@ namespace MsgPack.Rpc.Server
 			this._requestContextPoolProvider = ( factory, configuration ) => new StandardObjectPool<ServerRequestContext>( factory, configuration );
 		}
 		
-		static partial void ValidateRequestContextPoolProvider( Func<Func<ServerRequestContext>, ObjectPoolConfiguration, ObjectPool<ServerRequestContext>> value );
+		static partial void CoerceRequestContextPoolProviderValue( ref Func<Func<ServerRequestContext>, ObjectPoolConfiguration, ObjectPool<ServerRequestContext>> value );
+
 		private Func<Func<ServerResponseContext>, ObjectPoolConfiguration, ObjectPool<ServerResponseContext>> _responseContextPoolProvider = ( factory, configuration ) => new StandardObjectPool<ServerResponseContext>( factory, configuration );
 		
 		/// <summary>
@@ -434,12 +570,24 @@ namespace MsgPack.Rpc.Server
 		/// </value>
 		public Func<Func<ServerResponseContext>, ObjectPoolConfiguration, ObjectPool<ServerResponseContext>> ResponseContextPoolProvider
 		{
-			get{ return this._responseContextPoolProvider; }
+			get
+			{
+				Contract.Ensures( Contract.Result<Func<Func<ServerResponseContext>, ObjectPoolConfiguration, ObjectPool<ServerResponseContext>>>() != null );
+
+				return this._responseContextPoolProvider;
+			}
 			set
 			{
+				if ( !( value != null ) )
+				{
+					throw new ArgumentNullException( "value" );
+				}
+				Contract.EndContractBlock();
+
 				this.VerifyIsNotFrozen();
-				ValidateResponseContextPoolProvider( value );
-				this._responseContextPoolProvider = value;
+				var coerced = value;
+				CoerceResponseContextPoolProviderValue( ref coerced );
+				this._responseContextPoolProvider = coerced;
 			}
 		}
 		
@@ -451,7 +599,8 @@ namespace MsgPack.Rpc.Server
 			this._responseContextPoolProvider = ( factory, configuration ) => new StandardObjectPool<ServerResponseContext>( factory, configuration );
 		}
 		
-		static partial void ValidateResponseContextPoolProvider( Func<Func<ServerResponseContext>, ObjectPoolConfiguration, ObjectPool<ServerResponseContext>> value );
+		static partial void CoerceResponseContextPoolProviderValue( ref Func<Func<ServerResponseContext>, ObjectPoolConfiguration, ObjectPool<ServerResponseContext>> value );
+
 		private Func<Func<ListeningContext>, ObjectPoolConfiguration, ObjectPool<ListeningContext>> _listeningContextPoolProvider = ( factory, configuration ) => new StandardObjectPool<ListeningContext>( factory, configuration );
 		
 		/// <summary>
@@ -462,12 +611,24 @@ namespace MsgPack.Rpc.Server
 		/// </value>
 		public Func<Func<ListeningContext>, ObjectPoolConfiguration, ObjectPool<ListeningContext>> ListeningContextPoolProvider
 		{
-			get{ return this._listeningContextPoolProvider; }
+			get
+			{
+				Contract.Ensures( Contract.Result<Func<Func<ListeningContext>, ObjectPoolConfiguration, ObjectPool<ListeningContext>>>() != null );
+
+				return this._listeningContextPoolProvider;
+			}
 			set
 			{
+				if ( !( value != null ) )
+				{
+					throw new ArgumentNullException( "value" );
+				}
+				Contract.EndContractBlock();
+
 				this.VerifyIsNotFrozen();
-				ValidateListeningContextPoolProvider( value );
-				this._listeningContextPoolProvider = value;
+				var coerced = value;
+				CoerceListeningContextPoolProviderValue( ref coerced );
+				this._listeningContextPoolProvider = coerced;
 			}
 		}
 		
@@ -479,7 +640,8 @@ namespace MsgPack.Rpc.Server
 			this._listeningContextPoolProvider = ( factory, configuration ) => new StandardObjectPool<ListeningContext>( factory, configuration );
 		}
 		
-		static partial void ValidateListeningContextPoolProvider( Func<Func<ListeningContext>, ObjectPoolConfiguration, ObjectPool<ListeningContext>> value );
+		static partial void CoerceListeningContextPoolProviderValue( ref Func<Func<ListeningContext>, ObjectPoolConfiguration, ObjectPool<ListeningContext>> value );
+
 		private Func<Func<TcpServerTransport>, ObjectPoolConfiguration, ObjectPool<TcpServerTransport>> _tcpTransportPoolProvider = ( factory, configuration ) => new StandardObjectPool<TcpServerTransport>( factory, configuration );
 		
 		/// <summary>
@@ -490,12 +652,24 @@ namespace MsgPack.Rpc.Server
 		/// </value>
 		public Func<Func<TcpServerTransport>, ObjectPoolConfiguration, ObjectPool<TcpServerTransport>> TcpTransportPoolProvider
 		{
-			get{ return this._tcpTransportPoolProvider; }
+			get
+			{
+				Contract.Ensures( Contract.Result<Func<Func<TcpServerTransport>, ObjectPoolConfiguration, ObjectPool<TcpServerTransport>>>() != null );
+
+				return this._tcpTransportPoolProvider;
+			}
 			set
 			{
+				if ( !( value != null ) )
+				{
+					throw new ArgumentNullException( "value" );
+				}
+				Contract.EndContractBlock();
+
 				this.VerifyIsNotFrozen();
-				ValidateTcpTransportPoolProvider( value );
-				this._tcpTransportPoolProvider = value;
+				var coerced = value;
+				CoerceTcpTransportPoolProviderValue( ref coerced );
+				this._tcpTransportPoolProvider = coerced;
 			}
 		}
 		
@@ -507,7 +681,8 @@ namespace MsgPack.Rpc.Server
 			this._tcpTransportPoolProvider = ( factory, configuration ) => new StandardObjectPool<TcpServerTransport>( factory, configuration );
 		}
 		
-		static partial void ValidateTcpTransportPoolProvider( Func<Func<TcpServerTransport>, ObjectPoolConfiguration, ObjectPool<TcpServerTransport>> value );
+		static partial void CoerceTcpTransportPoolProviderValue( ref Func<Func<TcpServerTransport>, ObjectPoolConfiguration, ObjectPool<TcpServerTransport>> value );
+
 		private Func<Func<UdpServerTransport>, ObjectPoolConfiguration, ObjectPool<UdpServerTransport>> _udpTransportPoolProvider = ( factory, configuration ) => new StandardObjectPool<UdpServerTransport>( factory, configuration );
 		
 		/// <summary>
@@ -518,12 +693,24 @@ namespace MsgPack.Rpc.Server
 		/// </value>
 		public Func<Func<UdpServerTransport>, ObjectPoolConfiguration, ObjectPool<UdpServerTransport>> UdpTransportPoolProvider
 		{
-			get{ return this._udpTransportPoolProvider; }
+			get
+			{
+				Contract.Ensures( Contract.Result<Func<Func<UdpServerTransport>, ObjectPoolConfiguration, ObjectPool<UdpServerTransport>>>() != null );
+
+				return this._udpTransportPoolProvider;
+			}
 			set
 			{
+				if ( !( value != null ) )
+				{
+					throw new ArgumentNullException( "value" );
+				}
+				Contract.EndContractBlock();
+
 				this.VerifyIsNotFrozen();
-				ValidateUdpTransportPoolProvider( value );
-				this._udpTransportPoolProvider = value;
+				var coerced = value;
+				CoerceUdpTransportPoolProviderValue( ref coerced );
+				this._udpTransportPoolProvider = coerced;
 			}
 		}
 		
@@ -535,7 +722,8 @@ namespace MsgPack.Rpc.Server
 			this._udpTransportPoolProvider = ( factory, configuration ) => new StandardObjectPool<UdpServerTransport>( factory, configuration );
 		}
 		
-		static partial void ValidateUdpTransportPoolProvider( Func<Func<UdpServerTransport>, ObjectPoolConfiguration, ObjectPool<UdpServerTransport>> value );
+		static partial void CoerceUdpTransportPoolProviderValue( ref Func<Func<UdpServerTransport>, ObjectPoolConfiguration, ObjectPool<UdpServerTransport>> value );
+
 		/// <summary>
 		/// 	Returns a string that represents the current object.
 		/// </summary>
@@ -546,7 +734,6 @@ namespace MsgPack.Rpc.Server
 		{
 			var buffer = new StringBuilder( 4096 );
 			buffer.Append( "{ " );
-
 			buffer.Append( "\"PreferIPv4\" : " );
 			ToString( this.PreferIPv4, buffer );
 			buffer.Append( ", " );
@@ -567,9 +754,6 @@ namespace MsgPack.Rpc.Server
 			buffer.Append( ", " );
 			buffer.Append( "\"ListenBackLog\" : " );
 			ToString( this.ListenBackLog, buffer );
-			buffer.Append( ", " );
-			buffer.Append( "\"PortNumber\" : " );
-			ToString( this.PortNumber, buffer );
 			buffer.Append( ", " );
 			buffer.Append( "\"ExecutionTimeout\" : " );
 			ToString( this.ExecutionTimeout, buffer );
@@ -600,7 +784,6 @@ namespace MsgPack.Rpc.Server
 			buffer.Append( ", " );
 			buffer.Append( "\"UdpTransportPoolProvider\" : " );
 			ToString( this.UdpTransportPoolProvider, buffer );
-
 			buffer.Append( " }" );
 			return buffer.ToString();
 		}
