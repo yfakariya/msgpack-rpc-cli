@@ -43,7 +43,7 @@ namespace MsgPack.Rpc
 		///		Cannot deserialize instance from <paramref name="unpackedException"/>.
 		/// </exception>
 		protected internal RpcException( RpcError rpcError, MessagePackObject unpackedException )
-			: this( rpcError, GetString( unpackedException, MessageKeyUtf8, true ), GetString( unpackedException, DebugInformationKeyUtf8, false ) )
+			: this( rpcError, unpackedException.GetString( MessageKeyUtf8 ), unpackedException.GetString( DebugInformationKeyUtf8 ) )
 		{
 			if ( unpackedException.IsDictionary )
 			{
