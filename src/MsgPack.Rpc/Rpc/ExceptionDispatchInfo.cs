@@ -47,7 +47,14 @@ namespace MsgPack.Rpc
 				throw new ArgumentNullException( "source" );
 			}
 
+			Contract.EndContractBlock();
+
 			this._source = source;
+
+		[ContractInvariantMethod]
+		private void ObjectInvariant()
+		{
+			Contract.Invariant( this._source != null );
 		}
 
 		public void Throw()
