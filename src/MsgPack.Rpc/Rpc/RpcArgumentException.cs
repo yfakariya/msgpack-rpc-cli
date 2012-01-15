@@ -69,7 +69,8 @@ namespace MsgPack.Rpc
 		/// <exception cref="ArgumentException">
 		///		<paramref name="methodName"/> or <paramref name="parameterName"/> is empty or blank.
 		/// </exception>
-		public RpcArgumentException( string methodName, string parameterName ) : this( methodName, parameterName, "The value of argument is invalid.", null ) { }
+		public RpcArgumentException( string methodName, string parameterName )
+			: this( methodName, parameterName, null, null, null ) { }
 
 		/// <summary>
 		///		Initializes a new instance of the <see cref="RpcArgumentException"/> class with a specified error message.
@@ -104,7 +105,8 @@ namespace MsgPack.Rpc
 		///			So you should specify some error handler to instrument it (e.g. logging handler).
 		///		</para>
 		/// </remarks>
-		public RpcArgumentException( string methodName, string parameterName, string message, string debugInformation ) : this( methodName, parameterName, message, debugInformation, null ) { }
+		public RpcArgumentException( string methodName, string parameterName, string message, string debugInformation )
+			: this( methodName, parameterName, message, debugInformation, null ) { }
 
 		/// <summary>
 		///		Initializes a new instance of the <see cref="RpcArgumentException"/> class with a specified error message and a reference to the inner exception that is the cause of this exception. 
@@ -143,7 +145,7 @@ namespace MsgPack.Rpc
 		///		</para>
 		/// </remarks>
 		public RpcArgumentException( string methodName, string parameterName, string message, string debugInformation, Exception inner )
-			: base( RpcError.ArgumentError, methodName, message, debugInformation, inner )
+			: base( RpcError.ArgumentError, methodName, message ?? RpcError.ArgumentError.DefaultMessage, debugInformation, inner )
 		{
 			if ( parameterName == null )
 			{

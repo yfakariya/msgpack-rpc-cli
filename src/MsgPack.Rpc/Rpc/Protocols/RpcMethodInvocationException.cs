@@ -68,7 +68,7 @@ namespace MsgPack.Rpc.Protocols
 		/// <exception cref="ArgumentException">
 		///		<paramref name="methodName"/> is empty or blank.
 		/// </exception>
-		public RpcMethodInvocationException( RpcError rpcError, string methodName ) : this( rpcError, methodName, "Failed to call specified method.", null ) { }
+		public RpcMethodInvocationException( RpcError rpcError, string methodName ) : this( rpcError, methodName, null, null, null ) { }
 
 		/// <summary>
 		///		Initializes a new instance of the <see cref="RpcMethodInvocationException"/> class with a specified error message.
@@ -103,7 +103,8 @@ namespace MsgPack.Rpc.Protocols
 		///			So you should specify some error handler to instrument it (e.g. logging handler).
 		///		</para>
 		/// </remarks>
-		public RpcMethodInvocationException( RpcError rpcError, string methodName, string message, string debugInformation ) : this( rpcError, methodName, message, debugInformation, null ) { }
+		public RpcMethodInvocationException( RpcError rpcError, string methodName, string message, string debugInformation )
+			: this( rpcError, methodName, message, debugInformation, null ) { }
 
 		/// <summary>
 		///		Initializes a new instance of the <see cref="RpcMethodInvocationException"/> class with a specified error message and a reference to the inner exception that is the cause of this exception. 
@@ -142,7 +143,7 @@ namespace MsgPack.Rpc.Protocols
 		///		</para>
 		/// </remarks>
 		public RpcMethodInvocationException( RpcError rpcError, string methodName, string message, string debugInformation, Exception inner )
-			: base( rpcError, message, debugInformation, inner )
+			: base( rpcError ?? RpcError.CallError, message, debugInformation, inner )
 		{
 			if ( methodName == null )
 			{

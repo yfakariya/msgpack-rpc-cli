@@ -35,7 +35,7 @@ namespace MsgPack.Rpc
 		/// <param name="rpcError">
 		///		Metadata of error. If you specify null, <see cref="RpcError.RemoteRuntimeError"/> is used.
 		///	</param>
-		public RpcServerUnavailableException(RpcError rpcError) : this( rpcError, "MessagePack-RPC destination server is unavailable.", null ) { }
+		public RpcServerUnavailableException( RpcError rpcError ) : this( rpcError, null, null, null ) { }
 
 		/// <summary>
 		///		Initializes a new instance of the <see cref="RpcServerUnavailableException"/> class with a specified error message.
@@ -61,7 +61,8 @@ namespace MsgPack.Rpc
 		///			So you should specify some error handler to instrument it (e.g. logging handler).
 		///		</para>
 		/// </remarks>		
-		public RpcServerUnavailableException( RpcError rpcError, string message, string debugInformation ) : base( rpcError, message, debugInformation ) { }
+		public RpcServerUnavailableException( RpcError rpcError, string message, string debugInformation )
+			: this( rpcError, message, debugInformation, null ) { }
 
 		/// <summary>
 		///		Initializes a new instance of the <see cref="RpcServerUnavailableException"/> class with a specified error message and a reference to the inner exception that is the cause of this exception. 

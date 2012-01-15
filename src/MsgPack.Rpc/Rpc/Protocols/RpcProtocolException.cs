@@ -37,7 +37,7 @@ namespace MsgPack.Rpc.Protocols
 		/// <param name="rpcError">
 		///		Metadata of error. If you specify null, <see cref="RpcError.RemoteRuntimeError"/> is used.
 		///	</param>
-		public RpcProtocolException( RpcError rpcError ) : this( rpcError, "Some protocol violation is occurred in MessagePack-RPC communication.", null ) { }
+		public RpcProtocolException( RpcError rpcError ) : this( rpcError, null, null, null ) { }
 
 		/// <summary>
 		///		Initializes a new instance of the <see cref="RpcProtocolException"/> class with a specified error message.
@@ -63,7 +63,7 @@ namespace MsgPack.Rpc.Protocols
 		///			So you should specify some error handler to instrument it (e.g. logging handler).
 		///		</para>
 		/// </remarks>		
-		public RpcProtocolException( RpcError rpcError, string message, string debugInformation ) : base( rpcError, message, debugInformation ) { }
+		public RpcProtocolException( RpcError rpcError, string message, string debugInformation ) : this( rpcError, message, debugInformation, null ) { }
 
 		/// <summary>
 		///		Initializes a new instance of the <see cref="RpcProtocolException"/> class with a specified error message and a reference to the inner exception that is the cause of this exception. 

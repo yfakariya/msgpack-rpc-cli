@@ -169,7 +169,7 @@ namespace MsgPack.Rpc
 		///		</para>
 		/// </remarks>
 		public RpcException( RpcError rpcError, string message, string debugInformation, Exception inner )
-			: base( message, inner )
+			: base( message ?? ( rpcError ?? RpcError.RemoteRuntimeError ).DefaultMessage, inner )
 		{
 			this._rpcError = rpcError ?? RpcError.RemoteRuntimeError;
 			this._debugInformation = debugInformation;

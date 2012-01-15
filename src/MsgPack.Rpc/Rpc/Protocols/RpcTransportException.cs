@@ -36,8 +36,8 @@ namespace MsgPack.Rpc.Protocols
 		/// <param name="rpcError">
 		///		Metadata of error. If you specify null, <see cref="RpcError.TransportError"/> is used.
 		///	</param>
-		public RpcTransportException( RpcError rpcError ) : this( rpcError, "Some network error is occurred in MessagePack-RPC communication.", null ) { }
-	
+		public RpcTransportException( RpcError rpcError ) : this( null, null, null, null ) { }
+
 		/// <summary>
 		///		Initializes a new instance of the <see cref="RpcTransportException"/> class with a specified error message.
 		/// </summary>
@@ -62,7 +62,7 @@ namespace MsgPack.Rpc.Protocols
 		///			So you should specify some error handler to instrument it (e.g. logging handler).
 		///		</para>
 		/// </remarks>		
-		public RpcTransportException( RpcError rpcError, string message, string debugInformation ) : base( rpcError, message, debugInformation ) { }
+		public RpcTransportException( RpcError rpcError, string message, string debugInformation ) : this( rpcError, message, debugInformation, null ) { }
 
 		/// <summary>
 		///		Initializes a new instance of the <see cref="RpcTransportException"/> class with a specified error message and a reference to the inner exception that is the cause of this exception. 

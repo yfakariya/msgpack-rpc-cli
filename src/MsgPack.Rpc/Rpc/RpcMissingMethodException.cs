@@ -45,7 +45,7 @@ namespace MsgPack.Rpc
 		///		<paramref name="methodName"/> is empty or blank.
 		/// </exception>
 		public RpcMissingMethodException( string methodName )
-			: base( RpcError.NoMethodError, methodName ) { }
+			: this( methodName, null, null, null ) { }
 
 		/// <summary>
 		///		Initializes a new instance of the <see cref="RpcMissingMethodException"/> class with a specified error message.
@@ -77,8 +77,8 @@ namespace MsgPack.Rpc
 		///			So you should specify some error handler to instrument it (e.g. logging handler).
 		///		</para>
 		/// </remarks>
-		public RpcMissingMethodException( string methodName, string message, string debugInformation ) 
-			: base( RpcError.NoMethodError, methodName, message, debugInformation ) { }
+		public RpcMissingMethodException( string methodName, string message, string debugInformation )
+			: this( methodName, message, debugInformation, null ) { }
 
 		/// <summary>
 		///		Initializes a new instance of the <see cref="RpcMissingMethodException"/> class with a specified error message and a reference to the inner exception that is the cause of this exception. 

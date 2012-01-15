@@ -50,7 +50,7 @@ namespace MsgPack.Rpc
 		///		Initializes a new instance of the <see cref="RpcTimeoutException"/> class with the default error message.
 		/// </summary>
 		/// <param name="timeout">Timeout value in client.</param>
-		public RpcTimeoutException( TimeSpan timeout ) : this( timeout, "Request has been timeout.", null ) { }
+		public RpcTimeoutException( TimeSpan timeout ) : this( timeout, null, null, null ) { }
 
 		/// <summary>
 		///		Initializes a new instance of the <see cref="RpcTimeoutException"/> class with a specified error message.
@@ -75,10 +75,7 @@ namespace MsgPack.Rpc
 		///		</para>
 		/// </remarks>
 		public RpcTimeoutException( TimeSpan timeout, string message, string debugInformation )
-			: base( RpcError.TimeoutError, message, debugInformation )
-		{
-			this._clientTimeout = timeout;
-		}
+			: this( timeout, message, debugInformation, null ) { }
 
 		/// <summary>
 		///		Initializes a new instance of the <see cref="RpcTimeoutException"/> class with a specified error message and a reference to the inner exception that is the cause of this exception. 
