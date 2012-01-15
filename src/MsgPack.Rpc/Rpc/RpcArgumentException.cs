@@ -183,7 +183,7 @@ namespace MsgPack.Rpc
 		internal RpcArgumentException( MessagePackObject unpackedException )
 			: base( RpcError.ArgumentError, unpackedException )
 		{
-			unpackedException.TryGetString( _parameterNameKeyUtf8, RpcException.CreateSerializationException, out this._parameterName );
+			this._parameterName = unpackedException.GetString( _parameterNameKeyUtf8 );
 		}
 
 		/// <summary>

@@ -186,7 +186,7 @@ namespace MsgPack.Rpc.Protocols
 		protected internal RpcMethodInvocationException( RpcError rpcError, MessagePackObject unpackedException )
 			: base( rpcError, unpackedException )
 		{
-			unpackedException.TryGetString( _methodNameKeyUtf8, message => new SerializationException( message ), out this._methodName );
+			this._methodName = unpackedException.GetString( _methodNameKeyUtf8 );
 		}
 
 		/// <summary>

@@ -25,50 +25,32 @@ namespace MsgPack.Rpc
 {
 	internal static class MessagePackObjectExtension
 	{
-		public static bool TryGetString( this MessagePackObject source, MessagePackObject key, Func<string, Exception> exceptionGenerator, out string result )
+		public static string GetString( this MessagePackObject source, MessagePackObject key )
 		{
 			if ( source.IsDictionary )
 			{
 				MessagePackObject value;
 				if ( source.AsDictionary().TryGetValue( key, out value ) && value.IsTypeOf<string>().GetValueOrDefault() )
 				{
-					result = value.AsString();
-					return true;
+					return value.AsString();
 				}
 			}
 
-			HandleError( source, exceptionGenerator );
-
-			result = null;
-			return false;
+			return null;
 		}
 
-		public static bool TryGetTimeSpan( this MessagePackObject source, MessagePackObject key, Func<string, Exception> exceptionGenerator, out TimeSpan result )
+		public static TimeSpan? GetTimeSpan( this MessagePackObject source, MessagePackObject key )
 		{
 			if ( source.IsDictionary )
 			{
 				MessagePackObject value;
 				if ( source.AsDictionary().TryGetValue( key, out value ) && value.IsTypeOf<Int64>().GetValueOrDefault() )
 				{
-					result = new TimeSpan( value.AsInt64() );
-					return true;
+					return new TimeSpan( value.AsInt64() );
 				}
 			}
 
-			HandleError( source, exceptionGenerator );
-
-			result = default( TimeSpan );
-			return false;
-		}
-
-		private static void HandleError( MessagePackObject source, Func<string, Exception> exceptionGenerator )
-		{
-			if ( exceptionGenerator != null )
-			{
-				// FIXME: Configurable
-				string message = String.Format( CultureInfo.CurrentCulture, "'{0}' is not valid error information.", source );
-				throw exceptionGenerator( message );
-			}
+			return null;
 		}
 	}
 }

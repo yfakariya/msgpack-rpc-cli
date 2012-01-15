@@ -32,13 +32,14 @@ namespace MsgPack.Rpc
 		private const string _clientTimeoutKey = "ClientTimeout";
 		private static readonly MessagePackObject _clientTimeoutKeyUtf8 = MessagePackConvert.EncodeString( _clientTimeoutKey );
 
-		private readonly TimeSpan _clientTimeout;
+		// NOT readonly for safe deserialization
+		private TimeSpan? _clientTimeout;
 
 		/// <summary>
 		///		Gets the timeout value which was expired in client.
 		/// </summary>
-		/// <value>Timeout value in client.</value>
-		public TimeSpan ClientTimeout
+		/// <value>The timeout value in client. This value may be <c>null</c> when the server turnes</value>
+		public TimeSpan? ClientTimeout
 		{
 			get { return this._clientTimeout; }
 		}
@@ -137,7 +138,7 @@ namespace MsgPack.Rpc
 		internal RpcTimeoutException( MessagePackObject unpackedException )
 			: base( RpcError.TimeoutError, unpackedException )
 		{
-			unpackedException.TryGetTimeSpan( _clientTimeoutKeyUtf8, RpcException.CreateSerializationException, out this._clientTimeout );
+			this._clientTimeout = unpackedException.GetTimeSpan( _clientTimeoutKeyUtf8 );
 		}
 
 		/// <summary>
