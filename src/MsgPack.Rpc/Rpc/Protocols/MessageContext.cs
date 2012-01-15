@@ -53,7 +53,13 @@ namespace MsgPack.Rpc.Protocols
 
 		private DateTimeOffset _sessionStartedAt;
 
-		internal DateTimeOffset SessionStartedAt
+		/// <summary>
+		///		Gets the session start time.
+		/// </summary>
+		/// <value>
+		///		The session start time.
+		/// </value>
+		public DateTimeOffset SessionStartedAt
 		{
 			get { return this._sessionStartedAt; }
 		}
@@ -73,11 +79,20 @@ namespace MsgPack.Rpc.Protocols
 
 		private bool _completedSynchronously;
 
-		internal bool CompletedSynchronously
+		/// <summary>
+		///		Gets a value indicating whether the operation has been completed synchronously.
+		/// </summary>
+		/// <value>
+		/// 	<c>true</c> if the operation has been completed synchronously; otherwise, <c>false</c>.
+		/// </value>
+		public bool CompletedSynchronously
 		{
 			get { return this._completedSynchronously; }
 		}
 
+		/// <summary>
+		///		Sets the operation has been completed synchronously.
+		/// </summary>
 		public void SetCompletedSynchronously()
 		{
 			this._completedSynchronously = true;
@@ -85,11 +100,18 @@ namespace MsgPack.Rpc.Protocols
 
 		private IContextBoundableTransport _boundTransport;
 
+		/// <summary>
+		///		Gets the bound <see cref="IContextBoundableTransport"/>.
+		/// </summary>
 		internal IContextBoundableTransport BoundTransport
 		{
 			get { return this._boundTransport; }
 		}
 
+		/// <summary>
+		///		Sets the bound <see cref="IContextBoundableTransport"/>.
+		/// </summary>
+		/// <param name="transport">The <see cref="IContextBoundableTransport"/>.</param>
 		internal virtual void SetTransport( IContextBoundableTransport transport )
 		{
 			this.AcceptSocket = transport.BoundSocket;
@@ -102,14 +124,23 @@ namespace MsgPack.Rpc.Protocols
 			this.Completed += transport.OnSocketOperationCompleted;
 		}
 
+		/// <summary>
+		///		Initializes a new instance of the <see cref="MessageContext"/> class.
+		/// </summary>
 		protected MessageContext() { }
 
+		/// <summary>
+		///		Renews the session id and start time.
+		/// </summary>
 		public void RenewSessionId()
 		{
 			this._sessionId = Interlocked.Increment( ref _lastSessionId );
 			this._sessionStartedAt = DateTimeOffset.Now;
 		}
 
+		/// <summary>
+		///		Clears this instance internal buffers for reuse.
+		/// </summary>
 		internal virtual void Clear()
 		{
 			var boundTransport = Interlocked.Exchange( ref this._boundTransport, null );
