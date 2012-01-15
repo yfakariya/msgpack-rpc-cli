@@ -40,14 +40,6 @@ namespace MsgPack.Rpc
 	public class RpcFaultException : RpcException
 	{
 		/// <summary>
-		///		Initialize new instance which represents specified error with specified message..
-		/// </summary>
-		/// <param name="rpcError">
-		///		Metadata of error. If you specify null, <see cref="RpcError.RemoteRuntimeError"/> is used.
-		///	</param>
-		public RpcFaultException( RpcError rpcError ) : base( rpcError, "MessagePack-RPC destination server thrown exception.", null ) { }
-
-		/// <summary>
 		///		Initializes a new instance of the <see cref="RpcFaultException"/> class with a specified error message.
 		/// </summary>
 		/// <param name="rpcError">
