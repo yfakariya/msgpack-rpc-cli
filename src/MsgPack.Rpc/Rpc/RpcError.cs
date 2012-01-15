@@ -38,12 +38,7 @@ namespace MsgPack.Rpc
 	{
 		#region -- Built-in Errors --
 
-		/// <summary>
-		///		Cannot get response from server.
-		///		Details are unknown at all, for instance, message might reach server.
-		///		It might be success when you retry.
-		/// </summary>
-		public static readonly RpcError TimeoutError =
+		private static readonly RpcError _timeoutError =
 			new RpcError(
 				"RPCError.TimeoutError",
 				-60,
@@ -53,10 +48,23 @@ namespace MsgPack.Rpc
 			);
 
 		/// <summary>
-		///		Cannot initiate transferring message.
-		///		It may was network failure, was configuration issue, or failed to handshake.
+		///		Gets the <see cref="RpcError"/> for when the client cannot get response from server.
+		///		Details are unknown at all, for instance, message might reach server.
+		///		It might be success when the client retry.
 		/// </summary>
-		public static readonly RpcError TransportError =
+		/// <value>
+		///		The <see cref="RpcError"/> for timeout error.
+		/// </value>
+		public static RpcError TimeoutError
+		{
+			get
+			{
+				Contract.Ensures( Contract.Result<RpcError>() != null );
+				return RpcError._timeoutError;
+			}
+		}
+
+		private static readonly RpcError _transportError =
 			new RpcError(
 				"RPCError.ClientError.TransportError",
 				-50,
@@ -66,10 +74,23 @@ namespace MsgPack.Rpc
 			);
 
 		/// <summary>
-		///		Cannot reach specified remote end point.
-		///		This error is transport protocol specific.
+		///		Gets the <see cref="RpcError"/> for when the client cannot initiate transferring message.
+		///		It might be network failure, be configuration issue, or handshake failure.
 		/// </summary>
-		public static readonly RpcError NetworkUnreacheableError =
+		/// <value>
+		///		The <see cref="RpcError"/> for general tranport error.
+		/// </value>
+		public static RpcError TransportError
+		{
+			get
+			{
+				Contract.Ensures( Contract.Result<RpcError>() != null );
+				return RpcError._transportError;
+			}
+		}
+
+
+		private static readonly RpcError _networkUnreacheableError =
 			new RpcError(
 				"RPCError.ClientError.TranportError.NetworkUnreacheableError",
 				-51,
@@ -79,11 +100,23 @@ namespace MsgPack.Rpc
 			);
 
 		/// <summary>
-		///		Connection was refused explicitly by remote end point.
-		///		It should fail when you retry.
-		///		This error is connection oriented transport protocol specific.
+		///		Gets the <see cref="RpcError"/> for when the client cannot reach specified remote end point.
+		///		This error is transport protocol specific.
 		/// </summary>
-		public static readonly RpcError ConnectionRefusedError =
+		/// <value>
+		///		The <see cref="RpcError"/> for network unreacheable error.
+		/// </value>
+		public static RpcError NetworkUnreacheableError
+		{
+			get
+			{
+				Contract.Ensures( Contract.Result<RpcError>() != null );
+				return RpcError._networkUnreacheableError;
+			}
+		}
+
+
+		private static readonly RpcError _connectionRefusedError =
 			new RpcError(
 				"RPCError.ClientError.TranportError.ConnectionRefusedError",
 				-52,
@@ -93,11 +126,24 @@ namespace MsgPack.Rpc
 			);
 
 		/// <summary>
-		///		Connection timout was occurred.
-		///		It might be success when you retry.
+		///		Gets the <see cref="RpcError"/> for when the client connection was explicitly refused by the remote end point.
+		///		It should fail when you retry.
 		///		This error is connection oriented transport protocol specific.
 		/// </summary>
-		public static readonly RpcError ConnectionTimeoutError =
+		/// <value>
+		///		The <see cref="RpcError"/> for connection refused error.
+		/// </value>
+		public static RpcError ConnectionRefusedError
+		{
+			get
+			{
+				Contract.Ensures( Contract.Result<RpcError>() != null );
+				return RpcError._connectionRefusedError;
+			}
+		}
+
+
+		private static readonly RpcError _connectionTimeoutError =
 			new RpcError(
 				"RPCError.ClientError.TranportError.ConnectionTimeoutError",
 				-53,
@@ -107,8 +153,38 @@ namespace MsgPack.Rpc
 			);
 
 		/// <summary>
-		///		Message was refused explicitly by remote end point.
+		///		Gets the <see cref="RpcError"/> for when a connection timout was occurred.
+		///		It might be success when you retry.
+		///		This error is connection oriented transport protocol specific.
 		/// </summary>
+		/// <value>
+		///		The <see cref="RpcError"/> for connection timeout error.
+		/// </value>
+		public static RpcError ConnectionTimeoutError
+		{
+			get
+			{
+				Contract.Ensures( Contract.Result<RpcError>() != null );
+				return RpcError._connectionTimeoutError;
+			}
+		}
+
+
+		private static readonly RpcError _messageRefusedError =
+			new RpcError(
+				"RPCError.ClientError.MessageRefusedError",
+				-40,
+				"Message was refused explicitly by remote end point.",
+				typeof( RpcProtocolException ),
+				( error, data ) => new RpcProtocolException( error, data )
+			);
+
+		/// <summary>
+		///		Gets the <see cref="RpcError"/> for when the message was explicitly refused by remote end point.
+		/// </summary>
+		/// <value>
+		///		The <see cref="RpcError"/> for message refused error.
+		/// </value>
 		/// <remarks>
 		///		<para>
 		///			End point issues this error when:
@@ -135,20 +211,32 @@ namespace MsgPack.Rpc
 		///				<item>Packet was changed unexpectedly.</item>
 		///			</list>
 		///		</para>
-		/// </remarks>
-		public static readonly RpcError MessageRefusedError =
+		/// </remarks>		
+		public static RpcError MessageRefusedError
+		{
+			get
+			{
+				Contract.Ensures( Contract.Result<RpcError>() != null );
+				return RpcError._messageRefusedError;
+			}
+		}
+
+
+		private static readonly RpcError _messageTooLargeError =
 			new RpcError(
-				"RPCError.ClientError.MessageRefusedError",
-				-40,
-				"Message was refused explicitly by remote end point.",
-				typeof( RpcProtocolException ),
-				( error, data ) => new RpcProtocolException( error, data )
+				"RPCError.ClientError.MessageRefusedError.MessageTooLargeError",
+				-41, "Message is too large.",
+				typeof( RpcMessageTooLongException ),
+				( error, data ) => new RpcMessageTooLongException( data )
 			);
 
 		/// <summary>
-		///		Message was refused explicitly by remote end point due to it was too large.
-		///		Structure may be right, but message was simply too large or some portions might be corruptted.
+		///		Gets the <see cref="RpcError"/> for when the message was refused explicitly by remote end point due to it was too large.
+		///		The structure may be right, but message was simply too large or some portions might be corruptted.
 		/// </summary>
+		/// <value>
+		///		The <see cref="RpcError"/> for message too large error.
+		/// </value>
 		/// <remarks>
 		///		<para>
 		///			It may be caused when:
@@ -167,19 +255,17 @@ namespace MsgPack.Rpc
 		///			</list>
 		///		</para>
 		/// </remarks>
-		public static readonly RpcError MessageTooLargeError =
-			new RpcError(
-				"RPCError.ClientError.MessageRefusedError.MessageTooLargeError",
-				-41, "Message is too large.",
-				typeof( RpcMessageTooLongException ),
-				( error, data ) => new RpcMessageTooLongException( data )
-			);
+		public static RpcError MessageTooLargeError
+		{
+			get
+			{
+				Contract.Ensures( Contract.Result<RpcError>() != null );
+				return RpcError._messageTooLargeError;
+			}
+		}
 
-		/// <summary>
-		///		Failed to call specified method.
-		///		Message was certainly reached and the structure was right, but failed to call method.
-		/// </summary>
-		public static readonly RpcError CallError =
+
+		private static readonly RpcError _callError =
 			new RpcError(
 				"RPCError.ClientError.CallError",
 				-20,
@@ -189,9 +275,23 @@ namespace MsgPack.Rpc
 			);
 
 		/// <summary>
-		///		Specified method was not found.
+		///		Gets the <see cref="RpcError"/> for when the RPC runtime failed to call specified method.
+		///		The message was certainly reached and the structure was right, but failed to call method.
 		/// </summary>
-		public static readonly RpcError NoMethodError =
+		/// <value>
+		///		The <see cref="RpcError"/> for call error.
+		/// </value>
+		public static RpcError CallError
+		{
+			get
+			{
+				Contract.Ensures( Contract.Result<RpcError>() != null );
+				return RpcError._callError;
+			}
+		}
+
+
+		private static readonly RpcError _noMethodError =
 			new RpcError(
 				"RPCError.ClientError.CallError.NoMethodError",
 				-21,
@@ -201,9 +301,23 @@ namespace MsgPack.Rpc
 			);
 
 		/// <summary>
-		///		Some argument(s) were wrong.
+		///		Gets the <see cref="RpcError"/> for when the specified method was not found.
+		///		The message was certainly reached and the structure was right, but failed to call method.
 		/// </summary>
-		public static readonly RpcError ArgumentError =
+		/// <value>
+		///		The <see cref="RpcError"/> for no method error.
+		/// </value>
+		public static RpcError NoMethodError
+		{
+			get
+			{
+				Contract.Ensures( Contract.Result<RpcError>() != null );
+				return RpcError._noMethodError;
+			}
+		}
+
+
+		private static readonly RpcError _argumentError =
 			new RpcError(
 				"RPCError.ClientError.CallError.ArgumentError",
 				-22,
@@ -213,10 +327,23 @@ namespace MsgPack.Rpc
 			);
 
 		/// <summary>
-		///		Server cannot process received message.
-		///		Other server might process your request.
+		///		Gets the <see cref="RpcError"/> for when the some argument(s) are wrong.
+		///		The serialized value might be ill formed or the value is not valid semantically.
 		/// </summary>
-		public static readonly RpcError ServerError =
+		/// <value>
+		///		The <see cref="RpcError"/> for argument error.
+		/// </value>
+		public static RpcError ArgumentError
+		{
+			get
+			{
+				Contract.Ensures( Contract.Result<RpcError>() != null );
+				return RpcError._argumentError;
+			}
+		}
+
+
+		private static readonly RpcError _serverError =
 			new RpcError(
 				"RPCError.ServerError",
 				-30,
@@ -226,10 +353,23 @@ namespace MsgPack.Rpc
 			);
 
 		/// <summary>
-		///		Server is busy.
-		///		Other server may process your request.
+		///		Gets the <see cref="RpcError"/> for when the server cannot process received message.
+		///		Other server might process your request.
 		/// </summary>
-		public static readonly RpcError ServerBusyError =
+		/// <value>
+		///		The <see cref="RpcError"/> for server error.
+		/// </value>
+		public static RpcError ServerError
+		{
+			get
+			{
+				Contract.Ensures( Contract.Result<RpcError>() != null );
+				return RpcError._serverError;
+			}
+		}
+
+
+		private static readonly RpcError _serverBusyError =
 			new RpcError(
 				"RPCError.ServerError.ServerBusyError",
 				-31,
@@ -239,9 +379,23 @@ namespace MsgPack.Rpc
 			);
 
 		/// <summary>
-		///		Internal runtime error in remote end point.
+		///		Gets the <see cref="RpcError"/> for when the server is busy.
+		///		Other server may process your request.
 		/// </summary>
-		public static readonly RpcError RemoteRuntimeError =
+		/// <value>
+		///		The <see cref="RpcError"/> for server busy error.
+		/// </value>
+		public static RpcError ServerBusyError
+		{
+			get
+			{
+				Contract.Ensures( Contract.Result<RpcError>() != null );
+				return RpcError._serverBusyError;
+			}
+		}
+
+
+		private static readonly RpcError _remoteRuntimeError =
 			new RpcError(
 				"RPCError.RemoteRuntimeError",
 				-10,
@@ -250,12 +404,28 @@ namespace MsgPack.Rpc
 				( error, data ) => new RpcException( error, data )
 			);
 
+		/// <summary>
+		///		Gets the <see cref="RpcError"/> for when an internal runtime error is occurred in the remote end point.
+		/// </summary>
+		/// <value>
+		///		The <see cref="RpcError"/> for remote runtime error.
+		/// </value>
+		public static RpcError RemoteRuntimeError
+		{
+			get
+			{
+				Contract.Ensures( Contract.Result<RpcError>() != null );
+				return RpcError._remoteRuntimeError;
+			}
+		}
+
+
 		#endregion -- Built-in Errors --
 
 		private const string _unexpectedErrorIdentifier = "RPCError.RemoteError.UnexpectedError";
 		private const int _unexpectedErrorCode = Int32.MaxValue;
 
-		internal static readonly RpcError Unexpected =
+		private static readonly RpcError _unexpected =
 			new RpcError(
 				_unexpectedErrorIdentifier,
 				_unexpectedErrorCode,
@@ -263,6 +433,26 @@ namespace MsgPack.Rpc
 				typeof( UnexpcetedRpcException ),
 				( error, data ) => new RpcException( error, data )
 			);
+
+		/// <summary>
+		///		Gets the <see cref="RpcError"/> for unexpected error.
+		/// </summary>
+		///	<value>
+		///		The <see cref="RpcError"/> for unexpected error.
+		///	</value>
+		/// <remarks>
+		///		The <see cref="RemoteRuntimeError"/> should be used for caught 'unexpected' exception.
+		///		This value is for unexpected situation on exception marshaling.
+		/// </remarks>
+		internal static RpcError Unexpected
+		{
+			get
+			{
+				Contract.Ensures( Contract.Result<RpcError>() != null );
+				return RpcError._unexpected;
+			}
+		}
+
 
 		private static readonly Dictionary<string, RpcError> _identifierDictionary = new Dictionary<string, RpcError>();
 		private static readonly Dictionary<int, RpcError> _errorCodeDictionary = new Dictionary<int, RpcError>();
@@ -272,7 +462,7 @@ namespace MsgPack.Rpc
 			foreach ( FieldInfo field in
 				typeof( RpcError ).FindMembers(
 					MemberTypes.Field,
-					BindingFlags.Static | BindingFlags.Public,
+					BindingFlags.Static | BindingFlags.NonPublic,
 					( member, criteria ) => ( member as FieldInfo ).FieldType.Equals( criteria ),
 					typeof( RpcError )
 				)
@@ -459,11 +649,11 @@ namespace MsgPack.Rpc
 
 			return
 				new RpcError(
-					identifier.StartsWith( "RPCError.", StringComparison.Ordinal ) ? identifier : "RPCError." + identifier,
+					identifier,
 					errorCode,
 					"Application throw exception.",
 					typeof( RpcFaultException ),
-					( error, data  ) => new RpcFaultException( error, data )
+					( error, data ) => new RpcFaultException( error, data )
 				);
 		}
 
@@ -493,6 +683,39 @@ namespace MsgPack.Rpc
 			}
 
 			return CustomError( String.IsNullOrWhiteSpace( identifier ) ? _unexpectedErrorIdentifier : identifier, errorCode ?? _unexpectedErrorCode );
+		}
+
+		/// <summary>
+		///		Determines whether two <see cref="RpcError"/> instances have the same value. 
+		/// </summary>
+		/// <param name="left">A <see cref="RpcError"/> instance to compare with <paramref name="right"/>.</param>
+		/// <param name="right">A <see cref="RpcError"/> instance to compare with <paramref name="left"/>.</param>
+		/// <returns>
+		///		<c>true</c> if the <see cref="RpcError"/> instances are equivalent; otherwise, <c>false</c>.
+		/// </returns>
+		public static bool operator ==( RpcError left, RpcError right )
+		{
+			if ( Object.ReferenceEquals( left, null ) )
+			{
+				return Object.ReferenceEquals( right, null );
+			}
+			else
+			{
+				return left.Equals( right );
+			}
+		}
+
+		/// <summary>
+		///		Determines whether two <see cref="RpcError"/> instances do not have the same value. 
+		/// </summary>
+		/// <param name="left">A <see cref="RpcError"/> instance to compare with <paramref name="right"/>.</param>
+		/// <param name="right">A <see cref="RpcError"/> instance to compare with <paramref name="left"/>.</param>
+		/// <returns>
+		///		<c>true</c> if the <see cref="RpcError"/> instances are not equivalent; otherwise, <c>false</c>.
+		/// </returns>
+		public static bool operator !=( RpcError left, RpcError right )
+		{
+			return !( left == right );
 		}
 	}
 }
