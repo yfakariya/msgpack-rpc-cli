@@ -47,7 +47,11 @@ namespace MsgPack.Rpc
 		/// </value>
 		public string ParameterName
 		{
-			get { return this._parameterName; }
+			get
+			{
+				Contract.Ensures( Contract.Result<string>() != null );
+				return this._parameterName ?? String.Empty;
+			}
 		}
 
 		/// <summary>

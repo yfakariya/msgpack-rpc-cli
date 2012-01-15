@@ -21,6 +21,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
@@ -184,6 +185,8 @@ namespace MsgPack.Rpc
 		///	</param>
 		protected virtual void GetExceptionMessage( IDictionary<MessagePackObject, MessagePackObject> store, bool includesDebugInformation )
 		{
+			Contract.Requires( store != null );
+
 			if ( !includesDebugInformation )
 			{
 				return;

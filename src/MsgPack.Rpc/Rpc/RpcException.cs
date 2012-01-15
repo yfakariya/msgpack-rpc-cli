@@ -20,6 +20,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Runtime.Serialization;
 
 namespace MsgPack.Rpc
@@ -92,7 +93,12 @@ namespace MsgPack.Rpc
 		/// </value>
 		public RpcError RpcError
 		{
-			get { return this._rpcError; }
+			get
+			{
+				Contract.Ensures( Contract.Result<RpcError>() != null );
+				Contract.Assert( this._rpcError != null );
+				return this._rpcError;
+			}
 		}
 
 		private readonly string _debugInformation;
@@ -106,7 +112,7 @@ namespace MsgPack.Rpc
 		/// </value>
 		public string DebugInformation
 		{
-			get { return this._debugInformation; }
+			get { return this._debugInformation ?? String.Empty; }
 		}
 
 		/// <summary>

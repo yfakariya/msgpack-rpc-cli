@@ -46,7 +46,11 @@ namespace MsgPack.Rpc.Protocols
 		/// </value>
 		public string MethodName
 		{
-			get { return this._methodName; }
+			get
+			{
+				Contract.Ensures( Contract.Result<string>() != null );
+				return this._methodName;
+			}
 		}
 
 		/// <summary>
