@@ -101,11 +101,6 @@ namespace {0}
 			isConditionPhase = !isConditionPhase;
 		}
 		
-		if( precondition.Length > 0 )
-		{
-			precondition.Append( @"				Contract.EndContractBlock();" ).AppendLine();
-		}
-		
 		foreach( var expression in CreateConstraintExpressions( property.Postcondition, property.Type, false ) )
 		{
 			if( postcondition.Length == 0 )
@@ -114,6 +109,11 @@ namespace {0}
 			}
 			
 			postcondition.Append( @"				Contract.Ensures( " ).AppendFormat( CultureInfo.InvariantCulture, expression, "Contract.Result<" + property.Type + ">()" ).Append( " );" ).AppendLine();
+		}
+		
+		if( precondition.Length > 0 && postcondition.Length == 0 )
+		{
+			precondition.Append( @"				Contract.EndContractBlock();" ).AppendLine();
 		}
 		
 		// FIXME: Precondition, Postcondition, Remarks
@@ -134,7 +134,7 @@ namespace {0}
 				return this._{1};
 			}}
 			set
-			{{{7}
+			{{{7}{8}
 				this.VerifyIsNotFrozen();
 				var coerced = value;
 				Coerce{6}Value( ref coerced );
