@@ -57,6 +57,10 @@
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Rpc\Server\DebugTraceSourceSetting.cs" />
+    <Compile Include="Rpc\Server\Dispatch\AsyncServiceInvokerTest.cs" />
+    <Compile Include="Rpc\Server\Dispatch\InvocationHelperTest.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Rpc\Server\PreTest.cs" />
     <Compile Include="Rpc\Server\Protocols\_SetUpFixture.cs" />
     <Compile Include="Rpc\Server\_SetUpFixture.cs" />
