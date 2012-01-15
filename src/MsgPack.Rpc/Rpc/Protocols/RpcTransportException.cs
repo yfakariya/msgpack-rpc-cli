@@ -28,6 +28,9 @@ namespace MsgPack.Rpc.Protocols
 	/// <summary>
 	///		Exception thrown when network error occurred in/under transport layer.
 	/// </summary>
+#if !SILVERLIGHT
+	[Serializable]
+#endif
 	public sealed class RpcTransportException : RpcException
 	{
 		/// <summary>

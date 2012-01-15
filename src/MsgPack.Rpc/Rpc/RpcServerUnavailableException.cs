@@ -27,6 +27,9 @@ namespace MsgPack.Rpc
 	/// <summary>
 	///		Exception thrown when server is (maybe temporaly) unavailable.
 	/// </summary>
+#if !SILVERLIGHT
+	[Serializable]
+#endif
 	public sealed class RpcServerUnavailableException : RpcException
 	{
 		/// <summary>

@@ -34,6 +34,9 @@ namespace MsgPack.Rpc
 	///		The solution is to pack error information to Message-Pack map representation.
 	///		So, this class wraps the map as CLI <see cref="Exception"/> to interoperate MessagePack-RPC and CLI environment.
 	/// </remarks>
+#if !SILVERLIGHT
+	[Serializable]
+#endif
 	public class RpcFaultException : RpcException
 	{
 		/// <summary>
