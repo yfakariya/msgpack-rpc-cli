@@ -87,7 +87,8 @@ namespace MsgPack.Rpc
 				{
 					throw new ArgumentOutOfRangeException( "value", "Argument cannot be negative number." );
 				}
-				Contract.EndContractBlock();
+
+				Contract.Ensures( Contract.Result<int>() >= default( int ) );
 
 				this.VerifyIsNotFrozen();
 				var coerced = value;
@@ -128,7 +129,8 @@ namespace MsgPack.Rpc
 				{
 					throw new ArgumentOutOfRangeException( "value", "Argument cannot be negative number." );
 				}
-				Contract.EndContractBlock();
+
+				Contract.Ensures( Contract.Result<int?>() == null || Contract.Result<int?>().Value >= default( int ) );
 
 				this.VerifyIsNotFrozen();
 				var coerced = value;
@@ -169,7 +171,8 @@ namespace MsgPack.Rpc
 				{
 					throw new ArgumentOutOfRangeException( "value", String.Format( CultureInfo.CurrentCulture, "Argument must be valid enum value of '{0}' type.", typeof( ExhausionPolicy ) ) );
 				}
-				Contract.EndContractBlock();
+
+				Contract.Ensures( Enum.IsDefined( typeof( ExhausionPolicy ), Contract.Result<ExhausionPolicy>() ) );
 
 				this.VerifyIsNotFrozen();
 				var coerced = value;
@@ -210,7 +213,8 @@ namespace MsgPack.Rpc
 				{
 					throw new ArgumentOutOfRangeException( "value", "Argument must be positive number." );
 				}
-				Contract.EndContractBlock();
+
+				Contract.Ensures( Contract.Result<TimeSpan?>() == null || Contract.Result<TimeSpan?>().Value > default( TimeSpan ) );
 
 				this.VerifyIsNotFrozen();
 				var coerced = value;
@@ -251,7 +255,8 @@ namespace MsgPack.Rpc
 				{
 					throw new ArgumentOutOfRangeException( "value", "Argument must be positive number." );
 				}
-				Contract.EndContractBlock();
+
+				Contract.Ensures( Contract.Result<TimeSpan?>() == null || Contract.Result<TimeSpan?>().Value > default( TimeSpan ) );
 
 				this.VerifyIsNotFrozen();
 				var coerced = value;
