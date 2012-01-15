@@ -178,7 +178,6 @@ namespace MsgPack.Rpc.Server.Protocols
 			this._returnDataPacker = Packer.Create( this._returnDataBuffer, false );
 			this._errorDataPacker.Dispose();
 			this._errorDataPacker = Packer.Create( this._errorDataBuffer, false );
-			this.MessageId = 0;
 			base.Clear();
 		}
 	}

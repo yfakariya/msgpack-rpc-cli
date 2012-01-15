@@ -253,7 +253,6 @@ namespace MsgPack.Rpc.Server.Protocols
 		/// </summary>
 		internal void ClearDispatchContext()
 		{
-			this.MessageId = 0;
 			this.MethodName = null;
 			this.MessageType = MessageType.Response; // Invalid value.
 			if ( this._argumentsUnpacker != null )

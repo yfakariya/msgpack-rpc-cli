@@ -188,7 +188,6 @@ namespace MsgPack.Rpc.Client.Protocols
 			this._methodName = methodName;
 			this._notificationComplectionCallback = completionCallback;
 			this._requestCompletionCallback = null;
-			this.MessageId = null;
 		}
 				
 		internal void Prepare()
@@ -244,7 +243,6 @@ namespace MsgPack.Rpc.Client.Protocols
 			this._argumentsPacker = Packer.Create( this._argumentsBuffer, false );
 			this._methodName = null;
 			this._messageType = MessageType.Response; // Invalid.
-			this.MessageId = null;
 			this._requestCompletionCallback = null;
 			this._notificationComplectionCallback = null;
 			base.Clear();
