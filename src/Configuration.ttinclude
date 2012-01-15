@@ -63,6 +63,7 @@ namespace {0}
 
 		if( property.Remarks != null )
 		{
+			remarks.AppendLine();
 			remarks.Append(
 @"		/// <remarks>"
 			).AppendLine();
@@ -76,7 +77,7 @@ namespace {0}
 
 			remarks.Append(
 @"		/// </remarks>"
-			).AppendLine();
+			);
 		}
 		
 		bool isConditionPhase = true;
