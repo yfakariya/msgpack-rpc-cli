@@ -20,6 +20,7 @@
 
 using System;
 using System.Net.Sockets;
+using MsgPack.Rpc.Protocols;
 
 namespace MsgPack.Rpc.Server.Protocols
 {
@@ -27,8 +28,9 @@ namespace MsgPack.Rpc.Server.Protocols
 	{
 		public static RpcErrorMessage ToServerRpcError( this SocketError socketError )
 		{
-			// FIXME : IMPL
-			return new RpcErrorMessage( RpcError.RemoteRuntimeError, "Unexpected socket error.", new SocketException( ( int )socketError ).Message );
+			// FIXME : "Message" Localization
+			RpcError rpcError = socketError.ToRpcError();
+			return new RpcErrorMessage( rpcError, rpcError == RpcError.TransportError ? "Unexpected socket error." : rpcError.DefaultMessageInvariant, new SocketException( ( int )socketError ).Message );
 		}
 	}
 }

@@ -23,7 +23,7 @@ using System.Net.Sockets;
 
 namespace MsgPack.Rpc.Protocols
 {
-	public static class SocketErrorCodeExtension
+	internal static class SocketErrorCodeExtension
 	{
 		public static bool? IsError( this SocketError source )
 		{
@@ -48,6 +48,37 @@ namespace MsgPack.Rpc.Protocols
 				default:
 				{
 					return true;
+				}
+			}
+		}
+
+		public static RpcError ToRpcError( this SocketError source )
+		{
+			switch ( source )
+			{
+				case SocketError.ConnectionRefused:
+				{
+					// Caller bug
+					return RpcError.ConnectionRefusedError;
+				}
+				case SocketError.HostNotFound:
+				case SocketError.HostUnreachable:
+				case SocketError.NetworkUnreachable:
+				{
+					return RpcError.NetworkUnreacheableError;
+				}
+				case SocketError.MessageSize:
+				{
+					return RpcError.MessageTooLargeError;
+				}
+				case SocketError.TimedOut:
+				{
+					return RpcError.TimeoutError;
+				}
+				default:
+				{
+					// Caller bug
+					return RpcError.TransportError;
 				}
 			}
 		}
