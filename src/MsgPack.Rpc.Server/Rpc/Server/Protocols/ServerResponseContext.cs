@@ -180,5 +180,31 @@ namespace MsgPack.Rpc.Server.Protocols
 			this._errorDataPacker = Packer.Create( this._errorDataBuffer, false );
 			base.Clear();
 		}
+
+		/// <summary>
+		///		Gets the copy of the current error data.
+		/// </summary>
+		/// <returns>
+		///		The copy of the current error data.
+		/// </returns>
+		public byte[] GetErrorData()
+		{
+			Contract.Ensures( Contract.Result<byte[]>() != null );
+
+			return this._errorDataBuffer.ToArray();
+		}
+
+		/// <summary>
+		///		Gets the copy of the current return value data.
+		/// </summary>
+		/// <returns>
+		///		The copy of the current return value data.
+		/// </returns>
+		public byte[] GetReturnValueData()
+		{
+			Contract.Ensures( Contract.Result<byte[]>() != null );
+
+			return this._returnDataBuffer.ToArray();
+		}
 	}
 }
