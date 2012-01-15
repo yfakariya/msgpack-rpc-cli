@@ -33,10 +33,11 @@ namespace MsgPack.Rpc.StandardObjectPoolTracing
 		private static readonly TraceSource _source = new TraceSource( "MsgPack.Rpc.StandardObjectPoolTracing" );
 
 		private static readonly Dictionary<MessageId, TraceEventType> _typeTable = 
-			new Dictionary<MessageId, TraceEventType> ( 13 )
+			new Dictionary<MessageId, TraceEventType> ( 18 )
 			{
 				{ MessageId.InitializedWithDefaultConfiguration, TraceEventType.Verbose },
 				{ MessageId.InitializedWithConfiguration, TraceEventType.Verbose },
+				{ MessageId.FailedToAddPoolInitially, TraceEventType.Error },
 				{ MessageId.Disposed, TraceEventType.Verbose },
 				{ MessageId.Finalized, TraceEventType.Verbose },
 				{ MessageId.BorrowFromPool, TraceEventType.Verbose },
@@ -45,8 +46,12 @@ namespace MsgPack.Rpc.StandardObjectPoolTracing
 				{ MessageId.PoolIsEmpty, TraceEventType.Verbose },
 				{ MessageId.ReturnToPool, TraceEventType.Verbose },
 				{ MessageId.FailedToReturnToPool, TraceEventType.Error },
-				{ MessageId.EvictExtraItemsInduced, TraceEventType.Information },
-				{ MessageId.EvictExtraItemsPreiodic, TraceEventType.Verbose },
+				{ MessageId.EvictingExtraItemsInduced, TraceEventType.Verbose },
+				{ MessageId.EvictingExtraItemsPreiodic, TraceEventType.Verbose },
+				{ MessageId.EvictedExtraItemsInduced, TraceEventType.Information },
+				{ MessageId.EvictedExtraItemsPreiodic, TraceEventType.Verbose },
+				{ MessageId.GarbageCollectedWithoutLost, TraceEventType.Verbose },
+				{ MessageId.GarbageCollectedWithLost, TraceEventType.Information },
 				{ MessageId.FailedToRefreshEvictionTImer, TraceEventType.Error },
 			};
 
@@ -115,11 +120,15 @@ namespace MsgPack.Rpc.StandardObjectPoolTracing
 		/// </summary>
 		public const MessageId InitializedWithConfiguration = MessageId.InitializedWithConfiguration;
 		/// <summary>
-		/// 	<see cref="MessageId" /> of .Disposed (ID:3) message.
+		/// 	<see cref="MessageId" /> of .FailedToAddPoolInitially (ID:3) message.
+		/// </summary>
+		public const MessageId FailedToAddPoolInitially = MessageId.FailedToAddPoolInitially;
+		/// <summary>
+		/// 	<see cref="MessageId" /> of .Disposed (ID:81) message.
 		/// </summary>
 		public const MessageId Disposed = MessageId.Disposed;
 		/// <summary>
-		/// 	<see cref="MessageId" /> of .Finalized (ID:4) message.
+		/// 	<see cref="MessageId" /> of .Finalized (ID:82) message.
 		/// </summary>
 		public const MessageId Finalized = MessageId.Finalized;
 		/// <summary>
@@ -147,32 +156,53 @@ namespace MsgPack.Rpc.StandardObjectPoolTracing
 		/// </summary>
 		public const MessageId FailedToReturnToPool = MessageId.FailedToReturnToPool;
 		/// <summary>
-		/// 	<see cref="MessageId" /> of .EvictExtraItemsInduced (ID:301) message.
+		/// 	<see cref="MessageId" /> of .EvictingExtraItemsInduced (ID:301) message.
 		/// </summary>
-		public const MessageId EvictExtraItemsInduced = MessageId.EvictExtraItemsInduced;
+		public const MessageId EvictingExtraItemsInduced = MessageId.EvictingExtraItemsInduced;
 		/// <summary>
-		/// 	<see cref="MessageId" /> of .EvictExtraItemsPreiodic (ID:302) message.
+		/// 	<see cref="MessageId" /> of .EvictingExtraItemsPreiodic (ID:302) message.
 		/// </summary>
-		public const MessageId EvictExtraItemsPreiodic = MessageId.EvictExtraItemsPreiodic;
+		public const MessageId EvictingExtraItemsPreiodic = MessageId.EvictingExtraItemsPreiodic;
 		/// <summary>
-		/// 	<see cref="MessageId" /> of .FailedToRefreshEvictionTImer (ID:303) message.
+		/// 	<see cref="MessageId" /> of .EvictedExtraItemsInduced (ID:303) message.
+		/// </summary>
+		public const MessageId EvictedExtraItemsInduced = MessageId.EvictedExtraItemsInduced;
+		/// <summary>
+		/// 	<see cref="MessageId" /> of .EvictedExtraItemsPreiodic (ID:304) message.
+		/// </summary>
+		public const MessageId EvictedExtraItemsPreiodic = MessageId.EvictedExtraItemsPreiodic;
+		/// <summary>
+		/// 	<see cref="MessageId" /> of .GarbageCollectedWithoutLost (ID:311) message.
+		/// </summary>
+		public const MessageId GarbageCollectedWithoutLost = MessageId.GarbageCollectedWithoutLost;
+		/// <summary>
+		/// 	<see cref="MessageId" /> of .GarbageCollectedWithLost (ID:312) message.
+		/// </summary>
+		public const MessageId GarbageCollectedWithLost = MessageId.GarbageCollectedWithLost;
+		/// <summary>
+		/// 	<see cref="MessageId" /> of .FailedToRefreshEvictionTImer (ID:391) message.
 		/// </summary>
 		public const MessageId FailedToRefreshEvictionTImer = MessageId.FailedToRefreshEvictionTImer;
 		public enum MessageId
 		{
 			InitializedWithDefaultConfiguration = 1,
 			InitializedWithConfiguration = 2,
-			Disposed = 3,
-			Finalized = 4,
+			FailedToAddPoolInitially = 3,
+			Disposed = 81,
+			Finalized = 82,
 			BorrowFromPool = 101,
 			ExpandPool = 102,
 			FailedToExpandPool = 103,
 			PoolIsEmpty = 104,
 			ReturnToPool = 201,
 			FailedToReturnToPool = 202,
-			EvictExtraItemsInduced = 301,
-			EvictExtraItemsPreiodic = 302,
-			FailedToRefreshEvictionTImer = 303,
+			EvictingExtraItemsInduced = 301,
+			EvictingExtraItemsPreiodic = 302,
+			EvictedExtraItemsInduced = 303,
+			EvictedExtraItemsPreiodic = 304,
+			GarbageCollectedWithoutLost = 311,
+			GarbageCollectedWithLost = 312,
+			FailedToRefreshEvictionTImer = 391,
 		}
 	}
 }

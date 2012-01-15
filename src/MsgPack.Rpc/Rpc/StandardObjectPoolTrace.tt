@@ -31,16 +31,21 @@
 <#= Generate( "MsgPack.Rpc.StandardObjectPoolTracing", "StandardObjectPoolTrace",
 	new TraceMessage( "InitializedWithDefaultConfiguration", TraceEventType.Verbose, 1 ),
 	new TraceMessage( "InitializedWithConfiguration", TraceEventType.Verbose, 2 ),
-	new TraceMessage( "Disposed", TraceEventType.Verbose, 3 ),
-	new TraceMessage( "Finalized", TraceEventType.Verbose, 4 ),
+	new TraceMessage( "FailedToAddPoolInitially", TraceEventType.Error, 3 ),
+	new TraceMessage( "Disposed", TraceEventType.Verbose, 81 ),
+	new TraceMessage( "Finalized", TraceEventType.Verbose, 82 ),
 	new TraceMessage( "BorrowFromPool", TraceEventType.Verbose, 101 ),
 	new TraceMessage( "ExpandPool", TraceEventType.Verbose, 102 ),
 	new TraceMessage( "FailedToExpandPool", TraceEventType.Verbose, 103 ),
 	new TraceMessage( "PoolIsEmpty", TraceEventType.Verbose, 104 ),
 	new TraceMessage( "ReturnToPool", TraceEventType.Verbose, 201 ),
 	new TraceMessage( "FailedToReturnToPool", TraceEventType.Error, 202 ),
-	new TraceMessage( "EvictExtraItemsInduced", TraceEventType.Information, 301 ),
-	new TraceMessage( "EvictExtraItemsPreiodic", TraceEventType.Verbose, 302 ),
-	new TraceMessage( "FailedToRefreshEvictionTImer", TraceEventType.Error, 303 )
+	new TraceMessage( "EvictingExtraItemsInduced", TraceEventType.Verbose, 301 ),
+	new TraceMessage( "EvictingExtraItemsPreiodic", TraceEventType.Verbose, 302 ),
+	new TraceMessage( "EvictedExtraItemsInduced", TraceEventType.Information, 303 ),
+	new TraceMessage( "EvictedExtraItemsPreiodic", TraceEventType.Verbose, 304 ),
+	new TraceMessage( "GarbageCollectedWithoutLost", TraceEventType.Verbose, 311 ),
+	new TraceMessage( "GarbageCollectedWithLost", TraceEventType.Information, 312 ),
+	new TraceMessage( "FailedToRefreshEvictionTImer", TraceEventType.Error, 391 )
 )
 #>
