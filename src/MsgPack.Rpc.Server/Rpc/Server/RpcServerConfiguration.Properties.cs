@@ -90,7 +90,8 @@ namespace MsgPack.Rpc.Server
 				{
 					throw new ArgumentOutOfRangeException( "value", "Argument cannot be negative number." );
 				}
-				Contract.EndContractBlock();
+
+				Contract.Ensures( Contract.Result<int>() >= default( int ) );
 
 				this.VerifyIsNotFrozen();
 				var coerced = value;
@@ -131,7 +132,8 @@ namespace MsgPack.Rpc.Server
 				{
 					throw new ArgumentOutOfRangeException( "value", "Argument must be positive number." );
 				}
-				Contract.EndContractBlock();
+
+				Contract.Ensures( Contract.Result<int>() > default( int ) );
 
 				this.VerifyIsNotFrozen();
 				var coerced = value;
@@ -172,7 +174,8 @@ namespace MsgPack.Rpc.Server
 				{
 					throw new ArgumentOutOfRangeException( "value", "Argument cannot be negative number." );
 				}
-				Contract.EndContractBlock();
+
+				Contract.Ensures( Contract.Result<int>() >= default( int ) );
 
 				this.VerifyIsNotFrozen();
 				var coerced = value;
@@ -213,7 +216,8 @@ namespace MsgPack.Rpc.Server
 				{
 					throw new ArgumentOutOfRangeException( "value", "Argument must be positive number." );
 				}
-				Contract.EndContractBlock();
+
+				Contract.Ensures( Contract.Result<int>() > default( int ) );
 
 				this.VerifyIsNotFrozen();
 				var coerced = value;
@@ -254,7 +258,8 @@ namespace MsgPack.Rpc.Server
 				{
 					throw new ArgumentNullException( "value" );
 				}
-				Contract.EndContractBlock();
+
+				Contract.Ensures( Contract.Result<EndPoint>() != null );
 
 				this.VerifyIsNotFrozen();
 				var coerced = value;
@@ -295,7 +300,8 @@ namespace MsgPack.Rpc.Server
 				{
 					throw new ArgumentOutOfRangeException( "value", "Argument cannot be negative number." );
 				}
-				Contract.EndContractBlock();
+
+				Contract.Ensures( Contract.Result<int>() >= default( int ) );
 
 				this.VerifyIsNotFrozen();
 				var coerced = value;
@@ -336,7 +342,8 @@ namespace MsgPack.Rpc.Server
 				{
 					throw new ArgumentOutOfRangeException( "value", "Argument must be positive number." );
 				}
-				Contract.EndContractBlock();
+
+				Contract.Ensures( Contract.Result<TimeSpan?>() == null || Contract.Result<TimeSpan?>().Value > default( TimeSpan ) );
 
 				this.VerifyIsNotFrozen();
 				var coerced = value;
@@ -377,7 +384,8 @@ namespace MsgPack.Rpc.Server
 				{
 					throw new ArgumentOutOfRangeException( "value", "Argument cannot be negative number." );
 				}
-				Contract.EndContractBlock();
+
+				Contract.Ensures( Contract.Result<TimeSpan?>() == null || Contract.Result<TimeSpan?>().Value >= default( TimeSpan ) );
 
 				this.VerifyIsNotFrozen();
 				var coerced = value;
@@ -418,7 +426,8 @@ namespace MsgPack.Rpc.Server
 				{
 					throw new ArgumentNullException( "value" );
 				}
-				Contract.EndContractBlock();
+
+				Contract.Ensures( Contract.Result<Func<RpcServer, ServerTransportManager>>() != null );
 
 				this.VerifyIsNotFrozen();
 				var coerced = value;
@@ -459,7 +468,8 @@ namespace MsgPack.Rpc.Server
 				{
 					throw new ArgumentNullException( "value" );
 				}
-				Contract.EndContractBlock();
+
+				Contract.Ensures( Contract.Result<Func<RpcServer, Dispatcher>>() != null );
 
 				this.VerifyIsNotFrozen();
 				var coerced = value;
@@ -500,7 +510,8 @@ namespace MsgPack.Rpc.Server
 				{
 					throw new ArgumentNullException( "value" );
 				}
-				Contract.EndContractBlock();
+
+				Contract.Ensures( Contract.Result<Func<RpcServerConfiguration, ServiceTypeLocator>>() != null );
 
 				this.VerifyIsNotFrozen();
 				var coerced = value;
@@ -541,7 +552,8 @@ namespace MsgPack.Rpc.Server
 				{
 					throw new ArgumentNullException( "value" );
 				}
-				Contract.EndContractBlock();
+
+				Contract.Ensures( Contract.Result<Func<Func<ServerRequestContext>, ObjectPoolConfiguration, ObjectPool<ServerRequestContext>>>() != null );
 
 				this.VerifyIsNotFrozen();
 				var coerced = value;
@@ -582,7 +594,8 @@ namespace MsgPack.Rpc.Server
 				{
 					throw new ArgumentNullException( "value" );
 				}
-				Contract.EndContractBlock();
+
+				Contract.Ensures( Contract.Result<Func<Func<ServerResponseContext>, ObjectPoolConfiguration, ObjectPool<ServerResponseContext>>>() != null );
 
 				this.VerifyIsNotFrozen();
 				var coerced = value;
@@ -623,7 +636,8 @@ namespace MsgPack.Rpc.Server
 				{
 					throw new ArgumentNullException( "value" );
 				}
-				Contract.EndContractBlock();
+
+				Contract.Ensures( Contract.Result<Func<Func<ListeningContext>, ObjectPoolConfiguration, ObjectPool<ListeningContext>>>() != null );
 
 				this.VerifyIsNotFrozen();
 				var coerced = value;
@@ -664,7 +678,8 @@ namespace MsgPack.Rpc.Server
 				{
 					throw new ArgumentNullException( "value" );
 				}
-				Contract.EndContractBlock();
+
+				Contract.Ensures( Contract.Result<Func<Func<TcpServerTransport>, ObjectPoolConfiguration, ObjectPool<TcpServerTransport>>>() != null );
 
 				this.VerifyIsNotFrozen();
 				var coerced = value;
@@ -705,7 +720,8 @@ namespace MsgPack.Rpc.Server
 				{
 					throw new ArgumentNullException( "value" );
 				}
-				Contract.EndContractBlock();
+
+				Contract.Ensures( Contract.Result<Func<Func<UdpServerTransport>, ObjectPoolConfiguration, ObjectPool<UdpServerTransport>>>() != null );
 
 				this.VerifyIsNotFrozen();
 				var coerced = value;
