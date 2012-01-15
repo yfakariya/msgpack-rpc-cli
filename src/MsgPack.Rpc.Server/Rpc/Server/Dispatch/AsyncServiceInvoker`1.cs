@@ -20,12 +20,12 @@
 
 using System;
 using System.Diagnostics;
+using System.Diagnostics.Contracts;
 using System.Reflection;
 using System.Threading.Tasks;
 using MsgPack.Rpc.Protocols;
-using MsgPack.Serialization;
 using MsgPack.Rpc.Server.Protocols;
-using System.Diagnostics.Contracts;
+using MsgPack.Serialization;
 
 namespace MsgPack.Rpc.Server.Dispatch
 {
@@ -39,17 +39,16 @@ namespace MsgPack.Rpc.Server.Dispatch
 	[ContractClass( typeof( AsyncServiceInvokerContract<> ) )]
 	internal abstract class AsyncServiceInvoker<T> : IAsyncServiceInvoker
 	{
-		internal static readonly MethodInfo InvokeCoreMethod =
-		typeof( AsyncServiceInvoker<T> ).GetMethod( "InvokeCore", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance );
+		private readonly RpcServerConfiguration _configuration;
 
 		private readonly MessagePackSerializer<T> _returnValueSerializer;
 		private readonly string _operationId;
 
 		/// <summary>
-		/// Gets the ID of the operation.
+		///		Gets the ID of the operation.
 		/// </summary>
 		/// <value>
-		/// The ID of the operation.
+		///		The ID of the operation.
 		/// </value>
 		public string OperationId
 		{
@@ -109,7 +108,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 			this._operationId = serviceDescription.ToString() + "::" + targetOperation.Name;
 			this._returnValueSerializer = context.GetSerializer<T>();
 		}
-		
+
 		public Task InvokeAsync( ServerRequestContext requestContext, ServerResponseContext responseContext )
 		{
 			if ( requestContext == null )
