@@ -25,7 +25,7 @@ using MsgPack.Rpc.Server.Dispatch;
 using MsgPack.Rpc.Server.Protocols;
 using MsgPack.Serialization;
 
-namespace MsgPack.Rpc.Server
+namespace MsgPack.Rpc.Server.Dispatch
 {
 	public abstract class Dispatcher
 	{

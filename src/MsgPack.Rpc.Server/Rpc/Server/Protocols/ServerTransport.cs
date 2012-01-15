@@ -25,6 +25,7 @@ using System.Linq;
 using System.Net.Sockets;
 using System.Threading;
 using MsgPack.Rpc.Protocols;
+using MsgPack.Rpc.Server.Dispatch;
 
 namespace MsgPack.Rpc.Server.Protocols
 {

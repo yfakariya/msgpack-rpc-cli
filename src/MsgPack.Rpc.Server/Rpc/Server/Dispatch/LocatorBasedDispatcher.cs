@@ -24,7 +24,7 @@ using System.Threading.Tasks;
 using MsgPack.Rpc.Server.Dispatch;
 using MsgPack.Rpc.Server.Protocols;
 
-namespace MsgPack.Rpc.Server
+namespace MsgPack.Rpc.Server.Dispatch
 {
 	public sealed class LocatorBasedDispatcher : Dispatcher
 	{
