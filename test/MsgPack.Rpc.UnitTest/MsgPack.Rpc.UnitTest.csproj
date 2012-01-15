@@ -58,7 +58,28 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Rpc\ArraySegmentExtensionTests.cs" />
     <Compile Include="Rpc\ByteArraySegmentStreamTest.cs" />
+    <Compile Include="Rpc\DisposableExtensions.cs" />
+    <Compile Include="Rpc\ExceptionDispatchInfoTest.cs" />
+    <Compile Include="Rpc\ExceptionExtensionsTest.cs" />
+    <Compile Include="Rpc\ObjectPoolCorruptedExceptionTest.cs" />
+    <Compile Include="Rpc\ObjectPoolEmptyExceptionTest.cs" />
+    <Compile Include="Rpc\PooledObject.cs" />
+    <Compile Include="Rpc\Protocols\MessageContextTest.cs" />
+    <Compile Include="Rpc\Protocols\SocketErrorCodeExtensionTest.cs" />
+    <Compile Include="Rpc\Protocols\_SetUpFixture.cs" />
+    <Compile Include="Rpc\RpcArgumentExceptionTest.cs" />
+    <Compile Include="Rpc\RpcExceptionTest.cs" />
+    <Compile Include="Rpc\RpcExceptionTestBase`1.cs" />
+    <Compile Include="Rpc\RpcFaultExceptionTest.cs" />
+    <Compile Include="Rpc\Protocols\RpcMessageTooLongExceptionTest.cs" />
+    <Compile Include="Rpc\Protocols\RpcMethodInvocationExceptionTest.cs" />
+    <Compile Include="Rpc\RpcMissingMethodExceptionTest.cs" />
+    <Compile Include="Rpc\Protocols\RpcProtocolExceptionTest.cs" />
+    <Compile Include="Rpc\RpcServerUnavailableExceptionTest.cs" />
+    <Compile Include="Rpc\RpcTimeoutExceptionTest.cs" />
+    <Compile Include="Rpc\Protocols\RpcTransportExceptionTest.cs" />
     <Compile Include="Rpc\StandardObjectPoolTest.cs" />
+    <Compile Include="Rpc\UnexpcetedRpcExceptionTest.cs" />
     <Compile Include="Rpc\_SetUpFixture.cs" />
   </ItemGroup>
   <ItemGroup>

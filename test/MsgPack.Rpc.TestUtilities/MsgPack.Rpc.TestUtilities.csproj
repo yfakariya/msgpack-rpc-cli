@@ -40,6 +40,9 @@
     <Reference Include="MsgPack">
       <HintPath>..\..\lib\MsgPack.dll</HintPath>
     </Reference>
+    <Reference Include="nunit.framework">
+      <HintPath>..\..\lib\nunit.framework.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -58,6 +61,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Rpc\Client\Protocols\InProcClientTransport.cs" />
     <Compile Include="Rpc\Client\Protocols\InProcClientTransportManager.cs" />
+    <Compile Include="Rpc\GenericExceptionTester.cs" />
     <Compile Include="Rpc\Server\CallbackServer.cs" />
     <Compile Include="Rpc\Server\CallbackServerErrorEventArgs.cs" />
     <Compile Include="Rpc\Server\Dispatch\CallbackDispatcher.cs" />

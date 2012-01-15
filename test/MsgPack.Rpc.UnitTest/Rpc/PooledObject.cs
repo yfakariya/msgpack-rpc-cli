@@ -1,4 +1,4 @@
-﻿#region -- License Terms --
+#region -- License Terms --
 //
 // MessagePack for CLI
 //
@@ -19,19 +19,13 @@
 #endregion -- License Terms --
 
 using System;
-using System.Reflection;
-using System.Resources;
-using System.Runtime.InteropServices;
 
-[assembly: AssemblyTitle( "MessagePack for CLI(.NET/Mono)" )]
-[assembly: AssemblyDescription( "MessagePack for CLI(.NET/Mono) RPC core library unit tests." )]
-[assembly: AssemblyConfiguration( "Develop" )]
-[assembly: AssemblyProduct( "MessagePack" )]
-[assembly: AssemblyCopyright( "Copyright © FUJIWARA, Yusuke 2010" )]
+namespace MsgPack.Rpc
+{
+	internal sealed class PooledObject : IDisposable
+	{
+		public PooledObject() { }
 
-[assembly: ComVisible( false )]
-[assembly: CLSCompliant( true )]
-[assembly: NeutralResourcesLanguage( "en-US" )]
-[assembly: AssemblyVersion( "1.0.0.0" )]
-[assembly: AssemblyFileVersion( "0.1.0.0" )]
-[assembly: AssemblyInformationalVersion( "0.1" )]
+		public void Dispose() { }
+	}
+}

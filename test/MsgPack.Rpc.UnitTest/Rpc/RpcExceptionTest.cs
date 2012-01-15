@@ -19,19 +19,23 @@
 #endregion -- License Terms --
 
 using System;
-using System.Reflection;
-using System.Resources;
-using System.Runtime.InteropServices;
+using NUnit.Framework;
 
-[assembly: AssemblyTitle( "MessagePack for CLI(.NET/Mono)" )]
-[assembly: AssemblyDescription( "MessagePack for CLI(.NET/Mono) RPC core library unit tests." )]
-[assembly: AssemblyConfiguration( "Develop" )]
-[assembly: AssemblyProduct( "MessagePack" )]
-[assembly: AssemblyCopyright( "Copyright © FUJIWARA, Yusuke 2010" )]
+namespace MsgPack.Rpc
+{
+	[TestFixture]
+	public class RpcExceptionTest : RpcExceptionTestBase<RpcException>
+	{
+		protected override RpcError DefaultError
+		{
+			get { return RpcError.RemoteRuntimeError; }
+		}
 
-[assembly: ComVisible( false )]
-[assembly: CLSCompliant( true )]
-[assembly: NeutralResourcesLanguage( "en-US" )]
-[assembly: AssemblyVersion( "1.0.0.0" )]
-[assembly: AssemblyFileVersion( "0.1.0.0" )]
-[assembly: AssemblyInformationalVersion( "0.1" )]
+		protected override System.Collections.Generic.IDictionary<string, object> GetTestArguments()
+		{
+			var result = base.GetTestArguments();
+			SetRpcError( result, RpcError.CustomError( "Test.ApplicationError", 1 ) ); // Dummy random
+			return result;
+		}
+	}
+}

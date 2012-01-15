@@ -1,4 +1,4 @@
-﻿#region -- License Terms --
+#region -- License Terms --
 //
 // MessagePack for CLI
 //
@@ -19,19 +19,30 @@
 #endregion -- License Terms --
 
 using System;
-using System.Reflection;
-using System.Resources;
-using System.Runtime.InteropServices;
+using System.Collections.Generic;
 
-[assembly: AssemblyTitle( "MessagePack for CLI(.NET/Mono)" )]
-[assembly: AssemblyDescription( "MessagePack for CLI(.NET/Mono) RPC core library unit tests." )]
-[assembly: AssemblyConfiguration( "Develop" )]
-[assembly: AssemblyProduct( "MessagePack" )]
-[assembly: AssemblyCopyright( "Copyright © FUJIWARA, Yusuke 2010" )]
+namespace MsgPack.Rpc
+{
+	internal static class DisposableExtensions
+	{
+		public static void DisposeAll( this IEnumerable<IDisposable> source )
+		{
+			if ( source == null )
+			{
+				return;
+			}
 
-[assembly: ComVisible( false )]
-[assembly: CLSCompliant( true )]
-[assembly: NeutralResourcesLanguage( "en-US" )]
-[assembly: AssemblyVersion( "1.0.0.0" )]
-[assembly: AssemblyFileVersion( "0.1.0.0" )]
-[assembly: AssemblyInformationalVersion( "0.1" )]
+			foreach ( var target in source )
+			{
+				if ( target != null )
+				{
+					try
+					{
+						target.Dispose();
+					}
+					catch { }
+				}
+			}
+		}
+	}
+}

@@ -20,10 +20,8 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using NUnit.Framework;
 using System.Threading;
+using NUnit.Framework;
 
 namespace MsgPack.Rpc
 {
@@ -34,7 +32,7 @@ namespace MsgPack.Rpc
 		public void TestBorrow_CanUpToMaximum()
 		{
 			const int maximum = 3;
-			var target =
+			using ( var target =
 				new StandardObjectPool<PooledObject>(
 					() => new PooledObject(),
 					new ObjectPoolConfiguration()
@@ -45,19 +43,20 @@ namespace MsgPack.Rpc
 						MaximumPooled = maximum,
 						MinimumReserved = 1
 					}
-				);
-
-			var result = new List<PooledObject>();
-			try
+				) )
 			{
-				for ( int i = 0; i < maximum; i++ )
+				var result = new List<PooledObject>();
+				try
 				{
-					result.Add( target.Borrow() );
+					for ( int i = 0; i < maximum; i++ )
+					{
+						result.Add( target.Borrow() );
+					}
 				}
-			}
-			finally
-			{
-				result.DisposeAll();
+				finally
+				{
+					result.DisposeAll();
+				}
 			}
 		}
 
@@ -66,7 +65,7 @@ namespace MsgPack.Rpc
 		public void TestBorrow_BlockUntilAvailable_Exceeds_Timeout()
 		{
 			const int maximum = 1;
-			var target =
+			using ( var target =
 				new StandardObjectPool<PooledObject>(
 					() => new PooledObject(),
 					new ObjectPoolConfiguration()
@@ -77,19 +76,20 @@ namespace MsgPack.Rpc
 						MaximumPooled = maximum,
 						MinimumReserved = 1
 					}
-				);
-
-			var result = new List<PooledObject>();
-			try
+				) )
 			{
-				for ( int i = 0; i < maximum + 1; i++ )
+				var result = new List<PooledObject>();
+				try
 				{
-					result.Add( target.Borrow() );
+					for ( int i = 0; i < maximum + 1; i++ )
+					{
+						result.Add( target.Borrow() );
+					}
 				}
-			}
-			finally
-			{
-				result.DisposeAll();
+				finally
+				{
+					result.DisposeAll();
+				}
 			}
 		}
 
@@ -98,8 +98,8 @@ namespace MsgPack.Rpc
 		[Timeout( 500 )]
 		public void TestBorrow_ThrowException_Exceeds_ThrowException()
 		{
-			const int maximum = 1;
-			var target =
+			const int maximum = 9;
+			using ( var target =
 				new StandardObjectPool<PooledObject>(
 					() => new PooledObject(),
 					new ObjectPoolConfiguration()
@@ -110,39 +110,188 @@ namespace MsgPack.Rpc
 						MaximumPooled = maximum,
 						MinimumReserved = 1
 					}
-				);
-
-			var result = new List<PooledObject>();
-			try
+				) )
 			{
-				for ( int i = 0; i < maximum + 1; i++ )
+				var result = new List<PooledObject>();
+				try
 				{
-					result.Add( target.Borrow() );
+					for ( int i = 0; i < maximum + 1; i++ )
+					{
+						result.Add( target.Borrow() );
+					}
+				}
+				finally
+				{
+					result.DisposeAll();
 				}
 			}
-			finally
+		}
+
+		[Test]
+		public void TestEviction_Induced_ReducedToHalf()
+		{
+			const int maximum = 8;
+			using ( var target =
+				new StandardObjectPool<PooledObject>(
+					() => new PooledObject(),
+					new ObjectPoolConfiguration()
+					{
+						Name = "Pool",
+						BorrowTimeout = null,
+						EvitionInterval = TimeSpan.FromHours( 1 ),
+						ExhausionPolicy = ExhausionPolicy.ThrowException,
+						MaximumPooled = maximum,
+						MinimumReserved = 1
+					}
+				) )
 			{
-				result.DisposeAll();
+				var items = new List<PooledObject>();
+				try
+				{
+					for ( int i = 0; i < maximum; i++ )
+					{
+						items.Add( target.Borrow() );
+					}
+
+					foreach ( var item in items )
+					{
+						target.Return( item );
+					}
+
+					Assert.That( target.LeasedCount, Is.EqualTo( maximum ) );
+					target.EvictExtraItems();
+					Assert.That( target.LeasedCount, Is.EqualTo( maximum / 2 ) );
+					target.EvictExtraItems();
+					Assert.That( target.LeasedCount, Is.EqualTo( maximum / 4 ) );
+					target.EvictExtraItems();
+					Assert.That( target.LeasedCount, Is.EqualTo( maximum / 8 ) );
+					target.EvictExtraItems();
+					Assert.That( target.LeasedCount, Is.EqualTo( maximum / 8 ) );
+				}
+				finally
+				{
+					items.DisposeAll();
+				}
 			}
 		}
 
 		[Test]
-		public void TestLease_LeasedObjectDisposed_ActualValueReturnedGracefully()
+		public void TestEviction_Timer_ReducedAtLeast()
 		{
-			//using( var target = 
-			//    new StandardObjectPool<ExternalResource>(
-			//    ))
+			const int maximum = 2;
+			using ( var target =
+				new StandardObjectPool<PooledObject>(
+					() => new PooledObject(),
+					new ObjectPoolConfiguration()
+					{
+						Name = "Pool",
+						BorrowTimeout = null,
+						EvitionInterval = TimeSpan.FromMilliseconds( 500 ),
+						ExhausionPolicy = ExhausionPolicy.ThrowException,
+						MaximumPooled = maximum,
+						MinimumReserved = 1
+					}
+				) )
+			{
+				var items = new List<PooledObject>();
+				try
+				{
+					for ( int i = 0; i < maximum; i++ )
+					{
+						items.Add( target.Borrow() );
+					}
+
+					foreach ( var item in items )
+					{
+						target.Return( item );
+					}
+
+					Assert.That( target.LeasedCount, Is.EqualTo( maximum ) );
+
+					Thread.Sleep( TimeSpan.FromMilliseconds( 1000 ) );
+
+					Assert.That( target.LeasedCount, Is.LessThan( maximum ) );
+				}
+				finally
+				{
+					items.DisposeAll();
+				}
+			}
 		}
 
 		[Test]
-		public void TestLease_LeasedObjectFinalized_ActualValueReturnedGracefully()
+		public void TestEviction_MinimumIsZero_PooledIsZero_NoActions()
 		{
-			//var 
-		}
-		// FIXME:Eviction
+			const int minimum = 0;
+			const int maximum = 2;
+			using ( var target =
+				new StandardObjectPool<PooledObject>(
+					() => new PooledObject(),
+					new ObjectPoolConfiguration()
+					{
+						BorrowTimeout = null,
+						EvitionInterval = TimeSpan.FromMilliseconds( 500 ),
+						ExhausionPolicy = ExhausionPolicy.ThrowException,
+						MaximumPooled = maximum,
+						MinimumReserved = minimum
+					}
+				) )
+			{
+				var items = new List<PooledObject>();
+				try
+				{
+					for ( int i = 0; i < maximum; i++ )
+					{
+						items.Add( target.Borrow() );
+					}
 
-		// FIXME: Empty -> Eviction
-		// FIXME: Empty -> Refill to minimum.
+					Assert.That( target.PooledCount, Is.EqualTo( 0 ) );
+					target.EvictExtraItems();
+					Assert.That( target.PooledCount, Is.EqualTo( 0 ) );
+				}
+				finally
+				{
+					items.DisposeAll();
+				} 
+			}
+		}
+
+		[Test]
+		public void TestEviction_MinimumIsNotZero_PooledIsZero_Refilled()
+		{
+			const int minimum = 1;
+			const int maximum = 2;
+			using ( var target =
+				new StandardObjectPool<PooledObject>(
+					() => new PooledObject(),
+					new ObjectPoolConfiguration()
+					{
+						BorrowTimeout = null,
+						EvitionInterval = TimeSpan.FromMilliseconds( 500 ),
+						ExhausionPolicy = ExhausionPolicy.ThrowException,
+						MaximumPooled = maximum,
+						MinimumReserved = minimum
+					}
+				) )
+			{
+				var items = new List<PooledObject>();
+				try
+				{
+					for ( int i = 0; i < maximum; i++ )
+					{
+						items.Add( target.Borrow() );
+					}
+
+					Assert.That( target.PooledCount, Is.EqualTo( 0 ) );
+					target.EvictExtraItems();
+					Assert.That( target.PooledCount, Is.EqualTo( 0 ) );
+				}
+				finally
+				{
+					items.DisposeAll();
+				}
+			}
+		}
 
 		private sealed class ExternalResource : IDisposable
 		{
@@ -199,35 +348,5 @@ namespace MsgPack.Rpc
 				Interlocked.Exchange( ref this._isDisposed, 1 );
 			}
 		}
-	}
-
-	internal static class DisposableExtensions
-	{
-		public static void DisposeAll( this IEnumerable<IDisposable> source )
-		{
-			if ( source == null )
-			{
-				return;
-			}
-
-			foreach ( var target in source )
-			{
-				if ( target != null )
-				{
-					try
-					{
-						target.Dispose();
-					}
-					catch { }
-				}
-			}
-		}
-	}
-
-	internal sealed class PooledObject : IDisposable
-	{
-		public PooledObject() { }
-
-		public void Dispose() { }
 	}
 }
