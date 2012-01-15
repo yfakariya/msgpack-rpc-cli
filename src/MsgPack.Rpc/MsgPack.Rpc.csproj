@@ -65,6 +65,7 @@
     <Compile Include="Rpc\ExhausionPolicy.cs" />
     <Compile Include="Rpc\FreezableObject.cs" />
     <Compile Include="Rpc\IFreezable.cs" />
+    <Compile Include="Rpc\IStackTracePreservable.cs" />
     <Compile Include="Rpc\MessagePackRpcMethodAttribute.cs" />
     <Compile Include="Rpc\MessagePackRpcServiceContractAttribute.cs" />
     <Compile Include="Rpc\NetworkEnvironment.cs" />
@@ -80,6 +81,7 @@
     <Compile Include="Rpc\OnTheFlyObjectPool`1.cs" />
     <Compile Include="Rpc\Protocols\IContextBoundableTransport.cs" />
     <Compile Include="Rpc\Protocols\MessageContext.cs" />
+    <Compile Include="Rpc\RpcException.PreserveStackTrace.cs" />
     <Compile Include="Rpc\RpcIdentifierUtility.cs" />
     <Compile Include="Rpc\MessagePackObjectExtension.cs" />
     <Compile Include="Rpc\Protocols\MessageType.cs">

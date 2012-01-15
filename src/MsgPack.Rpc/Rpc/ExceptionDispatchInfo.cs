@@ -50,6 +50,12 @@ namespace MsgPack.Rpc
 			Contract.EndContractBlock();
 
 			this._source = source;
+			var preservable = source as IStackTracePreservable;
+			if ( preservable != null )
+			{
+				preservable.PreserveStackTrace();
+			}
+		}
 
 		[ContractInvariantMethod]
 		private void ObjectInvariant()
@@ -59,7 +65,14 @@ namespace MsgPack.Rpc
 
 		public void Throw()
 		{
-			throw CreateMatroshika( this._source );
+			if ( this._source is IStackTracePreservable )
+			{
+				throw this._source;
+			}
+			else
+			{
+				throw CreateMatroshika( this._source );
+			}
 		}
 
 		internal static Exception CreateMatroshika( Exception inner )
