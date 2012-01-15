@@ -117,20 +117,6 @@ namespace MsgPack.Rpc
 			: base( RpcError.NoMethodError, methodName, message ?? RpcError.NoMethodError.DefaultMessage, debugInformation, inner ) { }
 
 		/// <summary>
-		///		Initialize new instance with serialized data.
-		/// </summary>
-		/// <param name="info"><see cref="SerializationInfo"/> which has serialized data.</param>
-		/// <param name="context"><see cref="StreamingContext"/> which has context information about transport source or destination.</param>
-		/// <exception cref="ArgumentNullException">
-		///		<paramref name="info"/> is null.
-		/// </exception>
-		/// <exception cref="SerializationException">
-		///		Cannot deserialize instance from <paramref name="info"/>.
-		/// </exception>
-		private RpcMissingMethodException( SerializationInfo info, StreamingContext context )
-			: base( info, context ) { }
-
-		/// <summary>
 		///		Initializes a new instance of the <see cref="RpcMissingMethodException"/> class with the unpacked data.
 		/// </summary>
 		/// <param name="unpackedException">

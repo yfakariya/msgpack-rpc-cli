@@ -34,10 +34,8 @@ namespace MsgPack.Rpc
 #endif
 	public sealed class UnexpcetedRpcException : RpcException
 	{
-		private const string _errorFieldKey = "UnexpectedError";
-		private const string _errorDetailFieldKey = "UnexpectedErrorDetail";
-
-		private readonly MessagePackObject _error;
+		// NOT readonly for safe deserialization
+		private MessagePackObject _error;
 
 		/// <summary>
 		///		Get the value of error field of response.
@@ -51,7 +49,8 @@ namespace MsgPack.Rpc
 			get { return this._error; }
 		}
 
-		private readonly MessagePackObject _errorDetail;
+		// NOT readonly for safe deserialization
+		private MessagePackObject _errorDetail;
 
 		/// <summary>
 		///		Get the value of return field of response in error.
@@ -83,32 +82,41 @@ namespace MsgPack.Rpc
 			this._errorDetail = errorDetail;
 		}
 
+#if !SILVERLIGHT
 		/// <summary>
-		///		Restore state from specified info.
+		///		When overridden on the derived class, handles <see cref="E:Exception.SerializeObjectState"/> event to add type-specified serialization state.
 		/// </summary>
-		/// <param name="info"><see cref="SerializationInfo"/>.</param>
-		/// <param name="context"><see cref="StreamingContext"/>.</param>
-		private UnexpcetedRpcException( SerializationInfo info, StreamingContext context )
-			: base( info, context )
+		/// <param name="sender">The <see cref="Exception"/> instance itself.</param>
+		/// <param name="e">
+		///		The <see cref="System.Runtime.Serialization.SafeSerializationEventArgs"/> instance containing the event data.
+		///		The overriding method adds its internal state to this object via <see cref="M:SafeSerializationEventArgs.AddSerializedState"/>.
+		///	</param>
+		/// <seealso cref="ISafeSerializationData"/>
+		protected override void OnSerializeObjectState( object sender, SafeSerializationEventArgs e )
 		{
-			this._error = ( MessagePackObject )info.GetValue( _errorFieldKey, typeof( MessagePackObject ) );
-			this._errorDetail = ( MessagePackObject )info.GetValue( _errorDetailFieldKey, typeof( MessagePackObject ) );
+			base.OnSerializeObjectState( sender, e );
+			e.AddSerializedState(
+				new SerializedState()
+				{
+					Error = this._error,
+					ErrorDetail = this._errorDetail
+				}
+			);
 		}
 
-		/// <summary>
-		///		Get serialization data and put into <paramref name="info"/>.
-		/// </summary>
-		/// <param name="info"><see cref="SerializationInfo"/>.</param>
-		/// <param name="context"><see cref="StreamingContext"/>.</param>
-		/// <exception cref="ArgumentNullException">
-		///		<paramref name="info"/> is null.
-		/// </exception>
-		public sealed override void GetObjectData( SerializationInfo info, StreamingContext context )
+		[Serializable]
+		private sealed class SerializedState : ISafeSerializationData
 		{
-			base.GetObjectData( info, context );
+			public MessagePackObject Error;
+			public MessagePackObject ErrorDetail;
 
-			info.AddValue( _errorFieldKey, this.Error, typeof( MessagePackObject ) );
-			info.AddValue( _errorDetailFieldKey, this.ErrorDetail, typeof( MessagePackObject ) );
+			public void CompleteDeserialization( object deserialized )
+			{
+				var enclosing = deserialized as UnexpcetedRpcException;
+				enclosing._error = this.Error;
+				enclosing._errorDetail = this.ErrorDetail;
+			}
 		}
+#endif
 	}
 }

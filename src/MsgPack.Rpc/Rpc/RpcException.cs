@@ -21,6 +21,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.Globalization;
 using System.Runtime.Serialization;
 
 namespace MsgPack.Rpc
@@ -78,12 +79,12 @@ namespace MsgPack.Rpc
 #endif
 	public partial class RpcException : Exception
 	{
-		/// <summary>
-		///		"ErrorCode" of utf-8.
-		/// </summary>
-		private static readonly MessagePackObject _errorCodeKeyUtf8 = MessagePackConvert.EncodeString( "ErrorCode" );
+		private const string _debugInformationKey = "DebugInformation";
+		private const string _remoteExceptionsKey = "RemoteExceptions";
+		private const string _rpcErrorIdentifierKey = "RpcError";
 
-		private readonly RpcError _rpcError;
+		// NOT readonly for safe-deserialization
+		private RpcError _rpcError;
 
 		/// <summary>
 		///		Gets the metadata of the error.
@@ -101,7 +102,8 @@ namespace MsgPack.Rpc
 			}
 		}
 
-		private readonly string _debugInformation;
+		// NOT readonly for safe-deserialization
+		private string _debugInformation;
 
 		/// <summary>
 		///		Gets the debug information of the error.
@@ -173,85 +175,78 @@ namespace MsgPack.Rpc
 		{
 			this._rpcError = rpcError ?? RpcError.RemoteRuntimeError;
 			this._debugInformation = debugInformation;
+#if !SILVERLIGHT
+			this.RegisterSerializeObjectStateEventHandler();
+#endif
 		}
 
-		/// <summary>
-		///		Initialize new instance with serialized data.
-		/// </summary>
-		/// <param name="info"><see cref="SerializationInfo"/> which has serialized data.</param>
-		/// <param name="context"><see cref="StreamingContext"/> which has context information about transport source or destination.</param>
-		/// <exception cref="ArgumentNullException">
-		///		<paramref name="info"/> is null.
-		/// </exception>
-		/// <exception cref="SerializationException">
-		///		Cannot deserialize instance from <paramref name="info"/>.
-		/// </exception>
-		protected RpcException( SerializationInfo info, StreamingContext context ) : base( info, context ) { }
-
-		/// <summary>
-		///		Create <see cref="RpcException"/> or dervied instance which corresponds to sepcified error information.
-		/// </summary>
-		/// <param name="error">Basic error information. This information will propagate to client.</param>
-		/// <param name="errorDetail">Detailed error information, which is usally debugging purpose only, so will not propagate to client.</param>
-		/// <returns>
-		///		<see cref="RpcException"/> or dervied instance which corresponds to sepcified error information.
-		/// </returns>
-		/// <exception cref="ArgumentException">
-		///		<paramref name="error"/> is <see cref="MessagePackObject.IsNil">nil</see>.
-		/// </exception>
-		public static RpcException FromMessage( MessagePackObject error, MessagePackObject errorDetail )
+		internal static T Get<T>( SerializationEntry entry, string name, Func<SerializationEntry, T> getter )
 		{
-			// TODO: Application specific customization
-			// TODO: Application specific exception class
+			Contract.Assert( name != null );
+			Contract.Assert( getter != null );
 
-			if ( error.IsNil )
+			try
 			{
-				throw new ArgumentException( "'error' must not be nil.", "error" );
+				return getter( entry );
 			}
-
-			// Recommeded path
-			if ( error.IsTypeOf<byte[]>().GetValueOrDefault() )
+			catch ( InvalidCastException ex )
 			{
-				string identifier = null;
-				try
-				{
-					identifier = error.AsString();
-				}
-				catch ( InvalidOperationException ) { }
-
-				int? errorCode = null;
-
-				if ( errorDetail.IsTypeOf<IDictionary<MessagePackObject, MessagePackObject>>().GetValueOrDefault() )
-				{
-					var asDictionary = errorDetail.AsDictionary();
-					MessagePackObject value;
-					if ( asDictionary.TryGetValue( _errorCodeKeyUtf8, out value ) && value.IsTypeOf<int>().GetValueOrDefault() )
-					{
-						errorCode = value.AsInt32();
-					}
-				}
-
-				if ( identifier != null || errorCode != null )
-				{
-					RpcError rpcError = RpcError.FromIdentifier( identifier, errorCode );
-					return rpcError.ToException( errorDetail );
-				}
+				throw new SerializationException( String.Format( CultureInfo.CurrentCulture, "Invalid '{0}' value.", name ), ex );
 			}
-
-			// Other path.
-			return new UnexpcetedRpcException( error, errorDetail );
 		}
+
+#if !SILVERLIGHT
 
 		/// <summary>
-		///		Create <see cref="RpcException"/> for specified serialization error.
+		///		When overridden on the derived class, handles <see cref="E:Exception.SerializeObjectState"/> event to add type-specified serialization state.
 		/// </summary>
-		/// <param name="serializationError">Serialization error.</param>
-		/// <returns>
-		///		<see cref="RpcException"/> for specified serialization error.
-		/// </returns>
-		internal static RpcException FromRpcError( RpcErrorMessage serializationError )
+		/// <param name="sender">The <see cref="Exception"/> instance itself.</param>
+		/// <param name="e">
+		///		The <see cref="System.Runtime.Serialization.SafeSerializationEventArgs"/> instance containing the event data.
+		///		The overriding method adds its internal state to this object via <see cref="M:SafeSerializationEventArgs.AddSerializedState"/>.
+		///	</param>
+		///	<remarks>
+		///		The overriding method MUST invoke base implementation, or the serialization should fail.
+		///	</remarks>
+		/// <seealso cref="ISafeSerializationData"/>
+		protected virtual void OnSerializeObjectState( object sender, SafeSerializationEventArgs e )
 		{
-			return serializationError.Error.ToException( serializationError.Detail );
+			e.AddSerializedState(
+				new SerializedState()
+				{
+					DebugInformation = this._debugInformation,
+					RemoteExceptions = this._remoteExceptions,
+					RpcErrorIdentifier = this._rpcError.Identifier,
+					RpcErrorCode = this._rpcError.ErrorCode,
+					PreservedStackTrace = this._preservedStackTrace
+				}
+			);
 		}
+
+		private void RegisterSerializeObjectStateEventHandler()
+		{
+			this.SerializeObjectState += this.OnSerializeObjectState;
+		}
+
+		[Serializable]
+		private sealed class SerializedState : ISafeSerializationData
+		{
+			public string DebugInformation;
+			public RemoteExceptionInformation[] RemoteExceptions;
+			public string RpcErrorIdentifier;
+			public int? RpcErrorCode;
+			public List<string> PreservedStackTrace;
+
+			public void CompleteDeserialization( object deserialized )
+			{
+				var enclosing = deserialized as RpcException;
+				enclosing._debugInformation = this.DebugInformation;
+				enclosing._remoteExceptions = this.RemoteExceptions;
+				enclosing._rpcError = MsgPack.Rpc.RpcError.FromIdentifier( this.RpcErrorIdentifier, this.RpcErrorCode );
+				enclosing._preservedStackTrace = this.PreservedStackTrace;
+				enclosing.RegisterSerializeObjectStateEventHandler();
+			}
+		}
+#endif
 	}
 }

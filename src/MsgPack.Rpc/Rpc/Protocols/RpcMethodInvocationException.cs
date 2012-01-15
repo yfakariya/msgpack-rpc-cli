@@ -36,7 +36,8 @@ namespace MsgPack.Rpc.Protocols
 		private const string _methodNameKey = "MethodName";
 		private static readonly MessagePackObject _methodNameKeyUtf8 = MessagePackConvert.EncodeString( "MethodName" );
 
-		private readonly string _methodName;
+		// NOT readonly for safe deserialization
+		private string _methodName;
 
 		/// <summary>
 		///		Gets the name of invoking method.
@@ -161,23 +162,6 @@ namespace MsgPack.Rpc.Protocols
 		}
 
 		/// <summary>
-		///		Initialize new instance with serialized data.
-		/// </summary>
-		/// <param name="info"><see cref="SerializationInfo"/> which has serialized data.</param>
-		/// <param name="context"><see cref="StreamingContext"/> which has context information about transport source or destination.</param>
-		/// <exception cref="ArgumentNullException">
-		///		<paramref name="info"/> is null.
-		/// </exception>
-		/// <exception cref="SerializationException">
-		///		Cannot deserialize instance from <paramref name="info"/>.
-		/// </exception>
-		protected RpcMethodInvocationException( SerializationInfo info, StreamingContext context )
-			: base( info, context )
-		{
-			this._methodName = info.GetString( _methodNameKey );
-		}
-
-		/// <summary>
 		///		Initialize new sintance with unpacked data.
 		/// </summary>
 		/// <param name="rpcError">
@@ -210,18 +194,38 @@ namespace MsgPack.Rpc.Protocols
 			store.Add( _methodNameKeyUtf8, MessagePackConvert.EncodeString( this._methodName ) );
 		}
 
+#if !SILVERLIGHT
 		/// <summary>
-		///		Set up <see cref="SerializationInfo"/> with this instance data.
+		///		When overridden on the derived class, handles <see cref="E:Exception.SerializeObjectState"/> event to add type-specified serialization state.
 		/// </summary>
-		/// <param name="info"><see cref="SerializationInfo"/> to be set serialized data.</param>
-		/// <param name="context"><see cref="StreamingContext"/> which has context information about transport source or destination.</param>
-		/// <exception cref="ArgumentNullException">
-		///		<paramref name="info"/> is null.
-		/// </exception>
-		public override void GetObjectData( SerializationInfo info, StreamingContext context )
+		/// <param name="sender">The <see cref="Exception"/> instance itself.</param>
+		/// <param name="e">
+		///		The <see cref="System.Runtime.Serialization.SafeSerializationEventArgs"/> instance containing the event data.
+		///		The overriding method adds its internal state to this object via <see cref="M:SafeSerializationEventArgs.AddSerializedState"/>.
+		///	</param>
+		/// <seealso cref="ISafeSerializationData"/>
+		protected override void OnSerializeObjectState( object sender, SafeSerializationEventArgs e )
 		{
-			base.GetObjectData( info, context );
-			info.AddValue( _methodNameKey, this._methodName );
+			base.OnSerializeObjectState( sender, e );
+			e.AddSerializedState(
+				new SerializedState()
+				{
+					MethodName = this._methodName
+				}
+			);
 		}
+
+		[Serializable]
+		private sealed class SerializedState : ISafeSerializationData
+		{
+			public string MethodName;
+
+			public void CompleteDeserialization( object deserialized )
+			{
+				var enclosing = deserialized as RpcMethodInvocationException;
+				enclosing._methodName = this.MethodName;
+			}
+		}
+#endif
 	}
 }

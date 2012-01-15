@@ -95,19 +95,6 @@ namespace MsgPack.Rpc.Protocols
 		public RpcProtocolException( RpcError rpcError, string message, string debugInformation, Exception inner ) : base( rpcError, message, debugInformation, inner ) { }
 
 		/// <summary>
-		///		Initialize new instance with serialized data.
-		/// </summary>
-		/// <param name="info"><see cref="SerializationInfo"/> which has serialized data.</param>
-		/// <param name="context"><see cref="StreamingContext"/> which has context information about transport source or destination.</param>
-		/// <exception cref="ArgumentNullException">
-		///		<paramref name="info"/> is null.
-		/// </exception>
-		/// <exception cref="SerializationException">
-		///		Cannot deserialize instance from <paramref name="info"/>.
-		/// </exception>
-		protected RpcProtocolException( SerializationInfo info, StreamingContext context ) : base( info, context ) { }
-
-		/// <summary>
 		///		Initializes a new instance of the <see cref="RpcProtocolException"/> with unpacked data.
 		/// </summary>
 		/// <param name="rpcError">

@@ -109,23 +109,6 @@ namespace MsgPack.Rpc
 		}
 
 		/// <summary>
-		///		Initialize new instance with serialized data.
-		/// </summary>
-		/// <param name="info"><see cref="SerializationInfo"/> which has serialized data.</param>
-		/// <param name="context"><see cref="StreamingContext"/> which has context information about transport source or destination.</param>
-		/// <exception cref="ArgumentNullException">
-		///		<paramref name="info"/> is null.
-		/// </exception>
-		/// <exception cref="SerializationException">
-		///		Cannot deserialize instance from <paramref name="info"/>.
-		/// </exception>
-		private RpcTimeoutException( SerializationInfo info, StreamingContext context )
-			: base( info, context )
-		{
-			this._clientTimeout = new TimeSpan( info.GetInt64( _clientTimeoutKey ) );
-		}
-
-		/// <summary>
 		///		Initializes a new instance of the <see cref="RpcTimeoutException"/> class with the unpacked data.
 		/// </summary>
 		/// <param name="unpackedException">
@@ -140,18 +123,38 @@ namespace MsgPack.Rpc
 			this._clientTimeout = unpackedException.GetTimeSpan( _clientTimeoutKeyUtf8 );
 		}
 
+#if !SILVERLIGHT
 		/// <summary>
-		///		Set up <see cref="SerializationInfo"/> with this instance data.
+		///		When overridden on the derived class, handles <see cref="E:Exception.SerializeObjectState"/> event to add type-specified serialization state.
 		/// </summary>
-		/// <param name="info"><see cref="SerializationInfo"/> to be set serialized data.</param>
-		/// <param name="context"><see cref="StreamingContext"/> which has context information about transport source or destination.</param>
-		/// <exception cref="ArgumentNullException">
-		///		<paramref name="info"/> is null.
-		/// </exception>
-		public sealed override void GetObjectData( SerializationInfo info, StreamingContext context )
+		/// <param name="sender">The <see cref="Exception"/> instance itself.</param>
+		/// <param name="e">
+		///		The <see cref="System.Runtime.Serialization.SafeSerializationEventArgs"/> instance containing the event data.
+		///		The overriding method adds its internal state to this object via <see cref="M:SafeSerializationEventArgs.AddSerializedState"/>.
+		///	</param>
+		/// <seealso cref="ISafeSerializationData"/>
+		protected override void OnSerializeObjectState( object sender, SafeSerializationEventArgs e )
 		{
-			base.GetObjectData( info, context );
-			info.AddValue( _clientTimeoutKey, this._clientTimeout.Ticks );
+			base.OnSerializeObjectState( sender, e );
+			e.AddSerializedState(
+				new SerializedState()
+				{
+					ClientTimeout = this._clientTimeout
+				}
+			);
 		}
+
+		[Serializable]
+		private sealed class SerializedState : ISafeSerializationData
+		{
+			public TimeSpan? ClientTimeout;
+
+			public void CompleteDeserialization( object deserialized )
+			{
+				var enclosing = deserialized as RpcTimeoutException;
+				enclosing._clientTimeout = this.ClientTimeout;
+			}
+		}
+#endif
 	}
 }
