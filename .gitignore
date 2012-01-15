@@ -3,7 +3,7 @@
 *.csproj.user
 bin/
 Bin/
-lib/
+#lib/
 local/
 obj/
 Index.dat

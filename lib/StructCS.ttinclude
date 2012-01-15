@@ -1,0 +1,1133 @@
+﻿<#
+//
+// C# struct template
+//
+// Copyright (C) 2011 FUJIWARA, Yusuke
+//
+//    Licensed under the Apache License, Version 2.0 (the "License");
+//    you may not use this file except in compliance with the License.
+//    You may obtain a copy of the License at
+//
+//        http://www.apache.org/licenses/LICENSE-2.0
+//
+//    Unless required by applicable law or agreed to in writing, software
+//    distributed under the License is distributed on an "AS IS" BASIS,
+//    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//    See the License for the specific language governing permissions and
+//    limitations under the License.
+//
+#>
+<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ assembly name="System.Core.dll" #>
+<#@ assembly name="System.Xml.dll" #>
+<#@ import namespace="System" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ import namespace="System.Globalization" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Runtime.InteropServices" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Text.RegularExpressions" #>
+<#@ import namespace="System.Xml" #>
+<#+
+
+/// <summary>
+/// 	Options of the value type itself.
+/// </summary>
+public enum ValueTypeOptions
+{
+	/// <summary>
+	/// 	None. Sequential, assembly visible, and equatable struct will be generated.
+	/// </summary>
+	None = 0,
+	
+	/// <summary>
+	/// 	Make the type public visibility.
+	/// </summary>
+	Public = 0x1,
+	
+	/// <summary>
+	/// 	Make the type auto layout. Default is sequential(or explicit if you specify offset in field declaration).
+	/// </summary>
+	AutoLayout = 0x2,
+	
+	/// <summary>
+	/// 	Make the type runtime serializable. 
+	/// </summary>
+	Serializable = 0x4,
+	
+	/// <summary>
+	/// 	Make the type formattable. 
+	/// </summary>
+	Formattable = 0x8
+}
+
+/// <summary>
+/// 	Custom option of field.
+/// </summary>
+public enum FieldOptions
+{
+	None = 0,
+	
+	/// <summary>
+	/// 	Make field mutable.
+	/// </summary>
+	Mutable = 0x1,
+		
+	/// <summary>
+	/// 	Expose field directly instead of property.
+	/// </summary>
+	DirectAccess = 0x1 << 20,
+}
+
+/// <summary>
+/// 	Accessiblity of field or property value. When field is wrapped by property then underlying field visibility always private.
+/// </summary>
+public enum MemberAccessibility
+{
+	/// <summary>
+	/// 	Public.
+	/// </summary>
+	Public = 0,
+	
+	/// <summary>
+	/// 	Assembly (internal in C#.)
+	/// </summary>
+	Assembly,
+	
+	/// <summary>
+	/// 	Private.
+	/// </summary>
+	Private
+}
+
+/// <summary>
+/// 	Represents field metadata.
+/// </summary>
+public sealed class FieldDeclaration
+{
+	private readonly string _name;
+	
+	/// <summary>
+	/// 	Get name of the field.
+	/// </summary>
+	/// <value>
+	/// 	Name of the field.
+	/// </value>
+	public string Name { get { return this._name; } }
+	
+	private readonly bool _isValueType;
+	
+	/// <summary>
+	/// 	Get the value whether field type is value type.
+	/// </summary>
+	/// <value>
+	/// 	If field type is value type then true.
+	/// </value>
+	public bool IsValueType { get { return this._isValueType; } }
+	
+	private readonly string _typeName;
+	
+	/// <summary>
+	/// 	Get type of the field.
+	/// </summary>
+	/// <value>
+	/// 	Type of the field.
+	/// </value>
+	public string TypeName { get { return this._typeName; } }
+	
+	/// <summary>
+	/// 	Get or set accessibility of the field or property.
+	/// </summary>
+	/// <value>
+	/// 	Accessibility of the field or property
+	/// </value>
+	public MemberAccessibility Accessibility { get; set; }
+	
+	/// <summary>
+	/// 	Get or set options of the field.
+	/// </summary>
+	/// <value>
+	/// 	Options of the field.
+	/// </value>
+	public FieldOptions Options { get; set; }
+	
+	/// <summary>
+	/// 	Get or set summary comment of field or property.
+	/// </summary>
+	/// <value>
+	/// 	Summary comment of field or property.
+	/// </value>
+	public string SummaryComment { get; set; }
+		
+	/// <summary>
+	/// 	Get or set value comment of field or property.
+	/// </summary>
+	/// <value>
+	/// 	Value comment of field or property.
+	/// </value>
+	public string ValueComment { get; set; }
+
+	private int? _offset;
+	
+	/// <summary>
+	/// 	Get or set offset of the field.
+	/// </summary>
+	/// <value>
+	/// 	Offset of the field. Default is null, which indicates offset is automatically set by the runtime.
+	/// </value>
+	public int? Offset
+	{
+		get{ return this._offset; }
+		set
+		{
+			if( value != null && value < 0 )
+			{
+				throw new ArgumentOutOfRangeException( "value" );
+			}
+			
+			this._offset = value;
+		}
+	}
+		
+	/// <summary>
+	/// 	Initialize new instance.
+	/// </summary>
+	/// <param name="name">Name of the field.</param>
+	/// <param name="typeName">Type name of the field.</param>
+	/// <param name="isValueType">If field type is value type then true.</param>
+	/// <exception cref="ArgumentNullException">
+	/// 	<paramref name="name"/> or <paramref name="typeName"/> is null.
+	/// </exception>
+	/// <exception cref="ArgumentException">
+	/// 	<paramref name="name"/> or <paramref name="typeName"/> is blank.
+	/// </exception>
+	public FieldDeclaration( string name, string typeName, bool isValueType )
+	{
+		if( name == null )
+		{
+			throw new ArgumentNullException( "name" );
+		}
+		
+		if( String.IsNullOrWhiteSpace( name ) )
+		{
+			throw new ArgumentException( "'name' must not be blank.", "name" );
+		}
+		
+		if( typeName == null )
+		{
+			throw new ArgumentNullException( "typeName" );
+		}		
+			
+		if( String.IsNullOrWhiteSpace( typeName ) )
+		{
+			throw new ArgumentException( "'typeName' must not be blank.", "typeName" );
+		}
+		
+		this._name = name;
+		this._typeName= typeName;
+		this._isValueType = isValueType;
+	}
+	
+	public override int GetHashCode()
+	{
+		// Normaly, names are not equal in set or dictionary key.
+		return this._name.GetHashCode();
+	}
+	
+	public static bool Equals( FieldDeclaration left, FieldDeclaration right )
+	{
+		if( Object.ReferenceEquals( left, null ) )
+		{
+			return Object.ReferenceEquals( right, null );
+		}
+		else
+		{
+			return left.Equals( right );
+		}
+	}
+	
+	public override bool Equals( object obj )
+	{
+		if( Object.ReferenceEquals( obj, this ) )
+		{
+			return true;
+		}
+		
+		if( Object.ReferenceEquals( obj, null ) )
+		{
+			return false;
+		}
+		
+		FieldDeclaration other = obj as FieldDeclaration;
+		if( Object.ReferenceEquals( other, null ) )
+		{
+			return false;
+		}
+		
+		return 
+			this._name == other._name
+			&& this._typeName == other._typeName
+			&& this._offset == other._offset
+			&& this.Accessibility == other.Accessibility
+			&& this.Options == other.Options;
+	}
+	
+	public static bool operator ==( FieldDeclaration left, FieldDeclaration right )
+	{
+		return FieldDeclaration.Equals( left, right );
+	}
+		
+	public static bool operator !=( FieldDeclaration left, FieldDeclaration right )
+	{
+		return !FieldDeclaration.Equals( left, right );
+	}
+}
+
+private static string GetAccessibility( MemberAccessibility accessibility )
+{
+	switch( accessibility )
+	{
+		case MemberAccessibility.Assembly:
+		{
+			return "internal";
+		}
+		case MemberAccessibility.Public:
+		{
+			return "public";
+		}
+		default:
+		{
+			return "private";
+		}
+	}
+}
+	
+private static string GetFieldKeywords( FieldOptions options )
+{
+	if( Has( options, FieldOptions.Mutable ) )
+	{
+		return String.Empty;
+	}
+	else
+	{
+		return "readonly";
+	}
+}
+
+private static bool Has( FieldOptions options, FieldOptions flag )
+{
+	return ( options & flag ) == flag;
+}
+
+private static bool Has( ValueTypeOptions options, ValueTypeOptions flag )
+{
+	return ( options & flag ) == flag;
+}
+
+private static string ToParameterName( FieldDeclaration fieldDeclartion, CultureInfo culture )
+{
+	var match = GetFieldNameMatch( fieldDeclartion.Name );
+	
+	if( match.Groups[ _firstCharGroup ].Success )
+	{
+		return match.Groups[ _firstCharGroup ].Value.ToLower( culture ) + match.Groups[ _remainingCharsGroup ].Value;
+	}
+	else
+	{
+		return match.Groups[ _remainingCharsGroup ].Value;
+	}
+}
+
+private const string _prefixGroup = "prefix";
+private const string _firstCharGroup ="firstChar";
+private const string _remainingCharsGroup = "remainingChars";
+private static readonly Regex _fieldNameRegex = new Regex( "^(?<" + _prefixGroup + ">[msc]?_+)?(?<" + _firstCharGroup + ">.)?(?<" + _remainingCharsGroup + ">.*)$", RegexOptions.Compiled | RegexOptions.CultureInvariant );
+
+private static string ToFieldName( FieldDeclaration fieldDeclartion, CultureInfo culture )
+{
+	var match = GetFieldNameMatch( fieldDeclartion.Name );
+	
+	if( match.Groups[ _prefixGroup ].Success )
+	{
+		return fieldDeclartion.Name;
+	}
+	else
+	{
+		return "_" + match.Groups[ _firstCharGroup ].Value.ToLower( culture ) + match.Groups[ _remainingCharsGroup ].Value;
+	}
+}
+
+private static string ToPropertyName( FieldDeclaration fieldDeclartion, CultureInfo culture )
+{
+	var match = GetFieldNameMatch( fieldDeclartion.Name );
+	
+	if( match.Groups[ _firstCharGroup ].Success )
+	{
+		return match.Groups[ _firstCharGroup ].Value.ToUpper( culture ) + match.Groups[ _remainingCharsGroup ].Value;
+	}
+	else
+	{
+		return match.Groups[ _remainingCharsGroup ].Value;
+	}
+}
+
+private static Match GetFieldNameMatch( string value )
+{
+	var match = _fieldNameRegex.Match( value );
+	if( !match.Success )
+	{
+		throw new InvalidOperationException( 
+			String.Format(
+				CultureInfo.CurrentCulture,
+				"'{0}' is invalid as field name.",
+				value
+			)
+		);
+	}
+	
+	return match;
+}
+
+private static string LocalizeText( string text, CultureInfo culture, Func<string, CultureInfo, string> localizer )
+{
+	if( text != null )
+	{
+		if( localizer == null )
+		{
+			return text;
+		}
+		else
+		{
+			return localizer( text, culture );
+		}
+	}
+		
+	return null;
+}
+
+private static string LocalizeSummaryComment( FieldDeclaration field, CultureInfo culture, Func<string, CultureInfo, string> localizer )
+{
+	return LocalizeText( field.SummaryComment, culture, localizer );
+}
+
+private static string LocalizeValueComment( FieldDeclaration field, CultureInfo culture, Func<string, CultureInfo, string> localizer )
+{
+	return LocalizeText( field.ValueComment, culture, localizer );
+}
+
+private static string EscapeXml( string value )
+{
+	if( value == null )
+	{
+		return null;
+	}
+	
+	return String.Join( String.Empty, EscapeXmlCore( value ) );
+}
+				
+private static IEnumerable<char> EscapeXmlCore( IEnumerable<char> value )
+{
+	foreach( var c in value )
+	{
+		switch( c )
+		{
+			case '<':
+			{
+				yield return '&';
+				yield return 'l';
+				yield return 't';
+				yield return ';';
+				break;
+			}
+			case '>':
+			{
+				yield return '&';
+				yield return 'g';
+				yield return 't';
+				yield return ';';
+				break;
+			}
+			case '"':
+			{
+				yield return '&';
+				yield return 'q';
+				yield return 'u';
+				yield return 'o';
+				yield return 't';
+				yield return ';';
+				break;
+			}
+			case '\'':
+			{
+				yield return '&';
+				yield return 'a';
+				yield return 'p';
+				yield return 'o';
+				yield return 's';
+				yield return ';';
+				break;
+			}
+			case '&':
+			{
+				yield return '&';
+				yield return 'a';
+				yield return 'm';
+				yield return 'p';
+				yield return ';';
+				break;
+			}
+			default:
+			{
+				yield return c;
+				break;
+			}
+		}
+	}
+}
+
+/// <summary>
+/// 	Get code generation routine with specified parameters.
+/// </summary>
+/// <param name="typeName">Name of generating struct.</param>
+/// <param name="fields">Field declartion of the struct.</param>
+/// <param name="genericArguments">List of string representations of generic arguments.</param>
+/// <param name="genericArgumentConstraints">List of string representations of generic argument constraints.</param>
+/// <param name="typeOptions">Option flags of the struct.</param>
+/// <param name="pack">Packing size of fields. Defualt is null which indicates packing is aligned automatically. This value is ignored if <see cref="ValueTypeOptions.AutoLayout"/> is specified.</param>
+/// <param name="constructorAccessibility">Accessibility of constructor.</param>
+/// <param name="toStringGenerator">Custom action to generate ToString method body statement. 1st parameter is <paramref name="fields"/>, return value is body statements.</param>
+/// <param name="comparator">Custom action to generate CompareTo method body statement. 1st parameter is <paramref name="fields"/>, return value is body statements.</param>
+/// <param name="typeSummary">Summary of type.</param>
+/// <param name="culture">Culture to use casing.</param>
+/// <param name="indentChars">Indentation charactors.</param>
+/// <param name="customAttributes">Custom attribute declartion lines.</param>
+/// <returns><see cref="StructCodeGenerator"/> to generate code.</returns>
+Action GetStructCodeGenerator(
+	string typeName,
+	IList<FieldDeclaration> fields,
+	IEnumerable<string> genericArguments = null,
+	IEnumerable<string> genericArgumentConstraints = null,
+	ValueTypeOptions typeOptions = ValueTypeOptions.None,
+	int? pack = null,
+	MemberAccessibility constructorAccessibility = MemberAccessibility.Public,
+	Func<IList<FieldDeclaration>, string> toStringGenerator = null,
+	Func<IList<FieldDeclaration>, string> comparator = null,
+	string typeSummary = null,
+	Func<string, CultureInfo, string> commentLocalizer = null,
+	CultureInfo culture = null,
+	string indentChars = null,
+	IEnumerable<string> customAttributes = null
+)
+{
+	return
+		() =>
+		{
+			var safeIndentChars = indentChars ?? "\t";
+			var safeCulture = culture ?? CultureInfo.InvariantCulture;
+			var safeCommentLocalizer = commentLocalizer ?? new Func<string, CultureInfo, string>( ( _0, _1 ) => _0 );
+
+			LayoutKind layoutKind = LayoutKind.Sequential;
+			if( Has( typeOptions, ValueTypeOptions.AutoLayout ) )
+			{
+				if( pack == null )
+				{
+					throw new ArgumentException( "'pack' cannot be set if type is auto layout.", "pack" );
+				}
+				
+				layoutKind = LayoutKind.Auto;
+			}
+				
+			// anonymous block.
+			{
+				var offsetSpecifiedFields = fields.Where( item => item.Offset != null ).ToArray();
+				var autoOffsetFields = fields.Where( item => item.Offset == null ).ToArray();
+				if( offsetSpecifiedFields.Length > 0 && layoutKind == LayoutKind.Auto )
+				{
+					StringBuilder offsetSpecifiedFieldList = new StringBuilder();
+					foreach( var field in offsetSpecifiedFields )
+					{
+						if( offsetSpecifiedFieldList.Length > 0 )
+						{
+							offsetSpecifiedFieldList.Append( ", " );
+						}
+						
+						offsetSpecifiedFieldList.Append( field.Name );
+					}
+					
+					throw new ArgumentException( 
+						String.Format( 
+							CultureInfo.CurrentCulture, 
+							"'Offset' cannot be set in fields '{0}' if type is auto layout.",
+							offsetSpecifiedFieldList
+						),
+						"fields"
+					);
+				}
+				
+				if( offsetSpecifiedFields.Length > 0 && autoOffsetFields.Length > 0 )
+				{
+					StringBuilder offsetSpecifiedFieldList = new StringBuilder();
+					foreach( var field in offsetSpecifiedFields )
+					{
+						if( offsetSpecifiedFieldList.Length > 0 )
+						{
+							offsetSpecifiedFieldList.Append( ", " );
+						}
+						
+						offsetSpecifiedFieldList.Append( field.Name );
+					}
+					
+					StringBuilder autoOffsetFieldList = new StringBuilder();
+					foreach( var field in autoOffsetFields )
+					{
+						if( autoOffsetFieldList.Length > 0 )
+						{
+							autoOffsetFieldList.Append( ", " );
+						}
+						
+						autoOffsetFieldList.Append( field.Name );
+					}
+					
+					throw new ArgumentException(
+						String.Format(
+							CultureInfo.CurrentCulture,
+							"Some fields are specified offset but others are not.{0}You must specify all of fields or none of fields.{0}Fields which are offset specified are:'{1}'{0}Fiels which are not offset specified are:'{2}'",
+							Environment.NewLine,
+							offsetSpecifiedFieldList,
+							autoOffsetFieldList
+						),
+						"fields"
+					);					
+				}
+			}
+			
+			var genericArgumentsString = ( genericArguments == null || !genericArguments.Any() ) ? String.Empty : "<" + String.Join( ", ", genericArguments ) + ">";
+
+			if( typeSummary != null )
+			{#>
+/// <summary>
+/// 	<#= LocalizeText( typeSummary, safeCulture, safeCommentLocalizer ) #>
+/// </summary>
+<#+
+	}
+#>
+[global::System.Runtime.InteropServices.StructLayout( global::System.Runtime.InteropServices.LayoutKind.<#= layoutKind  #><#= pack != null ? ", " + pack.ToString() : String.Empty #> )]
+<#+
+			if ( Has( typeOptions, ValueTypeOptions.Serializable ) )
+			{
+#>
+[global::System.Serializable]
+<#+
+			}
+			
+			if ( customAttributes != null )
+			{
+				foreach ( var customAttribute in customAttributes )
+				{
+#>
+<#= customAttribute #>
+<#+
+				}			
+			}
+			
+			StringBuilder inheritance = new StringBuilder( " : " ).Append( "global::System.IEquatable<" ).Append( typeName ).Append( genericArgumentsString ).Append( ">" );
+			
+			if( comparator != null )
+			{
+				inheritance.Append( ", global::System.Collections.Generic.IComparable<" ).Append( typeName ).Append( genericArgumentsString ).Append( ">" );
+			}
+			
+			if( Has( typeOptions, ValueTypeOptions.Formattable ) )
+			{
+				inheritance.Append( ", global::System.IFormattable" );
+			}
+			
+			// Type declaration
+#>
+<#= Has( typeOptions, ValueTypeOptions.Public ) ? "public" : "internal" #> partial struct <#= typeName #><#= genericArgumentsString #><#= inheritance.ToString() #>
+<#+
+			if( genericArgumentConstraints != null )
+			{
+				foreach( var genericArgumentConstraint in genericArgumentConstraints )
+				{
+#>
+			where <#= genericArgumentConstraint #>
+<#+
+				}
+			}
+#>
+{
+<#+
+			this.PushIndent( safeIndentChars );
+			
+			// Null instance.
+#>
+/// <summary>
+/// 	<#= LocalizeText( "Get empty instance.", safeCulture, safeCommentLocalizer ) #>
+/// </summary>
+<#+
+			if( !String.IsNullOrWhiteSpace( genericArgumentsString ) )
+			{
+#>
+[SuppressMessage( "Microsoft.Design", "CA1000:DoNotDeclareStaticMembersOnGenericTypes" )]
+<#+
+			}
+#>
+public static <#= typeName #><#= genericArgumentsString #> Null { get { return default( <#= typeName #><#= genericArgumentsString #> ); } }
+
+<#+
+			
+			// Instance fields and properties.
+			foreach( var field in fields )
+			{
+				if( !String.IsNullOrWhiteSpace( field.ValueComment ) )
+				{
+#>
+/// <summary>
+/// 	<#= LocalizeValueComment( field, safeCulture, safeCommentLocalizer ) #>
+/// </summary>
+<#+
+				}
+			
+				if( !Has( field.Options, FieldOptions.DirectAccess ) )
+				{
+					// If it is not direct access, field is always private.
+#>private<#+
+				}
+				else
+				{
+					#><#= GetAccessibility( field.Accessibility ) #><#+
+				}
+#> <#= GetFieldKeywords( field.Options ) #> <#= field.TypeName #> <#= ToFieldName( field, safeCulture ) #>;
+
+<#+
+				// Generate property.
+				if( !Has( field.Options, FieldOptions.DirectAccess ) )
+				{
+					if( !String.IsNullOrWhiteSpace( field.SummaryComment ) )
+					{
+#>
+/// <summary>
+/// 	<#= LocalizeSummaryComment( field, safeCulture, safeCommentLocalizer ) #>
+/// </summary>
+<#+
+						if( !String.IsNullOrWhiteSpace( field.ValueComment ) )
+						{#>/// <value>
+/// 	<#= LocalizeValueComment( field, safeCulture, safeCommentLocalizer ) #>
+/// </value>
+<#+
+						}
+					}#>
+<#= GetAccessibility( field.Accessibility ) #> <#= field.TypeName #> <#= ToPropertyName( field, safeCulture ) #>
+{
+<#+ this.PushIndent( safeIndentChars ); #>
+get
+{
+<#+ this.PushIndent( safeIndentChars ); #>
+return this.<#= ToFieldName( field, safeCulture ) #>;
+<#+ this.PopIndent(); #>
+}
+<#+
+					if( Has( field.Options, FieldOptions.DirectAccess ) )
+					{
+#>
+set
+{
+<#+ this.PushIndent( safeIndentChars ); #>
+this.<#= field.Name #> = value;
+<#+ this.PopIndent(); #>
+}
+<#+
+					}	
+					
+					this.PopIndent();
+#>
+}
+		
+<#+
+				}
+			}
+
+			// Constructor
+#>
+/// <summary>
+/// 	<#= LocalizeText( "Initialize new instance.", safeCulture, safeCommentLocalizer ) #>
+/// </summary>
+<#+
+			foreach( var field in fields )
+			{
+				if( !String.IsNullOrWhiteSpace( field.ValueComment ) )
+				{
+#>/// <#= "<param name=\"" + ToParameterName( field, safeCulture ) + "\">" #>
+/// 	<#= LocalizeValueComment( field, safeCulture, safeCommentLocalizer ) #>
+/// </param>
+<#+
+				}
+			}
+#>
+<#= GetAccessibility( constructorAccessibility ) #> <#= typeName #>(
+<#+
+			this.PushIndent( safeIndentChars );
+			// Constructor parameters
+			{
+				bool isFirst = true;
+				foreach( var field in fields )
+				{
+					if( isFirst )
+					{
+						isFirst = false;
+					}
+					else
+					{#>,
+<#+
+					}
+#><#= field.TypeName #> <#= ToParameterName( field, safeCulture ) #><#+
+				}
+			}
+			
+			this.PopIndent();
+#>
+
+)
+{
+<#+
+			this.PushIndent( safeIndentChars );
+			// Instance field initializations.
+			foreach( var field in fields )
+			{#>
+this.<#= ToFieldName( field, safeCulture ) #> = <#= ToParameterName( field, safeCulture ) #>;
+<#+
+			}
+			
+			this.PopIndent();
+#>
+}
+		
+<#+
+			// ToString override
+			if( toStringGenerator != null )
+			{#>
+/// <summary>
+/// 	<#= LocalizeText( "Returns string representation of this instnace.", safeCulture, safeCommentLocalizer ) #>
+/// </summary>
+/// <returns>
+/// 	<#= LocalizeText( "String representation of this instance.", safeCulture, safeCommentLocalizer ) #>
+/// </returns>
+public override string ToString()
+{
+<#+
+				this.PushIndent( safeIndentChars ); 
+				if( Has( typeOptions, ValueTypeOptions.Formattable ) )
+				{
+#>
+return this.ToString( null, null );
+<#+
+				}
+				else
+				{
+#>
+<#= toStringGenerator( fields ) #>
+<#+
+				}
+				
+				this.PopIndent();
+#>
+}
+<#+
+				if( Has( typeOptions, ValueTypeOptions.Formattable ) )
+				{#>
+
+/// <summary>
+/// 	<#= LocalizeText( "Returns string representation of this instnace with specified format.", safeCulture, safeCommentLocalizer ) #>
+/// </summary>
+/// <#= "<param name=\"format\">" + LocalizeText( "Format string.", safeCulture, safeCommentLocalizer ) + "</param>" #>
+/// <returns>
+/// 	<#= LocalizeText( "String representation of this instance with specified format.", safeCulture, safeCommentLocalizer ) #>
+/// </returns>
+public string ToString( string format )
+{
+<#+ this.PushIndent( safeIndentChars ); #>
+return this.ToString( format, null );
+<#+ this.PopIndent(); #>
+}
+
+/// <summary>
+/// 	<#= LocalizeText( "Returns string representation of this instnace with specified <see cref=\"IFormatProvider\"/>.", safeCulture, safeCommentLocalizer ) #>
+/// </summary>
+/// <#= "<param name=\"formatProvider\">" + LocalizeText( "Format provider.", safeCulture, safeCommentLocalizer ) + "</param>" #>
+/// <returns>
+/// 	<#= LocalizeText( "String representation of this instance with specified <see cref=\"IFormatProvider\"/>.", safeCulture, safeCommentLocalizer ) #>
+/// </returns>
+public string ToString( IFormatProvider formatProvider )
+{
+<#+ this.PushIndent( safeIndentChars ); #>
+return this.ToString( null, formatProvider );
+<#+ this.PopIndent(); #>
+}
+
+<#+
+					if( toStringGenerator != null )
+					{
+#>
+/// <summary>
+/// 	<#= LocalizeText( "Returns string representation of this instnace with specified format and <see cref=\"IFormatProvider\"/>.", safeCulture, safeCommentLocalizer ) #>
+/// </summary>
+/// <#= "<param name=\"format\">" + LocalizeText( "Format string.", safeCulture, safeCommentLocalizer ) + "</param>" #>
+/// <#= "<param name=\"formatProvider\">" + LocalizeText( "Format provider.", safeCulture, safeCommentLocalizer ) + "</param>" #>
+/// <returns>
+/// 	<#= LocalizeText( "String representation of this instance with specified format and <see cref=\"IFormatProvider\"/>.", safeCulture, safeCommentLocalizer ) #>
+/// </returns>
+public string ToString( string format, IFormatProvider formatProvider )
+{
+<#+ this.PushIndent( safeIndentChars ); #>
+<#= toStringGenerator( fields ) #>
+<#+ this.PopIndent(); #>
+}
+<#+
+					}
+				}
+#>
+		
+<#+
+			}
+			
+			// GetHashCode override
+#>
+/// <summary>
+/// 	<#= LocalizeText( "Returns hash code of this instnace.", safeCulture, safeCommentLocalizer ) #>
+/// </summary>
+/// <returns>
+/// 	<#= LocalizeText( "Hash code of this instance.", safeCulture, safeCommentLocalizer ) #>
+/// </returns>
+public override int GetHashCode()
+{
+<#+ this.PushIndent( safeIndentChars ); #>
+return <#+
+			if( fields.Count == 0 )
+			{#>0<#+
+			}
+			else
+			{
+				bool isFirst = true;
+				foreach( var field in fields )
+				{
+					if( isFirst )
+					{
+						isFirst = false;
+					}
+					else
+					{
+#> ^ <#+
+					}
+					
+					if( field.IsValueType )
+					{
+#>this.<#= ToFieldName( field, safeCulture ) #>.GetHashCode()<#+
+					}
+					else
+					{
+#>( this.<#= ToFieldName( field, safeCulture ) #> == null ? 0 : this.<#= ToFieldName( field, safeCulture ) #>.GetHashCode() )<#+
+					}
+				}
+			}
+#>;
+<#+
+			this.PopIndent();
+#>
+}
+		
+<#+
+			// Equals override
+			// IEquatable.Equals
+#>
+/// <summary>
+/// 	<#= LocalizeText( String.Format( safeCulture, "Compare specified object is <see cref=\"{0}\"/> and equal to this instnace.", typeName + EscapeXml( genericArgumentsString ) ), safeCulture, safeCommentLocalizer ) #>
+/// </summary>
+/// <param name="obj">
+/// 	<#= LocalizeText( String.Format( safeCulture, "<see cref=\"{0}\"/> to compare.", typeName + EscapeXml( genericArgumentsString ) ), safeCulture, safeCommentLocalizer ) #>
+/// </param>
+/// <returns>
+/// 	<#= LocalizeText( "If specified instance equals to this instance then true.", safeCulture, safeCommentLocalizer ) #>
+/// </returns>
+public override bool Equals( object obj )
+{
+<#+ this.PushIndent( safeIndentChars ); #>
+if( Object.ReferenceEquals( obj, null ) )
+{
+<#+ this.PushIndent( safeIndentChars ); #>
+return false;
+<#+ this.PopIndent(); #>
+}
+
+if( !( obj is <#= typeName #><#= genericArgumentsString #> ) )
+{
+<#+ this.PushIndent( safeIndentChars ); #>
+return false;
+<#+ this.PopIndent(); #>
+}
+
+return this.Equals( ( <#= typeName #><#= genericArgumentsString #> )obj );
+<#+ this.PopIndent(); #>
+}
+		
+/// <summary>
+/// 	<#= LocalizeText( "Compare specified object is equal to this instnace.", safeCulture, safeCommentLocalizer ) #>
+/// </summary>
+/// <param name="other">
+/// 	<#= LocalizeText( String.Format( safeCulture, "<see cref=\"{0}\"/> to compare.", typeName + EscapeXml( genericArgumentsString ) ), safeCulture, safeCommentLocalizer ) #>
+/// </param>
+/// <returns>
+/// 	<#= LocalizeText( "If specified instance equals to this instance then true.", safeCulture, safeCommentLocalizer ) #>
+/// </returns>
+public bool Equals( <#= typeName #><#= genericArgumentsString #> other )
+{
+<#+ this.PushIndent( safeIndentChars ); #>
+return <#+
+			if( fields.Count == 0 )
+			{#>true<#+
+			}
+			else
+			{
+				bool isFirst = true;
+				foreach( var field in fields )
+				{
+					if( isFirst )
+					{
+						isFirst = false;
+					}
+					else
+					{
+#> && <#+
+					}
+					
+					if( field.IsValueType )
+					{
+#>this.<#= ToFieldName( field, safeCulture ) #>.Equals( other.<#= ToFieldName( field, safeCulture ) #> )<#+
+					}
+					else
+					{
+#>( this.<#= ToFieldName( field, safeCulture ) #> == null ? other.<#= ToFieldName( field, safeCulture ) #> == null : this.<#= ToFieldName( field, safeCulture ) #>.Equals( other.<#= ToFieldName( field, safeCulture ) #> ) )<#+
+					}
+				}
+			}
+#>;
+<#+
+			this.PopIndent();
+#>
+}
+
+<#+
+			// IComparable.CompareTo
+			if( comparator != null )
+			{
+#>
+/// <summary>
+/// 	<#= LocalizeText( "Compare specified object and this instnace.", safeCulture, safeCommentLocalizer ) #>
+/// </summary>
+/// <param name="other">
+/// 	<#= LocalizeText( String.Format( safeCulture, "<see cref=\"{0}\"/> to compare.", typeName ), safeCulture, safeCommentLocalizer ) #>
+/// </param>
+/// <returns>
+/// 	<#= LocalizeText( "If specified instance is greator than this instance then 0, specified instance is lessor then this instance then -1, else 0.", safeCulture, safeCommentLocalizer ) #>
+/// </returns>
+public int CompareTo( <#= typeName #> other )
+{
+<#+ this.PushIndent( safeIndentChars ); #>
+<#= comparator( fields ) #>
+<#+ this.PopIndent(); #>
+}
+
+<#+
+			}
+			
+			// ==
+			// !=
+#>
+/// <summary>
+/// 	<#= LocalizeText( "Compare specified two objects are equal.", safeCulture, safeCommentLocalizer ) #>
+/// </summary>
+/// <param name="left">
+/// 	<#= LocalizeText( String.Format( safeCulture, "<see cref=\"{0}\"/> to compare.", typeName + EscapeXml( genericArgumentsString ) ), safeCulture, safeCommentLocalizer ) #>
+/// </param>
+/// <param name="right">
+/// 	<#= LocalizeText( String.Format( safeCulture, "<see cref=\"{0}\"/> to compare.", typeName + EscapeXml( genericArgumentsString ) ), safeCulture, safeCommentLocalizer ) #>
+/// </param>
+/// <returns>
+/// 	<#= LocalizeText( "If specified objects are equal then true.", safeCulture, safeCommentLocalizer ) #>
+/// </returns>
+public static bool operator ==( <#= typeName #><#= genericArgumentsString #> left, <#= typeName #><#= genericArgumentsString #> right )
+{
+<#+ this.PushIndent( safeIndentChars ); #>
+return left.Equals( right );
+<#+ this.PopIndent(); #>
+}
+
+/// <summary>
+/// 	<#= LocalizeText( "Compare specified two objects are not equal.", safeCulture, safeCommentLocalizer ) #>
+/// </summary>
+/// <param name="left">
+/// 	<#= LocalizeText( String.Format( safeCulture, "<see cref=\"{0}\"/> to compare.", typeName + EscapeXml( genericArgumentsString ) ), safeCulture, safeCommentLocalizer ) #>
+/// </param>
+/// <param name="right">
+/// 	<#= LocalizeText( String.Format( safeCulture, "<see cref=\"{0}\"/> to compare.", typeName + EscapeXml( genericArgumentsString ) ), safeCulture, safeCommentLocalizer ) #>
+/// </param>
+/// <returns>
+/// 	<#= LocalizeText( "If specified objects are not equal then true.", safeCulture, safeCommentLocalizer ) #>
+/// </returns>
+public static bool operator !=( <#= typeName #><#= genericArgumentsString #> left, <#= typeName #><#= genericArgumentsString #> right )
+{
+<#+ this.PushIndent( safeIndentChars ); #>
+return !left.Equals( right );
+<#+ this.PopIndent(); #>
+}		
+<#+
+			// <
+			// >
+			if( comparator != null )
+	{#>
+	
+/// <summary>
+/// 	<#= LocalizeText( "Compare specified two objects.", safeCulture, safeCommentLocalizer ) #>
+/// </summary>
+/// <param name="left">
+/// 	<#= LocalizeText( String.Format( safeCulture, "<see cref=\"{0}\"/> to compare.", typeName + EscapeXml( genericArgumentsString ) ), safeCulture, safeCommentLocalizer ) #>
+/// </param>
+/// <param name="right">
+/// 	<#= LocalizeText( String.Format( safeCulture, "<see cref=\"{0}\"/> to compare.", typeName + EscapeXml( genericArgumentsString ) ), safeCulture, safeCommentLocalizer ) #>
+/// </param>
+/// <returns>
+/// 	<#= LocalizeText( "If <paramref name=\"left\"/> is lessor than <paramref name=\"right\"/> then true.", safeCulture, safeCommentLocalizer ) #>
+/// </returns>
+public static bool operator <( <#= typeName #><#= genericArgumentsString #> left, <#= typeName #><#= genericArgumentsString #> right )
+{
+<#+ this.PushIndent( safeIndentChars ); #>
+return left.CompareTo( right ) < 0;
+<#+ this.PopIndent(); #>
+}
+		
+/// <summary>
+/// 	<#= LocalizeText( "Compare specified two objects.", safeCulture, safeCommentLocalizer ) #>
+/// </summary>
+/// <param name="left">
+/// 	<#= LocalizeText( String.Format( safeCulture, "<see cref=\"{0}\"/> to compare.", typeName + EscapeXml( genericArgumentsString ) ), safeCulture, safeCommentLocalizer ) #>
+/// </param>
+/// <param name="right">
+/// 	<#= LocalizeText( String.Format( safeCulture, "<see cref=\"{0}\"/> to compare.", typeName + EscapeXml( genericArgumentsString ) ), safeCulture, safeCommentLocalizer ) #>
+/// </param>
+/// <returns>
+/// 	<#= LocalizeText( "If <paramref name=\"left\"/> is greator than <paramref name=\"right\"/> then true.", safeCulture, safeCommentLocalizer ) #>
+/// </returns>
+public static bool operator >( <#= typeName #><#= genericArgumentsString #> left, <#= typeName #><#= genericArgumentsString #> right )
+>{
+<#+ this.PushIndent( safeIndentChars ); #>
+return left.CompareTo( right ) > 0;
+<#+ this.PopIndent(); #>
+}<#+
+			}
+		this.PopIndent();
+#>
+}
+<#+
+		};
+}
+#>
