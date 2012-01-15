@@ -28,7 +28,7 @@ namespace MsgPack.Rpc.Server.Protocols
 	/// <summary>
 	/// 	Defines trace for MsgPack.Rpc.Server.Protocols namespace.
 	/// </summary>
-	public static partial class MsgPackRpcServerProtocolsTrace
+	internal static partial class MsgPackRpcServerProtocolsTrace
 	{
 		private static readonly TraceSource _source = new TraceSource( "MsgPack.Rpc.Server.Protocols" );
 

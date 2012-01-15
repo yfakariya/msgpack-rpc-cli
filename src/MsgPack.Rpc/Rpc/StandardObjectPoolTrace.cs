@@ -28,7 +28,7 @@ namespace MsgPack.Rpc.StandardObjectPoolTracing
 	/// <summary>
 	/// 	Defines trace for MsgPack.Rpc.StandardObjectPoolTracing namespace.
 	/// </summary>
-	public static partial class StandardObjectPoolTrace
+	internal static partial class StandardObjectPoolTrace
 	{
 		private static readonly TraceSource _source = new TraceSource( "MsgPack.Rpc.StandardObjectPoolTracing" );
 

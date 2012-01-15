@@ -28,7 +28,7 @@ namespace MsgPack.Rpc.Server
 	/// <summary>
 	/// 	Defines trace for MsgPack.Rpc.Server namespace.
 	/// </summary>
-	public static partial class MsgPackRpcServerTrace
+	internal static partial class MsgPackRpcServerTrace
 	{
 		private static readonly TraceSource _source = new TraceSource( "MsgPack.Rpc.Server" );
 

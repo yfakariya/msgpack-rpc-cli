@@ -25,8 +25,6 @@
 //    See the License for the specific language governing permissions and
 //    limitations under the License.
 //
-#>
-<#+
 public string Generate( string nameSpace, params TraceMessage[] messages )
 {
 	return this.Generate( nameSpace, nameSpace.Replace( ".", String.Empty ) + "Trace", messages );
@@ -101,7 +99,7 @@ using System.Diagnostics;
 	buffer.Append( indent ).Append( "/// " ).Append( indent ).Append ("Defines trace for " ).Append( nameSpace ).AppendLine( " namespace." );
 	buffer.Append( indent ).AppendLine( "/// </summary>" );
 	
-	buffer.Append( indent ).Append( "public static partial class " ).AppendLine( className );
+	buffer.Append( indent ).Append( "internal static partial class " ).AppendLine( className );
 	buffer.Append( indent ).AppendLine( "{" );
 	
 	buffer.Append( indent ).Append( indent ).Append( "private static readonly TraceSource _source = new TraceSource( \"" ).Append( nameSpace ).Append( "\" );" ).AppendLine();
