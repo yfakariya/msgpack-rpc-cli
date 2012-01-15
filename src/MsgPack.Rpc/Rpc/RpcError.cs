@@ -23,6 +23,7 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Reflection;
 using MsgPack.Rpc.Protocols;
+using System.Globalization;
 
 namespace MsgPack.Rpc
 {
@@ -369,6 +370,51 @@ namespace MsgPack.Rpc
 			Contract.Assume( this._exceptionUnmarshaler != null );
 
 			return this._exceptionUnmarshaler( this, detail );
+		}
+
+		/// <summary>
+		///		Determines whether the specified <see cref="System.Object"/> is equal to this instance.
+		/// </summary>
+		/// <param name="obj">The <see cref="System.Object"/> to compare with this instance.</param>
+		/// <returns>
+		///		<c>true</c> if the specified <see cref="System.Object"/> is equal to this instance; otherwise, <c>false</c>.
+		/// </returns>
+		public sealed override bool Equals( object obj )
+		{
+			if ( Object.ReferenceEquals( this, obj ) )
+			{
+				return true;
+			}
+
+			var other = obj as RpcError;
+			if ( Object.ReferenceEquals( other, null ) )
+			{
+				return false;
+			}
+
+			return this._errorCode == other._errorCode && this._identifier == other._identifier;
+		}
+
+		/// <summary>
+		///		Returns a hash code for this instance.
+		/// </summary>
+		/// <returns>
+		///		A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table. 
+		/// </returns>
+		public sealed override int GetHashCode()
+		{
+			return this._errorCode.GetHashCode();
+		}
+
+		/// <summary>
+		///		Returns a <see cref="System.String"/> that represents this instance.
+		/// </summary>
+		/// <returns>
+		///		A <see cref="System.String"/> that represents this instance.
+		/// </returns>
+		public sealed override string ToString()
+		{
+			return String.Format( CultureInfo.CurrentCulture, "{0}({1}): {2}", this._identifier, this._errorCode, this.DefaultMessage );
 		}
 
 		/// <summary>
