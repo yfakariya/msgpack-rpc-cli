@@ -209,7 +209,7 @@ namespace MsgPack.Rpc
 			}
 			set
 			{
-				if ( !( value.Value > default( TimeSpan ) ) )
+				if ( !( value == null || value.Value > default( TimeSpan ) ) )
 				{
 					throw new ArgumentOutOfRangeException( "value", "Argument must be positive number." );
 				}
@@ -251,7 +251,7 @@ namespace MsgPack.Rpc
 			}
 			set
 			{
-				if ( !( value.Value > default( TimeSpan ) ) )
+				if ( !( value == null || value.Value > default( TimeSpan ) ) )
 				{
 					throw new ArgumentOutOfRangeException( "value", "Argument must be positive number." );
 				}

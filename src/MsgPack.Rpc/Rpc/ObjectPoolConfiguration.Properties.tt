@@ -104,7 +104,7 @@ using System.Text;
 		Value = "The timeout of blocking of the borrowing when the pool is exhausited. " +
 			"<c>null</c> indicates unlimited waiting. " +
 			"The default is <c>null</c>.",
-		Precondition = Constraints.OnlyPositive,
+		Precondition = Constraints.NullOrPositive,
 		Postcondition = Constraints.NullOrPositive
 	},
 	new Property()
@@ -115,7 +115,7 @@ using System.Text;
 		Summary = "Gets or sets the interval to evict extra pooled objects.",
 		Value = "The interval to evict extra pooled objects. " +
 			"The default is 3 minutes.",
-		Precondition = Constraints.OnlyPositive,
+		Precondition = Constraints.NullOrPositive,
 		Postcondition = Constraints.NullOrPositive
 	}
 ) #>
