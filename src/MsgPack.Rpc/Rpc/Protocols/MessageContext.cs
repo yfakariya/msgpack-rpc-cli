@@ -19,6 +19,7 @@
 #endregion -- License Terms --
 
 using System;
+using System.Diagnostics.Contracts;
 using System.Globalization;
 using System.Net.Sockets;
 using System.Threading;
@@ -95,6 +96,8 @@ namespace MsgPack.Rpc.Protocols
 		/// </summary>
 		public void SetCompletedSynchronously()
 		{
+			Contract.Ensures( this.CompletedSynchronously == true );
+
 			this._completedSynchronously = true;
 		}
 
@@ -114,6 +117,10 @@ namespace MsgPack.Rpc.Protocols
 		/// <param name="transport">The <see cref="IContextBoundableTransport"/>.</param>
 		internal virtual void SetTransport( IContextBoundableTransport transport )
 		{
+			Contract.Requires( transport != null );
+			Contract.Requires( this.BoundTransport == null );
+			Contract.Ensures( this.BoundTransport != null );
+
 			this.AcceptSocket = transport.BoundSocket;
 			var oldBoundTransport = Interlocked.CompareExchange( ref this._boundTransport, transport, null );
 			if ( oldBoundTransport != null )
@@ -134,6 +141,9 @@ namespace MsgPack.Rpc.Protocols
 		/// </summary>
 		public void RenewSessionId()
 		{
+			Contract.Ensures( this.SessionId > 0 );
+			Contract.Ensures( this.SessionStartedAt >= DateTimeOffset.Now );
+
 			this._sessionId = Interlocked.Increment( ref _lastSessionId );
 			this._sessionStartedAt = DateTimeOffset.Now;
 		}
@@ -143,6 +153,12 @@ namespace MsgPack.Rpc.Protocols
 		/// </summary>
 		internal virtual void Clear()
 		{
+			Contract.Ensures( this.BoundTransport == null );
+			Contract.Ensures( this.CompletedSynchronously == false );
+			Contract.Ensures( this.MessageId == null );
+			Contract.Ensures( this.SessionId == 0 );
+			Contract.Ensures( this.SessionStartedAt == default( DateTimeOffset ) );
+
 			var boundTransport = Interlocked.Exchange( ref this._boundTransport, null );
 			if ( boundTransport != null )
 			{
