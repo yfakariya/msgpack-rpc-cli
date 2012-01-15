@@ -36,6 +36,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 	///		Type of the return value of the target method.
 	///		<see cref="Missing"/> when the traget method returns void.
 	/// </typeparam>
+	[ContractClass( typeof( AsyncServiceInvokerContract<> ) )]
 	internal abstract class AsyncServiceInvoker<T> : IAsyncServiceInvoker
 	{
 		internal static readonly MethodInfo InvokeCoreMethod =
@@ -52,8 +53,13 @@ namespace MsgPack.Rpc.Server.Dispatch
 		/// </value>
 		public string OperationId
 		{
-			get { return this._operationId; }
-		} 
+			get
+			{
+				Contract.Ensures( !String.IsNullOrEmpty( Contract.Result<string>() ) );
+
+				return this._operationId;
+			}
+		}
 
 		private readonly ServiceDescription _serviceDescription;
 
@@ -66,7 +72,12 @@ namespace MsgPack.Rpc.Server.Dispatch
 		/// </value>
 		public ServiceDescription ServiceDescription
 		{
-			get { return this._serviceDescription; }
+			get
+			{
+				Contract.Ensures( Contract.Result<ServiceDescription>() != null );
+
+				return this._serviceDescription;
+			}
 		}
 
 		private readonly MethodInfo _targetOperation;
@@ -80,14 +91,18 @@ namespace MsgPack.Rpc.Server.Dispatch
 		/// </value>
 		public MethodInfo TargetOperation
 		{
-			get { return this._targetOperation; }
+			get
+			{
+				Contract.Ensures( Contract.Result<MethodInfo>() != null );
+				return this._targetOperation;
+			}
 		}
 
 		protected AsyncServiceInvoker( SerializationContext context, ServiceDescription serviceDescription, MethodInfo targetOperation )
 		{
-			Contract.Assert( context != null );
-			Contract.Assert( serviceDescription != null );
-			Contract.Assert( targetOperation != null );
+			Contract.Requires( context != null );
+			Contract.Requires( serviceDescription != null );
+			Contract.Requires( targetOperation != null );
 
 			this._serviceDescription = serviceDescription;
 			this._targetOperation = targetOperation;
@@ -101,6 +116,8 @@ namespace MsgPack.Rpc.Server.Dispatch
 			{
 				throw new ArgumentNullException( "requestContext" );
 			}
+
+			Contract.EndContractBlock();
 
 			var messageId = requestContext.MessageId;
 			var arguments = requestContext.ArgumentsUnpacker;
@@ -197,4 +214,19 @@ namespace MsgPack.Rpc.Server.Dispatch
 		/// <param name="error">The RPC error will be stored.</param>
 		protected abstract void InvokeCore( Unpacker arguments, out Task task, out RpcErrorMessage error );
 	}
+
+	[ContractClassFor( typeof( AsyncServiceInvoker<> ) )]
+	internal abstract class AsyncServiceInvokerContract<T> : AsyncServiceInvoker<T>
+	{
+		protected AsyncServiceInvokerContract() : base( null, null, null, null ) { }
+
+		protected override void InvokeCore( Unpacker arguments, out Task task, out RpcErrorMessage error )
+		{
+			Contract.Requires( arguments != null );
+			Contract.Ensures( Contract.ValueAtReturn( out task ) != null );
+			task = default( Task );
+			error = default( RpcErrorMessage );
+		}
+	}
+
 }
