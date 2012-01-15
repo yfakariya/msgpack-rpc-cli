@@ -82,10 +82,12 @@ namespace MsgPack.Rpc.Server.Dispatch
 			}
 			else if ( ( rpcException = exception as RpcException ) != null )
 			{
-				return new RpcErrorMessage( rpcException.RpcError, rpcException.Message, rpcException.DebugInformation );
+				// FIXME: Configurable 'includesDebugInformation'.
+				return new RpcErrorMessage( rpcException.RpcError, rpcException.GetExceptionMessage( false ) );
 			}
 			else
 			{
+				// FIXME: Configurable 'invariant'.
 				return new RpcErrorMessage( RpcError.RemoteRuntimeError, RpcError.RemoteRuntimeError.DefaultMessageInvariant, exception.ToString() );
 			}
 		}
