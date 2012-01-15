@@ -48,6 +48,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 		private static readonly PropertyInfo _rpcErrorMessageSuccessProperty =
 			FromExpression.ToProperty( () => RpcErrorMessage.Success );
 
+
 		private static ServiceInvokerGenerator _default = new ServiceInvokerGenerator( false );
 
 		/// <summary>
@@ -154,7 +155,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 		/// <returns>
 		///		<see cref="ServiceInvoker{T}"/> where T is return type of the target method.
 		/// </returns>
-		public IAsyncServiceInvoker GetServiceInvoker( SerializationContext context, ServiceDescription serviceDescription, MethodInfo targetOperation )
+		public IAsyncServiceInvoker GetServiceInvoker( RpcServerConfiguration configuration, SerializationContext context, ServiceDescription serviceDescription, MethodInfo targetOperation )
 		{
 			bool isReadLockHeld = false;
 			try
@@ -173,7 +174,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 					return result;
 				}
 
-				IAsyncServiceInvoker newInvoker = CreateInvoker( context, serviceDescription, targetOperation );
+				IAsyncServiceInvoker newInvoker = CreateInvoker( configuration, context, serviceDescription, targetOperation );
 
 				bool isWriteLockHeld = false;
 				try
@@ -211,7 +212,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 			}
 		}
 
-		private IAsyncServiceInvoker CreateInvoker( SerializationContext context, ServiceDescription serviceDescription, MethodInfo targetOperation )
+		private IAsyncServiceInvoker CreateInvoker( RpcServerConfiguration configuration, SerializationContext context, ServiceDescription serviceDescription, MethodInfo targetOperation )
 		{
 			var parameters = targetOperation.GetParameters();
 			CheckParameters( parameters );
@@ -238,11 +239,12 @@ namespace MsgPack.Rpc.Server.Dispatch
 			var emitter = new ServiceInvokerEmitter( this._moduleBuilder, Interlocked.Increment( ref this._typeSequence ), targetOperation.DeclaringType, targetOperation.ReturnType, this._isDebuggable );
 			EmitInvokeCore( emitter, targetOperation, parameters, returnType, isWrapperNeeded );
 
-			return emitter.CreateInstance( context, serviceDescription, targetOperation );
+			return emitter.CreateInstance( configuration, context, serviceDescription, targetOperation );
 		}
 
 		private static void EmitInvokeCore( ServiceInvokerEmitter emitter, MethodInfo targetOperation, ParameterInfo[] parameters, Type returnType, bool isWrapperNeeded )
 		{
+			var asyncInvokerIsDebugModeProperty = typeof( AsyncServiceInvoker<> ).MakeGenericType( returnType ).GetProperty( "IsDebugMode", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic );
 			var il = emitter.GetInvokeCoreMethodILGenerator();
 			try
 			{
@@ -271,6 +273,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 					il.EmitLdfld( serializers[ i ] );
 					il.EmitAnyCall( serializers[ i ].FieldType.GetMethod( "UnpackFrom", BindingFlags.Public | BindingFlags.Instance ) );
 					il.EmitAnyStloc( unpackedArguments[ i ] );
+
 					EmitExceptionHandling(
 						il,
 						returnType,
@@ -279,6 +282,8 @@ namespace MsgPack.Rpc.Server.Dispatch
 						{
 							il0.EmitAnyLdloc( exception );
 							il0.EmitLdstr( parameters[ i ].Name );
+							il0.EmitAnyLdarg( 0 );
+							il0.EmitGetProperty( asyncInvokerIsDebugModeProperty );
 							il0.EmitCall( InvocationHelper.HandleArgumentDeserializationExceptionMethod );
 						}
 					);
@@ -349,6 +354,8 @@ namespace MsgPack.Rpc.Server.Dispatch
 					( il0, exception ) =>
 					{
 						il0.EmitAnyLdloc( exception );
+						il0.EmitAnyLdarg( 0 );
+						il0.EmitGetProperty( asyncInvokerIsDebugModeProperty );
 						il0.EmitCall( InvocationHelper.HandleInvocationExceptionMethod );
 					}
 				);

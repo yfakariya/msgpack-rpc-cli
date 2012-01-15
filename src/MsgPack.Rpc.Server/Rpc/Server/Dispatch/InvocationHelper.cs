@@ -22,10 +22,8 @@ using System;
 using System.ComponentModel;
 using System.Globalization;
 using System.Reflection;
-using MsgPack.Serialization;
 using MsgPack.Rpc.Protocols;
-using System.Diagnostics.Contracts;
-using MsgPack.Rpc.Server.Protocols;
+using MsgPack.Serialization;
 
 namespace MsgPack.Rpc.Server.Dispatch
 {
@@ -40,13 +38,13 @@ namespace MsgPack.Rpc.Server.Dispatch
 		///		<see cref="MethodInfo"/> of <see cref="HandleArgumentDeserializationException"/>.
 		/// </summary>
 		internal static readonly MethodInfo HandleArgumentDeserializationExceptionMethod =
-			FromExpression.ToMethod( ( Exception exception, string parameterName ) => HandleArgumentDeserializationException( exception, parameterName ) );
+			FromExpression.ToMethod( ( Exception exception, string parameterName, bool isDebugMode ) => HandleArgumentDeserializationException( exception, parameterName, isDebugMode ) );
 
 		/// <summary>
 		///		<see cref="MethodInfo"/> of <see cref="HandleInvocationException"/>.
 		/// </summary>
 		internal static readonly MethodInfo HandleInvocationExceptionMethod =
-			FromExpression.ToMethod( ( Exception exception ) => HandleInvocationException( exception ) );
+			FromExpression.ToMethod( ( Exception exception, bool isDebugMode ) => HandleInvocationException( exception, isDebugMode ) );
 
 		/// <summary>
 		///		<strong>This member is intended to MessagePack-RPC internal use.</strong>
@@ -58,9 +56,14 @@ namespace MsgPack.Rpc.Server.Dispatch
 		///		<see cref="RpcErrorMessage"/>.
 		/// </returns>
 		[EditorBrowsable( EditorBrowsableState.Never )]
-		public static RpcErrorMessage HandleArgumentDeserializationException( Exception exception, string parameterName )
+		public static RpcErrorMessage HandleArgumentDeserializationException( Exception exception, string parameterName, bool isDebugMode )
 		{
-			return new RpcErrorMessage( RpcError.ArgumentError, String.Format( CultureInfo.CurrentCulture, "Argument '{0}' is invalid.", exception.ToString() ) );
+			return
+				new RpcErrorMessage(
+					RpcError.ArgumentError,
+					String.Format( CultureInfo.CurrentCulture, "Argument '{0}' is invalid.", parameterName ),
+					( isDebugMode && exception != null ) ? exception.ToString() : null
+				);
 		}
 
 		/// <summary>
@@ -72,23 +75,31 @@ namespace MsgPack.Rpc.Server.Dispatch
 		///		<see cref="RpcErrorMessage"/>.
 		/// </returns>
 		[EditorBrowsable( EditorBrowsableState.Never )]
-		public static RpcErrorMessage HandleInvocationException( Exception exception )
+		public static RpcErrorMessage HandleInvocationException( Exception exception, bool isDebugMode )
 		{
-			// FIXME: More precise
+			ArgumentException asArgumentException;
 			RpcException rpcException;
-			if ( exception is ArgumentException )
+			if ( ( asArgumentException = exception as ArgumentException ) != null )
 			{
-				return new RpcErrorMessage( RpcError.ArgumentError, exception.Message, exception.ToString() );
+				return
+					new RpcErrorMessage(
+						RpcError.ArgumentError,
+						String.Format( CultureInfo.CurrentCulture, "Argument '{0}' is invalid.", asArgumentException.ParamName ),
+						isDebugMode ? exception.ToString() : null
+					);
 			}
 			else if ( ( rpcException = exception as RpcException ) != null )
 			{
-				// FIXME: Configurable 'includesDebugInformation'.
-				return new RpcErrorMessage( rpcException.RpcError, rpcException.GetExceptionMessage( false ) );
+				return new RpcErrorMessage( rpcException.RpcError, rpcException.GetExceptionMessage( isDebugMode ) );
 			}
 			else
 			{
-				// FIXME: Configurable 'invariant'.
-				return new RpcErrorMessage( RpcError.RemoteRuntimeError, RpcError.RemoteRuntimeError.DefaultMessageInvariant, exception.ToString() );
+				return
+					new RpcErrorMessage( 
+						RpcError.RemoteRuntimeError, 
+						isDebugMode ? RpcError.RemoteRuntimeError.DefaultMessage : RpcError.RemoteRuntimeError.DefaultMessageInvariant,
+						isDebugMode ? exception.ToString() : null
+					);
 			}
 		}
 

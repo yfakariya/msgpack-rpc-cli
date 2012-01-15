@@ -65,7 +65,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 			this._id = id;
 		}
 
-		public static IEnumerable<OperationDescription> FromServiceDescription( SerializationContext serializationContext, ServiceDescription service )
+		public static IEnumerable<OperationDescription> FromServiceDescription( RpcServerConfiguration configuration, SerializationContext serializationContext, ServiceDescription service )
 		{
 			if ( serializationContext == null )
 			{
@@ -79,11 +79,11 @@ namespace MsgPack.Rpc.Server.Dispatch
 
 			foreach ( var operation in service.ServiceType.GetMethods().Where( method => method.IsDefined( typeof( MessagePackRpcMethodAttribute ), true ) ) )
 			{
-				yield return FromServiceMethodCore( serializationContext, service, operation );
+				yield return FromServiceMethodCore( configuration, serializationContext, service, operation );
 			}
 		}
 
-		public static OperationDescription FromServiceMethod( SerializationContext serializationContext, ServiceDescription service, MethodInfo operation )
+		public static OperationDescription FromServiceMethod( RpcServerConfiguration configuration, SerializationContext serializationContext, ServiceDescription service, MethodInfo operation )
 		{
 			if ( serializationContext == null )
 			{
@@ -113,12 +113,12 @@ namespace MsgPack.Rpc.Server.Dispatch
 				);
 			}
 
-			return FromServiceMethodCore( serializationContext, service, operation );
+			return FromServiceMethodCore( configuration, serializationContext, service, operation );
 		}
 
-		private static OperationDescription FromServiceMethodCore( SerializationContext serializationContext, ServiceDescription service, MethodInfo operation )
+		private static OperationDescription FromServiceMethodCore( RpcServerConfiguration configuration, SerializationContext serializationContext, ServiceDescription service, MethodInfo operation )
 		{
-			var serviceInvoker = ServiceInvokerGenerator.Default.GetServiceInvoker( serializationContext, service, operation );
+			var serviceInvoker = ServiceInvokerGenerator.Default.GetServiceInvoker( configuration, serializationContext, service, operation );
 			return new OperationDescription( service, operation, serviceInvoker.OperationId, serviceInvoker.InvokeAsync );
 		}
 	}

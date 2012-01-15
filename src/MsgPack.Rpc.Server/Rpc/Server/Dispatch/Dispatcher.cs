@@ -154,7 +154,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 
 		protected void SetException( ServerResponseContext context, Exception exception )
 		{
-			context.Serialize<MessagePackObject>( MessagePackObject.Nil, InvocationHelper.HandleInvocationException( exception ), this.SerializationContext.GetSerializer<MessagePackObject>() );
+			context.Serialize<MessagePackObject>( MessagePackObject.Nil, InvocationHelper.HandleInvocationException( exception, this._server.Configuration.IsDebugMode ), this.SerializationContext.GetSerializer<MessagePackObject>() );
 		}
 	}
 }

@@ -34,7 +34,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 {
 	internal sealed class ServiceInvokerEmitter
 	{
-		private static readonly Type[] _constructorParameterTypes = new[] { typeof( SerializationContext ) };
+		private static readonly Type[] _constructorParameterTypes = new[] { typeof( RpcServerConfiguration ), typeof( SerializationContext ), typeof( ServiceDescription ), typeof( MethodInfo ) };
 		private static readonly Type[] _invokeCoreParameterTypes = new[] { typeof( Unpacker ), typeof( Task ), typeof( RpcErrorMessage ) };
 
 		/// <summary>
@@ -183,8 +183,8 @@ namespace MsgPack.Rpc.Server.Dispatch
 			if ( !this._typeBuilder.IsCreated() )
 			{
 				/*
-				 *	.ctor( SerializationContext context, ServiceDescription serviceDescription, MethodInfo targetOperation ) 
-				 *		: base( context, serviceDescription, targetOperation )
+				 *	.ctor( RpcServerConfiguration, SerializationContext context, ServiceDescription serviceDescription, MethodInfo targetOperation ) 
+				 *		: base( configuration, context, serviceDescription, targetOperation )
 				 *	{
 				 *		this._serializer0 = context.GetSerializer<T0>();
 				 *		this._serializer1 = context.GetSerializer<T1>();
@@ -198,6 +198,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 				il.Emit( OpCodes.Ldarg_1 );
 				il.Emit( OpCodes.Ldarg_2 );
 				il.Emit( OpCodes.Ldarg_3 );
+				il.Emit( OpCodes.Ldarg_S, 4 );
 				il.Emit( OpCodes.Call, this._typeBuilder.BaseType.GetConstructor( BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, _constructorParameterTypes, null ) );
 
 				// this._serializerN = context.GetSerializer<T>();
@@ -206,7 +207,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 					var targetType = Type.GetTypeFromHandle( entry.Key );
 					var getMethod = MsgPack.Serialization.Metadata._SerializationContext.GetSerializer1_Method.MakeGenericMethod( targetType );
 					il.Emit( OpCodes.Ldarg_0 );
-					il.Emit( OpCodes.Ldarg_1 );
+					il.Emit( OpCodes.Ldarg_2 );
 					il.Emit( OpCodes.Callvirt, getMethod );
 					il.Emit( OpCodes.Stfld, entry.Value );
 				}
@@ -227,23 +228,26 @@ namespace MsgPack.Rpc.Server.Dispatch
 		///		Newly built <see cref="ServiceInvoker"/> instance.
 		///		This value will not be <c>null</c>.
 		///	</returns>
-		public IAsyncServiceInvoker CreateInstance( SerializationContext context, ServiceDescription serviceDescription, MethodInfo targetOperation )
+		public IAsyncServiceInvoker CreateInstance( RpcServerConfiguration configuration, SerializationContext context, ServiceDescription serviceDescription, MethodInfo targetOperation )
 		{
+			var configurationParameter = Expression.Parameter( typeof( RpcServerConfiguration ) );
 			var contextParameter = Expression.Parameter( typeof( SerializationContext ) );
 			var serviceDescriptionParameter = Expression.Parameter( typeof( ServiceDescription ) );
 			var targetOperationParameter = Expression.Parameter( typeof( MethodInfo ) );
 			return
-				Expression.Lambda<Func<SerializationContext, ServiceDescription, MethodInfo, IAsyncServiceInvoker>>(
+				Expression.Lambda<Func<RpcServerConfiguration, SerializationContext, ServiceDescription, MethodInfo, IAsyncServiceInvoker>>(
 					Expression.New(
 						this.Create(),
+						configurationParameter,
 						contextParameter,
 						serviceDescriptionParameter,
 						targetOperationParameter
 					),
+					configurationParameter,
 					contextParameter,
 					serviceDescriptionParameter,
 					targetOperationParameter
-				).Compile()( context, serviceDescription, targetOperation );
+				).Compile()( configuration, context, serviceDescription, targetOperation );
 		}
 
 		/// <summary>

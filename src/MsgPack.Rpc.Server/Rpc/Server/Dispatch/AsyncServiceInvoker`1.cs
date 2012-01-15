@@ -41,6 +41,11 @@ namespace MsgPack.Rpc.Server.Dispatch
 	{
 		private readonly RpcServerConfiguration _configuration;
 
+		protected bool IsDebugMode
+		{
+			get { return this._configuration.IsDebugMode; }
+		}
+
 		private readonly MessagePackSerializer<T> _returnValueSerializer;
 		private readonly string _operationId;
 
@@ -97,12 +102,14 @@ namespace MsgPack.Rpc.Server.Dispatch
 			}
 		}
 
-		protected AsyncServiceInvoker( SerializationContext context, ServiceDescription serviceDescription, MethodInfo targetOperation )
+		protected AsyncServiceInvoker( RpcServerConfiguration configuration, SerializationContext context, ServiceDescription serviceDescription, MethodInfo targetOperation )
 		{
+			Contract.Requires( configuration != null );
 			Contract.Requires( context != null );
 			Contract.Requires( serviceDescription != null );
 			Contract.Requires( targetOperation != null );
 
+			this._configuration = configuration;
 			this._serviceDescription = serviceDescription;
 			this._targetOperation = targetOperation;
 			this._operationId = serviceDescription.ToString() + "::" + targetOperation.Name;
@@ -190,7 +197,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 					{
 						if ( previous.Exception != null )
 						{
-							error = InvocationHelper.HandleInvocationException( previous.Exception.InnerException );
+							error = InvocationHelper.HandleInvocationException( previous.Exception.InnerException, @this.IsDebugMode );
 						}
 						else if ( @this._returnValueSerializer != null )
 						{

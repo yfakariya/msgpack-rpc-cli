@@ -530,6 +530,42 @@ namespace MsgPack.Rpc.Server
 		
 		static partial void CoerceServiceTypeLocatorProviderValue( ref Func<RpcServerConfiguration, ServiceTypeLocator> value );
 
+		private bool _isDebugMode = false;
+		
+		/// <summary>
+		/// 	Gets or sets whether the server is in debug mode.
+		/// </summary>
+		/// <value>
+		/// 	<c>true</c>, the server is in debug mode; otherwise, <c>false</c>. The default is <c>false</c>.
+		/// </value>
+		/// <remarks>
+		/// 	When the server is in debug mode, the error message contains debugging information includes underlying exception string.
+		/// </remarks>
+		public bool IsDebugMode
+		{
+			get
+			{
+				return this._isDebugMode;
+			}
+			set
+			{
+				this.VerifyIsNotFrozen();
+				var coerced = value;
+				CoerceIsDebugModeValue( ref coerced );
+				this._isDebugMode = coerced;
+			}
+		}
+		
+		/// <summary>
+		/// 	Resets the IsDebugMode property value.
+		/// </summary>
+		public void ResetIsDebugMode()
+		{
+			this._isDebugMode = false;
+		}
+		
+		static partial void CoerceIsDebugModeValue( ref bool value );
+
 		private Func<Func<ServerRequestContext>, ObjectPoolConfiguration, ObjectPool<ServerRequestContext>> _requestContextPoolProvider = ( factory, configuration ) => new StandardObjectPool<ServerRequestContext>( factory, configuration );
 		
 		/// <summary>
@@ -785,6 +821,9 @@ namespace MsgPack.Rpc.Server
 			buffer.Append( ", " );
 			buffer.Append( "\"ServiceTypeLocatorProvider\" : " );
 			ToString( this.ServiceTypeLocatorProvider, buffer );
+			buffer.Append( ", " );
+			buffer.Append( "\"IsDebugMode\" : " );
+			ToString( this.IsDebugMode, buffer );
 			buffer.Append( ", " );
 			buffer.Append( "\"RequestContextPoolProvider\" : " );
 			ToString( this.RequestContextPoolProvider, buffer );

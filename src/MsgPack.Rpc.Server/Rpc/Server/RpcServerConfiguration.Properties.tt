@@ -159,6 +159,20 @@ new List<Property>()
 		Precondition = Constraints.NotNull,
 		Postcondition = Constraints.NotNull
 	},
+	new Property()
+	{
+		Name = "IsDebugMode",
+		Type = "bool",
+		Default = "false",
+		Summary = "Gets or sets whether the server is in debug mode.",
+		Value = "<c>true</c>, the server is in debug mode; otherwise, <c>false</c>. " +
+			"The default is <c>false</c>.",
+		Remarks =
+			new String[]
+			{
+				"When the server is in debug mode, the error message contains debugging information includes underlying exception string."
+			}
+	},
 };
 
 Func<string, string, Property> __objectPoolProviderPropertyFactory =
