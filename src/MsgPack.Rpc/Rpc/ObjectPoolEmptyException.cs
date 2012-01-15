@@ -67,7 +67,7 @@ namespace MsgPack.Rpc
 		/// <exception cref="T:System.Runtime.Serialization.SerializationException">
 		///		THe class name is <c>null</c>,
 		///		or <see cref="P:System.Exception.HResult"/> is zero.
-		///	</exception>		
+		///	</exception>
 		private ObjectPoolEmptyException( SerializationInfo info, StreamingContext context ) : base( info, context ) { }
 #endif
 	}
