@@ -135,7 +135,16 @@ namespace MsgPack.Rpc.Server.Dispatch
 
 			Task task;
 			RpcErrorMessage error;
-			this.InvokeCore( arguments, out task, out error );
+			try
+			{
+				this.InvokeCore( arguments, out task, out error );
+			}
+			catch ( Exception ex )
+			{
+				task = null;
+				error = InvocationHelper.HandleInvocationException( ex, this.IsDebugMode );
+			}
+
 			var tuple = Tuple.Create( this, requestContext.SessionId, messageId.GetValueOrDefault(), responseContext, error );
 			if ( task == null )
 			{
