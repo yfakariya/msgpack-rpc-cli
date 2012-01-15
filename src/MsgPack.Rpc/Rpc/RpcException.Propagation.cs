@@ -23,6 +23,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 
@@ -59,18 +60,24 @@ namespace MsgPack.Rpc
 							this._remoteExceptions[ i ] = new RemoteExceptionInformation( array[ i ].AsList() );
 						}
 					}
-					catch ( InvalidOperationException ex )
+					catch ( InvalidOperationException )
 					{
-						throw new SerializationException( "Failed to deserialize remote exception information", ex );
+						// FIXME: Trace
 					}
 				}
 			}
+
+#if !SILVERLIGHT
+			this.RegisterSerializeObjectStateEventHandler();
+#endif
 		}
 
 		// TODO: expose remote info for better logging.
 
-		private readonly RemoteExceptionInformation[] _remoteExceptions;
+		// NOT readonly for safe-deserialization
+		private RemoteExceptionInformation[] _remoteExceptions;
 
+		[Serializable]
 		private sealed class RemoteExceptionInformation
 		{
 			public readonly int Hop;
@@ -143,18 +150,6 @@ namespace MsgPack.Rpc
 		private static readonly MessagePackObject _remoteExceptionsUtf8 = MessagePackConvert.EncodeString( "RemoteExceptions" );
 		private static readonly MessagePackObject _remoteDataUtf8 = MessagePackConvert.EncodeString( "RemoteData" );
 
-		private static string GetString( MessagePackObject unpackedException, MessagePackObject key, bool isRequlred )
-		{
-			string value;
-			unpackedException.TryGetString( key, isRequlred ? CreateSerializationException : default( Func<string, Exception> ), out value );
-			return value;
-		}
-
-		internal static SerializationException CreateSerializationException( string message )
-		{
-			return new SerializationException( message );
-		}
-
 		/// <summary>
 		///		Get <see cref="MessagePackObject"/> which contains data about this instance.
 		/// </summary>
@@ -173,6 +168,8 @@ namespace MsgPack.Rpc
 
 			return new MessagePackObject( store );
 		}
+
+		private static readonly MethodInfo _marshalGetHRForException = typeof( Marshal ).GetMethod( "GetHRForException" );
 
 		/// <summary>
 		///		Stores derived type specific information to specified dictionary.
@@ -224,7 +221,21 @@ namespace MsgPack.Rpc
 					properties[ 0 ] = 0;
 					properties[ 1 ] = MessagePackConvert.EncodeString( inner.GetType().FullName );
 					// HResult is significant for some exception (e.g. IOException).
-					properties[ 2 ] = Marshal.GetHRForException( inner );
+					var asExternalException = inner as ExternalException;
+					if ( asExternalException != null )
+					{
+						properties[ 2 ] = asExternalException.ErrorCode;
+					}
+					else if ( _marshalGetHRForException.IsSecuritySafeCritical )
+					{
+						properties[ 2 ] = Marshal.GetHRForException( inner );
+					}
+					else
+					{
+						// Cannot get HResult due to partial trust.
+						properties[ 2 ] = 0;
+					}
+
 					properties[ 3 ] = MessagePackConvert.EncodeString( inner.Message );
 
 					// stack trace
