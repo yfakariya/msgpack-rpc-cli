@@ -46,7 +46,7 @@ namespace MsgPack.Rpc
 		///		Initializes a new instance of the <see cref="ObjectPoolEmptyException"/> class with a specified error message and a reference to the inner exception that is the cause of this exception. 
 		/// </summary>
 		/// <param name="message">The message to describe the error.</param>
-		/// <param name="inner">
+		/// <param name="innerException">
 		///		The exception that is the cause of the current exception, or <c>null</c> if no inner exception is specified.
 		/// </param>
 		public ObjectPoolEmptyException( string message, Exception innerException ) : base( message ?? "The object pool is empty.", innerException ) { }

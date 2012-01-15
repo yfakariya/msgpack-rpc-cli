@@ -25,7 +25,7 @@ using System.Runtime.Serialization;
 namespace MsgPack.Rpc
 {
 	/// <summary>
-	///		Rperesents MessagePack-RPC related exception.
+	///		Represents MessagePack-RPC related exception.
 	/// </summary>
 	/// <remarks>
 	///		<para>
@@ -83,10 +83,10 @@ namespace MsgPack.Rpc
 		private readonly RpcError _rpcError;
 
 		/// <summary>
-		///		Get metadata of error.
+		///		Gets the metadata of the error.
 		/// </summary>
 		/// <value>
-		///		Metadata of error. This value will not be null.
+		///		The metadata of the error. This value will not be <c>null</c>.
 		/// </value>
 		public RpcError RpcError
 		{
@@ -96,11 +96,11 @@ namespace MsgPack.Rpc
 		private readonly string _debugInformation;
 
 		/// <summary>
-		///		Get debug information of error.
+		///		Gets the debug information of the error.
 		/// </summary>
 		/// <value>
-		///		Debug information of error.
-		///		This value may be null for security reason, and its contents are for developers, not end users.
+		///		The debug information of the error.
+		///		This value will not be <c>null</c> but may be empty for security reason, and its contents are for developers, not end users.
 		/// </value>
 		public string DebugInformation
 		{
@@ -108,17 +108,17 @@ namespace MsgPack.Rpc
 		}
 
 		/// <summary>
-		///		Initialize new instance which represents specified error with specified message..
+		///		Initializes a new instance of the <see cref="RpcException"/> class with a specified error message.
 		/// </summary>
 		/// <param name="rpcError">
-		///		Metadata of error. If you specify null, <see cref="MsgPack.Rpc.RpcError.RemoteRuntimeError"/> is used.
+		///		The metadata of the error. If <c>null</c> is specified, the <see cref="MsgPack.Rpc.RpcError.RemoteRuntimeError"/> is used.
 		///	</param>
 		/// <param name="message">
-		///		Error message to desribe condition. Note that this message should not include security related information.
+		///		The error message to desribe condition. Note that this message should not include security related information.
 		///	</param>
 		/// <param name="debugInformation">
-		///		Debug information of error.
-		///		This value can be null for security reason, and its contents are for developers, not end users.
+		///		The debug information of the error.
+		///		This value can be <c>null</c> for security reason, and its contents are for developers, not end users.
 		/// </param>
 		/// <remarks>
 		///		<para>
@@ -134,20 +134,20 @@ namespace MsgPack.Rpc
 		public RpcException( RpcError rpcError, string message, string debugInformation ) : this( rpcError, message, debugInformation, null ) { }
 
 		/// <summary>
-		///		Initialize new instance which represents specified error with specified message and inner exception.
+		///		Initializes a new instance of the <see cref="RpcException"/> class with a specified error message and a reference to the inner exception that is the cause of this exception. 
 		/// </summary>
 		/// <param name="rpcError">
-		///		Metadata of error. If you specify null, <see cref="MsgPack.Rpc.RpcError.RemoteRuntimeError"/> is used.
+		///		The metadata of the error. If <c>null</c> is specified, the <see cref="MsgPack.Rpc.RpcError.RemoteRuntimeError"/> is used.
 		///	</param>
 		/// <param name="message">
-		///		Error message to desribe condition. Note that this message should not include security related information.
+		///		The error message to desribe condition. Note that this message should not include security related information.
 		///	</param>
 		/// <param name="debugInformation">
-		///		Debug information of error.
-		///		This value can be null for security reason, and its contents are for developers, not end users.
+		///		The debug information of the error.
+		///		This value can be <c>null</c> for security reason, and its contents are for developers, not end users.
 		/// </param>
 		/// <param name="inner">
-		///		Exception which caused this error.
+		///		The exception which caused this error.
 		/// </param>
 		/// <remarks>
 		///		<para>

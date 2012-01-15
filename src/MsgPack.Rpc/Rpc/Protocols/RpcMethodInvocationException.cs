@@ -37,10 +37,10 @@ namespace MsgPack.Rpc.Protocols
 		private readonly string _methodName;
 
 		/// <summary>
-		///		Get a name of invoking method.
+		///		Gets the name of invoking method.
 		/// </summary>
 		/// <value>
-		///		Name of invoking method. This value will not be null nor empty.
+		///		The name of invoking method. This value will not be empty but may be <c>null</c>.
 		/// </value>
 		public string MethodName
 		{
@@ -48,10 +48,10 @@ namespace MsgPack.Rpc.Protocols
 		}
 
 		/// <summary>
-		///		Initialize new instance which represents specified error.
+		///		Initializes a new instance of the <see cref="RpcMethodInvocationException"/> class with the default error message.
 		/// </summary>
 		/// <param name="rpcError">
-		///		Metadata of error. If you specify null, <see cref="RpcError.RemoteRuntimeError"/> is used.
+		///		Metadata of error. If you specify null, <see cref="RpcError.CallError"/> is used.
 		///	</param>
 		///	<param name="methodName">
 		///		Name of method which is related to this error.
@@ -65,10 +65,10 @@ namespace MsgPack.Rpc.Protocols
 		public RpcMethodInvocationException( RpcError rpcError, string methodName ) : this( rpcError, methodName, "Failed to call specified method.", null ) { }
 
 		/// <summary>
-		///		Initialize new instance which represents specified error.
+		///		Initializes a new instance of the <see cref="RpcMethodInvocationException"/> class with a specified error message.
 		/// </summary>
 		/// <param name="rpcError">
-		///		Metadata of error. If you specify null, <see cref="RpcError.RemoteRuntimeError"/> is used.
+		///		Metadata of error. If you specify null, <see cref="RpcError.CallError"/> is used.
 		///	</param>
 		///	<param name="methodName">
 		///		Name of method which is related to this error.
@@ -100,10 +100,10 @@ namespace MsgPack.Rpc.Protocols
 		public RpcMethodInvocationException( RpcError rpcError, string methodName, string message, string debugInformation ) : this( rpcError, methodName, message, debugInformation, null ) { }
 
 		/// <summary>
-		///		Initialize new instance which represents specified error.
+		///		Initializes a new instance of the <see cref="RpcMethodInvocationException"/> class with a specified error message and a reference to the inner exception that is the cause of this exception. 
 		/// </summary>
 		/// <param name="rpcError">
-		///		Metadata of error. If you specify null, <see cref="RpcError.RemoteRuntimeError"/> is used.
+		///		Metadata of error. If you specify null, <see cref="RpcError.CallError"/> is used.
 		///	</param>
 		///	<param name="methodName">
 		///		Name of method which is related to this error.
@@ -174,6 +174,7 @@ namespace MsgPack.Rpc.Protocols
 		///		Initialize new sintance with unpacked data.
 		/// </summary>
 		/// <param name="rpcError">
+		///		Metadata of error. If you specify null, <see cref="MsgPack.Rpc.RpcError.RemoteRuntimeError"/> is used.
 		///		Metadata of error. If you specify null, <see cref="RpcError.RemoteRuntimeError"/> is used.
 		///	</param>
 		/// <param name="unpackedException">
@@ -189,13 +190,13 @@ namespace MsgPack.Rpc.Protocols
 		}
 
 		/// <summary>
-		///		Store derived type specific information to specified dictionary.
+		///		Stores derived type specific information to specified dictionary.
 		/// </summary>
 		/// <param name="store">
-		///		Dictionary to be stored.
+		///		Dictionary to be stored. This value will not be <c>null</c>.
 		///	</param>
 		/// <param name="includesDebugInformation">
-		///		If this method should include debug information then true.
+		///		<c>true</c>, when this method should include debug information; otherwise, <c>false</c>.
 		///	</param>
 		protected override void GetExceptionMessage( IDictionary<MessagePackObject, MessagePackObject> store, bool includesDebugInformation )
 		{

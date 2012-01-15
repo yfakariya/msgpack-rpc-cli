@@ -22,6 +22,9 @@ using System;
 
 namespace MsgPack.Rpc
 {
+	/// <summary>
+	///		Defines extension methods for async-RPC related features.
+	/// </summary>
 	public static class ExceptionExtensions
 	{
 		/// <summary>

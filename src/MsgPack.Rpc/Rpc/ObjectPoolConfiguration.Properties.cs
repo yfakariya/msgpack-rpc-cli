@@ -155,7 +155,7 @@ namespace MsgPack.Rpc
 		/// 	Gets or sets the exhausion policy of the pool.
 		/// </summary>
 		/// <value>
-		/// 	The exhausion policy of the pool. The default is <see cref="ExhausionPolicy.BlockUntilAvailable"/>.
+		/// 	The exhausion policy of the pool. The default is <see cref="F:ExhausionPolicy.BlockUntilAvailable"/>.
 		/// </value>
 		public ExhausionPolicy ExhausionPolicy
 		{

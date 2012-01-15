@@ -30,10 +30,8 @@ using MsgPack.Rpc.StandardObjectPoolTracing;
 
 namespace MsgPack.Rpc
 {
-	// TODO: Move to NLiblet
-
 	/// <summary>
-	///		Implements standard <see cref="ObjectPool{TExternal,TInternal}"/>.
+	///		Implements standard <see cref="ObjectPool{T}"/>.
 	/// </summary>
 	/// <typeparam name="T">
 	///		The type of objects to be pooled.
@@ -62,7 +60,7 @@ namespace MsgPack.Rpc
 		private readonly int? _evictionIntervalMilliseconds;
 
 		/// <summary>
-		/// Initializes a new instance of the <see cref="StandardObjectPool&lt;TExternal, TInternal&gt;"/> class.
+		/// Initializes a new instance of the <see cref="StandardObjectPool&lt;T&gt;"/> class.
 		/// </summary>
 		/// <param name="factory">
 		///		The factory delegate to create <typeparamref name="T"/> type instance.
@@ -72,7 +70,6 @@ namespace MsgPack.Rpc
 		/// </param>
 		/// <exception cref="ArgumentNullException">
 		///		<paramref name="factory"/> is <c>null</c>.
-		///		Or, <paramref name="externalObjectFactory"/> is <c>null</c>.
 		/// </exception>
 		public StandardObjectPool( Func<T> factory, ObjectPoolConfiguration configuration )
 		{

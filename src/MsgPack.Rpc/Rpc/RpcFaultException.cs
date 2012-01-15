@@ -45,7 +45,7 @@ namespace MsgPack.Rpc
 		public RpcFaultException( RpcError rpcError ) : base( rpcError, "MessagePack-RPC destination server thrown exception.", null ) { }
 
 		/// <summary>
-		///		Initialize new instance which represents specified error with specified message..
+		///		Initializes a new instance of the <see cref="RpcFaultException"/> class with a specified error message.
 		/// </summary>
 		/// <param name="rpcError">
 		///		Metadata of error. If you specify null, <see cref="RpcError.RemoteRuntimeError"/> is used.
@@ -71,7 +71,7 @@ namespace MsgPack.Rpc
 		public RpcFaultException( RpcError rpcError, string message, string debugInformation ) : base( rpcError, message, debugInformation ) { }
 
 		/// <summary>
-		///		Initialize new instance which represents specified error with specified message and inner exception.
+		///		Initializes a new instance of the <see cref="RpcFaultException"/> class with a specified error message and a reference to the inner exception that is the cause of this exception. 
 		/// </summary>
 		/// <param name="rpcError">
 		///		Metadata of error. If you specify null, <see cref="RpcError.RemoteRuntimeError"/> is used.
@@ -113,7 +113,7 @@ namespace MsgPack.Rpc
 		protected internal RpcFaultException( SerializationInfo info, StreamingContext context ) : base( info, context ) { }
 
 		/// <summary>
-		///		Initialize new sintance with unpacked data.
+		///		Initializes a new instance of the <see cref="RpcFaultException"/> class with the unpacked data.
 		/// </summary>
 		/// <param name="rpcError">
 		///		Metadata of error. If you specify null, <see cref="RpcError.RemoteRuntimeError"/> is used.

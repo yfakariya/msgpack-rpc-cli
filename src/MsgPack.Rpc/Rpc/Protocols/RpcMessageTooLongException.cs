@@ -30,12 +30,12 @@ namespace MsgPack.Rpc.Protocols
 	public sealed class RpcMessageTooLongException : RpcProtocolException
 	{
 		/// <summary>
-		///		Initialize new instance with system default message.
+		///		Initializes a new instance of the <see cref="RpcMessageTooLongException"/> class with the default error message.
 		/// </summary>
 		public RpcMessageTooLongException() : this( "Message is too large.", null ) { }
 
 		/// <summary>
-		///		Initialize new instance which represents specified error.
+		///		Initializes a new instance of the <see cref="RpcMessageTooLongException"/> class with a specified error message.
 		/// </summary>
 		/// <param name="message">
 		///		Error message to desribe condition. Note that this message should not include security related information.
@@ -47,7 +47,7 @@ namespace MsgPack.Rpc.Protocols
 		public RpcMessageTooLongException( string message, string debugInformation ) : base( RpcError.MessageTooLargeError, message, debugInformation ) { }
 
 		/// <summary>
-		///		Initialize new instance which represents specified error.
+		///		Initializes a new instance of the <see cref="RpcMessageTooLongException"/> class with a specified error message and a reference to the inner exception that is the cause of this exception. 
 		/// </summary>
 		/// <param name="message">
 		///		Error message to desribe condition. Note that this message should not include security related information.
@@ -62,20 +62,7 @@ namespace MsgPack.Rpc.Protocols
 		public RpcMessageTooLongException( string message, string debugInformation, Exception inner ) : base( RpcError.MessageTooLargeError, message, debugInformation, inner ) { }
 
 		/// <summary>
-		///		Initialize new instance with serialized data.
-		/// </summary>
-		/// <param name="info"><see cref="SerializationInfo"/> which has serialized data.</param>
-		/// <param name="context"><see cref="StreamingContext"/> which has context information about transport source or destination.</param>
-		/// <exception cref="ArgumentNullException">
-		///		<paramref name="info"/> is null.
-		/// </exception>
-		/// <exception cref="SerializationException">
-		///		Cannot deserialize instance from <paramref name="info"/>.
-		/// </exception>
-		private RpcMessageTooLongException( SerializationInfo info, StreamingContext context ) : base( info, context ) { }
-
-		/// <summary>
-		///		Initialize new sintance with unpacked data.
+		///		Initializes a new instance of the <see cref="RpcException"/> class with the unpacked data.
 		/// </summary>
 		/// <param name="unpackedException">
 		///		Exception data from remote MessagePack-RPC server.

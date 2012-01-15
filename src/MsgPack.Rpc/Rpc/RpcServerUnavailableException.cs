@@ -30,7 +30,7 @@ namespace MsgPack.Rpc
 	public sealed class RpcServerUnavailableException : RpcException
 	{
 		/// <summary>
-		///		Initialize new instance which represents specified error.
+		///		Initializes a new instance of the <see cref="RpcServerUnavailableException"/> class with the default error message.
 		/// </summary>
 		/// <param name="rpcError">
 		///		Metadata of error. If you specify null, <see cref="RpcError.RemoteRuntimeError"/> is used.
@@ -38,7 +38,7 @@ namespace MsgPack.Rpc
 		public RpcServerUnavailableException(RpcError rpcError) : this( rpcError, "MessagePack-RPC destination server is unavailable.", null ) { }
 
 		/// <summary>
-		///		Initialize new instance which represents specified error.
+		///		Initializes a new instance of the <see cref="RpcServerUnavailableException"/> class with a specified error message.
 		/// </summary>
 		/// <param name="rpcError">
 		///		Metadata of error. If you specify null, <see cref="RpcError.RemoteRuntimeError"/> is used.
@@ -64,7 +64,7 @@ namespace MsgPack.Rpc
 		public RpcServerUnavailableException( RpcError rpcError, string message, string debugInformation ) : base( rpcError, message, debugInformation ) { }
 
 		/// <summary>
-		///		Initialize new instance which represents specified error.
+		///		Initializes a new instance of the <see cref="RpcServerUnavailableException"/> class with a specified error message and a reference to the inner exception that is the cause of this exception. 
 		/// </summary>
 		/// <param name="rpcError">
 		///		Metadata of error. If you specify null, <see cref="RpcError.RemoteRuntimeError"/> is used.
@@ -106,7 +106,7 @@ namespace MsgPack.Rpc
 		private RpcServerUnavailableException( SerializationInfo info, StreamingContext context ) : base( info, context ) { }
 
 		/// <summary>
-		///		Initialize new sintance with unpacked data.
+		///		Initializes a new instance of the <see cref="RpcServerUnavailableException"/> class with the unpacked data.
 		/// </summary>
 		/// <param name="rpcError">
 		///		Metadata of error. If you specify null, <see cref="RpcError.RemoteRuntimeError"/> is used.

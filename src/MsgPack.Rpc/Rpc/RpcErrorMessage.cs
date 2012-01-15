@@ -100,7 +100,7 @@ namespace MsgPack.Rpc
 		}
 
 		/// <summary>
-		///		Initialize new instance.
+		///		Initializes new instance.
 		/// </summary>
 		/// <param name="error">Error information of the error.</param>
 		/// <param name="detail">Unpacked detailed information of the error which was occurred in remote endpoint.</param>
@@ -121,13 +121,13 @@ namespace MsgPack.Rpc
 		}
 
 		/// <summary>
-		///		Initialize new instance.
+		///		Initializes new instance.
 		/// </summary>
-		/// <param name="error">Error information of the error.</param>
-		/// <param name="description">Description of the error which was occurred in local.</param>
-		/// <param name="debugInformation">Detailed debug information of the error which was occurred in local.</param>
+		/// <param name="error">The metadata of the error.</param>
+		/// <param name="description">The description of the error which was occurred in local.</param>
+		/// <param name="debugInformation">The detailed debug information of the error which was occurred in local.</param>
 		/// <exception cref="ArgumentNullException">
-		///		<paramref name="error"/> is null.
+		///		<paramref name="error"/> is <c>null</c>.
 		/// </exception>
 		public RpcErrorMessage( RpcError error, string description, string debugInformation )
 		{

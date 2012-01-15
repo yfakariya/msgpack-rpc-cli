@@ -35,7 +35,7 @@ namespace MsgPack.Rpc
 		private readonly TimeSpan _clientTimeout;
 
 		/// <summary>
-		///		Get timeout value which was expired in client.
+		///		Gets the timeout value which was expired in client.
 		/// </summary>
 		/// <value>Timeout value in client.</value>
 		public TimeSpan ClientTimeout
@@ -44,13 +44,13 @@ namespace MsgPack.Rpc
 		}
 
 		/// <summary>
-		///		Initialize new instance.
+		///		Initializes a new instance of the <see cref="RpcTimeoutException"/> class with the default error message.
 		/// </summary>
 		/// <param name="timeout">Timeout value in client.</param>
 		public RpcTimeoutException( TimeSpan timeout ) : this( timeout, "Request has been timeout.", null ) { }
 
 		/// <summary>
-		///		Initialize new instance with specified message.
+		///		Initializes a new instance of the <see cref="RpcTimeoutException"/> class with a specified error message.
 		/// </summary>
 		/// <param name="timeout">Timeout value in client.</param>
 		/// <param name="message">
@@ -78,7 +78,7 @@ namespace MsgPack.Rpc
 		}
 
 		/// <summary>
-		///		Initialize new instance with specified message and inner exception.
+		///		Initializes a new instance of the <see cref="RpcTimeoutException"/> class with a specified error message and a reference to the inner exception that is the cause of this exception. 
 		/// </summary>
 		/// <param name="timeout">Timeout value in client.</param>
 		/// <param name="message">

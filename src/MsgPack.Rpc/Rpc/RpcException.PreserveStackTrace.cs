@@ -20,9 +20,8 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Diagnostics;
+using System.Text;
 
 namespace MsgPack.Rpc
 {
@@ -40,6 +39,10 @@ namespace MsgPack.Rpc
 			this._preservedStackTrace.Add( new StackTrace( this, true ).ToString() );
 		}
 
+		/// <summary>
+		///		Gets a string representation of the immediate frames on the call stack.
+		/// </summary>
+		/// <returns>A string that describes the immediate frames of the call stack.</returns>
 		public override string StackTrace
 		{
 			get

@@ -48,8 +48,7 @@ namespace MsgPack.Rpc
 		///		The <see cref="ObjectPoolConfiguration"/> which contains various settings of this object pool.
 		/// </param>
 		/// <exception cref="ArgumentNullException">
-		///		<paramref name="internalResourceFactory"/> is <c>null</c>.
-		///		Or, <paramref name="externalObjectFactory"/> is <c>null</c>.
+		///		<paramref name="factory"/> is <c>null</c>.
 		/// </exception>
 		public OnTheFlyObjectPool( Func<T> factory, ObjectPoolConfiguration configuration )
 		{

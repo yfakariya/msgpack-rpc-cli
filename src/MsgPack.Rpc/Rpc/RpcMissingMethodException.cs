@@ -31,7 +31,7 @@ namespace MsgPack.Rpc
 	public sealed class RpcMissingMethodException : RpcMethodInvocationException
 	{
 		/// <summary>
-		///		Initialize new instance which represents specified error.
+		///		Initializes a new instance of the <see cref="RpcMissingMethodException"/> class with the default error message.
 		/// </summary>
 		///	<param name="methodName">
 		///		Name of method which is related to this error.
@@ -46,7 +46,7 @@ namespace MsgPack.Rpc
 			: base( RpcError.NoMethodError, methodName ) { }
 
 		/// <summary>
-		///		Initialize new instance which represents specified error.
+		///		Initializes a new instance of the <see cref="RpcMissingMethodException"/> class with a specified error message.
 		/// </summary>
 		///	<param name="methodName">
 		///		Name of method which is related to this error.
@@ -79,7 +79,7 @@ namespace MsgPack.Rpc
 			: base( RpcError.NoMethodError, methodName, message, debugInformation ) { }
 
 		/// <summary>
-		///		Initialize new instance which represents specified error.
+		///		Initializes a new instance of the <see cref="RpcMissingMethodException"/> class with a specified error message and a reference to the inner exception that is the cause of this exception. 
 		/// </summary>
 		///	<param name="methodName">
 		///		Name of method which is related to this error.
@@ -129,7 +129,7 @@ namespace MsgPack.Rpc
 			: base( info, context ) { }
 
 		/// <summary>
-		///		Initialize new sintance with unpacked data.
+		///		Initializes a new instance of the <see cref="RpcMissingMethodException"/> class with the unpacked data.
 		/// </summary>
 		/// <param name="unpackedException">
 		///		Exception data from remote MessagePack-RPC server.

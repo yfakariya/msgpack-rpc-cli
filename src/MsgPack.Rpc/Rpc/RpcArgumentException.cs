@@ -38,10 +38,10 @@ namespace MsgPack.Rpc
 		private readonly string _parameterName;
 
 		/// <summary>
-		///		Get name of parameter causing this exception.
+		///		Gets the name of parameter causing this exception.
 		/// </summary>
 		/// <value>
-		///		Name of parameter causing this exception. This value will not be null nor empty.
+		///		The mame of parameter causing this exception. This value will not be empty but may be <c>null</c>.
 		/// </value>
 		public string ParameterName
 		{
@@ -49,7 +49,7 @@ namespace MsgPack.Rpc
 		}
 
 		/// <summary>
-		///		Initialize new instance which represents specified argument error.
+		///		Initializes a new instance of the <see cref="RpcArgumentException"/> class with the default error message.
 		/// </summary>
 		///	<param name="methodName">
 		///		Name of method which is related to this error.
@@ -66,7 +66,7 @@ namespace MsgPack.Rpc
 		public RpcArgumentException( string methodName, string parameterName ) : this( methodName, parameterName, "The value of argument is invalid.", null ) { }
 
 		/// <summary>
-		///		Initialize new instance which represents specified argument error.
+		///		Initializes a new instance of the <see cref="RpcArgumentException"/> class with a specified error message.
 		/// </summary>
 		///	<param name="methodName">
 		///		Name of method which is related to this error.
@@ -101,7 +101,7 @@ namespace MsgPack.Rpc
 		public RpcArgumentException( string methodName, string parameterName, string message, string debugInformation ) : this( methodName, parameterName, message, debugInformation, null ) { }
 
 		/// <summary>
-		///		Initialize new instance which represents specified argument error.
+		///		Initializes a new instance of the <see cref="RpcArgumentException"/> class with a specified error message and a reference to the inner exception that is the cause of this exception. 
 		/// </summary>
 		///	<param name="methodName">
 		///		Name of method which is related to this error.
@@ -172,7 +172,7 @@ namespace MsgPack.Rpc
 		}
 
 		/// <summary>
-		///		Initialize new sintance with unpacked data.
+		///		Initializes a new instance of the <see cref="RpcException"/> class with the unpacked data.
 		/// </summary>
 		/// <param name="unpackedException">
 		///		Exception data from remote MessagePack-RPC server.

@@ -31,18 +31,18 @@ namespace MsgPack.Rpc.Protocols
 	public sealed class RpcTransportException : RpcException
 	{
 		/// <summary>
-		///		Initialize new instance which represents specified error.
+		///		Initializes a new instance of the <see cref="RpcTransportException"/> class with the default error message.
 		/// </summary>
 		/// <param name="rpcError">
-		///		Metadata of error. If you specify null, <see cref="RpcError.RemoteRuntimeError"/> is used.
+		///		Metadata of error. If you specify null, <see cref="RpcError.TransportError"/> is used.
 		///	</param>
 		public RpcTransportException( RpcError rpcError ) : this( rpcError, "Some network error is occurred in MessagePack-RPC communication.", null ) { }
 	
 		/// <summary>
-		///		Initialize new instance which represents specified error.
+		///		Initializes a new instance of the <see cref="RpcTransportException"/> class with a specified error message.
 		/// </summary>
 		/// <param name="rpcError">
-		///		Metadata of error. If you specify null, <see cref="RpcError.RemoteRuntimeError"/> is used.
+		///		Metadata of error. If you specify null, <see cref="RpcError.TransportError"/> is used.
 		///	</param>
 		/// <param name="message">
 		///		Error message to desribe condition. Note that this message should not include security related information.
@@ -65,10 +65,10 @@ namespace MsgPack.Rpc.Protocols
 		public RpcTransportException( RpcError rpcError, string message, string debugInformation ) : base( rpcError, message, debugInformation ) { }
 
 		/// <summary>
-		///		Initialize new instance which represents specified error.
+		///		Initializes a new instance of the <see cref="RpcTransportException"/> class with a specified error message and a reference to the inner exception that is the cause of this exception. 
 		/// </summary>
 		/// <param name="rpcError">
-		///		Metadata of error. If you specify null, <see cref="RpcError.RemoteRuntimeError"/> is used.
+		///		Metadata of error. If you specify null, <see cref="RpcError.TransportError"/> is used.
 		///	</param>
 		/// <param name="message">
 		///		Error message to desribe condition. Note that this message should not include security related information.
@@ -107,7 +107,7 @@ namespace MsgPack.Rpc.Protocols
 		private RpcTransportException( SerializationInfo info, StreamingContext context ) : base( info, context ) { }
 
 		/// <summary>
-		///		Initialize new sintance with unpacked data.
+		///		Initializes a new instance of the <see cref="RpcTransportException"/> class with the unpacked data.
 		/// </summary>
 		/// <param name="rpcError">
 		///		Metadata of error. If you specify null, <see cref="RpcError.RemoteRuntimeError"/> is used.

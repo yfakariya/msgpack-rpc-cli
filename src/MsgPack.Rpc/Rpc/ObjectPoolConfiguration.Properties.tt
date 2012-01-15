@@ -91,7 +91,7 @@ using System.Text;
 		Default = "ExhausionPolicy.BlockUntilAvailable",
 		Summary = "Gets or sets the exhausion policy of the pool.",
 		Value = "The exhausion policy of the pool. " +
-			"The default is <see cref=\"ExhausionPolicy.BlockUntilAvailable\"/>.",
+			"The default is <see cref=\"F:ExhausionPolicy.BlockUntilAvailable\"/>.",
 		Precondition = Constraints.OnlyDefined,
 		Postcondition = Constraints.OnlyDefined
 	},
