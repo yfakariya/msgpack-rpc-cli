@@ -68,6 +68,8 @@
     <Compile Include="Rpc\Protocols\SocketErrorCodeExtensionTest.cs" />
     <Compile Include="Rpc\Protocols\_SetUpFixture.cs" />
     <Compile Include="Rpc\RpcArgumentExceptionTest.cs" />
+    <Compile Include="Rpc\RpcErrorMessageTest.cs" />
+    <Compile Include="Rpc\RpcErrorTest.cs" />
     <Compile Include="Rpc\RpcExceptionTest.cs" />
     <Compile Include="Rpc\RpcExceptionTestBase`1.cs" />
     <Compile Include="Rpc\RpcFaultExceptionTest.cs" />
