@@ -29,7 +29,9 @@ namespace MsgPack.Rpc
 	/// <summary>
 	///		Thrown if some arguments are wrong like its type was not match, its value was out of range, its value was null but it is not illegal, so on.
 	/// </summary>
+#if !SILVERLIGHT
 	[Serializable]
+#endif
 	public sealed class RpcArgumentException : RpcMethodInvocationException
 	{
 		private const string _parameterNameKey = "ParameterName";
@@ -201,6 +203,7 @@ namespace MsgPack.Rpc
 			store.Add( _parameterNameKeyUtf8, MessagePackConvert.EncodeString( this._parameterName ) );
 		}
 
+#if !SILVERLIGHT
 		/// <summary>
 		///		Set up <see cref="SerializationInfo"/> with this instance data.
 		/// </summary>
@@ -214,5 +217,6 @@ namespace MsgPack.Rpc
 			base.GetObjectData( info, context );
 			info.AddValue( _parameterNameKey, this._parameterName );
 		}
+#endif
 	}
 }

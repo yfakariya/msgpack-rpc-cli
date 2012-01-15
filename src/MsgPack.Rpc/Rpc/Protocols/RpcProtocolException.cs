@@ -26,7 +26,9 @@ namespace MsgPack.Rpc.Protocols
 	/// <summary>
 	///		Exception ocurred when something is wrong in MessagePack-RPC protocol scheme.
 	/// </summary>
+#if !SILVERLIGHT
 	[Serializable]
+#endif
 	public class RpcProtocolException : RpcException
 	{
 		/// <summary>

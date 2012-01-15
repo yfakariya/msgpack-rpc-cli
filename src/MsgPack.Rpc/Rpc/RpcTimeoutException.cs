@@ -26,7 +26,9 @@ namespace MsgPack.Rpc
 	/// <summary>
 	///		Thrown when RPC invocation was time out.
 	/// </summary>
+#if !SILVERLIGHT
 	[Serializable]
+#endif
 	public sealed class RpcTimeoutException : RpcException
 	{
 		private const string _clientTimeoutKey = "ClientTimeout";

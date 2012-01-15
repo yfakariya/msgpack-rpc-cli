@@ -26,7 +26,9 @@ namespace MsgPack.Rpc.Protocols
 	/// <summary>
 	///		Thrown if incoming MsgPack-RPC message exceeds the quota.
 	/// </summary>
+#if !SILVERLIGHT
 	[Serializable]
+#endif
 	public sealed class RpcMessageTooLongException : RpcProtocolException
 	{
 		/// <summary>

@@ -72,7 +72,9 @@ namespace MsgPack.Rpc
 	///			</list>
 	///		</para>
 	/// </remarks>
+#if !SILVERLIGHT
 	[Serializable]
+#endif
 	public partial class RpcException : Exception
 	{
 		/// <summary>

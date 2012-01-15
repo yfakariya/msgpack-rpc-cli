@@ -27,7 +27,9 @@ namespace MsgPack.Rpc
 	/// <summary>
 	///		Thrown when specified method is not exist on remote server.
 	/// </summary>
+#if !SILVERLIGHT
 	[Serializable]
+#endif
 	public sealed class RpcMissingMethodException : RpcMethodInvocationException
 	{
 		/// <summary>

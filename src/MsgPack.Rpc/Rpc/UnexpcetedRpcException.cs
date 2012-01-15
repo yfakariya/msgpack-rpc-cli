@@ -29,7 +29,9 @@ namespace MsgPack.Rpc
 	/// <remarks>
 	///		If server returns error but its structure is not compatible with de-facto standard, client library will throw this exception.
 	/// </remarks>
+#if !SILVERLIGHT
 	[Serializable]
+#endif
 	public sealed class UnexpcetedRpcException : RpcException
 	{
 		private const string _errorFieldKey = "UnexpectedError";

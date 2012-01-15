@@ -28,7 +28,9 @@ namespace MsgPack.Rpc.Protocols
 	/// <summary>
 	///		Thrown if something wrong during remote method invocation.
 	/// </summary>
+#if !SILVERLIGHT
 	[Serializable]
+#endif
 	public class RpcMethodInvocationException : RpcException
 	{
 		private const string _methodNameKey = "MethodName";
