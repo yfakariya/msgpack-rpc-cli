@@ -153,18 +153,18 @@ namespace MsgPack.Rpc
 		/// <summary>
 		///		Get <see cref="MessagePackObject"/> which contains data about this instance.
 		/// </summary>
-		/// <param name="includesDebugInformation">
+		/// <param name="isDebugMode">
 		///		If this method should include debug information then true.
 		/// </param>
 		/// <returns>
 		///		<see cref="MessagePackObject"/> which contains data about this instance.
 		/// </returns>
-		public MessagePackObject GetExceptionMessage( bool includesDebugInformation )
+		public MessagePackObject GetExceptionMessage( bool isDebugMode )
 		{
 			var store = new MessagePackObjectDictionary( 2 );
 			store.Add( _errorCodeUtf8, this.RpcError.ErrorCode );
-			store.Add( MessageKeyUtf8, this.Message );
-			this.GetExceptionMessage( store, includesDebugInformation );
+			store.Add( MessageKeyUtf8, isDebugMode ? this.Message : this.RpcError.DefaultMessageInvariant );
+			this.GetExceptionMessage( store, isDebugMode );
 
 			return new MessagePackObject( store );
 		}
