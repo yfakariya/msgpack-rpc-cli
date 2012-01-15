@@ -27,7 +27,7 @@ namespace MsgPack.Rpc
 	/// <summary>
 	///		Represents MsgPack-RPC error instance.
 	/// </summary>
-	public struct RpcErrorMessage
+	public struct RpcErrorMessage : IEquatable<RpcErrorMessage>
 	{
 		/// <summary>
 		///		Gets the instance which represents success (that is, not error.)
@@ -155,6 +155,53 @@ namespace MsgPack.Rpc
 		}
 
 		/// <summary>
+		///		Determines whether the specified <see cref="System.Object"/> is equal to this instance.
+		/// </summary>
+		/// <param name="obj">The <see cref="System.Object"/> to compare with this instance.</param>
+		/// <returns>
+		///		<c>true</c> if the specified <see cref="System.Object"/> is equal to this instance; otherwise, <c>false</c>.
+		/// </returns>
+		public override bool Equals( object obj )
+		{
+			if ( Object.ReferenceEquals( obj, null ) )
+			{
+				return false;
+			}
+
+			if ( !( obj is RpcErrorMessage ) )
+			{
+				return false;
+			}
+
+			return this.Equals( ( RpcErrorMessage )obj );
+		}
+
+		/// <summary>
+		///		Indicates whether the current object is equal to another object of the same type.
+		/// </summary>
+		/// <param name="other">
+		///		An object to compare with this object.
+		/// </param>
+		/// <returns>
+		///		<x>true</x> if the current object is equal to the <paramref name="other"/> parameter; otherwise, <c>false</c>.
+		/// </returns>
+		public bool Equals( RpcErrorMessage other )
+		{
+			return this._error == other._error && this._detail == other._detail;
+		}
+
+		/// <summary>
+		///		Returns a hash code for this instance.
+		/// </summary>
+		/// <returns>
+		///		A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table. 
+		/// </returns>
+		public override int GetHashCode()
+		{
+			return ( this._error == null ? 0 : this._error.GetHashCode() ) ^ this._detail.GetHashCode();
+		}
+
+		/// <summary>
 		///		Returns string representation of this error.
 		/// </summary>
 		/// <returns>
@@ -187,6 +234,32 @@ namespace MsgPack.Rpc
 			}
 
 			return this._error.ToException( this._detail );
+		}
+
+		/// <summary>
+		///		Determines whether two <see cref="RpcErrorMessage"/> instances have the same value. 
+		/// </summary>
+		/// <param name="left">A <see cref="RpcErrorMessage"/> instance to compare with <paramref name="right"/>.</param>
+		/// <param name="right">A <see cref="RpcErrorMessage"/> instance to compare with <paramref name="left"/>.</param>
+		/// <returns>
+		///		<c>true</c> if the <see cref="RpcErrorMessage"/> instances are equivalent; otherwise, <c>false</c>.
+		/// </returns>
+		public static bool operator ==( RpcErrorMessage left, RpcErrorMessage right )
+		{
+			return left.Equals( right );
+		}
+
+		/// <summary>
+		///		Determines whether two <see cref="RpcErrorMessage"/> instances do not have the same value. 
+		/// </summary>
+		/// <param name="left">A <see cref="RpcErrorMessage"/> instance to compare with <paramref name="right"/>.</param>
+		/// <param name="right">A <see cref="RpcErrorMessage"/> instance to compare with <paramref name="left"/>.</param>
+		/// <returns>
+		///		<c>true</c> if the <see cref="RpcErrorMessage"/> instances are not equivalent; otherwise, <c>false</c>.
+		/// </returns>
+		public static bool operator !=( RpcErrorMessage left, RpcErrorMessage right )
+		{
+			return !left.Equals( right );
 		}
 	}
 }
