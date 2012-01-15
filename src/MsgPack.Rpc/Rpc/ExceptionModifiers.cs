@@ -22,9 +22,8 @@ using System;
 
 namespace MsgPack.Rpc
 {
-	internal sealed class ExceptionModifiers
+	internal static class ExceptionModifiers
 	{
-		public static readonly ExceptionModifiers IsMatrioshkaInner = new ExceptionModifiers();
-		private ExceptionModifiers() { }
+		public static readonly object IsMatrioshkaInner = String.Intern( typeof( ExceptionModifiers ).FullName + ".IsMatrioshkaInner" );
 	}
 }
