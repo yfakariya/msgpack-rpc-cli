@@ -113,8 +113,8 @@ namespace MsgPack.Rpc
 		///			So you should specify some error handler to instrument it (e.g. logging handler).
 		///		</para>
 		/// </remarks>
-		public RpcMissingMethodException( string methodName, string message, string debugInformation, Exception inner ) 
-			: base( RpcError.NoMethodError, methodName, message, debugInformation, inner ) { }
+		public RpcMissingMethodException( string methodName, string message, string debugInformation, Exception inner )
+			: base( RpcError.NoMethodError, methodName, message ?? RpcError.NoMethodError.DefaultMessage, debugInformation, inner ) { }
 
 		/// <summary>
 		///		Initialize new instance with serialized data.

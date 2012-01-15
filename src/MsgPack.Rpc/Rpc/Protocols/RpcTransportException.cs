@@ -91,7 +91,7 @@ namespace MsgPack.Rpc.Protocols
 		///			So you should specify some error handler to instrument it (e.g. logging handler).
 		///		</para>
 		/// </remarks>
-		public RpcTransportException( RpcError rpcError, string message, string debugInformation, Exception inner ) : base( rpcError, message, debugInformation, inner ) { }
+		public RpcTransportException( RpcError rpcError, string message, string debugInformation, Exception inner ) : base( rpcError ?? RpcError.TransportError, message, debugInformation, inner ) { }
 
 		/// <summary>
 		///		Initialize new instance with serialized data.

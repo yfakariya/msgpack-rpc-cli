@@ -91,7 +91,8 @@ namespace MsgPack.Rpc
 		///			So you should specify some error handler to instrument it (e.g. logging handler).
 		///		</para>
 		/// </remarks>
-		public RpcServerUnavailableException( RpcError rpcError, string message, string debugInformation, Exception inner ) : base( rpcError, message, debugInformation, inner ) { }
+		public RpcServerUnavailableException( RpcError rpcError, string message, string debugInformation, Exception inner )
+			: base( rpcError ?? RpcError.ServerError, message, debugInformation, inner ) { }
 
 		/// <summary>
 		///		Initialize new instance with serialized data.
