@@ -23,11 +23,12 @@ using System.Runtime.Serialization;
 
 namespace MsgPack.Rpc
 {
-	// TODO: NLiblet
 	/// <summary>
 	///		Thrown when object pool is in corrupted state.
 	/// </summary>
+#if !SILVERLIGHT
 	[Serializable]
+#endif
 	public sealed class ObjectPoolCorruptedException : Exception
 	{
 		/// <summary>

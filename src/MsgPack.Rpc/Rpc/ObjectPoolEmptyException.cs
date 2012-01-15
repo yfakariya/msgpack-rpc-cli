@@ -23,10 +23,12 @@ using System.Runtime.Serialization;
 
 namespace MsgPack.Rpc
 {
-	// TODO: Move to NLiblet
 	/// <summary>
 	///		Throwsn when the object pool with <see cref="ExhausionPolicy.ThrowException"/> is empty at borrowing.
 	/// </summary>
+#if !SILVERLIGHT
+	[Serializable]
+#endif
 	public sealed class ObjectPoolEmptyException : Exception
 	{
 		/// <summary>
@@ -65,7 +67,8 @@ namespace MsgPack.Rpc
 		/// <exception cref="T:System.Runtime.Serialization.SerializationException">
 		///		THe class name is <c>null</c>,
 		///		or <see cref="P:System.Exception.HResult"/> is zero.
-		///	</exception>		private ObjectPoolEmptyException( SerializationInfo info, StreamingContext context ) : base( info, context ) { }
+		///	</exception>		
+		private ObjectPoolEmptyException( SerializationInfo info, StreamingContext context ) : base( info, context ) { }
 #endif
 	}
 }
