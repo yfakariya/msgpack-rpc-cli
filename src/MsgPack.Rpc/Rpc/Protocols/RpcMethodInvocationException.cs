@@ -151,7 +151,7 @@ namespace MsgPack.Rpc.Protocols
 
 			if ( String.IsNullOrWhiteSpace( methodName ) )
 			{
-				throw new ArgumentException( "'methodName' cannot be empty not blank.", "methodName" );
+				throw new ArgumentException( "'methodName' cannot be empty nor blank.", "methodName" );
 			}
 
 			Contract.EndContractBlock();
