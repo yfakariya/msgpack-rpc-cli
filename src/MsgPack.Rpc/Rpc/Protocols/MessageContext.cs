@@ -166,6 +166,9 @@ namespace MsgPack.Rpc.Protocols
 			}
 
 			this._completedSynchronously = false;
+			this.MessageId = null;
+			this._sessionId = 0;
+			this._sessionStartedAt = default( DateTimeOffset );
 		}
 	}
 }
