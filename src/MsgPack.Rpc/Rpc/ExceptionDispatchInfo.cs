@@ -19,8 +19,14 @@
 #endregion -- License Terms --
 
 using System;
+using System.ComponentModel;
+using System.Diagnostics.Contracts;
+using System.Net;
+using System.Net.NetworkInformation;
+using System.Net.Sockets;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Security;
 
 namespace MsgPack.Rpc
 {
@@ -29,6 +35,8 @@ namespace MsgPack.Rpc
 	{
 		private static readonly Type[] _constructorParameterStringException = new[] { typeof( string ), typeof( Exception ) };
 		private static readonly PropertyInfo _exceptionHResultProperty = typeof( Exception ).GetProperty( "HResult", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance );
+		private static readonly MethodInfo _safeCreateMatroshikaMethod = typeof( ExceptionDispatchInfo ).GetMethod( "SafeCreateMatroshika", BindingFlags.Static | BindingFlags.NonPublic );
+		private static readonly MethodInfo _safeCreateWrapperWin32ExceptionMethod = typeof( ExceptionDispatchInfo ).GetMethod( "SafeCreateWrapperWin32Exception", BindingFlags.Static | BindingFlags.NonPublic );
 
 		private readonly Exception _source;
 
@@ -49,17 +57,87 @@ namespace MsgPack.Rpc
 
 		internal static Exception CreateMatroshika( Exception inner )
 		{
-			ExternalException asExternalException;
-#if !SILVERLIGHT
-			if ( AppDomain.CurrentDomain.IsFullyTrusted )
+			Contract.Requires( inner != null );
+			Contract.Ensures( Contract.Result<Exception>() != null );
+
+			Exception result = HandleKnownWin32Exception( inner );
+			if ( result != null )
 			{
+				return result;
+			}
+
+#if !SILVERLIGHT
+			result = TryCreateMatroshikaWithExternalExceptionMatroshka( inner );
+			if ( result != null )
+			{
+				return result;
+			}
+#endif
+			result = HandleExternalExceptionInPartialTrust( inner );
+			if ( result != null )
+			{
+				return result;
+			}
+
+			return GetMatroshika( inner ) ?? new TargetInvocationException( inner.Message, inner );
+		}
+		private static Exception HandleKnownWin32Exception( Exception inner )
+		{
+			// These do not have .ctor with innerException, so we must always create wrapper to preserve stack trace.
+			SocketException asSocketException;
+			HttpListenerException asHttpListenerException;
+			NetworkInformationException asNetworkInformationException;
+			Win32Exception asWin32Exception;
+
+			if ( ( asSocketException = inner as SocketException ) != null )
+			{
+				var result = new WrapperSocketException( asSocketException );
+				SetMatroshika( inner );
+				return result;
+			}
+
+			if ( ( asHttpListenerException = inner as HttpListenerException ) != null )
+			{
+				var result = new WrapperHttpListenerException( asHttpListenerException );
+				SetMatroshika( inner );
+				return result;
+			}
+
+			if ( ( asNetworkInformationException = inner as NetworkInformationException ) != null )
+			{
+				var result = new WrapperNetworkInformationException( asNetworkInformationException );
+				SetMatroshika( inner );
+				return result;
+			}
+
+			if ( ( asWin32Exception = inner as Win32Exception ) != null )
+			{
+				if ( _safeCreateWrapperWin32ExceptionMethod.IsSecuritySafeCritical )
+				{
+					var result = SafeCreateWrapperWin32Exception( asWin32Exception );
+					return result;
+				}
+				else
+				{
+					return new TargetInvocationException( asWin32Exception.Message, asWin32Exception );
+				}
+			}
+
+			return null;
+		}
+
+		private static Exception TryCreateMatroshikaWithExternalExceptionMatroshka( Exception inner )
+		{
+			// Try matroshika with HResult setting(requires full trust).
+			if ( AppDomain.CurrentDomain.IsFullyTrusted && _safeCreateMatroshikaMethod.IsSecuritySafeCritical )
+			{
+				ExternalException asExternalException;
 				if ( ( asExternalException = inner as ExternalException ) != null )
 				{
-					var result = GetMatroshika( inner );
-					if ( result != null )
+					var matroshika = SafeCreateMatroshika( asExternalException );
+					if ( matroshika != null )
 					{
-						_exceptionHResultProperty.SetValue( result, Marshal.GetHRForException( inner ), null );
-						return result;
+						return matroshika;
 					}
 					else
 					{
@@ -68,10 +146,16 @@ namespace MsgPack.Rpc
 					}
 				}
 			}
-#endif
 
+			return null;
+		}
+
+		private static Exception HandleExternalExceptionInPartialTrust( Exception inner )
+		{
+			// Partial trust fallback.
 			COMException asCOMException;
 			SEHException asSEHException;
+			ExternalException asExternalException;
 			if ( ( asCOMException = inner as COMException ) != null )
 			{
 				var result = new WrapperCOMException( asCOMException.Message, asCOMException );
@@ -93,7 +177,28 @@ namespace MsgPack.Rpc
 				return result;
 			}
 
-			return GetMatroshika( inner ) ?? new TargetInvocationException( inner.Message, inner );
+			return null;
+		}
+
+
+		[SecuritySafeCritical]
+		private static Exception SafeCreateMatroshika( ExternalException inner )
+		{
+			var result = GetMatroshika( inner );
+			if ( result != null )
+			{
+				_exceptionHResultProperty.SetValue( result, Marshal.GetHRForException( inner ), null );
+			}
+
+			return result;
+		}
+
+		[SecuritySafeCritical]
+		private static WrapperWin32Exception SafeCreateWrapperWin32Exception( Win32Exception inner )
+		{
+			var result = new WrapperWin32Exception( inner.Message, inner );
+			SetMatroshika( inner );
+			return result;
 		}
 
 		private static Exception GetMatroshika( Exception inner )
@@ -103,7 +208,7 @@ namespace MsgPack.Rpc
 			{
 				return null;
 			}
-			var result = ctor.Invoke( new object[] { inner.Message, inner.InnerException } ) as Exception;
+			var result = ctor.Invoke( new object[] { inner.Message, inner } ) as Exception;
 			SetMatroshika( inner );
 			return result;
 		}
@@ -145,6 +250,94 @@ namespace MsgPack.Rpc
 				: base( message, inner )
 			{
 				this.HResult = inner.ErrorCode;
+			}
+		}
+
+		[Serializable]
+		private sealed class WrapperWin32Exception : Win32Exception
+		{
+			public WrapperWin32Exception( string message, Win32Exception inner )
+				: base( message, inner )
+			{
+				this.HResult = inner.ErrorCode;
+			}
+		}
+
+		[Serializable]
+		private sealed class WrapperHttpListenerException : HttpListenerException
+		{
+			private readonly string _innerStackTrace;
+
+			public sealed override string StackTrace
+			{
+				get
+				{
+					return
+						String.Join(
+							this._innerStackTrace,
+							"   --- End of preserved stack trace ---",
+							Environment.NewLine,
+							base.StackTrace
+						);
+				}
+			}
+
+			public WrapperHttpListenerException( HttpListenerException inner )
+				: base( inner.ErrorCode )
+			{
+				this._innerStackTrace = inner.StackTrace;
+			}
+		}
+
+		[Serializable]
+		private sealed class WrapperNetworkInformationException : NetworkInformationException
+		{
+			private readonly string _innerStackTrace;
+
+			public sealed override string StackTrace
+			{
+				get
+				{
+					return
+						String.Join(
+							this._innerStackTrace,
+							"   --- End of preserved stack trace ---",
+							Environment.NewLine,
+							base.StackTrace
+						);
+				}
+			}
+
+			public WrapperNetworkInformationException( NetworkInformationException inner )
+				: base( inner.ErrorCode )
+			{
+				this._innerStackTrace = inner.StackTrace;
+			}
+		}
+
+		[Serializable]
+		private sealed class WrapperSocketException : SocketException
+		{
+			private readonly string _innerStackTrace;
+
+			public sealed override string StackTrace
+			{
+				get
+				{
+					return
+						String.Join(
+							this._innerStackTrace,
+							"   --- End of preserved stack trace ---",
+							Environment.NewLine,
+							base.StackTrace
+						);
+				}
+			}
+
+			public WrapperSocketException( SocketException inner )
+				: base( inner.ErrorCode )
+			{
+				this._innerStackTrace = inner.StackTrace;
 			}
 		}
 	}
