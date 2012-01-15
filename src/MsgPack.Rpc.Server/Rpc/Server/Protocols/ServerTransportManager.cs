@@ -214,7 +214,7 @@ namespace MsgPack.Rpc.Server.Protocols
 					errorDetail
 				);
 
-				this.RaiseServerError( new RpcTransportException( RpcError.TransportError, "Socket error.", errorDetail, new SocketException( ( int )context.SocketError ) ) );
+				this.RaiseServerError( new RpcTransportException( context.SocketError.ToRpcError(), "Socket error.", errorDetail, new SocketException( ( int )context.SocketError ) ) );
 				return false;
 			}
 
