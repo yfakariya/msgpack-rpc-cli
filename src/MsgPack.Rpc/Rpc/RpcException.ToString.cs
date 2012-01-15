@@ -19,7 +19,6 @@
 #endregion -- License Terms --
 
 using System;
-using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.Text;
 
@@ -27,7 +26,6 @@ namespace MsgPack.Rpc
 {
 	partial class RpcException
 	{
-
 		/// <summary>
 		///		Returns string representation of this exception for debugging.
 		/// </summary>
@@ -56,14 +54,12 @@ namespace MsgPack.Rpc
 		/// </returns>
 		public string ToString( bool includesDebugInformation )
 		{
-			if ( !includesDebugInformation || this._remoteExceptions == null )
+			if ( ( !includesDebugInformation || this._remoteExceptions == null ) && ( this._preservedStackTrace == null || this._preservedStackTrace.Count == 0 ) )
 			{
 				return base.ToString();
 			}
 			else
 			{
-				Contract.Assert( this._remoteExceptions != null );
-
 				// <Type>: <Message> ---> <InnerType1>: <InnerMessage1> ---> <InnerType2>: <InnerMessage2> ---> ...
 				// <ServerInnerStackTraceN>
 				//    --- End of inner exception stack trace ---
@@ -113,6 +109,8 @@ namespace MsgPack.Rpc
 						stringBuilder.Append( " ---> " ).Append( inner.GetType().FullName ).Append( ": " ).Append( inner.Message );
 					}
 				}
+
+				stringBuilder.AppendLine();
 			}
 			else if ( this._remoteExceptions != null )
 			{
@@ -120,6 +118,8 @@ namespace MsgPack.Rpc
 				{
 					stringBuilder.Append( " ---> " ).Append( remoteException.TypeName ).Append( ": " ).Append( remoteException.Message );
 				}
+
+				stringBuilder.AppendLine();
 			}
 		}
 
@@ -145,7 +145,7 @@ namespace MsgPack.Rpc
 						BuildGeneralStackTrace( inner, stringBuilder );
 					}
 
-					stringBuilder.Append( "   --- End of inner exception stack trace ---" );
+					stringBuilder.Append( "   --- End of inner exception stack trace ---" ).AppendLine();
 				}
 			}
 			else if ( this._remoteExceptions != null && this._remoteExceptions.Length > 0 )
@@ -158,17 +158,18 @@ namespace MsgPack.Rpc
 					)
 					{
 						// Serialized -> Deserialized case
-						stringBuilder.AppendFormat( "Exception transferred at[{0}]:", this._remoteExceptions[ i - 1 ].Hop );
+						stringBuilder.AppendFormat( "Exception transferred at[{0}]:", this._remoteExceptions[ i - 1 ].Hop ).AppendLine();
 					}
 					else
 					{
 						// Inner exception case
-						stringBuilder.Append( "   --- End of inner exception stack trace ---" );
+						stringBuilder.Append( "   --- End of inner exception stack trace ---" ).AppendLine();
 					}
 
 					foreach ( var frame in this._remoteExceptions[ i ].StackTrace )
 					{
 						WriteStackFrame( frame, stringBuilder );
+						stringBuilder.AppendLine();
 					}
 				}
 
@@ -185,31 +186,7 @@ namespace MsgPack.Rpc
 		/// <param name="stringBuilder">Buffer.</param>
 		private static void BuildGeneralStackTrace( Exception target, StringBuilder stringBuilder )
 		{
-			var stackTrace = new StackTrace( target, true );
-			for ( int i = 0; i < stackTrace.FrameCount; i++ )
-			{
-				WriteStackFrame( stackTrace.GetFrame( stackTrace.FrameCount - ( i + 1 ) ), stringBuilder );
-			}
-		}
-
-		/// <summary>
-		///		Write local stack framew string to specified buffer.
-		/// </summary>
-		/// <param name="frame">Stack frame to write.</param>
-		/// <param name="stringBuilder">Buffer.</param>
-		private static void WriteStackFrame( StackFrame frame, StringBuilder stringBuilder )
-		{
-			const string at = "at";
-			stringBuilder.AppendFormat( "   " + at + "{0}", frame.GetMethod() );
-			if ( frame.GetFileName() != null )
-			{
-				stringBuilder.AppendFormat( " " + at + " {0}", frame.GetFileName() );
-
-				if ( frame.GetFileLineNumber() > 0 )
-				{
-					stringBuilder.AppendFormat( ":line {0}", frame.GetFileLineNumber() );
-				}
-			}
+			stringBuilder.Append( target.StackTrace );
 		}
 
 		/// <summary>
