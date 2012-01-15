@@ -182,7 +182,6 @@ namespace MsgPack.Rpc.Protocols
 		/// </summary>
 		/// <param name="rpcError">
 		///		Metadata of error. If you specify null, <see cref="MsgPack.Rpc.RpcError.RemoteRuntimeError"/> is used.
-		///		Metadata of error. If you specify null, <see cref="RpcError.RemoteRuntimeError"/> is used.
 		///	</param>
 		/// <param name="unpackedException">
 		///		Exception data from remote MessagePack-RPC server.

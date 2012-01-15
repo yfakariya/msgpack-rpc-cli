@@ -195,13 +195,13 @@ namespace MsgPack.Rpc
 		}
 
 		/// <summary>
-		///		Store derived type specific information to specified dictionary.
+		///		Stores derived type specific information to specified dictionary.
 		/// </summary>
 		/// <param name="store">
-		///		Dictionary to be stored.
+		///		Dictionary to be stored. This value will not be <c>null</c>.
 		///	</param>
 		/// <param name="includesDebugInformation">
-		///		If this method should include debug information then true.
+		///		<c>true</c>, when this method should include debug information; otherwise, <c>false</c>.
 		///	</param>
 		protected sealed override void GetExceptionMessage( IDictionary<MessagePackObject, MessagePackObject> store, bool includesDebugInformation )
 		{

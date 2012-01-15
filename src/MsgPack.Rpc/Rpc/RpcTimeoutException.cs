@@ -126,7 +126,7 @@ namespace MsgPack.Rpc
 		}
 
 		/// <summary>
-		///		Initialize new sintance with unpacked data.
+		///		Initializes a new instance of the <see cref="RpcTimeoutException"/> class with the unpacked data.
 		/// </summary>
 		/// <param name="unpackedException">
 		///		Exception data from remote MessagePack-RPC server.
