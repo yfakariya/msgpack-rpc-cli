@@ -37,7 +37,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 	///		<see cref="Missing"/> when the traget method returns void.
 	/// </typeparam>
 	[ContractClass( typeof( AsyncServiceInvokerContract<> ) )]
-	internal abstract class AsyncServiceInvoker<T> : IAsyncServiceInvoker
+	public abstract class AsyncServiceInvoker<T> : IAsyncServiceInvoker
 	{
 		private readonly RpcServerConfiguration _configuration;
 
