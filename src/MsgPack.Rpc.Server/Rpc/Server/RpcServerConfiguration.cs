@@ -19,9 +19,7 @@
 #endregion -- License Terms --
 
 using System;
-using System.Net;
-using MsgPack.Rpc.Server.Dispatch;
-using MsgPack.Rpc.Server.Protocols;
+using System.Diagnostics.Contracts;
 
 namespace MsgPack.Rpc.Server
 {
@@ -38,7 +36,12 @@ namespace MsgPack.Rpc.Server
 		/// </value>
 		public static RpcServerConfiguration Default
 		{
-			get { return RpcServerConfiguration._default; }
+			get
+			{
+				Contract.Ensures( Contract.Result<RpcServerConfiguration>() != null ); 
+
+				return RpcServerConfiguration._default;
+			}
 		}
 
 		/// <summary>
@@ -48,26 +51,36 @@ namespace MsgPack.Rpc.Server
 
 		public ObjectPoolConfiguration CreateListeningContextPoolConfiguration()
 		{
+			Contract.Ensures( Contract.Result<ObjectPoolConfiguration>() != null );
+
 			return new ObjectPoolConfiguration() { ExhausionPolicy = ExhausionPolicy.ThrowException, MaximumPooled = this.MaximumConnection, MinimumReserved = this.MinimumConnection };
 		}
 
 		public ObjectPoolConfiguration CreateTcpTransportPoolConfiguration()
 		{
+			Contract.Ensures( Contract.Result<ObjectPoolConfiguration>() != null );
+
 			return new ObjectPoolConfiguration() { ExhausionPolicy = ExhausionPolicy.BlockUntilAvailable, MaximumPooled = this.MaximumConcurrentRequest, MinimumReserved = this.MinimumConcurrentRequest };
 		}
 
 		public ObjectPoolConfiguration CreateUdpTransportPoolConfiguration()
 		{
+			Contract.Ensures( Contract.Result<ObjectPoolConfiguration>() != null );
+
 			return new ObjectPoolConfiguration() { ExhausionPolicy = ExhausionPolicy.BlockUntilAvailable, MaximumPooled = this.MaximumConcurrentRequest, MinimumReserved = this.MinimumConcurrentRequest };
 		}
 
 		public ObjectPoolConfiguration CreateRequestContextPoolConfiguration()
 		{
+			Contract.Ensures( Contract.Result<ObjectPoolConfiguration>() != null );
+
 			return new ObjectPoolConfiguration() { ExhausionPolicy = ExhausionPolicy.BlockUntilAvailable, MaximumPooled = this.MaximumConcurrentRequest, MinimumReserved = this.MinimumConcurrentRequest };
 		}
 
 		public ObjectPoolConfiguration CreateResponseContextPoolConfiguration()
 		{
+			Contract.Ensures( Contract.Result<ObjectPoolConfiguration>() != null );
+
 			return new ObjectPoolConfiguration() { ExhausionPolicy = ExhausionPolicy.BlockUntilAvailable, MaximumPooled = this.MaximumConcurrentRequest, MinimumReserved = this.MinimumConcurrentRequest };
 		}
 
@@ -79,6 +92,10 @@ namespace MsgPack.Rpc.Server
 		/// </returns>
 		public RpcServerConfiguration Clone()
 		{
+			Contract.Ensures( Contract.Result<RpcServerConfiguration>() != null );
+			Contract.Ensures( !Object.ReferenceEquals( Contract.Result<RpcServerConfiguration>(), this ) );
+			Contract.Ensures( Contract.Result<RpcServerConfiguration>().IsFrozen == this.IsFrozen );
+
 			return this.CloneCore() as RpcServerConfiguration;
 		}
 
@@ -90,6 +107,9 @@ namespace MsgPack.Rpc.Server
 		/// </returns>
 		public RpcServerConfiguration Freeze()
 		{
+			Contract.Ensures( Object.ReferenceEquals( Contract.Result<RpcServerConfiguration>(), this ) );
+			Contract.Ensures( this.IsFrozen );
+
 			return this.FreezeCore() as RpcServerConfiguration;
 		}
 
@@ -102,6 +122,11 @@ namespace MsgPack.Rpc.Server
 		/// </returns>
 		public RpcServerConfiguration AsFrozen()
 		{
+			Contract.Ensures( Contract.Result<RpcServerConfiguration>() != null );
+			Contract.Ensures( !Object.ReferenceEquals( Contract.Result<RpcServerConfiguration>(), this ) );
+			Contract.Ensures( Contract.Result<RpcServerConfiguration>().IsFrozen );
+			Contract.Ensures( this.IsFrozen == Contract.OldValue( this.IsFrozen ) );
+
 			return this.AsFrozenCore() as RpcServerConfiguration;
 		}
 	}
