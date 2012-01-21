@@ -30,5 +30,24 @@ namespace MsgPack.Rpc
 		{
 			get { return RpcError.ServerError; }
 		}
+
+		[Test]
+		public void TestConstructor_RpcError_NotNull_DefaultValuesSet()
+		{
+			var error = RpcError.ServerBusyError;
+			var target = new RpcServerUnavailableException( error );
+
+			Assert.That( target.RpcError, Is.SameAs( error ) );
+			Assert.That( target.Message, Is.Not.Null.And.Not.Empty );
+		}
+
+		[Test]
+		public void TestConstructor_RpcError_Null_DefaultValuesSet()
+		{
+			var target = new RpcServerUnavailableException( null );
+
+			Assert.That( target.RpcError, Is.EqualTo( RpcError.ServerError ) );
+			Assert.That( target.Message, Is.Not.Null.And.Not.Empty );
+		}
 	}
 }

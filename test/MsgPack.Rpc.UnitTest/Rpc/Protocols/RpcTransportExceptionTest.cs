@@ -52,5 +52,24 @@ namespace MsgPack.Rpc.Protocols
 		{
 			return new RpcTransportException( rpcError, unpackedException );
 		}
+
+		[Test]
+		public void TestConstructor_RpcError_NotNull_DefaultValuesSet()
+		{
+			var error = RpcError.ConnectionRefusedError;
+			var target = new RpcTransportException( error );
+
+			Assert.That( target.RpcError, Is.SameAs( error ) );
+			Assert.That( target.Message, Is.Not.Null.And.Not.Empty );
+		}
+
+		[Test]
+		public void TestConstructor_RpcError_Null_DefaultValuesSet()
+		{
+			var target = new RpcTransportException( null );
+
+			Assert.That( target.RpcError, Is.EqualTo( RpcError.TransportError ) );
+			Assert.That( target.Message, Is.Not.Null.And.Not.Empty );
+		}
 	}
 }

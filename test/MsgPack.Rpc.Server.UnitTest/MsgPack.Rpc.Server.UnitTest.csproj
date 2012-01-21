@@ -61,6 +61,16 @@
     <Compile Include="Rpc\Server\Dispatch\InvocationHelperTest.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Rpc\Server\Dispatch\OperationDescriptionTest.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Rpc\Server\Dispatch\ServiceDescriptionTest.cs" />
+    <Compile Include="Rpc\Server\Dispatch\ServiceDescriptionTest.Equals.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>ServiceDescriptionTest.Equals.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Rpc\Server\Dispatch\ServiceInvokerGeneratorTest.cs" />
     <Compile Include="Rpc\Server\PreTest.cs" />
     <Compile Include="Rpc\Server\Protocols\_SetUpFixture.cs" />
     <Compile Include="Rpc\Server\_SetUpFixture.cs" />
@@ -86,8 +96,14 @@
     <None Include="App.config">
       <SubType>Designer</SubType>
     </None>
+    <None Include="Rpc\Server\Dispatch\ServiceDescriptionTest.Equals.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>ServiceDescriptionTest.Equals.cs</LastGenOutput>
+    </None>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>

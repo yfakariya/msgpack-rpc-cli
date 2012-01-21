@@ -52,5 +52,13 @@ namespace MsgPack.Rpc.Protocols
 		{
 			return new RpcMessageTooLongException( unpackedException );
 		}
+
+		[Test]
+		public void TestDefaultConstructor_DefaultPropertyValuesSet()
+		{
+			var target = new RpcMessageTooLongException();
+			Assert.That( target.RpcError, Is.EqualTo( RpcError.MessageTooLargeError ) );
+			Assert.That( target.Message, Is.Not.Null.And.Not.Empty );
+		}
 	}
 }

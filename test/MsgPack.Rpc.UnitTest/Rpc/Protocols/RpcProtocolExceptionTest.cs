@@ -30,5 +30,24 @@ namespace MsgPack.Rpc.Protocols
 		{
 			get { return RpcError.RemoteRuntimeError; }
 		}
+
+		[Test]
+		public void TestConstructor_RpcError_NotNull_DefaultValuesSet()
+		{
+			var error = RpcError.NoMethodError;
+			var target = new RpcProtocolException( error );
+
+			Assert.That( target.RpcError, Is.SameAs( error ) );
+			Assert.That( target.Message, Is.Not.Null.And.Not.Empty );
+		}
+
+		[Test]
+		public void TestConstructor_RpcError_Null_DefaultValuesSet()
+		{
+			var target = new RpcProtocolException( null );
+
+			Assert.That( target.RpcError, Is.EqualTo( RpcError.RemoteRuntimeError ) );
+			Assert.That( target.Message, Is.Not.Null.And.Not.Empty );
+		}
 	}
 }

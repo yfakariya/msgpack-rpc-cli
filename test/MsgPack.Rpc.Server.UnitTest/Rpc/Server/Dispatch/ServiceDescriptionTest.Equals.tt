@@ -1,0 +1,177 @@
+﻿<#
+//
+// MessagePack for CLI
+//
+// Copyright (C) 2010 FUJIWARA, Yusuke
+//
+//    Licensed under the Apache License, Version 2.0 (the "License");
+//    you may not use this file except in compliance with the License.
+//    You may obtain a copy of the License at
+//
+//        http://www.apache.org/licenses/LICENSE-2.0
+//
+//    Unless required by applicable law or agreed to in writing, software
+//    distributed under the License is distributed on an "AS IS" BASIS,
+//    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//    See the License for the specific language governing permissions and
+//    limitations under the License.
+//
+#>
+<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ output extension=".cs" #>
+<#@ assembly Name="System.Core" #>
+<#@ import namespace="System" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ import namespace="System.Text" #>
+<#
+var __testCases = new List<TestCase>();
+
+foreach( var name in new [] { "TestA", "TestB" } )
+{
+	foreach( var applicationName in new [] { "AppA", "AppB", null } )
+	{
+		foreach( var version in new int?[] { 1, 2, null } )
+		{
+			foreach( var initializer in new [] { "() => new object()" } )
+			{
+				__testCases.Add( new TestCase( name, applicationName, version, initializer ) );
+			}
+		}
+	}
+}
+#>
+#region -- License Terms --
+//
+// MessagePack for CLI
+//
+// Copyright (C) 2010 FUJIWARA, Yusuke
+//
+//    Licensed under the Apache License, Version 2.0 (the "License");
+//    you may not use this file except in compliance with the License.
+//    You may obtain a copy of the License at
+//
+//        http://www.apache.org/licenses/LICENSE-2.0
+//
+//    Unless required by applicable law or agreed to in writing, software
+//    distributed under the License is distributed on an "AS IS" BASIS,
+//    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//    See the License for the specific language governing permissions and
+//    limitations under the License.
+//
+#endregion -- License Terms --
+
+using System;
+using NUnit.Framework;
+
+namespace MsgPack.Rpc.Server.Dispatch
+{
+	partial class ServiceDescriptionTest
+	{
+<#
+var __created = new HashSet<string>();
+foreach( var __left in __testCases )
+{
+	foreach( var __right in __testCases )
+	{
+		string __suffix = ToTestBehaviorString( __left, __right ) + "_" + __left.Equals( __right );
+		if( !__created.Add( __suffix ) )
+		{
+			continue;
+		}
+#>
+
+		[Test]
+		public void TestEquals_<#= __suffix #>()
+		{
+			var left = 
+				new ServiceDescription( "<#= __left.Name #>", <#= __left.Initializer #> )
+				{
+<#
+		if( __left.Application != null )
+		{
+#>
+					Application = "<#= __left.Application #>",
+<#			
+		}
+		
+		if( __left.Version != null )
+		{
+#>
+					Version = <#= __left.Version #>
+<#
+		}
+#>
+				};
+
+			var right =
+				new ServiceDescription( "<#= __right.Name #>", <#= __right.Initializer #> )
+				{
+		<#
+		if( __right.Application != null )
+		{
+#>
+				Application = "<#= __right.Application #>",
+<#			
+		}
+		
+		if( __right.Version != null )
+		{
+#>
+				Version = <#= __right.Version #>
+<#
+		}
+#>
+				};
+				
+			Assert.That( left.Equals( right ), Is.<#= __left.Equals( __right ) #> );
+		}
+<#
+	}
+}
+#>
+	}
+}
+<#+
+private static string ToTestBehaviorString( TestCase left, TestCase right )
+{
+	var buffer = new StringBuilder();
+	buffer.Append( "NameAre" ).Append( left.Name == right.Name ? "Same" : "Differ" );
+	buffer.Append( "_ApplicationAre" );
+	
+	if( left.Application != null && right.Application != null )
+	{
+		buffer.Append( left.Application == right.Application ? "Same" : "Differ" );
+	}
+	else 
+	{
+		buffer.Append( left.Application == null ? "Null" : "NotNull" ).Append( "And" ).Append( right.Application == null ? "Null" : "NotNull" );
+	}
+	
+	buffer.Append( "_VersionAre" ).Append( left.Version == right.Version ? "Same" : "Differ" );
+	buffer.Append( "_TypeAre" ).Append( left.Initializer == right.Initializer ? "Same" : "Differ" );
+	
+	return buffer.ToString();
+}
+
+private struct TestCase
+{
+	public readonly string Name;
+	public readonly string Application;
+	
+	public string ExpectedApplication
+	{
+		get{ return this.Application ?? this.Name; }
+	}
+	
+	public readonly int? Version;
+	public readonly string Initializer;
+	
+	public TestCase( string name, string application, int? version, string initializer )
+	{
+		this.Name = name;
+		this.Application = application;
+		this.Version = version;
+		this.Initializer = initializer;
+	}
+}
+#>

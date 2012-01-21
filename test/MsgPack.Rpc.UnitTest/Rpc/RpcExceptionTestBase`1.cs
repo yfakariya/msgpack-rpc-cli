@@ -277,7 +277,7 @@ namespace MsgPack.Rpc
 			var asDictionary = result.AsDictionary();
 
 			Assert.That( asDictionary.Values.Any( item => item == GetRpcError( properties ).ErrorCode ) );
-			Assert.That( asDictionary.Values.Any( item => item.IsTypeOf<string>().GetValueOrDefault() && item.AsString().Contains( GetMessage( properties ) ) ) );
+			Assert.That( asDictionary.Values.Any( item => item.IsTypeOf<string>().GetValueOrDefault() && item.AsString().Contains( GetMessage( properties ) ) ), Is.True );
 			Assert.That( asDictionary.Values.Any( item => item.IsTypeOf<string>().GetValueOrDefault() && item.AsString().Contains( GetDebugInformation( properties ) ) ), Is.True );
 		}
 
@@ -295,7 +295,8 @@ namespace MsgPack.Rpc
 			var asDictionary = result.AsDictionary();
 
 			Assert.That( asDictionary.Values.Any( item => item == GetRpcError( properties ).ErrorCode ) );
-			Assert.That( asDictionary.Values.Any( item => item.IsTypeOf<string>().GetValueOrDefault() && item.AsString().Contains( GetMessage( properties ) ) ) );
+			Assert.That( asDictionary.Values.Any( item => item.IsTypeOf<string>().GetValueOrDefault() && item.AsString().Contains( GetMessage( properties ) ) ), Is.False );
+			Assert.That( asDictionary.Values.Any( item => item.IsTypeOf<string>().GetValueOrDefault() && item.AsString().Contains( GetRpcError( properties ).DefaultMessageInvariant ) ), Is.True );
 			Assert.That( asDictionary.Values.Any( item => item.IsTypeOf<string>().GetValueOrDefault() && item.AsString().Contains( GetDebugInformation( properties ) ) ), Is.False );
 		}
 

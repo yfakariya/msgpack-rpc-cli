@@ -61,8 +61,10 @@
     <Compile Include="Rpc\DisposableExtensions.cs" />
     <Compile Include="Rpc\ExceptionDispatchInfoTest.cs" />
     <Compile Include="Rpc\ExceptionExtensionsTest.cs" />
+    <Compile Include="Rpc\FreezableObjectTest.cs" />
     <Compile Include="Rpc\ObjectPoolCorruptedExceptionTest.cs" />
     <Compile Include="Rpc\ObjectPoolEmptyExceptionTest.cs" />
+    <Compile Include="Rpc\OnTheFlyObjectPoolTest.cs" />
     <Compile Include="Rpc\PooledObject.cs" />
     <Compile Include="Rpc\Protocols\MessageContextTest.cs" />
     <Compile Include="Rpc\Protocols\SocketErrorCodeExtensionTest.cs" />
