@@ -33,7 +33,7 @@ namespace MsgPack.Rpc
 	/// <remarks>
 	///		This object actually does not pool any objects, simply creates and returns <typeparamref name="T"/> type instances.
 	/// </remarks>
-	internal sealed class OnTheFlyObjectPool<T> : ObjectPool<T>
+	public sealed class OnTheFlyObjectPool<T> : ObjectPool<T>
 		where T : class
 	{
 		private readonly Func<T> _factory;
