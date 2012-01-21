@@ -77,43 +77,11 @@ namespace MsgPack.Rpc.Server.Dispatch
 				throw new ArgumentNullException( "service" );
 			}
 
+
 			foreach ( var operation in service.ServiceType.GetMethods().Where( method => method.IsDefined( typeof( MessagePackRpcMethodAttribute ), true ) ) )
 			{
-				yield return FromServiceMethodCore( configuration, serializationContext, service, operation );
+				yield return FromServiceMethodCore( configuration ?? RpcServerConfiguration.Default, serializationContext, service, operation );
 			}
-		}
-
-		public static OperationDescription FromServiceMethod( RpcServerConfiguration configuration, SerializationContext serializationContext, ServiceDescription service, MethodInfo operation )
-		{
-			if ( serializationContext == null )
-			{
-				throw new ArgumentNullException( "serializationContext" );
-			}
-
-			if ( service == null )
-			{
-				throw new ArgumentNullException( "service" );
-			}
-
-			if ( operation == null )
-			{
-				throw new ArgumentNullException( "operation" );
-			}
-
-			if ( !operation.DeclaringType.IsAssignableFrom( service.ServiceType ) )
-			{
-				throw new ArgumentException(
-					String.Format(
-						CultureInfo.CurrentCulture,
-						"Operation '{0}' is not declared on the service type '{1}' or its ancester types.",
-						operation.Name,
-						service.ServiceType.AssemblyQualifiedName
-					),
-					"operation"
-				);
-			}
-
-			return FromServiceMethodCore( configuration, serializationContext, service, operation );
 		}
 
 		private static OperationDescription FromServiceMethodCore( RpcServerConfiguration configuration, SerializationContext serializationContext, ServiceDescription service, MethodInfo operation )
