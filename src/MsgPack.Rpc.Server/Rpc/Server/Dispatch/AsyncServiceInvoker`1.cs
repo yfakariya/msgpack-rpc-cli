@@ -238,7 +238,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 		protected override void InvokeCore( Unpacker arguments, out Task task, out RpcErrorMessage error )
 		{
 			Contract.Requires( arguments != null );
-			Contract.Ensures( Contract.ValueAtReturn( out task ) != null );
+			Contract.Requires( arguments.IsArrayHeader );
 			task = default( Task );
 			error = default( RpcErrorMessage );
 		}
