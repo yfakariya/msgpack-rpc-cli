@@ -128,6 +128,10 @@ namespace MsgPack.Rpc.Server.Dispatch
 			var messageId = requestContext.MessageId;
 			var arguments = requestContext.ArgumentsUnpacker;
 
+			bool readMustSuccess = arguments.Read();
+			Contract.Assert( readMustSuccess, "Arguments is not an array." );
+			Contract.Assert( arguments.IsArrayHeader );
+
 			Trace.CorrelationManager.StartLogicalOperation();
 			if ( MsgPackRpcServerDispatchTrace.ShouldTrace( MsgPackRpcServerDispatchTrace.OperationStart ) )
 			{
