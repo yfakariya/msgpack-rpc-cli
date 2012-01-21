@@ -37,7 +37,7 @@ namespace MsgPack.Rpc.Protocols
 		/// <param name="rpcError">
 		///		Metadata of error. If you specify null, <see cref="RpcError.TransportError"/> is used.
 		///	</param>
-		public RpcTransportException( RpcError rpcError ) : this( null, null, null, null ) { }
+		public RpcTransportException( RpcError rpcError ) : this( rpcError, null, null, null ) { }
 
 		/// <summary>
 		///		Initializes a new instance of the <see cref="RpcTransportException"/> class with a specified error message.
