@@ -19,6 +19,7 @@
 #endregion -- License Terms --
 
 using System;
+using System.Diagnostics.Contracts;
 using System.Globalization;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -45,7 +46,11 @@ namespace MsgPack.Rpc.Server.Dispatch
 		/// </value>
 		public string Name
 		{
-			get { return this._name; }
+			get
+			{
+				Contract.Ensures( !String.IsNullOrWhiteSpace( Contract.Result<string>() ) );
+				return this._name;
+			}
 		}
 
 		private readonly Func<object> _initializer;
@@ -59,7 +64,11 @@ namespace MsgPack.Rpc.Server.Dispatch
 		/// </value>
 		public Func<object> Initializer
 		{
-			get { return this._initializer; }
+			get
+			{
+				Contract.Ensures( Contract.Result<Func<object>>() != null );
+				return this._initializer;
+			}
 		}
 
 		private Type _serviceType;
@@ -75,6 +84,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 		{
 			get
 			{
+				Contract.Ensures( Contract.Result<Type>() != null );
 				return this._serviceType ?? this._initializer.Method.DeclaringType;
 			}
 		}
@@ -93,7 +103,11 @@ namespace MsgPack.Rpc.Server.Dispatch
 		/// </exception>
 		public int Version
 		{
-			get { return this._version; }
+			get
+			{
+				Contract.Ensures( Contract.Result<int>() >= 0 );
+				return this._version;
+			}
 			set
 			{
 				if ( value < 0 )
@@ -125,7 +139,11 @@ namespace MsgPack.Rpc.Server.Dispatch
 		/// </remarks>
 		public string Application
 		{
-			get { return this._application ?? this.Name; }
+			get
+			{
+				Contract.Ensures( !String.IsNullOrWhiteSpace( Contract.Result<string>() ) );
+				return this._application ?? this.Name;
+			}
 			set
 			{
 				if ( String.IsNullOrEmpty( value ) )
@@ -159,6 +177,8 @@ namespace MsgPack.Rpc.Server.Dispatch
 			{
 				throw new ArgumentNullException( "initializer" );
 			}
+
+			Contract.EndContractBlock();
 
 			this._name = RpcIdentifierUtility.EnsureValidIdentifier( name, "name" );
 			this._initializer = initializer;
@@ -198,6 +218,8 @@ namespace MsgPack.Rpc.Server.Dispatch
 					"serviceType"
 				);
 			}
+
+			Contract.EndContractBlock();
 
 			var serviceContract = Attribute.GetCustomAttribute( serviceType, typeof( MessagePackRpcServiceContractAttribute ), true ) as MessagePackRpcServiceContractAttribute;
 			if ( serviceContract == null )
