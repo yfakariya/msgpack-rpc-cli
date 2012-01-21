@@ -207,7 +207,6 @@ namespace MsgPack.Rpc.Server.Dispatch
 				);
 			}
 
-			var serviceContractType = Type.GetType( serviceContract.Name, true );
 			var ctor = serviceType.GetConstructor( Type.EmptyTypes );
 			if ( ctor == null )
 			{
