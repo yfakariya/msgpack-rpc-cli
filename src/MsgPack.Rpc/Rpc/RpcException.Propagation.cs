@@ -233,11 +233,11 @@ namespace MsgPack.Rpc
 						var frame = innerStackTrace.GetFrame( innerStackTrace.FrameCount - ( i + 1 ) );
 						if ( frame.GetFileName() == null )
 						{
-							frames[ i ] = new MessagePackObject[] { frame.GetMethod().ToString(), frame.GetILOffset(), frame.GetNativeOffset() };
+							frames[ i ] = new MessagePackObject[] { ToStackFrameMethodSignature( frame.GetMethod() ), frame.GetILOffset(), frame.GetNativeOffset() };
 						}
 						else
 						{
-							frames[ i ] = new MessagePackObject[] { frame.GetMethod().ToString(), frame.GetILOffset(), frame.GetNativeOffset(), frame.GetFileName(), frame.GetFileLineNumber(), frame.GetFileColumnNumber() };
+							frames[ i ] = new MessagePackObject[] { ToStackFrameMethodSignature( frame.GetMethod() ), frame.GetILOffset(), frame.GetNativeOffset(), frame.GetFileName(), frame.GetFileLineNumber(), frame.GetFileColumnNumber() };
 						}
 					}
 					properties[ 4 ] = new MessagePackObject( frames );
@@ -262,6 +262,11 @@ namespace MsgPack.Rpc
 
 			store.Add( DebugInformationKeyUtf8, this.DebugInformation );
 
+		}
+
+		private static MessagePackObject ToStackFrameMethodSignature( MethodBase methodBase )
+		{
+			return String.Concat( methodBase.DeclaringType.FullName, ".", methodBase.Name, "(", String.Join( ", ", methodBase.GetParameters().Select( p => p.ParameterType.FullName ) ), ")" );
 		}
 
 		[SecuritySafeCritical]

@@ -21,6 +21,7 @@
 using System;
 using System.Diagnostics.Contracts;
 using System.Text;
+using System.Globalization;
 
 namespace MsgPack.Rpc
 {
@@ -158,7 +159,7 @@ namespace MsgPack.Rpc
 					)
 					{
 						// Serialized -> Deserialized case
-						stringBuilder.AppendFormat( "Exception transferred at[{0}]:", this._remoteExceptions[ i - 1 ].Hop ).AppendLine();
+						stringBuilder.AppendFormat( CultureInfo.CurrentCulture, "Exception transferred at [{0}]:", this._remoteExceptions[ i - 1 ].Hop ).AppendLine();
 					}
 					else
 					{
@@ -173,7 +174,7 @@ namespace MsgPack.Rpc
 					}
 				}
 
-				stringBuilder.AppendFormat( "Exception transferred at[{0}]:", this._remoteExceptions[ this._remoteExceptions.Length - 1 ].Hop ).AppendLine();
+				stringBuilder.AppendFormat( CultureInfo.CurrentCulture, "Exception transferred at [{0}]:", this._remoteExceptions[ this._remoteExceptions.Length - 1 ].Hop ).AppendLine();
 			}
 
 			BuildGeneralStackTrace( this, stringBuilder );
@@ -196,16 +197,15 @@ namespace MsgPack.Rpc
 		/// <param name="stringBuilder">Buffer.</param>
 		private static void WriteStackFrame( RemoteStackFrame frame, StringBuilder stringBuilder )
 		{
-			const string at = "at";
-			stringBuilder.AppendFormat( "   " + at + "{0}", frame.MethodSignature );
+			const string stackFrameTemplateWithFileInfo = "   at {0} in {1}:line {2}";
+			const string stackFrameTemplateWithoutFileInfo = "   at {0}";
 			if ( frame.FileName != null )
 			{
-				stringBuilder.AppendFormat( " " + at + " {0}", frame.FileName );
-
-				if ( frame.FileLineNumber > 0 )
-				{
-					stringBuilder.AppendFormat( ":line {0}", frame.FileLineNumber );
-				}
+				stringBuilder.AppendFormat( CultureInfo.CurrentCulture, stackFrameTemplateWithFileInfo, frame.MethodSignature, frame.FileName, frame.FileLineNumber );
+			}
+			else
+			{
+				stringBuilder.AppendFormat( CultureInfo.CurrentCulture, stackFrameTemplateWithoutFileInfo, frame.MethodSignature );
 			}
 		}
 	}
