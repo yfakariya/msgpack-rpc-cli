@@ -26,11 +26,14 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
+using System.Security;
 
 namespace MsgPack.Rpc
 {
 	partial class RpcException
 	{
+		private static readonly MethodInfo _safeGetHRFromExceptionMethod = typeof( RpcException ).GetMethod( "SafeGetHRFromException", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static );
+
 		/// <summary>
 		///		Initialize new sintance with unpacked data.
 		/// </summary>
@@ -169,8 +172,6 @@ namespace MsgPack.Rpc
 			return new MessagePackObject( store );
 		}
 
-		private static readonly MethodInfo _marshalGetHRForException = typeof( Marshal ).GetMethod( "GetHRForException" );
-
 		/// <summary>
 		///		Stores derived type specific information to specified dictionary.
 		/// </summary>
@@ -221,21 +222,7 @@ namespace MsgPack.Rpc
 					properties[ 0 ] = 0;
 					properties[ 1 ] = MessagePackConvert.EncodeString( inner.GetType().FullName );
 					// HResult is significant for some exception (e.g. IOException).
-					var asExternalException = inner as ExternalException;
-					if ( asExternalException != null )
-					{
-						properties[ 2 ] = asExternalException.ErrorCode;
-					}
-					else if ( _marshalGetHRForException.IsSecuritySafeCritical )
-					{
-						properties[ 2 ] = Marshal.GetHRForException( inner );
-					}
-					else
-					{
-						// Cannot get HResult due to partial trust.
-						properties[ 2 ] = 0;
-					}
-
+					properties[ 2 ] = SafeGetHRFromException( inner );
 					properties[ 3 ] = MessagePackConvert.EncodeString( inner.Message );
 
 					// stack trace
@@ -275,6 +262,27 @@ namespace MsgPack.Rpc
 
 			store.Add( DebugInformationKeyUtf8, this.DebugInformation );
 
+		}
+
+		[SecuritySafeCritical]
+		private static int SafeGetHRFromException( Exception exception )
+		{
+			var asExternalException = exception as ExternalException;
+			if ( asExternalException != null )
+			{
+				// ExternalException.ErrorCode is SecuritySafeCritical and its assembly must be fully trusted.
+				return asExternalException.ErrorCode;
+			}
+			else if ( _safeGetHRFromExceptionMethod.IsSecuritySafeCritical )
+			{
+				// Can invoke Marshal.GetHRForException because this assembly is fully trusted.
+				return Marshal.GetHRForException( exception );
+			}
+			else
+			{
+				// Cannot get HResult due to partial trust.
+				return 0;
+			}
 		}
 	}
 }

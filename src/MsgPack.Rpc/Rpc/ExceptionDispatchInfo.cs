@@ -149,7 +149,7 @@ namespace MsgPack.Rpc
 		private static Exception TryCreateMatroshikaWithExternalExceptionMatroshka( Exception inner )
 		{
 			// Try matroshika with HResult setting(requires full trust).
-			if ( AppDomain.CurrentDomain.IsFullyTrusted && _safeCreateMatroshikaMethod.IsSecuritySafeCritical )
+			if ( _safeCreateMatroshikaMethod.IsSecuritySafeCritical )
 			{
 				ExternalException asExternalException;
 				if ( ( asExternalException = inner as ExternalException ) != null )
