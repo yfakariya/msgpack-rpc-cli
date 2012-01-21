@@ -249,7 +249,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 				return false;
 			}
 
-			return this._name == other._name && this._version == other._version && this._application == other._application && this._initializer == other._initializer;
+			return this._name == other._name && this._version == other._version && this._application == other._application && this.ServiceType == other.ServiceType;
 		}
 
 		/// <summary>
@@ -261,7 +261,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 		public sealed override int GetHashCode()
 		{
 			// TODO: Use NLiblet
-			return this._name.GetHashCode() ^ ( this._application == null ? 0 : this._application.GetHashCode() ) ^ this._version.GetHashCode() ^ this._initializer.GetHashCode();
+			return this._name.GetHashCode() ^ ( this._application == null ? 0 : this._application.GetHashCode() ) ^ this._version.GetHashCode() ^ this.ServiceType.GetHashCode();
 		}
 
 		/// <summary>
