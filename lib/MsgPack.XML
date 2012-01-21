@@ -2190,7 +2190,7 @@
         </member>
         <member name="M:MsgPack.Packer.#ctor">
             <summary>
-            	Initialize new instance.
+            Initializes a new instance of the <see cref="T:MsgPack.Packer"/> class.
             </summary>
         </member>
         <member name="M:MsgPack.Packer.Create(System.IO.Stream)">
@@ -3388,13 +3388,13 @@
         </member>
         <member name="M:MsgPack.Float32Bits.#ctor(System.Single)">
             <summary>
-            	Initialize new instance from specified <see cref="T:System.Single"/>.
+            	Initializes a new instance of the <see cref="T:MsgPack.Float32Bits"/> type from specified <see cref="T:System.Single"/>.
             </summary>
             <param name="value">Value of <see cref="T:System.Single"/>.</param>
         </member>
         <member name="M:MsgPack.Float32Bits.#ctor(System.Byte[],System.Int32)">
             <summary>
-            	Initialize new instance from specified <see cref="T:System.Byte"/>[] which is big endian.
+            	Initializes a new instance of the <see cref="T:MsgPack.Float32Bits"/> type from specified <see cref="T:System.Byte"/>[] which is big endian.
             </summary>
             <param name="bigEndianBytes">Array of <see cref="T:System.Byte"/> which contains bytes in big endian.</param>
             <param name="offset">Offset to read.</param>
@@ -3781,21 +3781,39 @@
         </member>
         <member name="M:MsgPack.MessageTypeException.#ctor">
             <summary>
-            	Initialize new instance with default message.
+            	Initializes a new instance of the <see cref="T:MsgPack.MessageTypeException"/> class with the default error message.
             </summary>
         </member>
         <member name="M:MsgPack.MessageTypeException.#ctor(System.String)">
             <summary>
-            	Initialize new instance with specified message.
+            	Initializes a new instance of the <see cref="T:MsgPack.MessageTypeException"/> class with a specified error message.
             </summary>
-            <param name="message">Develiper friendly message to describe detail information.</param>
+            <param name="message">The message that describes the error. </param>
         </member>
         <member name="M:MsgPack.MessageTypeException.#ctor(System.String,System.Exception)">
             <summary>
-            	Initialize new instance with specified message and underlying error.
+            	Initializes a new instance of the <see cref="T:MsgPack.MessageTypeException"/> class with a specified error message and a reference to the inner exception that is the cause of this exception. 
             </summary>
-            <param name="message">Develiper friendly message to describe detail information.</param>
-            <param name="inner">Underlying error.</param>
+            <param name="message">The error message that explains the reason for the exception. </param>
+            <param name="inner">
+            	The exception that is the cause of the current exception, or a <c>null</c> if no inner exception is specified.
+            </param>
+        </member>
+        <member name="M:MsgPack.MessageTypeException.#ctor(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+            	Initializes a new instance of the <see cref="T:MsgPack.MessageTypeException"/> class with serialized data.
+            </summary>
+            <param name="info">
+            	The <see cref="T:System.Runtime.Serialization.SerializationInfo"/> that holds the serialized object data about the exception being thrown.
+            </param>
+            <param name="context">
+            	The <see cref="T:System.Runtime.Serialization.StreamingContext"/> that contains contextual information about the source or destination.</param>
+            <exception cref="T:System.ArgumentNullException">
+            	The <paramref name="info"/> parameter is <c>null</c>.
+            </exception>
+            <exception cref="T:System.Runtime.Serialization.SerializationException">
+            	The class name is <c>null</c> or <see cref="P:HResult"/> is zero (0).
+            </exception>
         </member>
         <member name="T:MsgPack.Float64Bits">
             <summary>
@@ -3849,13 +3867,13 @@
         </member>
         <member name="M:MsgPack.Float64Bits.#ctor(System.Double)">
             <summary>
-            	Initialize new instance from specified <see cref="T:System.Double"/>.
+            	Initializes a new instance of the <see cref="T:MsgPack.Float64Bits"/> type from specified <see cref="T:System.Double"/>.
             </summary>
             <param name="value">Value of <see cref="T:System.Double"/>.</param>
         </member>
         <member name="M:MsgPack.Float64Bits.#ctor(System.Byte[],System.Int32)">
             <summary>
-            	Initialize new instance from specified <see cref="T:System.Byte"/>[] which is big endian.
+            	Initializes a new instance of the <see cref="T:MsgPack.Float64Bits"/> type from specified <see cref="T:System.Byte"/>[] which is big endian.
             </summary>
             <param name="bigEndianBytes">Array of <see cref="T:System.Byte"/> which contains bytes in big endian.</param>
             <param name="offset">Offset to read.</param>
@@ -4202,7 +4220,7 @@
         </member>
         <member name="M:MsgPack.PackingOptions.#ctor">
             <summary>
-            	Initialize new instance.
+            	Initializes a new instance of the <see cref="T:MsgPack.PackingOptions"/> class.
             </summary>
         </member>
         <member name="P:MsgPack.PackingOptions.StringEncoding">
@@ -4634,7 +4652,7 @@
         </member>
         <member name="M:MsgPack.StreamingUnpacker.#ctor">
             <summary>
-            	Initialize new instance.
+            	Initializes a new instance of the <see cref="T:MsgPack.StreamingUnpacker"/> class.
             </summary>
         </member>
         <member name="M:MsgPack.StreamingUnpacker.Unpack(System.IO.Stream,MsgPack.UnpackingMode)">
@@ -4757,7 +4775,7 @@
         </member>
         <member name="M:MsgPack.StreamingUnpacker.CollectionUnpackagingState.#ctor">
             <summary>
-            	Initialize new instance.
+            	Initializes a new instance.
             </summary>
         </member>
         <member name="M:MsgPack.StreamingUnpacker.CollectionUnpackagingState.NewContextCollection(MsgPack.StreamingUnpacker.MessagePackHeader,System.UInt32)">
@@ -4820,13 +4838,13 @@
         </member>
         <member name="M:MsgPack.StreamingUnpacker.BytesBuffer.#ctor(System.UInt32)">
             <summary>
-            	Initialize new instance.
+            	Initializes a new instance.
             </summary>
             <param name="length">Length of bytes.</param>
         </member>
         <member name="M:MsgPack.StreamingUnpacker.BytesBuffer.#ctor(System.Byte[],System.Int32)">
             <summary>
-            	Initialize new instance.
+            	Initializes a new instance.
             </summary>
             <param name="backingStore">Existent backing store.</param>
             <param name="newPosition">Position where this buffer is filled.</param>
@@ -4873,21 +4891,39 @@
         </member>
         <member name="M:MsgPack.UnpackException.#ctor">
             <summary>
-            	Initialize new instance with default message.
+            	Initializes a new instance of the <see cref="T:MsgPack.UnpackException"/> class with the default error message.
             </summary>
         </member>
         <member name="M:MsgPack.UnpackException.#ctor(System.String)">
             <summary>
-            	Initialize new instance with specified message.
+            	Initializes a new instance of the <see cref="T:MsgPack.UnpackException"/> class with a specified error message.
             </summary>
-            <param name="message">Develiper friendly message to describe detail information.</param>
+            <param name="message">The message that describes the error. </param>
         </member>
         <member name="M:MsgPack.UnpackException.#ctor(System.String,System.Exception)">
             <summary>
-            	Initialize new instance with specified message and underlying error.
+            	Initializes a new instance of the <see cref="T:MsgPack.UnpackException"/> class with a specified error message and a reference to the inner exception that is the cause of this exception. 
             </summary>
-            <param name="message">Develiper friendly message to describe detail information.</param>
-            <param name="inner">Underlying error.</param>
+            <param name="message">The error message that explains the reason for the exception. </param>
+            <param name="inner">
+            	The exception that is the cause of the current exception, or a <c>null</c> if no inner exception is specified.
+            </param>
+        </member>
+        <member name="M:MsgPack.UnpackException.#ctor(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+            	Initializes a new instance of the <see cref="T:MsgPack.UnpackException"/> class with serialized data.
+            </summary>
+            <param name="info">
+            	The <see cref="T:System.Runtime.Serialization.SerializationInfo"/> that holds the serialized object data about the exception being thrown.
+            </param>
+            <param name="context">
+            	The <see cref="T:System.Runtime.Serialization.StreamingContext"/> that contains contextual information about the source or destination.</param>
+            <exception cref="T:System.ArgumentNullException">
+            	The <paramref name="info"/> parameter is <c>null</c>.
+            </exception>
+            <exception cref="T:System.Runtime.Serialization.SerializationException">
+            	The class name is <c>null</c> or <see cref="P:HResult"/> is zero (0).
+            </exception>
         </member>
         <member name="T:MsgPack.Serialization.LazyDelegatingMessagePackSerializer`1">
             <summary>
@@ -4937,57 +4973,57 @@
         </member>
         <member name="M:MsgPack.MessagePackObject.#ctor(System.Boolean)">
             <summary>
-            	Initialize new instance wraps <see cref="T:System.Boolean"/> instance.
+            	Initializes a new instance of the <see cref="T:MsgPack.MessagePackObject"/> type which wraps <see cref="T:System.Boolean"/> instance.
             </summary>
         </member>
         <member name="M:MsgPack.MessagePackObject.#ctor(System.Byte)">
             <summary>
-            	Initialize new instance wraps <see cref="T:System.Byte"/> instance.
+            	Initializes a new instance of the <see cref="T:MsgPack.MessagePackObject"/> type which wraps <see cref="T:System.Byte"/> instance.
             </summary>
         </member>
         <member name="M:MsgPack.MessagePackObject.#ctor(System.SByte)">
             <summary>
-            	Initialize new instance wraps <see cref="T:System.SByte"/> instance.
+            	Initializes a new instance of the <see cref="T:MsgPack.MessagePackObject"/> type which wraps <see cref="T:System.SByte"/> instance.
             </summary>
         </member>
         <member name="M:MsgPack.MessagePackObject.#ctor(System.Int16)">
             <summary>
-            	Initialize new instance wraps <see cref="T:System.Int16"/> instance.
+            	Initializes a new instance of the <see cref="T:MsgPack.MessagePackObject"/> type which wraps <see cref="T:System.Int16"/> instance.
             </summary>
         </member>
         <member name="M:MsgPack.MessagePackObject.#ctor(System.UInt16)">
             <summary>
-            	Initialize new instance wraps <see cref="T:System.UInt16"/> instance.
+            	Initializes a new instance of the <see cref="T:MsgPack.MessagePackObject"/> type which wraps <see cref="T:System.UInt16"/> instance.
             </summary>
         </member>
         <member name="M:MsgPack.MessagePackObject.#ctor(System.Int32)">
             <summary>
-            	Initialize new instance wraps <see cref="T:System.Int32"/> instance.
+            	Initializes a new instance of the <see cref="T:MsgPack.MessagePackObject"/> type which wraps <see cref="T:System.Int32"/> instance.
             </summary>
         </member>
         <member name="M:MsgPack.MessagePackObject.#ctor(System.UInt32)">
             <summary>
-            	Initialize new instance wraps <see cref="T:System.UInt32"/> instance.
+            	Initializes a new instance of the <see cref="T:MsgPack.MessagePackObject"/> type which wraps <see cref="T:System.UInt32"/> instance.
             </summary>
         </member>
         <member name="M:MsgPack.MessagePackObject.#ctor(System.Int64)">
             <summary>
-            	Initialize new instance wraps <see cref="T:System.Int64"/> instance.
+            	Initializes a new instance of the <see cref="T:MsgPack.MessagePackObject"/> type which wraps <see cref="T:System.Int64"/> instance.
             </summary>
         </member>
         <member name="M:MsgPack.MessagePackObject.#ctor(System.UInt64)">
             <summary>
-            	Initialize new instance wraps <see cref="T:System.UInt64"/> instance.
+            	Initializes a new instance of the <see cref="T:MsgPack.MessagePackObject"/> type which wraps <see cref="T:System.UInt64"/> instance.
             </summary>
         </member>
         <member name="M:MsgPack.MessagePackObject.#ctor(System.Single)">
             <summary>
-            	Initialize new instance wraps <see cref="T:System.Single"/> instance.
+            	Initializes a new instance of the <see cref="T:MsgPack.MessagePackObject"/> type which wraps <see cref="T:System.Single"/> instance.
             </summary>
         </member>
         <member name="M:MsgPack.MessagePackObject.#ctor(System.Double)">
             <summary>
-            	Initialize new instance wraps <see cref="T:System.Double"/> instance.
+            	Initializes a new instance of the <see cref="T:MsgPack.MessagePackObject"/> type which wraps <see cref="T:System.Double"/> instance.
             </summary>
         </member>
         <member name="M:MsgPack.MessagePackObject.AsBoolean">
@@ -5217,12 +5253,12 @@
         </member>
         <member name="M:MsgPack.MessagePackObject.#ctor(System.String)">
             <summary>
-            	Initialize new instance wraps <see cref="T:System.String"/>.
+            	Initializes a new instance wraps <see cref="T:System.String"/>.
             </summary>
         </member>
         <member name="M:MsgPack.MessagePackObject.#ctor(System.Collections.Generic.IList{MsgPack.MessagePackObject})">
             <summary>
-            	Initialize new instance wraps <see cref="T:System.Collections.Generic.IList`1"/>.
+            	Initializes a new instance wraps <see cref="T:System.Collections.Generic.IList`1"/>.
             </summary>
             <param name="value">
             	The collection to be copied.
@@ -5230,7 +5266,7 @@
         </member>
         <member name="M:MsgPack.MessagePackObject.#ctor(System.Collections.Generic.IList{MsgPack.MessagePackObject},System.Boolean)">
             <summary>
-            	Initialize new instance wraps <see cref="T:System.Collections.Generic.IList`1"/>.
+            	Initializes a new instance wraps <see cref="T:System.Collections.Generic.IList`1"/>.
             </summary>
             <param name="value">
             	The collection to be copied or used.
@@ -5251,7 +5287,7 @@
         </member>
         <member name="M:MsgPack.MessagePackObject.#ctor(MsgPack.MessagePackObjectDictionary)">
             <summary>
-            	Initialize new instance wraps <see cref="T:MsgPack.MessagePackObjectDictionary"/>.
+            	Initializes a new instance wraps <see cref="T:MsgPack.MessagePackObjectDictionary"/>.
             </summary>
             <param name="value">
             	The dictitonary to be copied.
@@ -5259,7 +5295,7 @@
         </member>
         <member name="M:MsgPack.MessagePackObject.#ctor(MsgPack.MessagePackObjectDictionary,System.Boolean)">
             <summary>
-            	Initialize new instance wraps <see cref="T:MsgPack.MessagePackObjectDictionary"/>.
+            	Initializes a new instance wraps <see cref="T:MsgPack.MessagePackObjectDictionary"/>.
             </summary>
             <param name="value">
             	The dictitonary to be copied or used.
@@ -5280,12 +5316,12 @@
         </member>
         <member name="M:MsgPack.MessagePackObject.#ctor(System.Byte[])">
             <summary>
-            	Initialize new instance wraps raw byte array.
+            	Initializes a new instance wraps raw byte array.
             </summary>
         </member>
         <member name="M:MsgPack.MessagePackObject.#ctor(MsgPack.MessagePackString)">
             <summary>
-            	Initialize new instance wraps <see cref="T:MsgPack.MessagePackString"/>.
+            	Initializes a new instance wraps <see cref="T:MsgPack.MessagePackString"/>.
             </summary>
             <param name="messagePackString"><see cref="T:MsgPack.MessagePackString"/> which represents byte array or UTF-8 encoded string.</param>
         </member>
@@ -5896,12 +5932,12 @@
         </member>
         <member name="M:MsgPack.StreamUnpacker.#ctor">
             <summary>
-            	Initialize new instance with default sized on memory buffer.
+            	Initializes a new instance with default sized on memory buffer.
             </summary>
         </member>
         <member name="M:MsgPack.StreamUnpacker.#ctor(System.IO.Stream,System.Boolean)">
             <summary>
-            	Initialize new instance using specified <see cref="T:System.IO.Stream"/> as source.
+            	Initializes a new instance using specified <see cref="T:System.IO.Stream"/> as source.
             </summary>
             <param name="source">Source <see cref="T:System.IO.Stream"/>.</param>
             <param name="ownsStream">If you want to dispose stream when this instance is disposed, then true.</param>
@@ -6026,27 +6062,39 @@
         </member>
         <member name="M:MsgPack.InvalidMessagePackStreamException.#ctor">
             <summary>
-            	Initialize new instance with default message.
+            	Initializes a new instance of the <see cref="T:MsgPack.InvalidMessagePackStreamException"/> class with the default error message.
             </summary>
         </member>
         <member name="M:MsgPack.InvalidMessagePackStreamException.#ctor(System.String)">
             <summary>
-            	Initialize new instance with specified message.
+            	Initializes a new instance of the <see cref="T:MsgPack.InvalidMessagePackStreamException"/> class with a specified error message.
             </summary>
-            <param name="message">
-            	Message to desribe this error.
-            </param>
+            <param name="message">The message that describes the error. </param>
         </member>
         <member name="M:MsgPack.InvalidMessagePackStreamException.#ctor(System.String,System.Exception)">
             <summary>
-            	Initialize new instance with specified message and inner exception which caused this exception.
+            	Initializes a new instance of the <see cref="T:MsgPack.InvalidMessagePackStreamException"/> class with a specified error message and a reference to the inner exception that is the cause of this exception. 
             </summary>
-            <param name="message">
-            	Message to desribe this error.
-            </param>
+            <param name="message">The error message that explains the reason for the exception. </param>
             <param name="inner">
-            	Exception which caused this exception.
+            	The exception that is the cause of the current exception, or a <c>null</c> if no inner exception is specified.
             </param>
+        </member>
+        <member name="M:MsgPack.InvalidMessagePackStreamException.#ctor(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+            	Initializes a new instance of the <see cref="T:MsgPack.InvalidMessagePackStreamException"/> class with serialized data.
+            </summary>
+            <param name="info">
+            	The <see cref="T:System.Runtime.Serialization.SerializationInfo"/> that holds the serialized object data about the exception being thrown.
+            </param>
+            <param name="context">
+            	The <see cref="T:System.Runtime.Serialization.StreamingContext"/> that contains contextual information about the source or destination.</param>
+            <exception cref="T:System.ArgumentNullException">
+            	The <paramref name="info"/> parameter is <c>null</c>.
+            </exception>
+            <exception cref="T:System.Runtime.Serialization.SerializationException">
+            	The class name is <c>null</c> or <see cref="P:HResult"/> is zero (0).
+            </exception>
         </member>
         <member name="T:MsgPack.IUnpackable">
             <summary>
@@ -7952,27 +8000,39 @@
         </member>
         <member name="M:MsgPack.MessageNotSupportedException.#ctor">
             <summary>
-            	Initialize new instance with default message.
+            	Initializes a new instance of the <see cref="T:MsgPack.MessageNotSupportedException"/> class with the default error message.
             </summary>
         </member>
         <member name="M:MsgPack.MessageNotSupportedException.#ctor(System.String)">
             <summary>
-            	Initialize new instance with specified message.
+            	Initializes a new instance of the <see cref="T:MsgPack.MessageNotSupportedException"/> class with a specified error message.
             </summary>
-            <param name="message">
-            	Message to desribe this error.
-            </param>
+            <param name="message">The message that describes the error. </param>
         </member>
         <member name="M:MsgPack.MessageNotSupportedException.#ctor(System.String,System.Exception)">
             <summary>
-            	Initialize new instance with specified message and inner exception which caused this exception.
+            	Initializes a new instance of the <see cref="T:MsgPack.MessageNotSupportedException"/> class with a specified error message and a reference to the inner exception that is the cause of this exception. 
             </summary>
-            <param name="message">
-            	Message to desribe this error.
-            </param>
+            <param name="message">The error message that explains the reason for the exception. </param>
             <param name="inner">
-            	Exception which caused this exception.
+            	The exception that is the cause of the current exception, or a <c>null</c> if no inner exception is specified.
             </param>
+        </member>
+        <member name="M:MsgPack.MessageNotSupportedException.#ctor(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+            	Initializes a new instance of the <see cref="T:MsgPack.MessageNotSupportedException"/> class with serialized data.
+            </summary>
+            <param name="info">
+            	The <see cref="T:System.Runtime.Serialization.SerializationInfo"/> that holds the serialized object data about the exception being thrown.
+            </param>
+            <param name="context">
+            	The <see cref="T:System.Runtime.Serialization.StreamingContext"/> that contains contextual information about the source or destination.</param>
+            <exception cref="T:System.ArgumentNullException">
+            	The <paramref name="info"/> parameter is <c>null</c>.
+            </exception>
+            <exception cref="T:System.Runtime.Serialization.SerializationException">
+            	The class name is <c>null</c> or <see cref="P:HResult"/> is zero (0).
+            </exception>
         </member>
     </members>
 </doc>
