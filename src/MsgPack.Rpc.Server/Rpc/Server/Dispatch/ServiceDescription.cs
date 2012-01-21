@@ -62,6 +62,8 @@ namespace MsgPack.Rpc.Server.Dispatch
 			get { return this._initializer; }
 		}
 
+		private Type _serviceType;
+
 		/// <summary>
 		///		Gets the type of the service.
 		/// </summary>
@@ -71,7 +73,10 @@ namespace MsgPack.Rpc.Server.Dispatch
 		/// </value>
 		public Type ServiceType
 		{
-			get { return this._initializer.Method.DeclaringType; }
+			get
+			{
+				return this._serviceType ?? this._initializer.Method.DeclaringType;
+			}
 		}
 
 		private int _version;
@@ -224,7 +229,8 @@ namespace MsgPack.Rpc.Server.Dispatch
 				new ServiceDescription( serviceContract.Name, Expression.Lambda<Func<object>>( Expression.New( ctor ) ).Compile() )
 				{
 					Application = String.IsNullOrWhiteSpace( serviceContract.Application ) ? serviceContract.Name : serviceContract.Application,
-					Version = String.IsNullOrWhiteSpace( serviceContract.Version ) ? 0 : Int32.Parse( serviceContract.Version )
+					Version = String.IsNullOrWhiteSpace( serviceContract.Version ) ? 0 : Int32.Parse( serviceContract.Version ),
+					_serviceType = serviceType
 				};
 		}
 
