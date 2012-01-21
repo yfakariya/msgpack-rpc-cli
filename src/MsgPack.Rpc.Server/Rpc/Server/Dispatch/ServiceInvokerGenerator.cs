@@ -21,15 +21,16 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.Contracts;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
-using System.Runtime.CompilerServices;
+using System.Runtime.Serialization;
 using System.Threading;
+using System.Threading.Tasks;
 using MsgPack.Serialization;
 using NLiblet.Reflection;
-using System.Threading.Tasks;
 
 namespace MsgPack.Rpc.Server.Dispatch
 {
@@ -47,6 +48,18 @@ namespace MsgPack.Rpc.Server.Dispatch
 			typeof( Missing ).GetField( "Value" );
 		private static readonly PropertyInfo _rpcErrorMessageSuccessProperty =
 			FromExpression.ToProperty( () => RpcErrorMessage.Success );
+		private static readonly MethodInfo _unpackerReadSubtreeMethod =
+			FromExpression.ToMethod( ( Unpacker unpacker ) => unpacker.ReadSubtree() );
+		private static readonly MethodInfo _unpackerReadMethod =
+			FromExpression.ToMethod( ( Unpacker unpacker ) => unpacker.Read() );
+		private static readonly PropertyInfo _cultureInfoCurrentCultureProperty =
+			FromExpression.ToProperty( () => CultureInfo.CurrentCulture );
+		private static readonly MethodInfo _stringFormatMethod =
+			FromExpression.ToMethod( ( IFormatProvider formatProvider, String format, object[] args ) => String.Format( formatProvider, format, args ) );
+		private static readonly ConstructorInfo _serializationExceptionCtorStringConstructor =
+			FromExpression.ToConstructor( ( string message ) => new SerializationException( message ) );
+		private static readonly MethodInfo _idisposableDisposeMethod =
+			FromExpression.ToMethod( ( IDisposable disposable ) => disposable.Dispose() );
 
 
 		private static ServiceInvokerGenerator _default = new ServiceInvokerGenerator( false );
@@ -60,7 +73,12 @@ namespace MsgPack.Rpc.Server.Dispatch
 		/// </value>
 		public static ServiceInvokerGenerator Default
 		{
-			get { return _default; }
+			get
+			{
+				Contract.Ensures( Contract.Result<ServiceInvokerGenerator>() != null );
+
+				return _default;
+			}
 			internal set  // For test
 			{
 				if ( value != null )
@@ -70,8 +88,21 @@ namespace MsgPack.Rpc.Server.Dispatch
 			}
 		}
 
+		internal void Dump()
+		{
+			this._assemblyBuilder.Save( this._assemblyName.Name + ".dll" );
+		}
+
 		private static long _assemblySequence;
 		private long _typeSequence;
+		private readonly AssemblyName _assemblyName;
+
+		// For debugging purposes.
+		internal AssemblyName AssemblyName
+		{
+			get { return this._assemblyName; }
+		}
+
 		private readonly AssemblyBuilder _assemblyBuilder;
 		private readonly ModuleBuilder _moduleBuilder;
 		private readonly ReaderWriterLockSlim _lock;
@@ -81,8 +112,8 @@ namespace MsgPack.Rpc.Server.Dispatch
 		internal ServiceInvokerGenerator( bool isDebuggable )
 		{
 			this._isDebuggable = isDebuggable;
-			var assemblyName = new AssemblyName( "SeamGeneratorHolder" + Interlocked.Increment( ref _assemblySequence ) );
-			this._assemblyBuilder = AppDomain.CurrentDomain.DefineDynamicAssembly( assemblyName, isDebuggable ? AssemblyBuilderAccess.RunAndSave : AssemblyBuilderAccess.Run );
+			this._assemblyName = new AssemblyName( "SeamGeneratorHolder" + Interlocked.Increment( ref _assemblySequence ) );
+			this._assemblyBuilder = AppDomain.CurrentDomain.DefineDynamicAssembly( this._assemblyName, isDebuggable ? AssemblyBuilderAccess.RunAndSave : AssemblyBuilderAccess.Run );
 
 			if ( isDebuggable )
 			{
@@ -116,11 +147,11 @@ namespace MsgPack.Rpc.Server.Dispatch
 #endif
 			if ( isDebuggable )
 			{
-				this._moduleBuilder = this._assemblyBuilder.DefineDynamicModule( assemblyName.Name, true );
+				this._moduleBuilder = this._assemblyBuilder.DefineDynamicModule( this._assemblyName.Name, this._assemblyName.Name + ".dll", true );
 			}
 			else
 			{
-				this._moduleBuilder = this._assemblyBuilder.DefineDynamicModule( assemblyName.Name, assemblyName.Name + ".dll", true );
+				this._moduleBuilder = this._assemblyBuilder.DefineDynamicModule( this._assemblyName.Name, true );
 			}
 
 			this._cache = new Dictionary<RuntimeMethodHandle, IAsyncServiceInvoker>();
@@ -157,14 +188,18 @@ namespace MsgPack.Rpc.Server.Dispatch
 		/// </returns>
 		public IAsyncServiceInvoker GetServiceInvoker( RpcServerConfiguration configuration, SerializationContext context, ServiceDescription serviceDescription, MethodInfo targetOperation )
 		{
+			Contract.Assert( configuration != null );
+			Contract.Assert( context != null );
+			Contract.Assert( serviceDescription != null );
+			Contract.Assert( targetOperation != null );
+
 			bool isReadLockHeld = false;
 			try
 			{
-				RuntimeHelpers.PrepareConstrainedRegions();
 				try { }
 				finally
 				{
-					this._lock.EnterReadLock();
+					this._lock.EnterUpgradeableReadLock();
 					isReadLockHeld = true;
 				}
 
@@ -179,7 +214,6 @@ namespace MsgPack.Rpc.Server.Dispatch
 				bool isWriteLockHeld = false;
 				try
 				{
-					RuntimeHelpers.PrepareConstrainedRegions();
 					try { }
 					finally
 					{
@@ -207,7 +241,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 			{
 				if ( isReadLockHeld )
 				{
-					this._lock.ExitReadLock();
+					this._lock.ExitUpgradeableReadLock();
 				}
 			}
 		}
@@ -216,35 +250,17 @@ namespace MsgPack.Rpc.Server.Dispatch
 		{
 			var parameters = targetOperation.GetParameters();
 			CheckParameters( parameters );
-			#region NEW_SPEC
-			// FIXME: returnType is always Task<T>
-			#endregion
-			bool isWrapperNeeded = false;
-			Type returnType;
-			if ( typeof( Task ).IsAssignableFrom( targetOperation.ReturnType ) )
-			{
-				returnType = targetOperation.ReturnType;
-			}
-			else if ( targetOperation.ReturnType == typeof( void ) )
-			{
-				returnType = typeof( Task );
-				isWrapperNeeded = true;
-			}
-			else
-			{
-				returnType = typeof( Task<> ).MakeGenericType( targetOperation.ReturnType );
-				isWrapperNeeded = true;
-			}
+			bool isWrapperNeeded = !typeof( Task ).IsAssignableFrom( targetOperation.ReturnType );
 
 			var emitter = new ServiceInvokerEmitter( this._moduleBuilder, Interlocked.Increment( ref this._typeSequence ), targetOperation.DeclaringType, targetOperation.ReturnType, this._isDebuggable );
-			EmitInvokeCore( emitter, targetOperation, parameters, returnType, isWrapperNeeded );
+			EmitInvokeCore( emitter, targetOperation, parameters, typeof( Task ), isWrapperNeeded );
 
 			return emitter.CreateInstance( configuration, context, serviceDescription, targetOperation );
 		}
 
 		private static void EmitInvokeCore( ServiceInvokerEmitter emitter, MethodInfo targetOperation, ParameterInfo[] parameters, Type returnType, bool isWrapperNeeded )
 		{
-			var asyncInvokerIsDebugModeProperty = typeof( AsyncServiceInvoker<> ).MakeGenericType( returnType ).GetProperty( "IsDebugMode", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic );
+			var asyncInvokerIsDebugModeProperty = typeof( AsyncServiceInvoker<> ).MakeGenericType( targetOperation.ReturnType ).GetProperty( "IsDebugMode", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic );
 			var il = emitter.GetInvokeCoreMethodILGenerator();
 			try
 			{
@@ -252,13 +268,32 @@ namespace MsgPack.Rpc.Server.Dispatch
 				var unpackedArguments = parameters.Select( item => il.DeclareLocal( item.ParameterType, item.Name ) ).ToArray();
 				var serializers = unpackedArguments.Select( item => emitter.RegisterSerializer( item.LocalType ) ).ToArray();
 
+				/*
+				 *	using( var argumentsItemUnpacker = arguments.ReadSubTree() )
+				 *	{
+				 *		argumentsItemUnpacker.
+				 *		...
+				 *	}
+				 */
+
+				var argumentsItemUnpacker = il.DeclareLocal( typeof( Unpacker ), "argumentsItemUnpacker" );
+				il.EmitAnyLdarg( 1 );
+				il.EmitAnyCall( _unpackerReadSubtreeMethod );
+				il.EmitAnyStloc( argumentsItemUnpacker );
+				il.BeginExceptionBlock();
+
 				for ( int i = 0; i < parameters.Length; i++ )
 				{
 					/*
+					 *	if ( !argumentsItemUnpacker.Read() )
+					 *	{
+					 *		throw new SerializationException( String.Format( CultureInfo.CurrentCuture, "Stream unexpectedly ends at argument {0}.", N ) );
+					 *	}
+					 *	
 					 *	T argN;
 					 *	try
 					 *	{
-					 *		argN = this._serializerN.UnpackFrom( arguments );
+					 *		argN = this._serializerN.UnpackFrom( argumentsItemUnpacker );
 					 *	}
 					 *	catch( Exception ex )
 					 *	{
@@ -267,10 +302,31 @@ namespace MsgPack.Rpc.Server.Dispatch
 					 *		return;
 					 *	}
 					 */
+					il.EmitAnyLdloc( argumentsItemUnpacker );
+					il.EmitAnyCall( _unpackerReadMethod );
+					var endIf = il.DefineLabel();
+					il.EmitBrtrue_S( endIf );
+					var args = il.DeclareLocal( typeof( object[] ), "args" );
+					il.EmitNewarr( typeof( object ), 1 );
+					il.EmitAnyStloc( args );
+					il.EmitGetProperty( _cultureInfoCurrentCultureProperty );
+					// TODO: Localization
+					il.EmitLdstr( "Stream unexpectedly ends at arguments array {0}." );
+					il.EmitAnyLdloc( args );
+					il.EmitAnyLdc_I4( 0 );
+					il.EmitAnyLdc_I4( i );
+					il.EmitBox( typeof( int ) );
+					il.EmitStelem( typeof( object ) );
+					il.EmitAnyLdloc( args );
+					il.EmitAnyCall( _stringFormatMethod );
+					il.EmitNewobj( _serializationExceptionCtorStringConstructor );
+					il.EmitThrow();
+					il.MarkLabel( endIf );
+
 					il.BeginExceptionBlock();
-					il.EmitAnyLdarg( 1 );
 					il.EmitAnyLdarg( 0 );
 					il.EmitLdfld( serializers[ i ] );
+					il.EmitAnyLdloc( argumentsItemUnpacker );
 					il.EmitAnyCall( serializers[ i ].FieldType.GetMethod( "UnpackFrom", BindingFlags.Public | BindingFlags.Instance ) );
 					il.EmitAnyStloc( unpackedArguments[ i ] );
 
@@ -289,13 +345,18 @@ namespace MsgPack.Rpc.Server.Dispatch
 					);
 				}
 
+				il.BeginFinallyBlock();
+				il.EmitAnyLdloc( argumentsItemUnpacker );
+				il.EmitAnyCall( _idisposableDisposeMethod );
+				il.EndExceptionBlock();
+
 				/*
 				 *	TService service = this._serviceDescription.Initializer()
 				 */
 
 				var service = il.DeclareLocal( targetOperation.DeclaringType, "service" );
 				il.EmitAnyLdarg( 0 );
-				il.EmitGetProperty( typeof( AsyncServiceInvoker<> ).MakeGenericType( returnType ).GetProperty( "ServiceDescription" ) );
+				il.EmitGetProperty( typeof( AsyncServiceInvoker<> ).MakeGenericType( targetOperation.ReturnType ).GetProperty( "ServiceDescription" ) );
 				il.EmitGetProperty( ServiceDescription.InitializerProperty );
 				il.EmitAnyCall( _func_1_Invoke );
 				il.EmitCastclass( service.LocalType );
@@ -315,7 +376,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 				 *	catch( Exception ex )
 				 *	{
 				 *		error = InvocationHelper.HandleInvocationException( ex );
-				 *		returnValue = default( T );
+				 *		returnValue = null;
 				 *		return;
 				 *	}
 				 */
@@ -374,16 +435,24 @@ namespace MsgPack.Rpc.Server.Dispatch
 		private static readonly MethodInfo _taskFactoryStartNew_Action_1_Object_Object =
 			FromExpression.ToMethod( ( TaskFactory @this, Action<Object> action, object state ) => @this.StartNew( action, state ) );
 		private static readonly MethodInfo _taskFactoryStartNew_Func_1_Object_T_Object =
-			typeof( TaskFactory ).GetMethod( "StartNew", new[] { typeof( Func<,> ), typeof( object ) } );
+			typeof( TaskFactory ).GetMethods( BindingFlags.Public | BindingFlags.Instance ).Single(
+				m =>
+					m.Name == "StartNew"
+					&& m.IsGenericMethod
+					&& m.GetParameters().Length == 2
+					&& m.GetParameters()[ 0 ].ParameterType.IsGenericType
+					&& m.GetParameters()[ 0 ].ParameterType.GetGenericTypeDefinition() == typeof( Func<,> )
+					&& m.GetParameters()[ 1 ].ParameterType == typeof( object )
+			);
 
 		private static void EmitWrapperInvocation( ServiceInvokerEmitter emitter, TracingILGenerator il, LocalBuilder service, MethodInfo targetOperation, Type returnType, LocalBuilder[] unpackedArguments )
 		{
 			/*
 			 * returnValue = Task.Factory.StartNew( this.PrivateInvokeCore( state as Tuple<...> ), new Tuple<...>(...) );
 			 */
-			var itemTypes = unpackedArguments.Select( item => item.LocalType ).ToArray();
+			var itemTypes = Enumerable.Repeat( service, 1 ).Concat( unpackedArguments ).Select( item => item.LocalType ).ToArray();
 			var tupleTypes = TupleItems.CreateTupleTypeList( itemTypes );
-			EmitPrivateInvoke( emitter.GetPrivateInvokeMethodILGenerator( returnType ), targetOperation, tupleTypes, itemTypes );
+			EmitPrivateInvoke( emitter.GetPrivateInvokeMethodILGenerator( targetOperation.ReturnType ), targetOperation, tupleTypes, itemTypes );
 
 			il.EmitGetProperty( _taskFactoryProperty );
 
@@ -391,10 +460,12 @@ namespace MsgPack.Rpc.Server.Dispatch
 			il.EmitLdnull();
 			il.EmitLdftn( emitter.PrivateInvokeMethod );
 			il.EmitNewobj(
-				returnType == typeof( void )
+				targetOperation.ReturnType == typeof( void )
 				? typeof( Action<object> ).GetConstructor( _delegateConstructorParameterTypes )
-				: typeof( Func<,> ).MakeGenericType( typeof( object ), returnType ).GetConstructor( _delegateConstructorParameterTypes )
+				: typeof( Func<,> ).MakeGenericType( typeof( object ), targetOperation.ReturnType ).GetConstructor( _delegateConstructorParameterTypes )
 			);
+
+			il.EmitAnyLdloc( service );
 
 			foreach ( var item in unpackedArguments )
 			{
@@ -406,13 +477,13 @@ namespace MsgPack.Rpc.Server.Dispatch
 				il.EmitNewobj( tupleType.GetConstructors().Single() );
 			}
 
-			if ( returnType == typeof( Task ) )
+			if ( targetOperation.ReturnType == typeof( void ) )
 			{
 				il.EmitAnyCall( _taskFactoryStartNew_Action_1_Object_Object );
 			}
 			else
 			{
-				il.EmitAnyCall( _taskFactoryStartNew_Func_1_Object_T_Object.MakeGenericMethod( returnType.GetGenericArguments()[ 0 ] ) );
+				il.EmitAnyCall( _taskFactoryStartNew_Func_1_Object_T_Object.MakeGenericMethod( targetOperation.ReturnType ) );
 			}
 
 		}
