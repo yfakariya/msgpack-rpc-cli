@@ -20,12 +20,12 @@
 
 using System;
 using System.Collections.Generic;
-using System.Globalization;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
-using MsgPack.Serialization;
 using MsgPack.Rpc.Server.Protocols;
+using MsgPack.Serialization;
 
 namespace MsgPack.Rpc.Server.Dispatch
 {
@@ -38,7 +38,12 @@ namespace MsgPack.Rpc.Server.Dispatch
 
 		public ServiceDescription Service
 		{
-			get { return this._service; }
+			get
+			{
+				Contract.Ensures( Contract.Result<ServiceDescription>() != null );
+				
+				return this._service;
+			}
 		}
 
 		private readonly MethodInfo _method;
@@ -47,14 +52,24 @@ namespace MsgPack.Rpc.Server.Dispatch
 
 		public Func<ServerRequestContext, ServerResponseContext, Task> Operation
 		{
-			get { return this._operation; }
+			get
+			{
+				Contract.Ensures( Contract.Result<Func<ServerRequestContext, ServerResponseContext, Task>>() != null );
+
+				return this._operation;
+			}
 		}
 
 		private readonly string _id;
 
 		public string Id
 		{
-			get { return this._id; }
+			get
+			{
+				Contract.Ensures( !String.IsNullOrEmpty( Contract.Result<string>() ) );
+
+				return this._id;
+			}
 		}
 
 		private OperationDescription( ServiceDescription service, MethodInfo method, string id, Func<ServerRequestContext, ServerResponseContext, Task> operation )
@@ -77,6 +92,8 @@ namespace MsgPack.Rpc.Server.Dispatch
 				throw new ArgumentNullException( "service" );
 			}
 
+			Contract.Ensures( Contract.Result<IEnumerable<OperationDescription>>() != null );
+			Contract.Ensures( Contract.ForAll( Contract.Result<IEnumerable<OperationDescription>>(), item => item != null ) );
 
 			foreach ( var operation in service.ServiceType.GetMethods().Where( method => method.IsDefined( typeof( MessagePackRpcMethodAttribute ), true ) ) )
 			{
@@ -86,6 +103,9 @@ namespace MsgPack.Rpc.Server.Dispatch
 
 		private static OperationDescription FromServiceMethodCore( RpcServerConfiguration configuration, SerializationContext serializationContext, ServiceDescription service, MethodInfo operation )
 		{
+			Contract.Requires( configuration != null );
+			Contract.Ensures( Contract.Result<OperationDescription>() != null );
+
 			var serviceInvoker = ServiceInvokerGenerator.Default.GetServiceInvoker( configuration, serializationContext, service, operation );
 			return new OperationDescription( service, operation, serviceInvoker.OperationId, serviceInvoker.InvokeAsync );
 		}
