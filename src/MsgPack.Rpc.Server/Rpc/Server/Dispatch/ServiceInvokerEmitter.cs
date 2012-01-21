@@ -26,16 +26,16 @@ using System.IO;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Threading.Tasks;
 using MsgPack.Serialization;
 using NLiblet.Reflection;
-using System.Threading.Tasks;
 
 namespace MsgPack.Rpc.Server.Dispatch
 {
 	internal sealed class ServiceInvokerEmitter
 	{
 		private static readonly Type[] _constructorParameterTypes = new[] { typeof( RpcServerConfiguration ), typeof( SerializationContext ), typeof( ServiceDescription ), typeof( MethodInfo ) };
-		private static readonly Type[] _invokeCoreParameterTypes = new[] { typeof( Unpacker ), typeof( Task ), typeof( RpcErrorMessage ) };
+		private static readonly Type[] _invokeCoreParameterTypes = new[] { typeof( Unpacker ), typeof( Task ).MakeByRefType(), typeof( RpcErrorMessage ).MakeByRefType() };
 
 		/// <summary>
 		///		 Gets a value indicating whether this instance is trace enabled.
