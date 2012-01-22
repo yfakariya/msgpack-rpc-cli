@@ -95,10 +95,26 @@ namespace MsgPack.Rpc.Server.Dispatch
 			Contract.Ensures( Contract.Result<IEnumerable<OperationDescription>>() != null );
 			Contract.Ensures( Contract.ForAll( Contract.Result<IEnumerable<OperationDescription>>(), item => item != null ) );
 
-			foreach ( var operation in service.ServiceType.GetMethods().Where( method => method.IsDefined( typeof( MessagePackRpcMethodAttribute ), true ) ) )
-			{
-				yield return FromServiceMethodCore( configuration ?? RpcServerConfiguration.Default, serializationContext, service, operation );
-			}
+			var generated = new HashSet<string>();
+			return
+				service.ServiceType.GetMethods()
+				.Where( method => method.IsDefined( typeof( MessagePackRpcMethodAttribute ), true ) )
+				.Select( operation =>
+					{
+						if ( !generated.Add( operation.Name ) )
+						{
+							throw new NotSupportedException(
+								String.Format(
+									CultureInfo.CurrentCulture,
+									"Method '{0}' is overloaded. Method overload is not supported on the MessagePack-RPC.",
+									operation.Name
+								)
+							);
+						}
+
+						return FromServiceMethodCore( configuration ?? RpcServerConfiguration.Default, serializationContext, service, operation );
+					}
+				).ToArray();
 		}
 
 		private static OperationDescription FromServiceMethodCore( RpcServerConfiguration configuration, SerializationContext serializationContext, ServiceDescription service, MethodInfo operation )
