@@ -64,11 +64,11 @@ namespace MsgPack.Rpc.Server.Dispatch
 			}
 		}
 
-		private void TestGetServiceInvokerCore<TArg1, TArg2, TResult>( 
+		private void TestGetServiceInvokerCore<TArg1, TArg2, TResult>(
 			EventHandler<ServiceInvokedEventArgs<TResult>> invoked,
 			RpcServerConfiguration configuration,
-			TArg1 arg1, 
-			TArg2 arg2, 
+			TArg1 arg1,
+			TArg2 arg2,
 			Action<ServerResponseContext> assertion
 		)
 		{
@@ -133,7 +133,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 						Assert.That( e.Arguments[ 1 ], Is.EqualTo( arg2 ) );
 						e.ReturnValue = returnValue;
 					},
-					new RpcServerConfiguration(){ IsDebugMode = true },
+					new RpcServerConfiguration() { IsDebugMode = true },
 					arg1,
 					arg2,
 					responseContext =>
@@ -167,7 +167,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 					arg2,
 					responseContext =>
 					{
-						Assert.That( Unpacking.UnpackObject( responseContext.GetErrorData() ).Value.Equals( rpcError.Identifier ) );
+						Assert.That( Unpacking.UnpackObject( responseContext.GetErrorData() ).Value.Equals( rpcError.Identifier ), "{0}!={1}", Unpacking.UnpackObject( responseContext.GetErrorData() ).Value, rpcError.Identifier );
 						var exception = new RpcException( rpcError, Unpacking.UnpackObject( responseContext.GetReturnValueData() ).Value );
 						Assert.That( exception.RpcError.Identifier, Is.EqualTo( rpcError.Identifier ) );
 						Assert.That( exception.RpcError.ErrorCode, Is.EqualTo( rpcError.ErrorCode ) );
@@ -206,7 +206,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 						Assert.That( exception.RpcError.Identifier, Is.EqualTo( rpcError.Identifier ) );
 						Assert.That( exception.RpcError.ErrorCode, Is.EqualTo( rpcError.ErrorCode ) );
 						Assert.That( exception.Message, Is.EqualTo( message ) );
-						Assert.That( exception.DebugInformation, Is.Empty );
+						Assert.That( exception.DebugInformation, Is.StringContaining( message ).And.Not.EqualTo( message ) );
 					}
 				);
 			}
@@ -280,11 +280,10 @@ namespace MsgPack.Rpc.Server.Dispatch
 						Assert.That( exception.DebugInformation, Is.EqualTo( debugInformation ) );
 					}
 				);
-
 			}
 		}
 
-		// FIXME: More test cases.
+		// FIXME: More test cases. ex. Async-based
 
 		[MessagePackRpcServiceContract( "Service" )]
 		public class Service<TArg1, TArg2, TResult>

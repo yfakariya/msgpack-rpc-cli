@@ -36,7 +36,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 		[Test()]
 		public void TestInvokeAsync_Success_TaskSetSerializedReturnValue()
 		{
-			ServerRequestContext requestContext = new ServerRequestContext();
+			ServerRequestContext requestContext = DispatchTestHelper.CreateRequestContext();
 			ServerResponseContext responseContext = new ServerResponseContext();
 			using ( var result = new Target( null, RpcErrorMessage.Success ).InvokeAsync( requestContext, responseContext ) )
 			{
@@ -50,7 +50,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 		[Test()]
 		public void TestInvokeAsync_FatalError_TaskSetSerializedError()
 		{
-			ServerRequestContext requestContext = new ServerRequestContext();
+			ServerRequestContext requestContext = DispatchTestHelper.CreateRequestContext();
 			ServerResponseContext responseContext = new ServerResponseContext();
 			using ( var result = new Target( new Exception( "FAIL" ), RpcErrorMessage.Success ).InvokeAsync( requestContext, responseContext ) )
 			{
@@ -66,7 +66,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 		[Test()]
 		public void TestInvokeAsync_MethodError_TaskSetSerializedError()
 		{
-			ServerRequestContext requestContext = new ServerRequestContext();
+			ServerRequestContext requestContext = DispatchTestHelper.CreateRequestContext();
 			ServerResponseContext responseContext = new ServerResponseContext();
 			using ( var result = new Target( null, new RpcErrorMessage( RpcError.ArgumentError, MessagePackObject.Nil ) ).InvokeAsync( requestContext, responseContext ) )
 			{

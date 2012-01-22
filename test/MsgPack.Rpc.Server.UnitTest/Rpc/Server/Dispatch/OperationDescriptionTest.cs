@@ -35,12 +35,15 @@ namespace MsgPack.Rpc.Server.Dispatch
 			SerializationContext serializationContext = new SerializationContext();
 			ServiceDescription service = ServiceDescription.FromServiceType( typeof( Service ) );
 
-			var result = OperationDescription.FromServiceDescription( configuration, serializationContext, service ).ToArray();
+			var result = OperationDescription.FromServiceDescription( configuration, serializationContext, service ).OrderBy( item=>item.Id).ToArray();
 
-			Assert.That( result, Is.Not.Null.And.Count.EqualTo( 1 ) );
-			Assert.That( result[ 0 ].Id, Is.EqualTo( Service.ExpectedOperationId ) );
+			Assert.That( result, Is.Not.Null.And.Length.EqualTo( 2 ) );
+			Assert.That( result[ 0 ].Id, Is.StringEnding( Service.ExpectedOperationId1 ) );
 			Assert.That( result[ 0 ].Operation, Is.Not.Null );
 			Assert.That( result[ 0 ].Service, Is.EqualTo( service ) );
+			Assert.That( result[ 1 ].Id, Is.StringEnding( Service.ExpectedOperationId2 ) );
+			Assert.That( result[ 1 ].Operation, Is.Not.Null );
+			Assert.That( result[ 1 ].Service, Is.EqualTo( service ) );
 		}
 
 		[Test()]
@@ -101,7 +104,8 @@ namespace MsgPack.Rpc.Server.Dispatch
 		[MessagePackRpcServiceContract( "Service" )]
 		private class Service
 		{
-			public const string ExpectedOperationId = "PublicMethod";
+			public const string ExpectedOperationId1 = "AnotherPublicMethod";
+			public const string ExpectedOperationId2 = "PublicMethod";
 
 			[MessagePackRpcMethod]
 			public void PublicMethod() { }

@@ -1,8 +1,29 @@
-﻿namespace MsgPack.Rpc.Server.Dispatch
-{
-	using System;
-	using NUnit.Framework;
+﻿#region -- License Terms --
+//
+// MessagePack for CLI
+//
+// Copyright (C) 2010 FUJIWARA, Yusuke
+//
+//    Licensed under the Apache License, Version 2.0 (the "License");
+//    you may not use this file except in compliance with the License.
+//    You may obtain a copy of the License at
+//
+//        http://www.apache.org/licenses/LICENSE-2.0
+//
+//    Unless required by applicable law or agreed to in writing, software
+//    distributed under the License is distributed on an "AS IS" BASIS,
+//    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//    See the License for the specific language governing permissions and
+//    limitations under the License.
+//
+#endregion -- License Terms --
 
+using System;
+using System.Linq;
+using NUnit.Framework;
+
+namespace MsgPack.Rpc.Server.Dispatch
+{
 
 	/// <summary>
 	///Tests the Default Service Type Locator 
@@ -10,106 +31,186 @@
 	[TestFixture()]
 	public class DefaultServiceTypeLocatorTest
 	{
-
-		private DefaultServiceTypeLocator _testClass;
-
-		/// <summary>
-		/// <see cref="NUnit"/> Set Up 
-		/// </summary>
-		[SetUp()]
-		public void SetUp()
-		{
-			_testClass = new DefaultServiceTypeLocator();
-		}
-
-		/// <summary>
-		/// <see cref="NUnit"/> Tear Down 
-		/// </summary>
-		[TearDown()]
-		public void TearDown()
-		{
-			_testClass = null;
-		}
-
-		/// <summary>
-		/// Tests the Constructor Default Service Type Locator 
-		/// </summary>
 		[Test()]
-		public void TestConstructorDefaultServiceTypeLocator()
+		public void TestAddService_Once_Sucess()
 		{
-			DefaultServiceTypeLocator testDefaultServiceTypeLocator = new DefaultServiceTypeLocator();
-			Assert.IsNotNull( testDefaultServiceTypeLocator, "Constructor of type, DefaultServiceTypeLocator failed to create instance." );
-			Assert.Fail( "Create or modify test(s)." );
+			var serviceType = typeof( Service );
 
+			var target = new DefaultServiceTypeLocator();
+
+			var result = target.AddService( serviceType );
+
+			Assert.That( result, Is.True );
+			Assert.That( target.EnumerateServices().Count(), Is.EqualTo( 1 ) );
 		}
 
-		/// <summary>
-		/// Tests the Add Service 
-		/// </summary>
 		[Test()]
-		public void TestAddService()
+		public void TestAddService_Twise_FirstIsSucceededAndSecondIsFailed()
 		{
-			System.Type serviceType = null;
-			bool expectedBoolean = null;
-			bool resultBoolean = null;
-			resultBoolean = _testClass.AddService( serviceType );
-			Assert.AreEqual( expectedBoolean, resultBoolean, "AddService method returned unexpected result." );
-			Assert.Fail( "Create or modify test(s)." );
+			var serviceType = typeof( Service );
 
+			var target = new DefaultServiceTypeLocator();
+
+			var result1 = target.AddService( serviceType );
+			var result2 = target.AddService( serviceType );
+
+			Assert.That( result1, Is.True );
+			Assert.That( result2, Is.False );
+			Assert.That( target.EnumerateServices().Count(), Is.EqualTo( 1 ) );
 		}
 
-		/// <summary>
-		/// Tests the Remove Service 
-		/// </summary>
 		[Test()]
-		public void TestRemoveService()
+		[ExpectedException( typeof( ArgumentNullException ) )]
+		public void TestAddService_Null()
 		{
-			System.Type serviceType = null;
-			bool expectedBoolean = null;
-			bool resultBoolean = null;
-			resultBoolean = _testClass.RemoveService( serviceType );
-			Assert.AreEqual( expectedBoolean, resultBoolean, "RemoveService method returned unexpected result." );
-			Assert.Fail( "Create or modify test(s)." );
+			Type serviceType = null;
 
+			var target = new DefaultServiceTypeLocator();
+
+			target.AddService( serviceType );
 		}
 
-		/// <summary>
-		/// Tests the Clear Services 
-		/// </summary>
 		[Test()]
-		public void TestClearServices()
+		[ExpectedException( typeof( ArgumentException ) )]
+		public void TestAddService_IsNotMarkedWithRpcServiceAttribute()
 		{
-			_testClass.ClearServices();
-			Assert.Fail( "Create or modify test(s)." );
+			Type serviceType = typeof( string );
 
+			var target = new DefaultServiceTypeLocator();
+
+			target.AddService( serviceType );
 		}
 
-		/// <summary>
-		/// Tests the Enumerate Services 
-		/// </summary>
 		[Test()]
-		public void TestEnumerateServices()
+		[Description( "Depends on AddService" )]
+		public void TestRemoveService_Registerd_Success()
 		{
-			System.Collections.Generic.IEnumerable<MsgPack.Rpc.Server.Dispatch.ServiceDescription> expectedIEnumerable = null;
-			System.Collections.Generic.IEnumerable<MsgPack.Rpc.Server.Dispatch.ServiceDescription> resultIEnumerable = null;
-			resultIEnumerable = _testClass.EnumerateServices();
-			Assert.AreEqual( expectedIEnumerable, resultIEnumerable, "EnumerateServices method returned unexpected result." );
-			Assert.Fail( "Create or modify test(s)." );
+			var serviceType = typeof( Service );
 
+			var target = new DefaultServiceTypeLocator();
+
+			target.AddService( serviceType );
+			var result = target.RemoveService( serviceType );
+
+			Assert.That( result, Is.True );
+			Assert.That( target.EnumerateServices().Count(), Is.EqualTo( 0 ) );
 		}
 
-		/// <summary>
-		/// Tests the Find Services 
-		/// </summary>
 		[Test()]
-		public void TestFindServices()
+		[Description( "Depends on AddService" )]
+		public void TestRemoveService_NotRegisterdNonEmpty_Fail()
 		{
-			System.Collections.Generic.IEnumerable<MsgPack.Rpc.Server.Dispatch.ServiceDescription> expectedIEnumerable = null;
-			System.Collections.Generic.IEnumerable<MsgPack.Rpc.Server.Dispatch.ServiceDescription> resultIEnumerable = null;
-			resultIEnumerable = _testClass.FindServices();
-			Assert.AreEqual( expectedIEnumerable, resultIEnumerable, "FindServices method returned unexpected result." );
-			Assert.Fail( "Create or modify test(s)." );
+			var serviceType = typeof( Service );
 
+			var target = new DefaultServiceTypeLocator();
+
+			target.AddService( serviceType );
+			var result = target.RemoveService( typeof( Service2 ) );
+
+			Assert.That( result, Is.False );
+			Assert.That( target.EnumerateServices().Count(), Is.EqualTo( 1 ) );
+		}
+
+		[Test()]
+		[Description( "Depends on AddService" )]
+		public void TestRemoveService_SpecifyNonServiceType_JustFail()
+		{
+			var serviceType = typeof( Service );
+
+			var target = new DefaultServiceTypeLocator();
+
+			target.AddService( serviceType );
+			var result = target.RemoveService( typeof( object ) );
+
+			Assert.That( result, Is.False );
+			Assert.That( target.EnumerateServices().Count(), Is.EqualTo( 1 ) );
+		}
+
+		[Test()]
+		[Description( "Depends on AddService" )]
+		public void TestRemoveService_Empty_Fail()
+		{
+			var serviceType = typeof( Service );
+
+			var target = new DefaultServiceTypeLocator();
+
+			var result = target.RemoveService( serviceType );
+
+			Assert.That( result, Is.False );
+			Assert.That( target.EnumerateServices().Count(), Is.EqualTo( 0 ) );
+		}
+
+		[Test()]
+		public void TestRemoveService_Null_JustFail()
+		{
+			Type serviceType = null;
+
+			var target = new DefaultServiceTypeLocator();
+
+			var result = target.RemoveService( serviceType );
+			
+			Assert.That( result, Is.False );
+		}
+
+		[Test()]
+		public void TestClearServices_NonEmpty_Cleared()
+		{
+			var target = new DefaultServiceTypeLocator();
+
+			target.AddService( typeof( Service ) );
+			target.AddService( typeof( Service2 ) );
+
+			target.ClearServices();
+
+			Assert.That( target.EnumerateServices().Count(), Is.EqualTo( 0 ) );
+		}
+
+		[Test()]
+		public void TestClearServices_Empty_Halmless()
+		{
+			var target = new DefaultServiceTypeLocator();
+
+			target.ClearServices();
+
+			Assert.That( target.EnumerateServices().Count(), Is.EqualTo( 0 ) );
+		}
+
+		[Test()]
+		public void TestEnumerateServices_Initial_Empty()
+		{
+			var target = new DefaultServiceTypeLocator();
+
+			Assert.That( target.EnumerateServices().Any(), Is.False );
+		}
+
+		[Test()]
+		public void TestFindServices_EquiavalantToEnumerateServices()
+		{
+			var target = new DefaultServiceTypeLocator();
+			target.AddService( typeof( Service ) );
+			target.AddService( typeof( Service2 ) );
+
+			Assert.That( target.FindServices(), Is.EqualTo( target.EnumerateServices() ) );
+		}
+
+		[MessagePackRpcServiceContract( "Svc1" )]
+		private sealed class Service
+		{
+			[MessagePackRpcMethod]
+			public void Action( string value )
+			{
+			}
+
+			[MessagePackRpcMethod]
+			public int Func( string value )
+			{
+				return 0;
+			}
+		}
+
+		[MessagePackRpcServiceContract( "Svc2" )]
+		private sealed class Service2
+		{
 		}
 	}
 }

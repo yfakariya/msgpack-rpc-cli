@@ -33,7 +33,6 @@ namespace MsgPack.Rpc.Server.Dispatch
 		public void TestFields()
 		{
 			Assert.That( InvocationHelper.HandleArgumentDeserializationExceptionMethod, Is.Not.Null );
-			Assert.That( InvocationHelper.HandleInvocationExceptionMethod, Is.Not.Null );
 		}
 
 		[Test]
@@ -157,8 +156,8 @@ namespace MsgPack.Rpc.Server.Dispatch
 
 			var result = InvocationHelper.HandleInvocationException( exception, true );
 
-			Assert.That( result.Error, Is.EqualTo( RpcError.RemoteRuntimeError ) );
-			Assert.That( result.Detail.AsDictionary()[ RpcException.MessageKeyUtf8 ].AsString(), Is.Not.Null.And.Not.Empty.And.No.StringContaining( exception.Message ) );
+			Assert.That( result.Error, Is.EqualTo( RpcError.CallError ) );
+			Assert.That( result.Detail.AsDictionary()[ RpcException.MessageKeyUtf8 ].AsString(), Is.Not.Null.And.Not.Empty.And.StringContaining( exception.Message ) );
 			Assert.That( result.Detail.AsDictionary()[ RpcException.DebugInformationKeyUtf8 ].AsString(), Is.StringContaining( exception.Message ) );
 		}
 
@@ -169,7 +168,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 
 			var result = InvocationHelper.HandleInvocationException( exception, false );
 
-			Assert.That( result.Error, Is.EqualTo( RpcError.RemoteRuntimeError ) );
+			Assert.That( result.Error, Is.EqualTo( RpcError.CallError ) );
 			Assert.That( result.Detail.AsDictionary()[ RpcException.MessageKeyUtf8 ].AsString(), Is.Not.Null.And.Not.Empty.And.No.StringContaining( exception.Message ) );
 			Assert.That( result.Detail.AsDictionary().ContainsKey( RpcException.DebugInformationKeyUtf8 ), Is.False );
 		}
@@ -179,7 +178,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 		{
 			var result = InvocationHelper.HandleInvocationException( null, false );
 
-			Assert.That( result.Error, Is.EqualTo( RpcError.RemoteRuntimeError ) );
+			Assert.That( result.Error, Is.EqualTo( RpcError.CallError ) );
 			Assert.That( result.Detail.AsDictionary()[ RpcException.MessageKeyUtf8 ].AsString(), Is.Not.Null.And.Not.Empty );
 			Assert.That( result.Detail.AsDictionary().ContainsKey( RpcException.DebugInformationKeyUtf8 ), Is.False );
 		}
@@ -189,7 +188,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 		{
 			var result = InvocationHelper.HandleInvocationException( null, false );
 
-			Assert.That( result.Error, Is.EqualTo( RpcError.RemoteRuntimeError ) );
+			Assert.That( result.Error, Is.EqualTo( RpcError.CallError ) );
 			Assert.That( result.Detail.AsDictionary()[ RpcException.MessageKeyUtf8 ].AsString(), Is.Not.Null.And.Not.Empty );
 			Assert.That( result.Detail.AsDictionary().ContainsKey( RpcException.DebugInformationKeyUtf8 ), Is.False );
 		}

@@ -19,16 +19,18 @@
 #endregion -- License Terms --
 
 using System;
-using NUnit.Framework;
 
-namespace MsgPack.Rpc.Server.Dispatch
+namespace MsgPack.Rpc.Server.Protocols
 {
 	/// <summary>
-	///Tests the Locator Based Dispatcher 
+	///		The <see cref="ServerTransportManager{T}"/> for <see cref="NullServerTransport"/>.
 	/// </summary>
-	[TestFixture()]
-	public class LocatorBasedDispatcherTest
+	internal sealed class NullServerTransportManager : ServerTransportManager<NullServerTransport>
 	{
-		// TODO: Tests as facade.
+		/// <summary>
+		/// Initializes a new instance of the <see cref="NullServerTransportManager"/> class.
+		/// </summary>
+		/// <param name="server">The server.</param>
+		public NullServerTransportManager( RpcServer server ) : base( server ) { }
 	}
 }
