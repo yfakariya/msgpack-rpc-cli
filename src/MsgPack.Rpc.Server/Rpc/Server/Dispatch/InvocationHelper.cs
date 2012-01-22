@@ -41,12 +41,6 @@ namespace MsgPack.Rpc.Server.Dispatch
 			FromExpression.ToMethod( ( Exception exception, string parameterName, bool isDebugMode ) => HandleArgumentDeserializationException( exception, parameterName, isDebugMode ) );
 
 		/// <summary>
-		///		<see cref="MethodInfo"/> of <see cref="HandleInvocationException"/>.
-		/// </summary>
-		internal static readonly MethodInfo HandleInvocationExceptionMethod =
-			FromExpression.ToMethod( ( Exception exception, bool isDebugMode ) => HandleInvocationException( exception, isDebugMode ) );
-
-		/// <summary>
 		///		<strong>This member is intended to MessagePack-RPC internal use.</strong>
 		///		Convert specified argument deserialization error to the RPC error.
 		/// </summary>
@@ -75,7 +69,22 @@ namespace MsgPack.Rpc.Server.Dispatch
 		///		<see cref="RpcErrorMessage"/>.
 		/// </returns>
 		[EditorBrowsable( EditorBrowsableState.Never )]
-		public static RpcErrorMessage HandleInvocationException( Exception exception, bool isDebugMode )
+		public static RpcErrorMessage HandleInvocationException( long sessionId, MessageType messageType, int? messageId, string operationId, Exception exception, bool isDebugMode )
+		{
+			MsgPackRpcServerDispatchTrace.TraceEvent(
+				MsgPackRpcServerDispatchTrace.OperationThrewException,
+				"Operation threw exception. {{ \"SessionId\" : {0}, \"MessageType\" : \"{1}\", \"MessageID\" : {2}, \"OperationID\" : \"{3}\", \"Exception\" : \"{4}\" }}",
+				sessionId,
+				messageType,
+				messageId,
+				operationId,
+				exception
+			);
+
+			return HandleInvocationException( exception, isDebugMode );
+		}
+
+		internal static RpcErrorMessage HandleInvocationException( Exception exception, bool isDebugMode )
 		{
 			ArgumentException asArgumentException;
 			RpcException rpcException;
@@ -125,7 +134,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 			{
 				MsgPackRpcServerDispatchTrace.TraceEvent(
 					MsgPackRpcServerDispatchTrace.OperationFailed,
-					"Operation failed. {{ \"SessionId\" : {0}, \"MessageType\" : \"{1}\", \"MessageID\" : {2}, \"OperationID\" : \"{3}\", \"Error\" : {4} }}",
+					"Operation failed. {{ \"SessionId\" : {0}, \"MessageType\" : \"{1}\", \"MessageID\" : {2}, \"OperationID\" : \"{3}\", \"RpcError\" : {4} }}",
 					sessionId,
 					messageType,
 					messageId,

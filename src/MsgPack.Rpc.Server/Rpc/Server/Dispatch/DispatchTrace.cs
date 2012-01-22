@@ -33,11 +33,12 @@ namespace MsgPack.Rpc.Server.Dispatch
 		private static readonly TraceSource _source = new TraceSource( "MsgPack.Rpc.Server.Dispatch" );
 
 		private static readonly Dictionary<MessageId, TraceEventType> _typeTable = 
-			new Dictionary<MessageId, TraceEventType> ( 3 )
+			new Dictionary<MessageId, TraceEventType> ( 4 )
 			{
 				{ MessageId.OperationStart, TraceEventType.Verbose },
 				{ MessageId.OperationSucceeded, TraceEventType.Verbose },
 				{ MessageId.OperationFailed, TraceEventType.Warning },
+				{ MessageId.OperationThrewException, TraceEventType.Warning },
 			};
 
 		/// <summary>
@@ -108,11 +109,16 @@ namespace MsgPack.Rpc.Server.Dispatch
 		/// 	<see cref="MessageId" /> of .OperationFailed (ID:1103) message.
 		/// </summary>
 		public const MessageId OperationFailed = MessageId.OperationFailed;
+		/// <summary>
+		/// 	<see cref="MessageId" /> of .OperationThrewException (ID:1190) message.
+		/// </summary>
+		public const MessageId OperationThrewException = MessageId.OperationThrewException;
 		public enum MessageId
 		{
 			OperationStart = 1101,
 			OperationSucceeded = 1102,
 			OperationFailed = 1103,
+			OperationThrewException = 1190,
 		}
 	}
 }

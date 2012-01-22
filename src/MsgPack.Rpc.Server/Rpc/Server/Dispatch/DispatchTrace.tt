@@ -33,5 +33,6 @@
 <#= Generate( "MsgPack.Rpc.Server.Dispatch",
 	new TraceMessage( "OperationStart", TraceEventType.Verbose, 1101 ),
 	new TraceMessage( "OperationSucceeded", TraceEventType.Verbose, 1102 ),
-	new TraceMessage( "OperationFailed", TraceEventType.Warning, 1103 )
+	new TraceMessage( "OperationFailed", TraceEventType.Warning, 1103 ),
+	new TraceMessage( "OperationThrewException", TraceEventType.Warning, 1190 )
 ) #>

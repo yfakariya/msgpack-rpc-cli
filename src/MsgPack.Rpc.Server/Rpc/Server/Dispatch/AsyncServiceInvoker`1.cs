@@ -113,7 +113,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 			this._serviceDescription = serviceDescription;
 			this._targetOperation = targetOperation;
 			this._operationId = serviceDescription.ToString() + "::" + targetOperation.Name;
-			this._returnValueSerializer = context.GetSerializer<T>();
+			this._returnValueSerializer = typeof( T ) == typeof( Missing ) ? null : context.GetSerializer<T>();
 		}
 
 		public Task InvokeAsync( ServerRequestContext requestContext, ServerResponseContext responseContext )
@@ -153,13 +153,13 @@ namespace MsgPack.Rpc.Server.Dispatch
 			catch ( Exception ex )
 			{
 				task = null;
-				error = InvocationHelper.HandleInvocationException( ex, this.IsDebugMode );
+				error = InvocationHelper.HandleInvocationException( requestContext.SessionId, requestContext.MessageType, requestContext.MessageId, this.OperationId, ex, this.IsDebugMode );
 			}
 
-			var tuple = Tuple.Create( this, requestContext.SessionId, messageId.GetValueOrDefault(), responseContext, error );
+			var tuple = Tuple.Create( this, requestContext.SessionId, messageId.GetValueOrDefault(), this.OperationId, responseContext, error );
 			if ( task == null )
 			{
-				return Task.Factory.StartNew( state => HandleInvocationResult( null, state as Tuple<AsyncServiceInvoker<T>, long, int, ServerResponseContext, RpcErrorMessage> ), tuple );
+				return Task.Factory.StartNew( state => HandleInvocationResult( null, state as Tuple<AsyncServiceInvoker<T>, long, int, string, ServerResponseContext, RpcErrorMessage> ), tuple );
 			}
 			else
 			{
@@ -168,7 +168,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 						task.ContinueWith(
 							( previous, state ) => HandleInvocationResult( 
 								previous, 
-								state as Tuple<AsyncServiceInvoker<T>, int, Packer, RpcErrorMessage>
+								state as Tuple<AsyncServiceInvoker<T>, long, int, string, ServerResponseContext, RpcErrorMessage>
 							),
 							tuple
 						);
@@ -184,13 +184,14 @@ namespace MsgPack.Rpc.Server.Dispatch
 			}
 		}
 
-		private static void HandleInvocationResult( Task previous, Tuple<AsyncServiceInvoker<T>, long, int, ServerResponseContext, RpcErrorMessage> closureState )
+		private static void HandleInvocationResult( Task previous, Tuple<AsyncServiceInvoker<T>, long, int, string, ServerResponseContext, RpcErrorMessage> closureState )
 		{
 			var @this = closureState.Item1;
 			var sessionId = closureState.Item2;
 			var messageId = closureState.Item3;
-			var responseContext = closureState.Item4;
-			var error = closureState.Item5;
+			var operationId = closureState.Item4;
+			var responseContext = closureState.Item5;
+			var error = closureState.Item6;
 
 			T result = default( T );
 			try
@@ -201,7 +202,15 @@ namespace MsgPack.Rpc.Server.Dispatch
 					{
 						if ( previous.Exception != null )
 						{
-							error = InvocationHelper.HandleInvocationException( previous.Exception.InnerException, @this.IsDebugMode );
+							error =
+								InvocationHelper.HandleInvocationException(
+									sessionId,
+									responseContext == null ? MessageType.Notification : MessageType.Request,
+									responseContext == null ? default( int? ) : messageId,
+									operationId,
+									previous.Exception.InnerException,
+									@this.IsDebugMode
+								);
 						}
 						else if ( @this._returnValueSerializer != null )
 						{
