@@ -62,6 +62,13 @@ namespace MsgPack.Rpc
 			this._factory = factory;
 		}
 
+		/// <summary>
+		///		Borrows the item from this pool.
+		/// </summary>
+		/// <returns>
+		///		The item borrowed.
+		///		This value cannot be <c>null</c>.
+		/// </returns>
 		protected sealed override T BorrowCore()
 		{
 			var result = this._factory();
@@ -69,6 +76,10 @@ namespace MsgPack.Rpc
 			return result;
 		}
 
+		/// <summary>
+		///		Returns the specified borrowed item.
+		/// </summary>
+		/// <param name="value">The borrowed item. This value will not be <c>null</c>.</param>
 		protected sealed override void ReturnCore( T value )
 		{
 			// nop.
