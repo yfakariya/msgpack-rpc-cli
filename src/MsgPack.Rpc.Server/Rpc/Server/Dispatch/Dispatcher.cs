@@ -95,7 +95,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 			{
 				var error = new RpcErrorMessage( RpcError.NoMethodError, "Operation does not exist.", null );
 				InvocationHelper.TraceInvocationResult<object>(
-					responseContext.SessionId,
+					requestContext.SessionId,
 					requestContext.MessageType,
 					requestContext.MessageId.GetValueOrDefault(),
 					requestContext.MethodName,
