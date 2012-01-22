@@ -22,15 +22,30 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-using System.Linq.Expressions;
 using MsgPack.Rpc.Server.Dispatch.SvcFileInterop;
 
 namespace MsgPack.Rpc.Server.Dispatch
 {
+	/// <summary>
+	///		Implements <see cref="ServiceTypeLocator"/> which uses WCF compatible *.svc file and the directory.
+	/// </summary>
 	public class FileBasedServiceTypeLocator : ServiceTypeLocator
 	{
+		/// <summary>
+		///		Gets or sets the base directory.
+		/// </summary>
+		/// <value>
+		///		The base directory to locate *.svc files.
+		///		If the value is <c>null</c> or empty, the <see cref="P:AppDomain.BaseDirectory"/> will be used.
+		/// </value>
 		public string BaseDirectory { get; set; }
 
+		/// <summary>
+		/// Find services types with implementation specific way and returns them as <see cref="ServiceDescription"/>.
+		/// </summary>
+		/// <returns>
+		/// The collection of <see cref="ServiceDescription"/>.
+		/// </returns>
 		public sealed override IEnumerable<ServiceDescription> FindServices()
 		{
 			var result = new List<ServiceDescription>();

@@ -19,6 +19,7 @@
 #endregion -- License Terms --
 
 using System;
+using System.Diagnostics.Contracts;
 using System.Threading.Tasks;
 using MsgPack.Rpc.Protocols;
 using MsgPack.Rpc.Server.Dispatch;
@@ -27,15 +28,37 @@ using MsgPack.Serialization;
 
 namespace MsgPack.Rpc.Server.Dispatch
 {
+	/// <summary>
+	///		Dispatches the RPC message to specific operation.
+	/// </summary>
 	public abstract class Dispatcher
 	{
 		private readonly RpcServer _server;
 
+		/// <summary>
+		///		Gets the serialization context to store serializer for request arguments and response values.
+		/// </summary>
+		/// <value>
+		///		The serialization context to store serializer for request arguments and response values.
+		///		This value will not be <c>null</c>.
+		/// </value>
 		protected SerializationContext SerializationContext
 		{
-			get { return this._server.SerializationContext; }
+			get
+			{
+				Contract.Ensures( Contract.Result<SerializationContext>() != null );
+
+				return this._server.SerializationContext;
+			}
 		}
 
+		/// <summary>
+		///		Initializes a new instance of the <see cref="Dispatcher"/> class.
+		/// </summary>
+		/// <param name="server">The server which will hold this instance.</param>
+		/// <exception cref="ArgumentNullException">
+		///		<paramref name="server"/> is <c>null</c>.
+		/// </exception>
 		protected Dispatcher( RpcServer server )
 		{
 			if ( server == null )
@@ -43,11 +66,21 @@ namespace MsgPack.Rpc.Server.Dispatch
 				throw new ArgumentNullException( "server" );
 			}
 
+			Contract.EndContractBlock();
+
 			this._server = server;
 		}
 
+		/// <summary>
+		///		Dispatches the specified request, and dispatches the response to the specified transport.
+		/// </summary>
+		/// <param name="serverTransport">The server transport the response to be dispatched.</param>
+		/// <param name="requestContext">The request context.</param>
 		internal void Dispatch( ServerTransport serverTransport, ServerRequestContext requestContext )
 		{
+			Contract.Requires( serverTransport != null );
+			Contract.Requires( requestContext != null );
+
 			ServerResponseContext responseContext = null;
 			if ( requestContext.MessageType == MessageType.Request )
 			{
@@ -145,15 +178,85 @@ namespace MsgPack.Rpc.Server.Dispatch
 			sessionState.Item1.RaiseServerError( exception );
 		}
 
+		/// <summary>
+		///		When overriden in the derived classes, dispatches the specified RPC method to the operation.
+		/// </summary>
+		/// <param name="methodName">Name of the method.</param>
+		/// <returns>
+		///		<para>
+		///			The <see cref="Func{T1,T2,TReturn}"/> which is entity of the operation.
+		///		</para>
+		///		<para>
+		///			The 1st argument is <see cref="ServerRequestContext"/> which holds any data related to the request. 
+		///			This value will not be <c>null</c>.
+		///		</para>
+		///		<para>
+		///			The 2nd argument is <see cref="ServerResponseContext"/> which handles any response related behaviors including error response.
+		///			This value will not be <c>null</c>.
+		///		</para>
+		///		<para>
+		///			The return value is <see cref="Task"/> which encapselates asynchronous target invocation.
+		///			This value cannot be <c>null</c>.
+		///		</para>
+		/// </returns>
+		/// <exception cref="Exception">
+		///		The derived class faces unexpected failure.
+		/// </exception>
+		/// <remarks>
+		///		Using <see cref="AsyncServiceInvoker{T}"/> derviced class is recommended approach.
+		/// </remarks>
 		protected abstract Func<ServerRequestContext, ServerResponseContext, Task> Dispatch( string methodName );
 
+		/// <summary>
+		///		Sets the return value to the <see cref="ServerResponseContext"/>.
+		/// </summary>
+		/// <typeparam name="T">The type of the return value.</typeparam>
+		/// <param name="context">The <see cref="ServerResponseContext"/> to be set the return value.</param>
+		/// <param name="returnValue">The return value to be set.</param>
+		/// <exception cref="ArgumentNullException">
+		///		<paramref name="context"/> is <c>null</c>.
+		/// </exception>
 		protected void SetReturnValue<T>( ServerResponseContext context, T returnValue )
 		{
+			if ( context == null )
+			{
+				throw new ArgumentNullException( "context" );
+			}
+
+			Contract.EndContractBlock();
+
 			context.Serialize( returnValue, RpcErrorMessage.Success, this.SerializationContext.GetSerializer<T>() );
 		}
 
+		/// <summary>
+		///		Sets the exception to the <see cref="ServerResponseContext"/> as called method failure.
+		/// </summary>
+		/// <param name="context">The <see cref="ServerResponseContext"/> to be set the error.</param>
+		/// <param name="exception">The exception to be set as the RPC error.</param>
+		/// <exception cref="ArgumentNullException">
+		///		<paramref name="context"/> is <c>null</c>.
+		///		Or, <paramref name="exception"/> is <c>null</c>.
+		/// </exception>
+		/// <remarks>
+		///		You should use <see cref="RpcException"/> derived class to represent application error.
+		///		The runtime does not interpret other exception types except <see cref="ArgumentException"/> derviced class,
+		///		so they are represented as <see cref="RpcError.CallError"/> in the lump.
+		///		(<see cref="ArgumentException"/> derviced class is transformed to <see cref="P:RpcError.ArgumentError"/>.
+		/// </remarks>
 		protected void SetException( ServerResponseContext context, Exception exception )
 		{
+			if ( context == null )
+			{
+				throw new ArgumentNullException( "context" );
+			}
+
+			if ( exception == null )
+			{
+				throw new ArgumentNullException( "exception" );
+			}
+
+			Contract.EndContractBlock();
+
 			context.Serialize<MessagePackObject>( MessagePackObject.Nil, InvocationHelper.HandleInvocationException( exception, this._server.Configuration.IsDebugMode ), this.SerializationContext.GetSerializer<MessagePackObject>() );
 		}
 	}

@@ -1,4 +1,4 @@
-#region -- License Terms --
+﻿#region -- License Terms --
 //
 // MessagePack for CLI
 //
@@ -26,19 +26,27 @@ using MsgPack.Rpc.Server.Protocols;
 
 namespace MsgPack.Rpc.Server.Dispatch
 {
+	/// <summary>
+	///		Implements <see cref="Dispatcher"/> which uses <see cref="ServiceTypeLocator"/>, <see cref="ServiceDescription"/> and <see cref="OperationDescription"/>.
+	/// </summary>
+	/// <remarks>
+	///		This class can be thought as the façade component.
+	/// </remarks>
 	public sealed class LocatorBasedDispatcher : Dispatcher
 	{
 		private readonly ServiceTypeLocator _locator;
 		private readonly Dictionary<string, OperationDescription> _descriptionTable;
 
+		/// <summary>
+		/// Initializes a new instance of the <see cref="LocatorBasedDispatcher"/> class.
+		/// </summary>
+		/// <param name="server">The server which will hold this instance.</param>
+		/// <exception cref="ArgumentNullException">
+		///		<paramref name="server"/> is <c>null</c>.
+		/// </exception>
 		public LocatorBasedDispatcher( RpcServer server )
 			: base( server )
 		{
-			if ( server == null )
-			{
-				throw new ArgumentNullException( "server" );
-			}
-
 			this._locator = server.Configuration.ServiceTypeLocatorProvider( server.Configuration );
 			this._descriptionTable = new Dictionary<string, OperationDescription>();
 
@@ -51,6 +59,30 @@ namespace MsgPack.Rpc.Server.Dispatch
 			}
 		}
 
+		/// <summary>
+		/// When overriden in the derived classes, dispatches the specified RPC method to the operation.
+		/// </summary>
+		/// <param name="methodName">Name of the method.</param>
+		/// <returns>
+		///   <para>
+		/// The <see cref="Func{T1,T2,TReturn}"/> which is entity of the operation.
+		///   </para>
+		///   <para>
+		/// The 1st argument is <see cref="ServerRequestContext"/> which holds any data related to the request.
+		/// This value will not be <c>null</c>.
+		///   </para>
+		///   <para>
+		/// The 2nd argument is <see cref="ServerResponseContext"/> which handles any response related behaviors including error response.
+		/// This value will not be <c>null</c>.
+		///   </para>
+		///   <para>
+		/// The return value is <see cref="Task"/> which encapselates asynchronous target invocation.
+		/// This value cannot be <c>null</c>.
+		///   </para>
+		/// </returns>
+		/// <exception cref="Exception">
+		/// The derived class faces unexpected failure.
+		///   </exception>
 		protected sealed override Func<ServerRequestContext, ServerResponseContext, Task> Dispatch( string methodName )
 		{
 			OperationDescription description;
