@@ -31,6 +31,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 	/// <summary>
 	///		Dispatches the RPC message to specific operation.
 	/// </summary>
+	[ContractClass( typeof( DispatcherContracts ) )]
 	public abstract class Dispatcher
 	{
 		private readonly RpcServer _server;
@@ -260,4 +261,18 @@ namespace MsgPack.Rpc.Server.Dispatch
 			context.Serialize<MessagePackObject>( MessagePackObject.Nil, InvocationHelper.HandleInvocationException( exception, this._server.Configuration.IsDebugMode ), this.SerializationContext.GetSerializer<MessagePackObject>() );
 		}
 	}
+
+	internal abstract class DispatcherContracts : Dispatcher
+	{
+		public DispatcherContracts( RpcServer server ) : base( server ) { }
+
+		protected override Func<ServerRequestContext, ServerResponseContext, Task> Dispatch( string methodName )
+		{
+			Contract.Requires( !String.IsNullOrEmpty( methodName ) );
+			Contract.Ensures( Contract.Result<Func<ServerRequestContext, ServerResponseContext, Task>>() != null );
+
+			return null;
+		}
+	}
+
 }
