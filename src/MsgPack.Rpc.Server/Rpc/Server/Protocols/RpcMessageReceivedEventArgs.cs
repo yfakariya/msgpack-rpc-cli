@@ -161,7 +161,7 @@ namespace MsgPack.Rpc.Server.Protocols
 				throw new InvalidOperationException( "ArgumentsUnpacker was already called." );
 			}
 
-			Contract.Assert( this._underlyingUnpacker.IsInStart );
+			Contract.Assert( this._underlyingUnpacker.Data.HasValue );
 
 			if ( !this._underlyingUnpacker.Read() )
 			{
