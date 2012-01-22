@@ -363,25 +363,14 @@ namespace MsgPack.Rpc.Server.Dispatch
 				il.EmitAnyStloc( service );
 
 				/*
-				 *	try
-				 *	{
 				 *	#if IS_TASK
-				 *		returnValue = service.Target( arg1, ..., argN );
+				 *	returnValue = service.Target( arg1, ..., argN );
 				 *	#else
-				 *		returnValue = Task.Factory.StartNew( this.PrivateInvokeCore( state as Tuple<...> ), new Tuple<...>(...) );
+				 *	returnValue = Task.Factory.StartNew( this.PrivateInvokeCore( state as Tuple<...> ), new Tuple<...>(...) );
 				 *	#endif
-				 *		error = RpcErrorMessage.Success;
-				 *		return;
-				 *	}
-				 *	catch( Exception ex )
-				 *	{
-				 *		error = InvocationHelper.HandleInvocationException( ex );
-				 *		returnValue = null;
-				 *		return;
-				 *	}
+				 *	error = RpcErrorMessage.Success;
+				 *	return;
 				 */
-				il.BeginExceptionBlock();
-
 				// Dereference managed pointer.
 				il.EmitAnyLdarg( 2 );
 
@@ -408,18 +397,6 @@ namespace MsgPack.Rpc.Server.Dispatch
 				il.EmitGetProperty( _rpcErrorMessageSuccessProperty );
 				// Set to arg.3
 				il.EmitStobj( typeof( RpcErrorMessage ) );
-				EmitExceptionHandling(
-					il,
-					returnType,
-					endOfMethod,
-					( il0, exception ) =>
-					{
-						il0.EmitAnyLdloc( exception );
-						il0.EmitAnyLdarg( 0 );
-						il0.EmitGetProperty( asyncInvokerIsDebugModeProperty );
-						il0.EmitCall( InvocationHelper.HandleInvocationExceptionMethod );
-					}
-				);
 				il.MarkLabel( endOfMethod );
 				il.EmitRet();
 			}
