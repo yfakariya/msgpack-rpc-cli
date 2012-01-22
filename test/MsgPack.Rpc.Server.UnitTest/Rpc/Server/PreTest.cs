@@ -23,9 +23,9 @@ using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
-using NUnit.Framework;
-using MsgPack.Rpc.Server.Protocols;
 using MsgPack.Rpc.Server.Dispatch;
+using MsgPack.Rpc.Server.Protocols;
+using NUnit.Framework;
 
 namespace MsgPack.Rpc.Server
 {
@@ -48,11 +48,12 @@ namespace MsgPack.Rpc.Server
 		// TODO: Error packet test.
 		private const bool _traceEnabled = true;
 		private DebugTraceSourceSetting _debugTrace;
+		private readonly TraceSource _trace = new TraceSource( "MsgPack.Rpc.Server.PreTest" );
 
 		[SetUp]
 		public void SetUp()
 		{
-			this._debugTrace = new DebugTraceSourceSetting( _traceEnabled, MsgPackRpcServerTrace.Source, MsgPackRpcServerProtocolsTrace.Source );
+			this._debugTrace = new DebugTraceSourceSetting( _traceEnabled, MsgPackRpcServerTrace.Source, MsgPackRpcServerProtocolsTrace.Source, _trace );
 		}
 
 		[TearDown]
@@ -114,7 +115,7 @@ namespace MsgPack.Rpc.Server
 			}
 		}
 
-		private static void TestEchoRequestCore( ref bool isOk, ManualResetEventSlim waitHandle, string message )
+		private void TestEchoRequestCore( ref bool isOk, ManualResetEventSlim waitHandle, string message )
 		{
 			using ( var client = new TcpClient() )
 			{
@@ -125,7 +126,7 @@ namespace MsgPack.Rpc.Server
 				using ( var stream = client.GetStream() )
 				using ( var packer = Packer.Create( stream ) )
 				{
-					Console.WriteLine( "---- Client sending request ----" );
+					this._trace.TraceInformation( "---- Client sending request ----" );
 
 					packer.PackArrayHeader( 4 );
 					packer.Pack( 0 );
@@ -135,7 +136,7 @@ namespace MsgPack.Rpc.Server
 					packer.Pack( message );
 					packer.Pack( now );
 
-					Console.WriteLine( "---- Client sent request ----" );
+					this._trace.TraceInformation( "---- Client sent request ----" );
 
 					if ( Debugger.IsAttached )
 					{
@@ -146,7 +147,7 @@ namespace MsgPack.Rpc.Server
 						Assert.That( waitHandle.Wait( TimeSpan.FromSeconds( 3 ) ) );
 					}
 
-					Console.WriteLine( "---- Client receiving response ----" );
+					this._trace.TraceInformation( "---- Client receiving response ----" );
 					var result = Unpacking.UnpackObject( stream );
 					Assert.That( result.IsArray );
 					var array = result.AsList();
@@ -159,7 +160,7 @@ namespace MsgPack.Rpc.Server
 					Assert.That( returnValue.Count, Is.EqualTo( 2 ) );
 					Assert.That( returnValue[ 0 ] == message, returnValue[ 0 ].ToString() );
 					Assert.That( returnValue[ 1 ] == now, returnValue[ 1 ].ToString() );
-					Console.WriteLine( "---- Client received response ----" );
+					this._trace.TraceInformation( "---- Client received response ----" );
 				}
 			}
 		}
@@ -215,7 +216,7 @@ namespace MsgPack.Rpc.Server
 			}
 		}
 
-		private static void TestEchoRequestContinuousCore( bool[] serverStatus, CountdownEvent waitHandle, int count, string message )
+		private void TestEchoRequestContinuousCore( bool[] serverStatus, CountdownEvent waitHandle, int count, string message )
 		{
 			using ( var client = new TcpClient() )
 			{
@@ -229,7 +230,7 @@ namespace MsgPack.Rpc.Server
 				{
 					for ( int i = 0; i < count; i++ )
 					{
-						Console.WriteLine( "---- Client sending request ----" );
+						this._trace.TraceInformation( "---- Client sending request ----" );
 						packer.PackArrayHeader( 4 );
 						packer.Pack( 0 );
 						packer.Pack( i );
@@ -237,7 +238,7 @@ namespace MsgPack.Rpc.Server
 						packer.PackArrayHeader( 2 );
 						packer.Pack( message );
 						packer.Pack( now );
-						Console.WriteLine( "---- Client sent request ----" );
+						this._trace.TraceInformation( "---- Client sent request ----" );
 					}
 
 					if ( Debugger.IsAttached )
@@ -251,7 +252,7 @@ namespace MsgPack.Rpc.Server
 
 					for ( int i = 0; i < count; i++ )
 					{
-						Console.WriteLine( "---- Client receiving response ----" );
+						this._trace.TraceInformation( "---- Client receiving response ----" );
 						var array = Unpacking.UnpackArray( stream );
 						Assert.That( array.Count, Is.EqualTo( 4 ) );
 						Assert.That( array[ 0 ] == 1, array[ 0 ].ToString() );
@@ -263,7 +264,7 @@ namespace MsgPack.Rpc.Server
 						Assert.That( returnValue.Count, Is.EqualTo( 2 ) );
 						Assert.That( returnValue[ 0 ] == message, returnValue[ 0 ].ToString() );
 						Assert.That( returnValue[ 1 ] == now, returnValue[ 1 ].ToString() );
-						Console.WriteLine( "---- Client received response ----" );
+						this._trace.TraceInformation( "---- Client received response ----" );
 					}
 
 					lock ( serverStatus )
