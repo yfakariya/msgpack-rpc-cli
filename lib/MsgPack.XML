@@ -4542,14 +4542,6 @@
             	Both of the <see cref="P:MsgPack.Unpacker.IsArrayHeader"/> and <see cref="P:MsgPack.Unpacker.IsMapHeader"/> are <c>false</c>.
             </exception>
         </member>
-        <member name="P:MsgPack.Unpacker.IsInStart">
-            <summary>
-             Gets a value indicating whether this instance is in start position.
-            </summary>
-            <value>
-            	<c>true</c> if this instance is in start; otherwise, <c>false</c>.
-            </value>
-        </member>
         <member name="P:MsgPack.Unpacker.UnderlyingStream">
             <summary>
             	Gets the underlying stream to handle direct API.
@@ -6026,14 +6018,6 @@
             <exception cref="T:System.InvalidOperationException">
             	Both of the <see cref="P:MsgPack.StreamUnpacker.IsArrayHeader"/> and <see cref="P:MsgPack.StreamUnpacker.IsMapHeader"/> are <c>false</c>.
             </exception>
-        </member>
-        <member name="P:MsgPack.StreamUnpacker.IsInStart">
-            <summary>
-            	Gets a value indicating whether this instance is in start position.
-            </summary>
-            <value>
-            	<c>true</c> if this instance is in start; otherwise, <c>false</c>.
-            </value>
         </member>
         <member name="P:MsgPack.StreamUnpacker.UnderlyingStream">
             <summary>
