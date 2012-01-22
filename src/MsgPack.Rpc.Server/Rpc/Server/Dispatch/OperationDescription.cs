@@ -21,6 +21,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -30,18 +31,25 @@ using MsgPack.Serialization;
 namespace MsgPack.Rpc.Server.Dispatch
 {
 	/// <summary>
-	///		Describes RPC service operation (method).
+	///		Describes the RPC service operation (method).
 	/// </summary>
 	public sealed class OperationDescription
 	{
 		private readonly ServiceDescription _service;
 
+		/// <summary>
+		///		Gets the service description.
+		/// </summary>
+		/// <value>
+		///		The service description which describles service and application specification including version.
+		///		This value will not be <c>null</c>.
+		/// </value>
 		public ServiceDescription Service
 		{
 			get
 			{
 				Contract.Ensures( Contract.Result<ServiceDescription>() != null );
-				
+
 				return this._service;
 			}
 		}
@@ -50,6 +58,14 @@ namespace MsgPack.Rpc.Server.Dispatch
 
 		private readonly Func<ServerRequestContext, ServerResponseContext, Task> _operation;
 
+		/// <summary>
+		///		Gets the operation to invoke.
+		/// </summary>
+		/// <value>
+		///		The operation to invoke.
+		///		This value may <see cref="M:IAsyncInvoker.Invoke"/> implementation.
+		///		This value will not be <c>null</c>.
+		/// </value>
 		public Func<ServerRequestContext, ServerResponseContext, Task> Operation
 		{
 			get
@@ -62,6 +78,13 @@ namespace MsgPack.Rpc.Server.Dispatch
 
 		private readonly string _id;
 
+		/// <summary>
+		///		Gets the id of the operation.
+		/// </summary>
+		/// <value>
+		///		The id of the operation.
+		///		This value will not be <c>null</c> nor empty.
+		/// </value>
 		public string Id
 		{
 			get
@@ -80,6 +103,16 @@ namespace MsgPack.Rpc.Server.Dispatch
 			this._id = id;
 		}
 
+		/// <summary>
+		///		Creates the collection of the <see cref="OperationDescription"/> from the service description.
+		/// </summary>
+		/// <param name="configuration">The configuration to initialize the invoker etc.</param>
+		/// <param name="serializationContext">The serialization context to initialize the invoker etc.</param>
+		/// <param name="service">The target service description.</param>
+		/// <returns>
+		///		Collection of the <see cref="OperationDescription"/> from the service description.
+		///		This value will not be <c>null</c> but might be empty.
+		/// </returns>
 		public static IEnumerable<OperationDescription> FromServiceDescription( RpcServerConfiguration configuration, SerializationContext serializationContext, ServiceDescription service )
 		{
 			if ( serializationContext == null )
