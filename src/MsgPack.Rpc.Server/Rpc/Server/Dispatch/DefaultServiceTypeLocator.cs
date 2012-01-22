@@ -47,7 +47,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 		/// <exception cref="ArgumentNullException">
 		///		<paramref name="serviceType"/> is <c>null</c>.
 		/// </exception>
-		/// <exception cref="ArgumentNullException">
+		/// <exception cref="ArgumentException">
 		///		<paramref name="serviceType"/> is invalid. 
 		///		See <see cref="M:ServiceDescription.FromServiceType"/> for details.
 		/// </exception>
@@ -86,6 +86,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 		{
 			foreach ( var item in this._serviceTypes )
 			{
+				// Enumerate to prevent manipulation via down cast.
 				yield return item;
 			}
 		}
