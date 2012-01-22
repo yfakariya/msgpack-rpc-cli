@@ -103,10 +103,11 @@ namespace MsgPack.Rpc.Server.Dispatch
 			}
 			else
 			{
+				// TODO: More cases?
 				return
 					new RpcErrorMessage( 
-						RpcError.RemoteRuntimeError, 
-						isDebugMode ? RpcError.RemoteRuntimeError.DefaultMessage : RpcError.RemoteRuntimeError.DefaultMessageInvariant,
+						RpcError.CallError,
+						isDebugMode ? exception.Message : RpcError.CallError.DefaultMessageInvariant,
 						isDebugMode ? exception.ToString() : null
 					);
 			}
