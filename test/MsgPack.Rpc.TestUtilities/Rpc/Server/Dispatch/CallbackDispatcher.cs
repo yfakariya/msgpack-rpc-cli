@@ -51,6 +51,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 			return
 				( requestContext, responseContext ) =>
 				{
+					requestContext.ArgumentsUnpacker.Read();
 					MessagePackObject[] args = MessagePackSerializer.Create<MessagePackObject[]>( _serializationContext ).UnpackFrom( requestContext.ArgumentsUnpacker );
 					var messageId = requestContext.MessageId;
 
