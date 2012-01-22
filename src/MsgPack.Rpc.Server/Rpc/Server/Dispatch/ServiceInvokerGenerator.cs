@@ -260,7 +260,8 @@ namespace MsgPack.Rpc.Server.Dispatch
 
 		private static void EmitInvokeCore( ServiceInvokerEmitter emitter, MethodInfo targetOperation, ParameterInfo[] parameters, Type returnType, bool isWrapperNeeded )
 		{
-			var asyncInvokerIsDebugModeProperty = typeof( AsyncServiceInvoker<> ).MakeGenericType( targetOperation.ReturnType ).GetProperty( "IsDebugMode", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic );
+			var methodReturnType = targetOperation.ReturnType == typeof( void ) ? typeof( Missing ) : targetOperation.ReturnType;
+			var asyncInvokerIsDebugModeProperty = typeof( AsyncServiceInvoker<> ).MakeGenericType( methodReturnType ).GetProperty( "IsDebugMode", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic );
 			var il = emitter.GetInvokeCoreMethodILGenerator();
 			try
 			{
@@ -356,7 +357,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 
 				var service = il.DeclareLocal( targetOperation.DeclaringType, "service" );
 				il.EmitAnyLdarg( 0 );
-				il.EmitGetProperty( typeof( AsyncServiceInvoker<> ).MakeGenericType( targetOperation.ReturnType ).GetProperty( "ServiceDescription" ) );
+				il.EmitGetProperty( typeof( AsyncServiceInvoker<> ).MakeGenericType( methodReturnType ).GetProperty( "ServiceDescription" ) );
 				il.EmitGetProperty( ServiceDescription.InitializerProperty );
 				il.EmitAnyCall( _func_1_Invoke );
 				il.EmitCastclass( service.LocalType );

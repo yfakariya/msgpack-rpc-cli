@@ -32,6 +32,9 @@ using NLiblet.Reflection;
 
 namespace MsgPack.Rpc.Server.Dispatch
 {
+	/// <summary>
+	///		Emits skelton of the generated service invoker derived class.
+	/// </summary>
 	internal sealed class ServiceInvokerEmitter
 	{
 		private static readonly Type[] _constructorParameterTypes = new[] { typeof( RpcServerConfiguration ), typeof( SerializationContext ), typeof( ServiceDescription ), typeof( MethodInfo ) };
@@ -112,7 +115,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 				host.DefineType(
 					typeName,
 					TypeAttributes.Sealed | TypeAttributes.Public | TypeAttributes.AutoClass | TypeAttributes.AutoLayout | TypeAttributes.BeforeFieldInit,
-					typeof( AsyncServiceInvoker<> ).MakeGenericType( returnType )
+					typeof( AsyncServiceInvoker<> ).MakeGenericType( returnType == typeof( void ) ? typeof( Missing ) : returnType )
 				);
 
 			this._constructorBuilder = this._typeBuilder.DefineConstructor( MethodAttributes.Public, CallingConventions.Standard, _constructorParameterTypes );
