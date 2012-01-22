@@ -148,7 +148,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			else
 			{
 				this.ErrorDataPacker.Pack( error.Error.Identifier );
-				this.ErrorDataPacker.Pack( error.Detail );
+				this.ReturnDataPacker.Pack( error.Detail );
 			}
 		}
 
