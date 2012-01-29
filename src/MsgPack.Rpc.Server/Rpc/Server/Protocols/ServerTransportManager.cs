@@ -220,6 +220,16 @@ namespace MsgPack.Rpc.Server.Protocols
 			this._requestContextPool = server.Configuration.RequestContextPoolProvider( () => new ServerRequestContext(), server.Configuration.CreateRequestContextPoolConfiguration() );
 			this._responseContextPool = server.Configuration.ResponseContextPoolProvider( () => new ServerResponseContext(), server.Configuration.CreateResponseContextPoolConfiguration() );
 
+			if ( this._requestContextPool == null )
+			{
+				throw new InvalidOperationException( "Configuration.RequestContextPoolProvider returns null." );
+			}
+
+			if ( this._responseContextPool == null )
+			{
+				throw new InvalidOperationException( "Configuration.ResponseContextPoolProvider returns null." );
+			}
+
 			this._server = server;
 		}
 
