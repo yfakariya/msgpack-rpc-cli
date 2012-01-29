@@ -320,7 +320,7 @@ namespace MsgPack.Rpc.Server.Protocols
 
 			if ( context == null )
 			{
-				throw new ArgumentNullException( "e" );
+				throw new ArgumentNullException( "context" );
 			}
 
 			Contract.EndContractBlock();
