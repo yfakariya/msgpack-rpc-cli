@@ -93,7 +93,6 @@
       <DependentUpon>ProtocolTrace.tt</DependentUpon>
     </Compile>
     <Compile Include="Rpc\Server\Protocols\ProtocolTrace.FromRpcError.cs" />
-    <Compile Include="Rpc\Server\Protocols\RpcMessageReceivedEventArgs.cs" />
     <Compile Include="Rpc\Server\Protocols\ServerRequestContext.cs" />
     <Compile Include="Rpc\Server\Protocols\ServerSocketError.cs" />
     <Compile Include="Rpc\Server\Protocols\ServerTransport.cs" />
