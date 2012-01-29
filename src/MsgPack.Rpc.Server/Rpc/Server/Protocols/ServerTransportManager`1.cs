@@ -155,7 +155,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			this._transportPool.Return( transport );
 		}
 
-		protected ServerRequestContext GetRequetContext( TTransport transport )
+		protected ServerRequestContext GetRequestContext( TTransport transport )
 		{
 			var requestContext = this.RequestContextPool.Borrow();
 			requestContext.SetTransport( transport );

@@ -190,7 +190,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			var transport = this.GetTransport( context.AcceptSocket );
 			context.AcceptSocket = null;
 			this.Accept( context );
-			transport.Receive( this.GetRequetContext( transport ) );
+			transport.Receive( this.GetRequestContext( transport ) );
 		}
 	}
 }
