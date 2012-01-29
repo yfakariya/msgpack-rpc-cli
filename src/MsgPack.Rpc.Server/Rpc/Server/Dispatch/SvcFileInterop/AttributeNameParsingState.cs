@@ -44,49 +44,68 @@ namespace MsgPack.Rpc.Server.Dispatch.SvcFileInterop
 		/// </returns>
 		protected sealed override SvcDirectiveParserState ParseCore( char currentChar, TextReader nextReader )
 		{
-			if ( !XmlConvert.IsStartNCNameChar( currentChar ) )
+			if ( !XmlConvert.IsStartNCNameChar( currentChar ) && currentChar != '%' )
 			{
 				return this.OnUnexpectedCharFound( currentChar );
 			}
 
 			this.Buffer.Append( currentChar );
 
+			bool isNameEnd = false;
+			bool isTransittingToFinish = currentChar == '%';
+
 			for ( int read = nextReader.Read(); read >= 0; read = nextReader.Read() )
 			{
-				if ( ( char )read == '=' )
+				if ( isTransittingToFinish )
 				{
-					int mayBeQuatation = nextReader.Read();
-					if ( mayBeQuatation == '\'' || mayBeQuatation == '"' )
-					{
-						return new AttributeValueParsingState( this, XmlConvert.DecodeName( this.Buffer.ToString() ), ( char )mayBeQuatation, this.Buffer );
-					}
-					else if ( mayBeQuatation == -1 )
-					{
-						return this.OnUnepxctedEof();
-					}
-					else
-					{
-						return this.OnUnexpectedCharFound( ( char )mayBeQuatation );
-					}
-				}
-				else if ( ( char )read == '%' )
-				{
-					var nextChar = nextReader.Read();
-					if ( nextChar == -1 )
-					{
-						return this.OnUnepxctedEof();
-					}
-					else if ( ( char )nextChar == '>' )
+					if ( ( char )read == '>' )
 					{
 						return new FinishedState( this );
 					}
-					else
+					else if ( Char.IsWhiteSpace( ( char )read ) )
 					{
-						return this.OnUnexpectedCharFound( ( char )read );
+						continue;
 					}
+
+					return this.OnUnexpectedCharFound( ( char )read );
+				}
+
+				if ( ( char )read == '=' )
+				{
+					for ( int mayBeQuatation = nextReader.Read(); mayBeQuatation >= 0; mayBeQuatation = nextReader.Read() )
+					{
+						if ( mayBeQuatation == '\'' || mayBeQuatation == '"' )
+						{
+							return new AttributeValueParsingState( this, XmlConvert.DecodeName( this.Buffer.ToString() ), ( char )mayBeQuatation, this.Buffer );
+						}
+						else if ( Char.IsWhiteSpace((char) mayBeQuatation ))
+						{
+							continue;
+						}
+						else
+						{
+							return this.OnUnexpectedCharFound( ( char )mayBeQuatation );
+						}
+					}
+
+					return this.OnUnexpectedEof();
+				}
+				else if ( ( char )read == '%' )
+				{
+					isTransittingToFinish = true;
+				}
+				else if ( Char.IsWhiteSpace( ( char )read ) )
+				{
+					isNameEnd = true;
 				}
 				else if ( XmlConvert.IsXmlChar( ( char )read ) )
 				{
+					if ( isNameEnd )
+					{
+						// 'NAME NAME' pattern
+						this.OnUnexpectedCharFound( ( char )read );
+					}
+
 					this.Buffer.Append( ( char )read );
 				}
 				else
@@ -95,7 +114,7 @@ namespace MsgPack.Rpc.Server.Dispatch.SvcFileInterop
 				}
 			}
 
-			return this.OnUnepxctedEof();
+			return this.OnUnexpectedEof();
 		}
 	}
 }

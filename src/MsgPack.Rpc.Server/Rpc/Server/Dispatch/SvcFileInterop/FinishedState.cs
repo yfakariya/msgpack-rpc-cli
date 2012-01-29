@@ -20,6 +20,7 @@
 
 using System;
 using System.IO;
+using System.Globalization;
 
 namespace MsgPack.Rpc.Server.Dispatch.SvcFileInterop
 {
@@ -55,7 +56,7 @@ namespace MsgPack.Rpc.Server.Dispatch.SvcFileInterop
 		/// </returns>
 		protected sealed override SvcDirectiveParserState ParseCore( char currentChar, TextReader nextReader )
 		{
-			return this;
+			throw new FormatException( String.Format( CultureInfo.CurrentCulture, "Extra character '{0}'(U+{1:X4}) is found.", currentChar, ( int )currentChar ) );
 		}
 	}
 }

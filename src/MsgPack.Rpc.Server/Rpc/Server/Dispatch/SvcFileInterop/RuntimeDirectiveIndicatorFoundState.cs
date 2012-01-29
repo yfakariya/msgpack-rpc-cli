@@ -36,9 +36,14 @@ namespace MsgPack.Rpc.Server.Dispatch.SvcFileInterop
 
 		protected sealed override SvcDirectiveParserState ParseCore( char currentChar, TextReader nextReader )
 		{
-			var c = currentChar;
-			for ( int i = 0; i < _indicator.Length; i++ )
+			int c = currentChar;
+			for ( int i = 0; i < _indicator.Length; i++, c = nextReader.Read() )
 			{
+				if ( c < 0 )
+				{
+					this.OnUnexpectedEof();
+				}
+
 				if ( _indicator[ i ] != c )
 				{
 					throw new NotSupportedException(

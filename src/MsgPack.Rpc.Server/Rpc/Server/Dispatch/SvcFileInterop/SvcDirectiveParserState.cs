@@ -19,6 +19,7 @@
 #endregion -- License Terms --
 
 using System;
+using System.Diagnostics.Contracts;
 using System.Globalization;
 using System.IO;
 
@@ -45,7 +46,6 @@ namespace MsgPack.Rpc.Server.Dispatch.SvcFileInterop
 		/// </value>
 		public int LineNumber { get; private set; }
 
-
 		/// <summary>
 		///		Gets a value indicating whether parsing is finished.
 		/// </summary>
@@ -68,6 +68,17 @@ namespace MsgPack.Rpc.Server.Dispatch.SvcFileInterop
 		public ServiceHostDirective Directive { get { return this._directive; } }
 
 		/// <summary>
+		///		Gets a value indicating whether this instance can skip whitespace.
+		/// </summary>
+		/// <value>
+		/// 	<c>true</c> if this instance can skip whitespace; otherwise, <c>false</c>.
+		/// </value>
+		protected virtual bool CanSkipWhitespace
+		{
+			get { return true; }
+		}
+
+		/// <summary>
 		///		Initializes a new instance of the <see cref="SvcDirectiveParserState"/> class.
 		/// </summary>
 		/// <param name="previousState">The previous state.</param>
@@ -81,8 +92,8 @@ namespace MsgPack.Rpc.Server.Dispatch.SvcFileInterop
 			}
 			else
 			{
-				this.LineNumber =1;
-				this.Position =0;
+				this.LineNumber = 1;
+				this.Position = 0;
 				this._directive = new ServiceHostDirective();
 			}
 		}
@@ -94,14 +105,17 @@ namespace MsgPack.Rpc.Server.Dispatch.SvcFileInterop
 		/// <returns>Next state.</returns>
 		public SvcDirectiveParserState Parse( TextReader reader )
 		{
+			Contract.Requires( reader != null );
+
 			using ( var wrappedReader = new LineCountingTextReader( this, reader ) )
 			{
 				int c = wrappedReader.Read();
 				if ( c == -1 )
 				{
-					this.OnUnepxctedEof();
+					this.OnUnexpectedEof();
 				}
-				if ( Char.IsWhiteSpace( ( char )c ) )
+
+				if ( this.CanSkipWhitespace && Char.IsWhiteSpace( ( char )c ) )
 				{
 					return this;
 				}
@@ -142,9 +156,9 @@ namespace MsgPack.Rpc.Server.Dispatch.SvcFileInterop
 		/// <exception cref="InvalidOperationException">
 		///		Always thrown to indicate unexpected EOF.
 		/// </exception>
-		protected SvcDirectiveParserState OnUnepxctedEof()
+		protected SvcDirectiveParserState OnUnexpectedEof()
 		{
-			throw new InvalidOperationException(
+			throw new FormatException(
 				String.Format(
 					CultureInfo.CurrentCulture,
 					"Unexpectedly ends at line:{0}, position:{1}",
@@ -163,8 +177,8 @@ namespace MsgPack.Rpc.Server.Dispatch.SvcFileInterop
 		/// </exception>
 		protected SvcDirectiveParserState OnUnexpectedCharFound( char currentChar )
 		{
-			// TODO: Escape
-			throw new InvalidOperationException(
+			// FIXME: Escape
+			throw new FormatException(
 				String.Format(
 					CultureInfo.CurrentCulture,
 					"Unexpected char '{0}'(0x{1}) in line:{2}, position:{3}.",

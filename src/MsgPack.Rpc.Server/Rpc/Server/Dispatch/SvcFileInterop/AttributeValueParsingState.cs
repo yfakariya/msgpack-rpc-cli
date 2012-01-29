@@ -32,7 +32,20 @@ namespace MsgPack.Rpc.Server.Dispatch.SvcFileInterop
 	/// </summary>
 	internal sealed class AttributeValueParsingState : ServiceHostDirectiveParsingState
 	{
+		// may single or double, the value started with this char.
 		private readonly char _quotation;
+
+		// debugging purposes
+		internal char Quotation
+		{
+			get { return this._quotation; }
+		}
+
+		protected sealed override bool CanSkipWhitespace
+		{
+			get { return false; }
+		}
+
 		private readonly string _attributeName;
 
 		public AttributeValueParsingState( AttributeNameParsingState previous, string attributeName, char quotation, StringBuilder buffer )
@@ -53,19 +66,24 @@ namespace MsgPack.Rpc.Server.Dispatch.SvcFileInterop
 		/// </returns>
 		protected sealed override SvcDirectiveParserState ParseCore( char currentChar, TextReader nextReader )
 		{
-			var c = currentChar;
-			while ( c != this._quotation )
+			for ( int read = currentChar; read != this._quotation; read = nextReader.Read() )
 			{
-				this.Buffer.Append( c );
-				int read = nextReader.Read();
-				if ( read == -1 )
+				switch ( read )
 				{
-					return this.OnUnepxctedEof();
+					case -1:
+					{
+						return this.OnUnexpectedEof();
+					}
+					case ( int )'\'':
+					case ( int )'"':
+					case ( int )'<':
+					case ( int )'>':
+					{
+						return this.OnUnexpectedCharFound( ( char )read );
+					}
 				}
-				else
-				{
-					this.Buffer.Append( ( char )read );
-				}
+
+				this.Buffer.Append( ( char )read );
 			}
 
 			if ( this._attributeName == "Service" )
@@ -131,7 +149,7 @@ namespace MsgPack.Rpc.Server.Dispatch.SvcFileInterop
 		/// </summary>
 		/// <param name="chars">The iterator.</param>
 		/// <returns>The iterator.</returns>
-		private static IEnumerable<char> Dereference( IEnumerable<char> chars )
+		private IEnumerable<char> Dereference( IEnumerable<char> chars )
 		{
 			var entityBuffer = new StringBuilder( 10 );
 			foreach ( char c in chars )
@@ -157,6 +175,11 @@ namespace MsgPack.Rpc.Server.Dispatch.SvcFileInterop
 				{
 					yield return c;
 				}
+			}
+
+			if ( entityBuffer.Length > 0 )
+			{
+				throw new FormatException( String.Format( CultureInfo.CurrentCulture, "Entity or character reference is not end in line {0}, position {1}.", this.LineNumber, this.Position ) );
 			}
 		}
 
