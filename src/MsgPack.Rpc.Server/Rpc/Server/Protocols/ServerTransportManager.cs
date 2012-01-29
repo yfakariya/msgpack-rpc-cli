@@ -250,17 +250,12 @@ namespace MsgPack.Rpc.Server.Protocols
 		///	</param>
 		protected void Dispose( bool disposing )
 		{
-			this.OnDisposing( disposing );
-
 			if ( Interlocked.CompareExchange( ref this._isDisposed, 1, 0 ) == 0 )
 			{
 				this.DisposeCore( disposing );
 			}
-
-			this.OnDisposed( disposing );
 		}
 
-		protected virtual void OnDisposing( bool disposing ) { }
 		/// <summary>
 		///		When overridden in derived class, releases unmanaged and - optionally - managed resources
 		/// </summary>
@@ -271,7 +266,6 @@ namespace MsgPack.Rpc.Server.Protocols
 		///		This method is guaranteed that this is invoked exactly once and after <see cref="IsDisposed"/> changed <c>true</c>.
 		/// </remarks>
 		protected virtual void DisposeCore( bool disposing ) { }
-		protected virtual void OnDisposed( bool disposing ) { }
 
 		/// <summary>
 		///		Begins the shutdown process.
@@ -281,13 +275,10 @@ namespace MsgPack.Rpc.Server.Protocols
 		/// </remarks>
 		public void BeginShutdown()
 		{
+			Interlocked.Exchange( ref this._isInShutdown, 1 );
 			this.BeginShutdownCore();
 		}
 
-		protected virtual void BeginShutdownCore()
-		{
-			Interlocked.Exchange( ref this._isInShutdown, 1 );
-		}
 		/// <summary>
 		///		When overridden in derived class, begins the shutdown process.
 		/// </summary>
