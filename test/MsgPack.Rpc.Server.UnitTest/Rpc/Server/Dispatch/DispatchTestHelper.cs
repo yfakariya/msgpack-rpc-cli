@@ -61,7 +61,8 @@ namespace MsgPack.Rpc.Server.Dispatch
 			using ( var buffer = new MemoryStream() )
 			using ( var packer = Packer.Create( buffer ) )
 			{
-				packer.PackItems( arguments );
+				packer.Pack( arguments.ToArray() );
+				buffer.Position = 0;
 				return CreateRequestContext( buffer );
 			}
 		}
@@ -70,7 +71,8 @@ namespace MsgPack.Rpc.Server.Dispatch
 		{
 			var result = new ServerRequestContext();
 			arguments.CopyTo( result.ArgumentsBuffer );
-			result.ArgumentsUnpacker = Unpacker.Create( arguments, false );
+			result.ArgumentsBuffer.Position = 0;
+			result.ArgumentsUnpacker = Unpacker.Create( result.ArgumentsBuffer, false );
 			return result;
 		}
 

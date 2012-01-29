@@ -223,7 +223,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 
 			Assert.That( Regex.Matches( result, Regex.Escape( name ) ), Is.Not.Null.And.Count.EqualTo( 1 ) );
 			Assert.That( Regex.Matches( result, Regex.Escape( application ) ), Is.Not.Null.And.Count.EqualTo( 1 ) );
-			Assert.That( Regex.Matches( result, Regex.Escape( version.ToString() ) ), Is.Not.Null.And.Count.EqualTo( 1 ) );
+			Assert.That( Regex.Matches( result, Regex.Escape( ":" + version ) ), Is.Not.Null.And.Count.EqualTo( 1 ) );
 		}
 
 		[Test()]
