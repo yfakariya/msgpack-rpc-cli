@@ -20,6 +20,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
 using MsgPack.Rpc.Protocols;
@@ -147,6 +148,8 @@ namespace MsgPack.Rpc.Server.Protocols
 
 		internal void SetTransport( ServerTransport transport )
 		{
+			Contract.Requires( transport != null );
+
 			this._initialProcess = transport.UnpackRequestHeader;
 			this.NextProcess = transport.UnpackRequestHeader;
 			base.SetTransport( transport );
@@ -157,7 +160,9 @@ namespace MsgPack.Rpc.Server.Protocols
 			throw new InvalidOperationException( "Invalid state transition." );
 		}
 
-
+		/// <summary>
+		///		Shifts receiving buffer offset to receive subsequent bytes.
+		/// </summary>
 		public void ShiftCurrentReceivingBuffer()
 		{
 			int shift = this.BytesTransferred;

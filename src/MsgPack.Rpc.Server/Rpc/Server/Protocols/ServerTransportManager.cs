@@ -19,6 +19,7 @@
 #endregion -- License Terms --
 
 using System;
+using System.Diagnostics.Contracts;
 using System.Globalization;
 using System.Net.Sockets;
 using System.Threading;
@@ -26,38 +27,96 @@ using MsgPack.Rpc.Protocols;
 
 namespace MsgPack.Rpc.Server.Protocols
 {
+	/// <summary>
+	///		Defines non-generic interfaces for manager object which manages <see cref="ServerTransport"/> instances lifetime.
+	/// </summary>
+	/// <threadsafety instance="true" static="true" />
+	[ContractClass( typeof( ServerTransportManagerContract ) )]
 	public abstract class ServerTransportManager : IDisposable
 	{
 		private readonly RpcServer _server;
 
+		/// <summary>
+		///		Gets the <see cref="RpcServer"/> which activated this instance.
+		/// </summary>
+		/// <value>
+		///		The <see cref="RpcServer"/> which activated this instance.
+		///		This value will not be <c>null</c>.
+		/// </value>
 		protected internal RpcServer Server
 		{
-			get { return this._server; }
+			get
+			{
+				Contract.Ensures( Contract.Result<RpcServer>() != null );
+
+				return this._server;
+			}
 		}
 
 		private readonly ObjectPool<ServerRequestContext> _requestContextPool;
 
+		/// <summary>
+		///		Gets the <see cref="ObjectPool{T}"/> to pool <see cref="ServerRequestContext"/>s.
+		/// </summary>
+		/// <value>
+		///		The <see cref="ObjectPool{T}"/> to pool <see cref="ServerRequestContext"/>s.
+		///		This value will not be <c>null</c>.
+		/// </value>
 		public ObjectPool<ServerRequestContext> RequestContextPool
 		{
-			get { return this._requestContextPool; }
+			get
+			{
+				Contract.Ensures( Contract.Result<ObjectPool<ServerRequestContext>>() != null );
+
+				return this._requestContextPool;
+			}
 		}
 
 		private readonly ObjectPool<ServerResponseContext> _responseContextPool;
 
+		/// <summary>
+		///		Gets the <see cref="ObjectPool{T}"/> to pool <see cref="ServerResponseContext"/>s.
+		/// </summary>
+		/// <value>
+		///		The <see cref="ObjectPool{T}"/> to pool <see cref="ServerResponseContext"/>s.
+		///		This value will not be <c>null</c>.
+		/// </value>
 		public ObjectPool<ServerResponseContext> ResponseContextPool
 		{
-			get { return this._responseContextPool; }
-		}
+			get
+			{
+				Contract.Ensures( Contract.Result<ObjectPool<ServerResponseContext>>() != null );
 
 		private readonly RpcServerConfiguration _configuration;
+				return this._responseContextPool;
+			}
+		}
 
+		/// <summary>
+		///		Gets the <see cref="RpcServerConfiguration"/> associated to this instance.
+		/// </summary>
+		/// <value>
+		///		The <see cref="RpcServerConfiguration"/> associated to this instance.
+		///		This value will not be <c>null</c>.
+		/// </value>
 		protected RpcServerConfiguration Configuration
 		{
-			get { return this._configuration; }
+			get
+			{
+				Contract.Ensures( Contract.Result<RpcServerConfiguration>() != null );
+
+				return this._server.Configuration;
+			}
 		}
 
 		private int _isDisposed;
 
+		/// <summary>
+		///		Gets a value indicating whether this instance is disposed.
+		/// </summary>
+		/// <value>
+		/// 	<c>true</c> if this instance is disposed; otherwise, <c>false</c>.
+		/// </value>
 		protected bool IsDisposed
 		{
 			get { return Interlocked.CompareExchange( ref this._isDisposed, 0, 0 ) != 0; }
@@ -65,6 +124,12 @@ namespace MsgPack.Rpc.Server.Protocols
 
 		private int _isInShutdown;
 
+		/// <summary>
+		///		Gets a value indicating whether this instance is in shutdown.
+		/// </summary>
+		/// <value>
+		/// 	<c>true</c> if this instance is in shutdown; otherwise, <c>false</c>.
+		/// </value>
 		public bool IsInShutdown
 		{
 			get { return Interlocked.CompareExchange( ref this._isInShutdown, 0, 0 ) != 0; }
@@ -72,6 +137,9 @@ namespace MsgPack.Rpc.Server.Protocols
 
 		private EventHandler<EventArgs> _shutdownCompleted;
 
+		/// <summary>
+		///		Occurs when the shutdown process is completed.
+		/// </summary>
 		public event EventHandler<EventArgs> ShutdownCompleted
 		{
 			add
@@ -98,6 +166,9 @@ namespace MsgPack.Rpc.Server.Protocols
 			}
 		}
 
+		/// <summary>
+		///		Raises <see cref="ShutdownCompleted"/> event.
+		/// </summary>
 		protected virtual void OnShutdownCompleted()
 		{
 			var handler = Interlocked.CompareExchange( ref this._shutdownCompleted, null, null );
@@ -107,13 +178,27 @@ namespace MsgPack.Rpc.Server.Protocols
 			}
 		}
 
+		/// <summary>
+		///		Raises <see cref="E:RpcServer.ClientError"/> event on the hosting <see cref="RpcServer"/>.
+		/// </summary>
+		/// <param name="context">The <see cref="ServerRequestContext"/> which holds client information.</param>
+		/// <param name="rpcError">The <see cref="RpcErrorMessage"/> representing the error.</param>
 		internal void RaiseClientError( ServerRequestContext context, RpcErrorMessage rpcError )
 		{
+			Contract.Requires( context != null );
+			Contract.Requires( !rpcError.IsSuccess );
+
 			this.Server.RaiseClientError( context, rpcError );
 		}
 
+		/// <summary>
+		///		Raises <see cref="E:RpcServer.ServerError"/> event on the hosting <see cref="RpcServer"/>.
+		/// </summary>
+		/// <param name="exception">The <see cref="Exception"/> representing error.</param>
 		internal void RaiseServerError( Exception exception )
 		{
+			Contract.Requires( exception != null );
+
 			this.Server.RaiseServerError( exception );
 		}
 
@@ -132,17 +217,29 @@ namespace MsgPack.Rpc.Server.Protocols
 			}
 
 			this._configuration = server.Configuration;
+			Contract.EndContractBlock();
+
 			this._requestContextPool = server.Configuration.RequestContextPoolProvider( () => new ServerRequestContext(), server.Configuration.CreateRequestContextPoolConfiguration() );
 			this._responseContextPool = server.Configuration.ResponseContextPoolProvider( () => new ServerResponseContext(), server.Configuration.CreateResponseContextPoolConfiguration() );
+
 			this._server = server;
 		}
 
+		/// <summary>
+		///		Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
+		/// </summary>
 		public void Dispose()
 		{
 			this.Dispose( true );
 			GC.SuppressFinalize( this );
 		}
 
+		/// <summary>
+		///		Releases unmanaged and - optionally - managed resources
+		/// </summary>
+		/// <param name="disposing">
+		///		<c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.
+		///	</param>
 		protected void Dispose( bool disposing )
 		{
 			this.OnDisposing( disposing );
@@ -156,9 +253,24 @@ namespace MsgPack.Rpc.Server.Protocols
 		}
 
 		protected virtual void OnDisposing( bool disposing ) { }
+		/// <summary>
+		///		When overridden in derived class, releases unmanaged and - optionally - managed resources
+		/// </summary>
+		/// <param name="disposing">
+		///		<c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.
+		///	</param>
+		/// <remarks>
+		///		This method is guaranteed that this is invoked exactly once and after <see cref="IsDisposed"/> changed <c>true</c>.
+		/// </remarks>
 		protected virtual void DisposeCore( bool disposing ) { }
 		protected virtual void OnDisposed( bool disposing ) { }
 
+		/// <summary>
+		///		Begins the shutdown process.
+		/// </summary>
+		/// <remarks>
+		///		To observe shutdown completion, subscribe <see cref="ShutdownCompleted"/> event.
+		/// </remarks>
 		public void BeginShutdown()
 		{
 			this.BeginShutdownCore();
@@ -168,7 +280,29 @@ namespace MsgPack.Rpc.Server.Protocols
 		{
 			Interlocked.Exchange( ref this._isInShutdown, 1 );
 		}
+		/// <summary>
+		///		When overridden in derived class, begins the shutdown process.
+		/// </summary>
+		/// <remarks>
+		///		This method might be called more than once.
+		/// </remarks>
+		protected virtual void BeginShutdownCore() { }
 
+		/// <summary>
+		///		Handles the socket error as server error.
+		/// </summary>
+		/// <param name="socket">The <see cref="Socket"/> caused error.</param>
+		/// <param name="context">The <see cref="SocketAsyncEventArgs"/> instance containing the asynchronous operation data.</param>
+		/// <returns>
+		///		<c>true</c>, if the error can be ignore, it is in shutdown which is initiated by another thread, for example; otherwise, <c>false</c>.
+		/// </returns>
+		/// <exception cref="ArgumentNullException">
+		///		<paramref name="socket"/> is <c>null</c>.
+		///		Or <paramref name="context"/> is <c>null</c>.
+		/// </exception>
+		/// <remarks>
+		///		When this method returns <c>false</c>, <see cref="RpcServer.ServerError"/> event will be also ocurred.
+		/// </remarks>
 		protected internal bool HandleSocketError( Socket socket, SocketAsyncEventArgs context )
 		{
 			if ( socket == null )
@@ -180,6 +314,8 @@ namespace MsgPack.Rpc.Server.Protocols
 			{
 				throw new ArgumentNullException( "e" );
 			}
+
+			Contract.EndContractBlock();
 
 			bool? isError = context.SocketError.IsError();
 			if ( isError == null )
@@ -221,6 +357,24 @@ namespace MsgPack.Rpc.Server.Protocols
 			return true;
 		}
 
+		/// <summary>
+		///		Invoked from the <see cref="ServerTransport"/> which was created by this manager,
+		///		returns the transport to this manager.
+		/// </summary>
+		/// <param name="transport">The <see cref="ServerTransport"/> which was created by this manager.</param>
 		internal abstract void ReturnTransport( ServerTransport transport );
 	}
+
+	[ContractClassFor( typeof( ServerTransportManager ) )]
+	internal abstract class ServerTransportManagerContract : ServerTransportManager
+	{
+		protected ServerTransportManagerContract() : base( null ) { }
+
+		internal override void ReturnTransport( ServerTransport transport )
+		{
+			Contract.Requires( transport != null );
+			Contract.Requires( Object.ReferenceEquals( transport.Manager, this ) );
+		}
+	}
+
 }
