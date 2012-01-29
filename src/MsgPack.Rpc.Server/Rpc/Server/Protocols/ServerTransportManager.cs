@@ -87,7 +87,6 @@ namespace MsgPack.Rpc.Server.Protocols
 			{
 				Contract.Ensures( Contract.Result<ObjectPool<ServerResponseContext>>() != null );
 
-		private readonly RpcServerConfiguration _configuration;
 				return this._responseContextPool;
 			}
 		}
@@ -216,7 +215,6 @@ namespace MsgPack.Rpc.Server.Protocols
 				throw new ArgumentNullException( "server" );
 			}
 
-			this._configuration = server.Configuration;
 			Contract.EndContractBlock();
 
 			this._requestContextPool = server.Configuration.RequestContextPoolProvider( () => new ServerRequestContext(), server.Configuration.CreateRequestContextPoolConfiguration() );
