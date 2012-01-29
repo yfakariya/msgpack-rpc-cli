@@ -174,7 +174,10 @@ namespace MsgPack.Rpc.Server.Protocols
 			this._errorDataBuffer.SetLength( 0 );
 			this._returnDataBuffer.SetLength( 0 );
 			this.BufferList = null;
-			this._returnDataPacker.Dispose();
+			this.SendingBuffer[ 1 ] = default( ArraySegment<byte> );
+			this.SendingBuffer[ 2 ] = default( ArraySegment<byte> );
+			this.SendingBuffer[ 3 ] = default( ArraySegment<byte> );
+ 			this._returnDataPacker.Dispose();
 			this._returnDataPacker = Packer.Create( this._returnDataBuffer, false );
 			this._errorDataPacker.Dispose();
 			this._errorDataPacker = Packer.Create( this._errorDataBuffer, false );
