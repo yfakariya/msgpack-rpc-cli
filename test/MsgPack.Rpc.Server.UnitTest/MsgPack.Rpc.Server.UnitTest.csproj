@@ -65,6 +65,16 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Rpc\Server\Dispatch\LocatorBasedDispatcherTest.cs" />
+    <Compile Include="Rpc\Server\Dispatch\SvcFileInterop\AttributeNameParsingStateTest.cs" />
+    <Compile Include="Rpc\Server\Dispatch\SvcFileInterop\AttributeValueParsingStateTest.cs" />
+    <Compile Include="Rpc\Server\Dispatch\SvcFileInterop\FinishedStateTest.cs" />
+    <Compile Include="Rpc\Server\Dispatch\SvcFileInterop\InitialStateTest.cs" />
+    <Compile Include="Rpc\Server\Dispatch\SvcFileInterop\RuntimeDirectiveIndicatorFoundStateTest.cs" />
+    <Compile Include="Rpc\Server\Dispatch\SvcFileInterop\ServerDirectiveIndicatorFoundStateTest.cs" />
+    <Compile Include="Rpc\Server\Dispatch\SvcFileInterop\ServiceHostDirectiveTest.cs" />
+    <Compile Include="Rpc\Server\Dispatch\SvcFileInterop\StartTagFoundStateTest.cs" />
+    <Compile Include="Rpc\Server\Dispatch\SvcFileInterop\SvcDirectiveParserStateTest.cs" />
+    <Compile Include="Rpc\Server\Dispatch\SvcFileInterop\SvcFileParserTest.cs" />
     <Compile Include="Rpc\Server\Protocols\NullServerTransport.cs" />
     <Compile Include="Rpc\Server\Protocols\NullServerTransportManager.cs" />
     <Compile Include="Rpc\Server\Dispatch\OperationDescriptionTest.cs">
