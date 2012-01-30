@@ -173,6 +173,11 @@ namespace MsgPack.Rpc.Server.Protocols
 			if ( Interlocked.CompareExchange( ref this._isInShutdown, 1, 0 ) == 0 )
 			{
 				this._boundSocket.Shutdown( SocketShutdown.Receive );
+
+				if ( Interlocked.CompareExchange( ref this._processing, 0, 0 ) == 0 )
+				{
+					this.OnShutdownCompleted();
+				}
 			}
 		}
 
