@@ -62,12 +62,14 @@
     <Compile Include="Rpc\Client\Protocols\InProcClientTransport.cs" />
     <Compile Include="Rpc\Client\Protocols\InProcClientTransportManager.cs" />
     <Compile Include="Rpc\GenericExceptionTester.cs" />
+    <Compile Include="Rpc\ObjectReturnedToPoolEventArgs`1.cs" />
     <Compile Include="Rpc\Server\CallbackServer.cs" />
     <Compile Include="Rpc\Server\CallbackServerErrorEventArgs.cs" />
     <Compile Include="Rpc\Server\Dispatch\CallbackDispatcher.cs" />
     <Compile Include="Rpc\InProcResponseEventArgs.cs" />
     <Compile Include="Rpc\Server\Protocols\InProcServerTransport.cs" />
     <Compile Include="Rpc\Server\Protocols\InProcServerTransportManager.cs" />
+    <Compile Include="Rpc\SingletonObjectPool`1.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\MsgPack.Rpc.Client\MsgPack.Rpc.Client.csproj">
