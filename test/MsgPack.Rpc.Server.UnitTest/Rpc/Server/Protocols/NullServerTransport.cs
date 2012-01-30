@@ -31,7 +31,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		/// Initializes a new instance of the <see cref="NullServerTransport"/> class.
 		/// </summary>
 		/// <param name="manager">The manager.</param>
-		public NullServerTransport( NullServerTransportManager manager ) : base( manager ) { }
+		public NullServerTransport( ServerTransportManager<NullServerTransport> manager ) : base( manager ) { }
 
 		/// <summary>
 		/// Performs protocol specific asynchronous 'Receive' operation.
