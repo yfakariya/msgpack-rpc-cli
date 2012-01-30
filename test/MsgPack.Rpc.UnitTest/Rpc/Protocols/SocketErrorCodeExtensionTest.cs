@@ -19,12 +19,14 @@
 #endregion -- License Terms --
 
 using System;
-using NUnit.Framework;
-using System.Net.Sockets;
 using System.Collections.Generic;
+using System.Net.Sockets;
+using NUnit.Framework;
 
 namespace MsgPack.Rpc.Protocols
 {
+	// These tests ensures backward compatibility and prevents regression.
+
 	[TestFixture]
 	public class SocketErrorCodeExtensionTest
 	{
