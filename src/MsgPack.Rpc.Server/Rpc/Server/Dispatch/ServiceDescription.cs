@@ -234,6 +234,8 @@ namespace MsgPack.Rpc.Server.Dispatch
 				);
 			}
 
+			var serviceName = String.IsNullOrWhiteSpace( serviceContract.Name ) ? ServiceIdentifier.TruncateGenericsSuffix( serviceType.Name ) : serviceContract.Name;
+
 			var ctor = serviceType.GetConstructor( Type.EmptyTypes );
 			if ( ctor == null )
 			{
@@ -248,10 +250,10 @@ namespace MsgPack.Rpc.Server.Dispatch
 			}
 
 			return
-				new ServiceDescription( serviceContract.Name, Expression.Lambda<Func<object>>( Expression.New( ctor ) ).Compile() )
+				new ServiceDescription( serviceName, Expression.Lambda<Func<object>>( Expression.New( ctor ) ).Compile() )
 				{
 					Application = String.IsNullOrWhiteSpace( serviceContract.Application ) ? serviceContract.Name : serviceContract.Application,
-					Version = String.IsNullOrWhiteSpace( serviceContract.Version ) ? 0 : Int32.Parse( serviceContract.Version ),
+					Version = serviceContract.Version,
 					_serviceType = serviceType
 				};
 		}
@@ -299,14 +301,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 		/// </returns>
 		public sealed override string ToString()
 		{
-			if ( this._application == null )
-			{
-				return this._name + ":" + this._version;
-			}
-			else
-			{
-				return this._application + "::" + this._name + ":" + this._version;
-			}
+			return ServiceIdentifier.CreateServiceId( this._application, this._name, this._version );
 		}
 
 		/// <summary>

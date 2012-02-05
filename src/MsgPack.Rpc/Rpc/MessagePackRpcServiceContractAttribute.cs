@@ -99,6 +99,14 @@ namespace MsgPack.Rpc
 				throw new ArgumentNullException( "name" );
 			}
 
+		internal string ToServiceId( Type serviceType )
+		{
+			return
+				ServiceIdentifier.CreateServiceId(
+					this._application,
+					String.IsNullOrWhiteSpace( this._name ) ? ServiceIdentifier.TruncateGenericsSuffix( serviceType.Name ) : this._name,
+					this.Version
+				);
 			if ( name.Length == 0 )
 			{
 				throw new ArgumentException( "The argument cannot be empty.", "name" );
