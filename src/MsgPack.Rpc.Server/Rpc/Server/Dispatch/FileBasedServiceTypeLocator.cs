@@ -31,6 +31,8 @@ namespace MsgPack.Rpc.Server.Dispatch
 	/// </summary>
 	public class FileBasedServiceTypeLocator : ServiceTypeLocator
 	{
+		private string _baseDirectory;
+
 		/// <summary>
 		///		Gets or sets the base directory.
 		/// </summary>
@@ -38,7 +40,36 @@ namespace MsgPack.Rpc.Server.Dispatch
 		///		The base directory to locate *.svc files.
 		///		If the value is <c>null</c> or empty, the <see cref="P:AppDomain.BaseDirectory"/> will be used.
 		/// </value>
-		public string BaseDirectory { get; set; }
+		public string BaseDirectory
+		{
+			get { return this._baseDirectory; }
+			set
+			{
+				if ( String.IsNullOrWhiteSpace( value ) )
+				{
+					this._baseDirectory = null;
+				}
+				else
+				{
+					try
+					{
+						this._baseDirectory = Path.GetFullPath( value );
+					}
+					catch ( ArgumentException ex )
+					{
+						throw new ArgumentException( "Invalid directory path.", "value", ex );
+					}
+					catch ( NotSupportedException ex )
+					{
+						throw new ArgumentException( "Invalid directory path.", "value", ex );
+					}
+					catch ( PathTooLongException ex )
+					{
+						throw new ArgumentException( "Invalid directory path.", "value", ex );
+					}
+				}
+			}
+		}
 
 		/// <summary>
 		/// Find services types with implementation specific way and returns them as <see cref="ServiceDescription"/>.
