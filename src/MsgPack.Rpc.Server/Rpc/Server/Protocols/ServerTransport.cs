@@ -29,7 +29,7 @@ using MsgPack.Rpc.Server.Dispatch;
 
 namespace MsgPack.Rpc.Server.Protocols
 {
-	// FIXME: timeout -> close transport
+	// FIXME: timeout -> close transport (in send/receive/execute)
 	/// <summary>
 	///		Encapselates underlying transport layer protocols and handle low level errors.
 	/// </summary>
@@ -131,10 +131,21 @@ namespace MsgPack.Rpc.Server.Protocols
 			{
 				if ( this.IsInShutdown || this.IsClientShutdowned )
 				{
-					this._boundSocket.Shutdown( SocketShutdown.Send );
+					this.ShutdownSending();
 					this.OnShutdownCompleted();
 				}
 			}
+		}
+
+		protected virtual void ShutdownSending()
+		{
+			MsgPackRpcServerProtocolsTrace.TraceEvent(
+				MsgPackRpcServerProtocolsTrace.ShutdownSending,
+				"Shutdown sending. {{ \"Socket\" : 0x{0:X}, \"RemoteEndPoint\" : \"{1}\", \"LocalEndPoint\" : \"{2}\" }}",
+				this._boundSocket == null ? IntPtr.Zero : this._boundSocket.Handle,
+				this._boundSocket == null ? null : this._boundSocket.RemoteEndPoint,
+				this._boundSocket == null ? null : this._boundSocket.LocalEndPoint
+			);
 		}
 
 		/// <summary>
@@ -206,13 +217,25 @@ namespace MsgPack.Rpc.Server.Protocols
 					this._boundSocket == null ? null : this._boundSocket.RemoteEndPoint,
 					this._boundSocket == null ? null : this._boundSocket.LocalEndPoint
 				);
-				this._boundSocket.Shutdown( SocketShutdown.Receive );
+
+				this.ShutdownReceiving();
 
 				if ( Interlocked.CompareExchange( ref this._processing, 0, 0 ) == 0 )
 				{
 					this.OnShutdownCompleted();
 				}
 			}
+		}
+
+		protected virtual void ShutdownReceiving()
+		{
+			MsgPackRpcServerProtocolsTrace.TraceEvent(
+				MsgPackRpcServerProtocolsTrace.ShutdownReceiving,
+				"Shutdown receiving. {{ \"Socket\" : 0x{0:X}, \"RemoteEndPoint\" : \"{1}\", \"LocalEndPoint\" : \"{2}\" }}",
+				this._boundSocket == null ? IntPtr.Zero : this._boundSocket.Handle,
+				this._boundSocket == null ? null : this._boundSocket.RemoteEndPoint,
+				this._boundSocket == null ? null : this._boundSocket.LocalEndPoint
+			);
 		}
 
 		private void VerifyIsNotDisposed()
@@ -236,7 +259,6 @@ namespace MsgPack.Rpc.Server.Protocols
 
 		private void HandleDeserializationError( ServerRequestContext context, RpcError error, string message, string debugInformation, Func<byte[]> invalidRequestHeaderProvider )
 		{
-			this.BeginShutdown();
 			int? messageId = context.MessageType == MessageType.Request ? context.MessageId : default( int? );
 			var rpcError = new RpcErrorMessage( error, message, debugInformation );
 
@@ -247,9 +269,10 @@ namespace MsgPack.Rpc.Server.Protocols
 				rpcError
 			);
 
+			this.BeginShutdown();
+			this.SendError( messageId, rpcError );
 			this.Manager.RaiseClientError( context, rpcError );
 			context.Clear();
-			this.SendError( messageId, rpcError );
 		}
 
 		private bool HandleSocketError( Socket socket, SocketAsyncEventArgs context )

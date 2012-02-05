@@ -19,6 +19,8 @@
 #endregion -- License Terms --
 
 using System;
+using System.Net.Sockets;
+using System.Diagnostics.Contracts;
 
 namespace MsgPack.Rpc.Server.Protocols
 {
@@ -30,8 +32,26 @@ namespace MsgPack.Rpc.Server.Protocols
 		public TcpServerTransport( TcpServerTransportManager manager )
 			: base( manager ) { }
 
+		protected override void ShutdownReceiving()
+		{
+			Contract.Assert( this.BoundSocket != null );
+
+			this.BoundSocket.Shutdown( SocketShutdown.Receive );
+			base.ShutdownReceiving();
+		}
+
+		protected override void ShutdownSending()
+		{
+			Contract.Assert( this.BoundSocket != null );
+
+			this.BoundSocket.Shutdown( SocketShutdown.Send );
+			base.ShutdownSending();
+		}
+
 		protected sealed override void ReceiveCore( ServerRequestContext context )
 		{
+			Contract.Assert( this.BoundSocket != null );
+
 			if ( !this.BoundSocket.ReceiveAsync( context ) )
 			{
 				context.SetCompletedSynchronously();
@@ -41,6 +61,8 @@ namespace MsgPack.Rpc.Server.Protocols
 
 		protected sealed override void SendCore( ServerResponseContext context )
 		{
+			Contract.Assert( this.BoundSocket != null );
+
 			if ( !this.BoundSocket.SendAsync( context ) )
 			{
 				context.SetCompletedSynchronously();
