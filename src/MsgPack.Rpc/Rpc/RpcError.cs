@@ -21,13 +21,12 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.Globalization;
 using System.Reflection;
 using MsgPack.Rpc.Protocols;
-using System.Globalization;
 
 namespace MsgPack.Rpc
 {
-	// FIXME: Refactor when server finished.
 	/// <summary>
 	///		Represents pre-defined MsgPack-RPC error metadata.
 	/// </summary>
