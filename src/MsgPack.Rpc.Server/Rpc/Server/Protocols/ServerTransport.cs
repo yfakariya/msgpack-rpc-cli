@@ -20,7 +20,6 @@
 
 using System;
 using System.Diagnostics.Contracts;
-using System.Globalization;
 using System.Linq;
 using System.Net.Sockets;
 using System.Threading;
@@ -35,8 +34,20 @@ namespace MsgPack.Rpc.Server.Protocols
 	/// </summary>
 	public abstract partial class ServerTransport : IDisposable, IContextBoundableTransport
 	{
+		#region -- Properties --
+
 		private Socket _boundSocket;
 
+		/// <summary>
+		///		Gets the bound <see cref="Socket"/> to the this transport.
+		/// </summary>
+		/// <value>
+		///		The bound <see cref="Socket"/> to the this transport.
+		///		This value might be <c>null</c>.
+		/// </value>
+		/// <remarks>
+		///		This value can be set via <see cref="ServerTransportManager.SetTransport"/> utility method.
+		/// </remarks>
 		public Socket BoundSocket
 		{
 			get { return this._boundSocket; }
@@ -50,15 +61,27 @@ namespace MsgPack.Rpc.Server.Protocols
 
 		private int _processing;
 
-		private int _isClientShutdowned;
+		private int _isClientShutdown;
 
-		public bool IsClientShutdowned
+		/// <summary>
+		///		Gets a value indicating whether the counterpart client is shutdown.
+		/// </summary>
+		/// <value>
+		/// 	<c>true</c> if the counterpart client is shutdown; otherwise, <c>false</c>.
+		/// </value>
+		public bool IsClientShutdown
 		{
-			get { return Interlocked.CompareExchange( ref this._isClientShutdowned, 0, 0 ) != 0; }
+			get { return Interlocked.CompareExchange( ref this._isClientShutdown, 0, 0 ) != 0; }
 		}
 
 		private int _isDisposed;
 
+		/// <summary>
+		///		Gets a value indicating whether this instance is disposed.
+		/// </summary>
+		/// <value>
+		/// 	<c>true</c> if this instance is disposed; otherwise, <c>false</c>.
+		/// </value>
 		public bool IsDisposed
 		{
 			get { return Interlocked.CompareExchange( ref this._isDisposed, 0, 0 ) != 0; }
@@ -66,22 +89,47 @@ namespace MsgPack.Rpc.Server.Protocols
 
 		private readonly ServerTransportManager _manager;
 
+		/// <summary>
+		///		Gets the <see cref="ServerTransportManager"/> which manages this instance.
+		/// </summary>
+		/// <value>
+		///		The <see cref="ServerTransportManager"/> which manages this instance.
+		///		This value will not be <c>null</c>.
+		/// </value>
 		protected internal ServerTransportManager Manager
 		{
-			get { return this._manager; }
+			get
+			{
+				Contract.Ensures( Contract.Result<ServerTransportManager>() != null );
+
+				return this._manager;
+			}
 		}
 
 		private readonly Dispatcher _dispatcher;
 
 		private int _isInShutdown;
 
+		/// <summary>
+		///		Gets a value indicating whether this instance is in shutdown.
+		/// </summary>
+		/// <value>
+		/// 	<c>true</c> if this instance is in shutdown; otherwise, <c>false</c>.
+		/// </value>
 		public bool IsInShutdown
 		{
 			get { return Interlocked.CompareExchange( ref this._isInShutdown, 0, 0 ) != 0; }
 		}
 
+		#endregion
+
+		#region -- Events --
+
 		private EventHandler<EventArgs> _shutdownCompleted;
 
+		/// <summary>
+		///		Occurs when shutdown completed.
+		/// </summary>
 		internal event EventHandler<EventArgs> ShutdownCompleted
 		{
 			add
@@ -108,6 +156,9 @@ namespace MsgPack.Rpc.Server.Protocols
 			}
 		}
 
+		/// <summary>
+		///		Raises internal shutdown completion event to achieve graceful shutdown.
+		/// </summary>
 		protected virtual void OnShutdownCompleted()
 		{
 			MsgPackRpcServerProtocolsTrace.TraceEvent(
@@ -125,28 +176,9 @@ namespace MsgPack.Rpc.Server.Protocols
 			}
 		}
 
-		private void OnProcessFinished()
-		{
-			if ( Interlocked.Decrement( ref this._processing ) == 0 )
-			{
-				if ( this.IsInShutdown || this.IsClientShutdowned )
-				{
-					this.ShutdownSending();
-					this.OnShutdownCompleted();
-				}
-			}
-		}
+		#endregion
 
-		protected virtual void ShutdownSending()
-		{
-			MsgPackRpcServerProtocolsTrace.TraceEvent(
-				MsgPackRpcServerProtocolsTrace.ShutdownSending,
-				"Shutdown sending. {{ \"Socket\" : 0x{0:X}, \"RemoteEndPoint\" : \"{1}\", \"LocalEndPoint\" : \"{2}\" }}",
-				this._boundSocket == null ? IntPtr.Zero : this._boundSocket.Handle,
-				this._boundSocket == null ? null : this._boundSocket.RemoteEndPoint,
-				this._boundSocket == null ? null : this._boundSocket.LocalEndPoint
-			);
-		}
+		#region -- Initialization / Disposal --
 
 		/// <summary>
 		///		Initializes a new instance of the <see cref="ServerTransport"/> class.
@@ -161,6 +193,8 @@ namespace MsgPack.Rpc.Server.Protocols
 			{
 				throw new ArgumentNullException( "manager" );
 			}
+
+			Contract.EndContractBlock();
 
 			this._manager = manager;
 			this._dispatcher = manager.Server.Configuration.DispatcherProvider( manager.Server );
@@ -206,7 +240,22 @@ namespace MsgPack.Rpc.Server.Protocols
 			}
 		}
 
-		public void BeginShutdown()
+		private void VerifyIsNotDisposed()
+		{
+			if ( this.IsDisposed )
+			{
+				throw new ObjectDisposedException( this.ToString() );
+			}
+		}
+
+		#endregion
+
+		#region -- Shutdown --
+
+		/// <summary>
+		///		Called from the manager, begins graceful shutdown on this transport.
+		/// </summary>
+		internal void BeginShutdown()
 		{
 			if ( Interlocked.CompareExchange( ref this._isInShutdown, 1, 0 ) == 0 )
 			{
@@ -227,6 +276,44 @@ namespace MsgPack.Rpc.Server.Protocols
 			}
 		}
 
+		/// <summary>
+		///		Bookkeeps current session is finished.
+		/// </summary>
+		private void OnSessionFinished()
+		{
+			if ( Interlocked.Decrement( ref this._processing ) == 0 )
+			{
+				if ( this.IsInShutdown || this.IsClientShutdown )
+				{
+					this.ShutdownSending();
+					this.OnShutdownCompleted();
+				}
+			}
+		}
+
+		/// <summary>
+		///		Shutdown sending on this transport.
+		/// </summary>
+		/// <remarks>
+		///		Usually, the derived class shutdown its <see cref="Socket"/> with <see cref="SocketShutdown.Send"/>.
+		/// </remarks>
+		protected virtual void ShutdownSending()
+		{
+			MsgPackRpcServerProtocolsTrace.TraceEvent(
+				MsgPackRpcServerProtocolsTrace.ShutdownSending,
+				"Shutdown sending. {{ \"Socket\" : 0x{0:X}, \"RemoteEndPoint\" : \"{1}\", \"LocalEndPoint\" : \"{2}\" }}",
+				this._boundSocket == null ? IntPtr.Zero : this._boundSocket.Handle,
+				this._boundSocket == null ? null : this._boundSocket.RemoteEndPoint,
+				this._boundSocket == null ? null : this._boundSocket.LocalEndPoint
+			);
+		}
+
+		/// <summary>
+		///		Shutdown receiving on this transport.
+		/// </summary>
+		/// <remarks>
+		///		Usually, the derived class shutdown its <see cref="Socket"/> with <see cref="SocketShutdown.Receive"/>.
+		/// </remarks>
 		protected virtual void ShutdownReceiving()
 		{
 			MsgPackRpcServerProtocolsTrace.TraceEvent(
@@ -238,16 +325,21 @@ namespace MsgPack.Rpc.Server.Protocols
 			);
 		}
 
-		private void VerifyIsNotDisposed()
-		{
-			if ( this.IsDisposed )
-			{
-				throw new ObjectDisposedException( this.ToString() );
-			}
-		}
+		#endregion
 
+		#region -- Error Handling --
+
+		/// <summary>
+		///		Handle general deserialization error.
+		/// </summary>
+		/// <param name="context">The <see cref="ServerRequestContext"/> which holds context information.</param>
+		/// <param name="message">The debugging message.</param>
+		/// <param name="invalidRequestHeaderProvider">A delegate which returns raw binary to be dumped.</param>
 		private void HandleDeserializationError( ServerRequestContext context, string message, Func<byte[]> invalidRequestHeaderProvider )
 		{
+			Contract.Assert( context != null );
+			Contract.Assert( invalidRequestHeaderProvider != null );
+
 			if ( invalidRequestHeaderProvider != null && MsgPackRpcServerProtocolsTrace.ShouldTrace( MsgPackRpcServerProtocolsTrace.DumpInvalidRequestHeader ) )
 			{
 				var array = invalidRequestHeaderProvider();
@@ -257,8 +349,21 @@ namespace MsgPack.Rpc.Server.Protocols
 			this.HandleDeserializationError( context, RpcError.MessageRefusedError, "Invalid stream.", message, invalidRequestHeaderProvider );
 		}
 
+		/// <summary>
+		///		Handle specified deserialization error.
+		/// </summary>
+		/// <param name="context">The <see cref="ServerRequestContext"/> which holds context information.</param>
+		/// <param name="error">The <see cref="RpcError"/> which represents the error.</param>
+		/// <param name="message">The descriptive message which will be transfered to the client.</param>
+		/// <param name="debugInformation">The debugging message.</param>
+		/// <param name="invalidRequestHeaderProvider">A delegate which returns raw binary to be dumped.</param>
 		private void HandleDeserializationError( ServerRequestContext context, RpcError error, string message, string debugInformation, Func<byte[]> invalidRequestHeaderProvider )
 		{
+			Contract.Assert( context != null );
+			Contract.Assert( error != null );
+			Contract.Assert( !String.IsNullOrEmpty( message ) );
+			Contract.Assert( invalidRequestHeaderProvider != null );
+
 			int? messageId = context.MessageType == MessageType.Request ? context.MessageId : default( int? );
 			var rpcError = new RpcErrorMessage( error, message, debugInformation );
 
@@ -270,15 +375,30 @@ namespace MsgPack.Rpc.Server.Protocols
 			);
 
 			this.BeginShutdown();
+			// Try send error response.
 			this.SendError( messageId, rpcError );
+			// Delegates to the manager to raise error event.
 			this.Manager.RaiseClientError( context, rpcError );
 			context.Clear();
 		}
 
+		/// <summary>
+		///		Handles the socket level error.
+		/// </summary>
+		/// <param name="socket">The <see cref="Socket"/>.</param>
+		/// <param name="context">The <see cref="System.Net.Sockets.SocketAsyncEventArgs"/> instance containing the event data.</param>
+		/// <returns>
+		///		<c>true</c>, if the error can be ignore, it is in shutdown which is initiated by another thread, for example; otherwise, <c>false</c>.
+		/// </returns>
 		private bool HandleSocketError( Socket socket, SocketAsyncEventArgs context )
 		{
+			// Delegates to the manager to raise error event.
 			return this.Manager.HandleSocketError( socket, context );
 		}
+
+		#endregion
+
+		#region -- Async Socket Event Handler --
 
 		/// <summary>
 		///		Dispatches <see cref="E:SocketAsyncEventArgs.Completed"/> event and handles socket level error.
@@ -289,6 +409,9 @@ namespace MsgPack.Rpc.Server.Protocols
 		{
 			var socket = sender as Socket;
 			var context = e as MessageContext;
+
+			Contract.Assert( socket != null );
+			Contract.Assert( context != null );
 
 			if ( !this.HandleSocketError( socket, e ) )
 			{
@@ -335,6 +458,9 @@ namespace MsgPack.Rpc.Server.Protocols
 			this.OnSocketOperationCompleted( sender, e );
 		}
 
+		#endregion
+
+		#region -- Receive --
 
 		/// <summary>
 		///		Receives byte stream from remote end point.
@@ -358,6 +484,8 @@ namespace MsgPack.Rpc.Server.Protocols
 				throw new ArgumentException( "Context is not bound to this object.", "context" );
 			}
 
+			Contract.EndContractBlock();
+
 			this.VerifyIsNotDisposed();
 
 			this.PrivateReceive( context );
@@ -365,7 +493,9 @@ namespace MsgPack.Rpc.Server.Protocols
 
 		private void PrivateReceive( ServerRequestContext context )
 		{
-			if ( this.IsClientShutdowned )
+			Contract.Assert( context != null );
+
+			if ( this.IsClientShutdown )
 			{
 				TraceCancelReceiveDueToClientShutdown( context );
 				return;
@@ -404,6 +534,8 @@ namespace MsgPack.Rpc.Server.Protocols
 
 		private void DrainRemainingReceivedData( ServerRequestContext context )
 		{
+			Contract.Assert( context != null );
+
 			// Process remaining binaries. This pipeline recursively call this method on other thread.
 			if ( !context.NextProcess( context ) )
 			{
@@ -437,8 +569,9 @@ namespace MsgPack.Rpc.Server.Protocols
 				throw new ArgumentNullException( "context" );
 			}
 
+			Contract.EndContractBlock();
 
-			if ( this.IsClientShutdowned )
+			if ( this.IsClientShutdown )
 			{
 				// Client no longer send any additional data, so reset state.
 				TraceCancelReceiveDueToClientShutdown( context );
@@ -450,7 +583,7 @@ namespace MsgPack.Rpc.Server.Protocols
 				// Server no longer process any subsequent retrieval.
 				TraceCancelReceiveDueToServerShutdown( context );
 				// Shutdown sending
-				this.OnProcessFinished();
+				this.OnSessionFinished();
 				return;
 			}
 
@@ -477,7 +610,7 @@ namespace MsgPack.Rpc.Server.Protocols
 					this._boundSocket == null ? null : this._boundSocket.RemoteEndPoint,
 					this._boundSocket == null ? null : this._boundSocket.LocalEndPoint
 				);
-				Interlocked.Exchange( ref this._isClientShutdowned, 1 );
+				Interlocked.Exchange( ref this._isClientShutdown, 1 );
 				if ( !context.ReceivedData.Any( segment => 0 < segment.Count ) )
 				{
 					// There are not data to handle.
@@ -504,7 +637,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			// Go deserialization pipeline.
 			if ( !context.NextProcess( context ) )
 			{
-				if ( this.IsClientShutdowned )
+				if ( this.IsClientShutdown )
 				{
 					// Client no longer send any additional data, so reset state.
 					TraceCancelReceiveDueToClientShutdown( context );
@@ -516,7 +649,7 @@ namespace MsgPack.Rpc.Server.Protocols
 					// Server no longer process any subsequent retrieval.
 					TraceCancelReceiveDueToServerShutdown( context );
 					// Shutdown sending
-					this.OnProcessFinished();
+					this.OnSessionFinished();
 					return;
 				}
 
@@ -525,6 +658,8 @@ namespace MsgPack.Rpc.Server.Protocols
 				return;
 			}
 		}
+
+		#region ---- Tracing ----
 
 		private void TraceCancelReceiveDueToClientShutdown( ServerRequestContext context )
 		{
@@ -550,6 +685,12 @@ namespace MsgPack.Rpc.Server.Protocols
 			);
 		}
 
+		#endregion
+
+		#endregion
+
+		#region -- Send --
+
 		// TODO: Move to other layer e.g. Server.
 		/// <summary>
 		///		Sends specified RPC error as response.
@@ -567,7 +708,8 @@ namespace MsgPack.Rpc.Server.Protocols
 		{
 			if ( messageId == null )
 			{
-				this.OnProcessFinished();
+				// This session is notification, so cannot send response.
+				this.OnSessionFinished();
 				return;
 			}
 
@@ -578,6 +720,18 @@ namespace MsgPack.Rpc.Server.Protocols
 			this.PrivateSend( context );
 		}
 
+		/// <summary>
+		///		Sends response to the client of the current session.
+		/// </summary>
+		/// <param name="context">
+		///		The <see cref="ServerResponseContext"/> holds context information of the reponse.
+		/// </param>
+		/// <exception cref="ArgumentNullException">
+		///		<paramref name="context"/> is <c>null</c>.
+		/// </exception>
+		/// <exception cref="ArgumentException">
+		///		<paramref name="context"/> is not bound to this transport.
+		/// </exception>
 		public void Send( ServerResponseContext context )
 		{
 			if ( context == null )
@@ -590,12 +744,16 @@ namespace MsgPack.Rpc.Server.Protocols
 				throw new ArgumentException( "Context is not bound to this object.", "context" );
 			}
 
+			Contract.EndContractBlock();
+
 			this.VerifyIsNotDisposed();
 			this.PrivateSend( context );
 		}
 
 		private void PrivateSend( ServerResponseContext context )
 		{
+			Contract.Assert( context != null );
+
 			context.Prepare();
 
 			if ( MsgPackRpcServerProtocolsTrace.ShouldTrace( MsgPackRpcServerProtocolsTrace.SendOutboundData ) )
@@ -628,6 +786,9 @@ namespace MsgPack.Rpc.Server.Protocols
 		///		<c>true</c>, if the subsequent request is already received;
 		///		<c>false</c>, otherwise.
 		/// </returns>
+		/// <exception cref="ArgumentNullException">
+		///		<paramref name="context"/> is <c>null</c>.
+		/// </exception>
 		///	<exception cref="InvalidOperationException">
 		///		This instance is not in 'Sending' state.
 		///	</exception>
@@ -636,6 +797,13 @@ namespace MsgPack.Rpc.Server.Protocols
 		///	</exception>
 		protected virtual void OnSent( ServerResponseContext context )
 		{
+			if ( context == null )
+			{
+				throw new ArgumentNullException( "context" );
+			}
+
+			Contract.EndContractBlock();
+
 			if ( MsgPackRpcServerProtocolsTrace.ShouldTrace( MsgPackRpcServerProtocolsTrace.SentOutboundData ) )
 			{
 				MsgPackRpcServerProtocolsTrace.TraceEvent(
@@ -652,12 +820,14 @@ namespace MsgPack.Rpc.Server.Protocols
 			context.Clear();
 			try
 			{
-				this.OnProcessFinished();
+				this.OnSessionFinished();
 			}
 			finally
 			{
 				this.Manager.ReturnTransport( this );
 			}
 		}
+
+		#endregion
 	}
 }

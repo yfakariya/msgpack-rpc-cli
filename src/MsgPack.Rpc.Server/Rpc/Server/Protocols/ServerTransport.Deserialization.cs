@@ -19,12 +19,10 @@
 #endregion -- License Terms --
 
 using System;
-using System.Globalization;
-using System.IO;
-using System.Linq;
-using MsgPack.Rpc.Protocols;
 using System.Diagnostics.Contracts;
+using System.Globalization;
 using System.Threading;
+using MsgPack.Rpc.Protocols;
 
 namespace MsgPack.Rpc.Server.Protocols
 {
@@ -104,6 +102,8 @@ namespace MsgPack.Rpc.Server.Protocols
 		/// </returns>
 		private bool UnpackMessageType( ServerRequestContext context )
 		{
+			Contract.Assert( context != null );
+			
 			if ( !context.HeaderUnpacker.Read() )
 			{
 				MsgPackRpcServerProtocolsTrace.TraceEvent( 
@@ -164,6 +164,8 @@ namespace MsgPack.Rpc.Server.Protocols
 		/// </returns>
 		private bool UnpackMessageId( ServerRequestContext context )
 		{
+			Contract.Assert( context != null );
+			
 			if ( !context.HeaderUnpacker.Read() )
 			{
 				MsgPackRpcServerProtocolsTrace.TraceEvent( 
@@ -202,6 +204,8 @@ namespace MsgPack.Rpc.Server.Protocols
 		/// </returns>
 		private bool UnpackMethodName( ServerRequestContext context )
 		{
+			Contract.Assert( context != null );
+
 			if ( !context.HeaderUnpacker.Read() )
 			{
 				MsgPackRpcServerProtocolsTrace.TraceEvent( 
@@ -240,6 +244,8 @@ namespace MsgPack.Rpc.Server.Protocols
 		/// </returns>
 		private bool UnpackArgumentsHeader( ServerRequestContext context )
 		{
+			Contract.Assert( context != null );
+			
 			if ( !context.HeaderUnpacker.Read() )
 			{
 				MsgPackRpcServerProtocolsTrace.TraceEvent( 
@@ -293,6 +299,8 @@ namespace MsgPack.Rpc.Server.Protocols
 		/// </returns>
 		private bool UnpackArguments( ServerRequestContext context )
 		{
+			Contract.Assert( context != null );
+			
 			while ( context.UnpackedArgumentsCount < context.ArgumentsCount )
 			{
 				if ( !context.ArgumentsBufferUnpacker.Read() )
@@ -327,6 +335,8 @@ namespace MsgPack.Rpc.Server.Protocols
 		/// </returns>
 		private bool Dispatch( ServerRequestContext context )
 		{
+			Contract.Assert( context != null );
+			
 			context.ClearBuffers();
 
 			var isNotification = context.MessageType == MessageType.Notification;
@@ -343,7 +353,7 @@ namespace MsgPack.Rpc.Server.Protocols
 
 				if ( isNotification )
 				{
-					this.OnProcessFinished();
+					this.OnSessionFinished();
 				}
 			}
 
