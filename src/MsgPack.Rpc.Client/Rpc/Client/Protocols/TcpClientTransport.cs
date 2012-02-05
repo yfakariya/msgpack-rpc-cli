@@ -18,10 +18,7 @@
 //
 #endregion -- License Terms --
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System.Net.Sockets;
 
 namespace MsgPack.Rpc.Client.Protocols
 {
@@ -29,6 +26,20 @@ namespace MsgPack.Rpc.Client.Protocols
 	{
 		public TcpClientTransport( TcpClientTransportManager manager )
 			: base( manager ) { }
+
+		protected sealed override void ShutdownSending()
+		{
+			this.BoundSocket.Shutdown( SocketShutdown.Send );
+
+			base.ShutdownSending();
+		}
+
+		protected sealed override void ShutdownReceiving()
+		{
+			this.BoundSocket.Shutdown( SocketShutdown.Receive );
+
+			base.ShutdownReceiving();
+		}
 
 		protected sealed override void SendCore( ClientRequestContext context )
 		{

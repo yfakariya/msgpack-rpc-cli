@@ -30,7 +30,7 @@ using System.Net;
 
 namespace MsgPack.Rpc.Client.Protocols
 {
-	public abstract class ClientTransportManager
+	public abstract class ClientTransportManager :  IDisposable
 	{
 		private readonly ObjectPool<ClientRequestContext> _requestContextPool;
 

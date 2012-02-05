@@ -22,6 +22,8 @@ using System;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
+using System.Globalization;
+using System.Diagnostics.Contracts;
 
 namespace MsgPack.Rpc.Client.Protocols
 {
@@ -53,6 +55,18 @@ namespace MsgPack.Rpc.Client.Protocols
 
 			var transport = this.GetTransport( socket );
 			transport.RemoteEndPoint = state as EndPoint;
+			return transport;
+		}
+
+		protected sealed override UdpClientTransport GetTransportCore( Socket bindingSocket )
+		{
+			if ( bindingSocket == null )
+			{
+				throw new InvalidOperationException( String.Format( CultureInfo.CurrentCulture, "'bindingSocket' is required in {0}.", this.GetType() ) );
+			}
+
+			var transport = base.GetTransportCore( bindingSocket );
+			transport.BoundSocket = bindingSocket;
 			return transport;
 		}
 	}

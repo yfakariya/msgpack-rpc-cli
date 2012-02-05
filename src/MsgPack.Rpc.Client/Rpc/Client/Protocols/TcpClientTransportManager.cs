@@ -114,5 +114,17 @@ namespace MsgPack.Rpc.Client.Protocols
 			taskCompletionSource.SetResult( this.GetTransport( context.ConnectSocket ) );
 			context.Dispose();
 		}
+
+		protected sealed override TcpClientTransport GetTransportCore( Socket bindingSocket )
+		{
+			if ( bindingSocket == null )
+			{
+				throw new InvalidOperationException( String.Format( CultureInfo.CurrentCulture, "'bindingSocket' is required in {0}.", this.GetType() ) );
+			}
+
+			var transport = base.GetTransportCore( bindingSocket );
+			transport.BoundSocket = bindingSocket;
+			return transport;
+		}
 	}
 }

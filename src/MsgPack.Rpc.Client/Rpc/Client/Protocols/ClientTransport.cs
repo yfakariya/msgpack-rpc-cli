@@ -121,11 +121,13 @@ namespace MsgPack.Rpc.Client.Protocols
 			{
 				if ( this._pendingNotificationTable.Count == 0 && this._pendingRequestTable.Count == 0 )
 				{
-					this._boundSocket.Shutdown( SocketShutdown.Receive );
+					this.ShutdownReceiving();
 					this.OnShutdownCompleted();
 				}
 			}
 		}
+
+		protected virtual void ShutdownReceiving() { }
 
 		/// <summary>
 		///		Initializes a new instance of the <see cref="ClientTransport"/> class.
@@ -163,7 +165,7 @@ namespace MsgPack.Rpc.Client.Protocols
 		{
 			if ( disposing )
 			{
-				Interlocked.Exchange( ref this._isDisposed, 1);
+				Interlocked.Exchange( ref this._isDisposed, 1 );
 			}
 		}
 
@@ -181,9 +183,11 @@ namespace MsgPack.Rpc.Client.Protocols
 			{
 				this._isInShutdown = true;
 				Thread.MemoryBarrier();
-				this._boundSocket.Shutdown( SocketShutdown.Send );
+				this.ShutdownSending();
 			}
 		}
+
+		protected virtual void ShutdownSending() { }
 
 		private void OnSocketOperationCompleted( object sender, SocketAsyncEventArgs e )
 		{

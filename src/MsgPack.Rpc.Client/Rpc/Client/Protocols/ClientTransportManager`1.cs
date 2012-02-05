@@ -101,21 +101,18 @@ namespace MsgPack.Rpc.Client.Protocols
 
 		protected TTransport GetTransport( Socket bindingSocket )
 		{
-			if ( bindingSocket == null )
-			{
-				throw new ArgumentNullException( "bindingSocket" );
-			}
-
 			if ( this._transportPool == null )
 			{
 				throw new InvalidOperationException( "Transport pool must be set via SetTransportPool()." );
 			}
 
+			Contract.Ensures( Contract.Result<TTransport>() != null );
+
 			TTransport transport;
 			try { }
 			finally
 			{
-				transport = this.GetTransportCore();
+				transport = this.GetTransportCore( bindingSocket );
 				transport.BoundSocket = bindingSocket;
 				this._activeTransports.TryAdd( transport, null );
 			}
@@ -123,7 +120,7 @@ namespace MsgPack.Rpc.Client.Protocols
 			return transport;
 		}
 
-		protected virtual TTransport GetTransportCore()
+		protected virtual TTransport GetTransportCore( Socket bindingSocket )
 		{
 			return this._transportPool.Borrow();
 		}
