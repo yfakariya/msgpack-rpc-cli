@@ -36,6 +36,11 @@ namespace MsgPack.Rpc.Server.Dispatch
 	{
 		private readonly RpcServer _server;
 
+		protected bool IsDebugMode
+		{
+			get { return this._server.Configuration.IsDebugMode; }
+		}
+
 		/// <summary>
 		///		Gets the serialization context to store serializer for request arguments and response values.
 		/// </summary>
@@ -113,19 +118,19 @@ namespace MsgPack.Rpc.Server.Dispatch
 			}
 
 			var task = operation( requestContext, responseContext );
-			var sessionState = Tuple.Create( this._server, requestContext.SessionId, requestContext.MessageType == MessageType.Request ? requestContext.MessageId : default( int? ) );
+			var sessionState = Tuple.Create( this._server, requestContext.SessionId, requestContext.MessageType == MessageType.Request ? requestContext.MessageId : default( int? ), requestContext.MethodName );
 
 			// FIXME: Execution timeout
 #if NET_4_5
 			task.ContinueWith( ( previous, state ) =>
 				{
-					var tuple = state as Tuple<ServerTransport, ServerResponseContext>
-					SendResponse( previous, tuple.Item1, tuple.Item2 )
+					var tuple = state as Tuple<ServerTransport, ServerResponseContext, Tuple<RpcServer, long, int?, string>;
+					SendResponse( previous, tuple.Item1, tuple.Item2, tuple.Item3 )
 				},
-				Tuple.Create( serverTransport, responseContext )
+				Tuple.Create( serverTransport, responseContext, sessionState )
 			).ContinueWith( ( previous, state ) =>
 				{
-					HandleSendFailure( previous, state as Tuple<RpcServer, long, int?> );
+					HandleSendFailure( previous, state as Tuple<RpcServer, long, int?, string> );
 				},
 				TaskContinuationOptions.OnlyOnFaulted,
 				sessionState
@@ -133,7 +138,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 #else
 			task.ContinueWith( previous =>
 				{
-					SendResponse( previous, serverTransport, responseContext );
+					SendResponse( previous, serverTransport, responseContext, sessionState );
 				}
 			).ContinueWith( previous =>
 				{
@@ -144,8 +149,33 @@ namespace MsgPack.Rpc.Server.Dispatch
 #endif
 		}
 
-		private static void SendResponse( Task previous, ServerTransport transport, ServerResponseContext context )
+		private static void SendResponse( Task previous, ServerTransport transport, ServerResponseContext context, Tuple<RpcServer, long, int?, string> sessionState )
 		{
+			if ( context == null )
+			{
+				if ( previous.IsFaulted )
+				{
+					try
+					{
+						previous.Exception.Handle( inner => inner is OperationCanceledException );
+					}
+					catch ( AggregateException exception )
+					{
+						InvocationHelper.HandleInvocationException(
+							sessionState.Item2,
+							MessageType.Notification,
+							null,
+							sessionState.Item4,
+							exception,
+							sessionState.Item1.Configuration.IsDebugMode
+						);
+					}
+				}
+
+				previous.Dispose();
+				return;
+			}
+
 			switch ( previous.Status )
 			{
 				case TaskStatus.Canceled:
@@ -164,19 +194,28 @@ namespace MsgPack.Rpc.Server.Dispatch
 			transport.Send( context );
 		}
 
-		private static void HandleSendFailure( Task previous, Tuple<RpcServer, long, int?> sessionState )
+		private static void HandleSendFailure( Task previous, Tuple<RpcServer, long, int?, string> sessionState )
 		{
-			var exception = previous.Exception;
-			MsgPackRpcServerProtocolsTrace.TraceEvent(
-				MsgPackRpcServerProtocolsTrace.ErrorWhenSendResponse,
-				"Failed to send response. {{ \"SessionID\" : {0}, \"MessageID\" : {1}, \"Error\" : {2} }}",
-				sessionState.Item2,
-				sessionState.Item3,
-				exception
-			);
+			try
+			{
+				previous.Exception.Handle( inner => inner is OperationCanceledException );
+			}
+			catch ( AggregateException exception )
+			{
+				MsgPackRpcServerProtocolsTrace.TraceEvent(
+					MsgPackRpcServerProtocolsTrace.ErrorWhenSendResponse,
+					"Failed to send response. {{ \"SessionID\" : {0}, \"MessageID\" : {1}, \"Error\" : {2} }}",
+					sessionState.Item2,
+					sessionState.Item3,
+					exception
+				);
 
-			previous.Dispose();
-			sessionState.Item1.RaiseServerError( exception );
+				sessionState.Item1.RaiseServerError( exception );
+			}
+			finally
+			{
+				previous.Dispose();
+			}
 		}
 
 		/// <summary>
@@ -258,7 +297,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 
 			Contract.EndContractBlock();
 
-			context.Serialize<MessagePackObject>( MessagePackObject.Nil, InvocationHelper.HandleInvocationException( exception, this._server.Configuration.IsDebugMode ), this.SerializationContext.GetSerializer<MessagePackObject>() );
+			context.Serialize<MessagePackObject>( MessagePackObject.Nil, InvocationHelper.HandleInvocationException( exception, this.IsDebugMode ), this.SerializationContext.GetSerializer<MessagePackObject>() );
 		}
 	}
 
