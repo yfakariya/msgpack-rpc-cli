@@ -131,6 +131,7 @@
     <Compile Include="Rpc\RpcTimeoutException.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Rpc\ServiceIdentifier.cs" />
     <Compile Include="Rpc\StandardObjectPoolTrace.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
