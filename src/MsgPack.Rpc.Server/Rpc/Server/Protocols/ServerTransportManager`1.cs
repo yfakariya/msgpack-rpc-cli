@@ -36,13 +36,6 @@ namespace MsgPack.Rpc.Server.Protocols
 	{
 		private readonly ConcurrentDictionary<TTransport, object> _activeTransports;
 
-#if DEBUG
-		internal TTransport[] DebugGetActiveTransports()
-		{
-			return this._activeTransports.Keys.ToArray();
-		}
-#endif
-
 		private ObjectPool<TTransport> _transportPool;
 
 		/// <summary>
