@@ -22,6 +22,9 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Security;
 using MsgPack.Rpc.Server.Dispatch.SvcFileInterop;
 
 namespace MsgPack.Rpc.Server.Dispatch
@@ -80,15 +83,83 @@ namespace MsgPack.Rpc.Server.Dispatch
 		public sealed override IEnumerable<ServiceDescription> FindServices()
 		{
 			var result = new List<ServiceDescription>();
-			foreach ( var file in Directory.GetFiles( String.IsNullOrWhiteSpace( this.BaseDirectory ) ? AppDomain.CurrentDomain.BaseDirectory : this.BaseDirectory, "*.svc" ) )
+			var targetDirectory = String.IsNullOrWhiteSpace( this.BaseDirectory ) ? AppDomain.CurrentDomain.BaseDirectory : this.BaseDirectory;
+
+			if ( !Directory.Exists( targetDirectory ) )
 			{
-				result.Add( ExtractServiceDescription( file ) );
+				return result;
+			}
+
+			// DirectoryNotFoundException might be occured here due to race condition,
+			// but it must be unexpected failure of the server environment, so it should not be catch.
+
+			var binDirectory = Path.Combine( targetDirectory, "bin" );
+
+			// AssemblyQualifiedName
+			var typeCatalog = new List<string>();
+			LoadAssemblies( targetDirectory, binDirectory, typeCatalog );
+
+			var catalog =
+				typeCatalog
+				.Select( typeQualifiedName => Type.GetType( typeQualifiedName ) )
+				.ToDictionary( item => item.FullName );
+
+			foreach ( var file in Directory.GetFiles( targetDirectory, "*.svc" ) )
+			{
+				var description = ExtractServiceDescription( file, targetDirectory, catalog );
+				if ( description != null )
+				{
+					result.Add( description );
+				}
 			}
 
 			return result;
 		}
 
-		private static ServiceDescription ExtractServiceDescription( string svcFile )
+		[SecuritySafeCritical]
+		private static void LoadAssemblies( string targetDirectory, string binDirectory, List<string> typeCatalog )
+		{
+			AppDomain.CurrentDomain.ReflectionOnlyAssemblyResolve += ReflectionOnlyAssemblyResolve;
+			try
+			{
+				foreach ( var catalogEntry
+					in Directory.GetFiles( targetDirectory, "*.dll" )
+					.Concat( Directory.Exists( binDirectory ) ? Directory.GetFiles( binDirectory, "*.dll" ) : Enumerable.Empty<string>() )
+					.SelectMany( file =>
+						Assembly.ReflectionOnlyLoadFrom( file ).GetTypes()
+					).Select( type =>
+						new
+						{
+							Type = type,
+							CustomAttribute =
+								type.GetCustomAttributesData().SingleOrDefault( attribute =>
+									attribute.Constructor.DeclaringType.AssemblyQualifiedName == typeof( MessagePackRpcServiceContractAttribute ).AssemblyQualifiedName
+								)
+						}
+					).Where( item => item.CustomAttribute != null )
+					.GroupBy( item => item.Type.Assembly.FullName )
+				)
+				{
+					Assembly.Load( catalogEntry.Key );
+					foreach ( var item in catalogEntry )
+					{
+						typeCatalog.Add( item.Type.AssemblyQualifiedName );
+					}
+				}
+			}
+			finally
+			{
+				AppDomain.CurrentDomain.ReflectionOnlyAssemblyResolve -= ReflectionOnlyAssemblyResolve;
+			}
+		}
+
+		[SecuritySafeCritical]
+		private static Assembly ReflectionOnlyAssemblyResolve( object sender, ResolveEventArgs args )
+		{
+			return Assembly.ReflectionOnlyLoad( args.Name );
+		}
+
+		private static ServiceDescription ExtractServiceDescription( string svcFile, string directory, IDictionary<string, Type> serviceTypeCatalog )
 		{
 			ServiceHostDirective directive;
 			using ( var stream = new FileStream( svcFile, FileMode.Open, FileAccess.Read, FileShare.Read, 1024, FileOptions.SequentialScan ) )
@@ -97,15 +168,26 @@ namespace MsgPack.Rpc.Server.Dispatch
 				directive = new SvcFileParser().Parse( reader );
 			}
 
-			var serviceType = Type.GetType( directive.Service, false );
-			if ( serviceType == null )
+			if ( directive.Service == null )
 			{
 				throw new InvalidOperationException(
 					String.Format(
 						CultureInfo.CurrentCulture,
-						"Cannot load service type '{0}' from directory '{1}'.",
+						"'Service' attribute is not found in '{0}' file.",
+						svcFile
+					)
+				);
+			}
+
+			Type serviceType;
+			if ( !serviceTypeCatalog.TryGetValue( directive.Service, out serviceType ) )
+			{
+				throw new InvalidOperationException(
+					String.Format(
+						CultureInfo.CurrentCulture,
+						"Cannot load the service type for name '{0}' from directory '{1}'. Note that service type name is case sensitive.",
 						directive.Service,
-						AppDomain.CurrentDomain.BaseDirectory
+						directory
 					)
 				);
 			}
