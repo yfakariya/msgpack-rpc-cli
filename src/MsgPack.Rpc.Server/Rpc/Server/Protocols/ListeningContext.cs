@@ -20,7 +20,6 @@
 
 using System;
 using System.Net.Sockets;
-using System.Threading;
 
 namespace MsgPack.Rpc.Server.Protocols
 {
@@ -29,6 +28,9 @@ namespace MsgPack.Rpc.Server.Protocols
 	/// </summary>
 	public sealed partial class ListeningContext : SocketAsyncEventArgs
 	{
+		/// <summary>
+		///		Initializes a new instance of the <see cref="ListeningContext"/> class.
+		/// </summary>
 		public ListeningContext() { }
 	}
 }

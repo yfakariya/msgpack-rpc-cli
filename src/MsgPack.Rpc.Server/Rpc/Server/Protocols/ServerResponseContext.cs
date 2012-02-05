@@ -26,6 +26,9 @@ using MsgPack.Serialization;
 
 namespace MsgPack.Rpc.Server.Protocols
 {
+	/// <summary>
+	///		Represents context information for the reponse message.
+	/// </summary>
 	public sealed class ServerResponseContext : MessageContext
 	{
 		/// <summary>
@@ -36,20 +39,44 @@ namespace MsgPack.Rpc.Server.Protocols
 
 		private Packer _returnDataPacker;
 
+		/// <summary>
+		///		Gets the <see cref="Packer"/> to pack return value.
+		/// </summary>
+		/// <value>
+		///		The <see cref="Packer"/> to pack return value.
+		///		This value will not be <c>null</c>.
+		/// </value>
 		public Packer ReturnDataPacker
 		{
-			get { return this._returnDataPacker; }
+			get
+			{
+				Contract.Ensures( Contract.Result<Packer>() != null );
+
+				return this._returnDataPacker;
+			}
 		}
 
 		private Packer _errorDataPacker;
 
+
+		/// <summary>
+		///		Gets the <see cref="Packer"/> to pack <see cref="RpcError"/>.
+		/// </summary>
+		/// <value>
+		///		The <see cref="Packer"/> to pack <see cref="RpcError"/>.
+		///		This value will not be <c>null</c>.
+		/// </value>
 		public Packer ErrorDataPacker
 		{
-			get { return this._errorDataPacker; }
+			get
+			{
+				Contract.Ensures( Contract.Result<Packer>() != null );
+				
+				return this._errorDataPacker; }
 		}
 
 		/// <summary>
-		///		The reusable buffer to pack <see cref="Id"/>.
+		///		The reusable buffer to pack ID.
 		///		This value will not be <c>null</c>.
 		/// </summary>
 		private readonly MemoryStream _idBuffer;
@@ -105,6 +132,9 @@ namespace MsgPack.Rpc.Server.Protocols
 		/// </remarks>
 		internal readonly ArraySegment<byte>[] SendingBuffer;
 
+		/// <summary>
+		///		Initializes a new instance of the <see cref="ServerResponseContext"/> class.
+		/// </summary>
 		public ServerResponseContext()
 		{
 			this._idBuffer = new MemoryStream( 5 );
@@ -118,6 +148,13 @@ namespace MsgPack.Rpc.Server.Protocols
 			this._errorDataPacker = Packer.Create( this._errorDataBuffer, false );
 		}
 
+		/// <summary>
+		///		Serializes the specified response data.
+		/// </summary>
+		/// <typeparam name="T">The type of return value.</typeparam>
+		/// <param name="returnValue">The return value.</param>
+		/// <param name="error">The error.</param>
+		/// <param name="returnValueSerializer">The serializer for the return value.</param>
 		internal void Serialize<T>( T returnValue, RpcErrorMessage error, MessagePackSerializer<T> returnValueSerializer )
 		{
 			// FIXME: Overwrite for error/timeout
@@ -152,6 +189,9 @@ namespace MsgPack.Rpc.Server.Protocols
 			}
 		}
 
+		/// <summary>
+		///		Prepares this instance to send response.
+		/// </summary>
 		internal void Prepare()
 		{
 			Contract.Assert( this.SendingBuffer[ 0 ].Array != null );
@@ -168,6 +208,9 @@ namespace MsgPack.Rpc.Server.Protocols
 			this.BufferList = this.SendingBuffer;
 		}
 
+		/// <summary>
+		///		Clears this instance internal buffers for reuse.
+		/// </summary>
 		internal sealed override void Clear()
 		{
 			this._idBuffer.SetLength( 0 );
@@ -177,7 +220,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			this.SendingBuffer[ 1 ] = default( ArraySegment<byte> );
 			this.SendingBuffer[ 2 ] = default( ArraySegment<byte> );
 			this.SendingBuffer[ 3 ] = default( ArraySegment<byte> );
- 			this._returnDataPacker.Dispose();
+			this._returnDataPacker.Dispose();
 			this._returnDataPacker = Packer.Create( this._returnDataBuffer, false );
 			this._errorDataPacker.Dispose();
 			this._errorDataPacker = Packer.Create( this._errorDataBuffer, false );

@@ -139,6 +139,18 @@ namespace MsgPack.Rpc.Server.Protocols
 			}
 		}
 
+		/// <summary>
+		///		Gets the transport managed by this instance.
+		/// </summary>
+		/// <param name="bindingSocket">The <see cref="Socket"/> to be bind the returning transport.</param>
+		/// <returns>
+		///		The transport managed by this instance.
+		///		Note that <see cref="ServerTransport.BoundSocket"/> might be <c>null</c> depends on <see cref="GetTransportCore"/> implementation.
+		/// </returns>
+		/// <exception cref="InvalidOperationException">
+		///		<see cref="IsTransportPoolSet"/> is <c>false</c>.
+		///		Or <paramref name="bindingSocket"/> cannot be <c>null</c> for the current transport.
+		/// </exception>
 		protected TTransport GetTransport( Socket bindingSocket )
 		{
 			if ( !this.IsTransportPoolSet )
@@ -147,7 +159,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			}
 
 			Contract.Ensures( Contract.Result<TTransport>() != null );
-			Contract.Ensures( Contract.Result<TTransport>().BoundSocket == bindingSocket );
+			Contract.Ensures( Contract.Result<TTransport>().BoundSocket == null || Contract.Result<TTransport>().BoundSocket == bindingSocket );
 
 			TTransport transport = this.GetTransportCore( bindingSocket );
 			this._activeTransports.TryAdd( transport, null );
@@ -155,19 +167,80 @@ namespace MsgPack.Rpc.Server.Protocols
 			return transport;
 		}
 
+		/// <summary>
+		///		Gets the transport managed by this instance.
+		/// </summary>
+		/// <param name="bindingSocket">The <see cref="Socket"/> to be bind the returning transport.</param>
+		/// <returns>
+		///		The transport managed by this instance.
+		///		Note that <see cref="ServerTransport.BoundSocket"/> might be <c>null</c> depends on <see cref="GetTransportCore"/> implementation.
+		/// </returns>
+		/// <exception cref="InvalidOperationException">
+		///		<paramref name="bindingSocket"/> cannot be <c>null</c> for the current transport.
+		/// </exception>
+		/// <remarks>
+		///		This implementation does not bind <paramref name="bindingSocket"/> to the returning transport.
+		///		The derived class which uses <see cref="Socket"/> for its communication, must set the transport via <see cref="BindSocket"/> method.
+		/// </remarks>
 		protected virtual TTransport GetTransportCore( Socket bindingSocket )
 		{
 			Contract.Ensures( Contract.Result<TTransport>() != null );
+			Contract.Ensures( Contract.Result<TTransport>().BoundSocket == null || Contract.Result<TTransport>().BoundSocket == bindingSocket );
 
-			var transport= this._transportPool.Borrow();
+			var transport = this._transportPool.Borrow();
 			return transport;
 		}
 
+		/// <summary>
+		///		Binds the specified socket to the specified transport.
+		/// </summary>
+		/// <param name="transport">The transport to be bound.</param>
+		/// <param name="bindingSocket">The socket to be bound.</param>
+		/// <exception cref="ArgumentNullException">
+		///		<paramref name="transport"/> is <c>null</c>.
+		///		Or <paramref name="bindingSocket"/> is <c>null</c>.
+		/// </exception>
+		protected void BindSocket( TTransport transport, Socket bindingSocket )
+		{
+			if ( transport == null )
+			{
+				throw new ArgumentNullException( "transport" );
+			}
+
+			if ( bindingSocket == null )
+			{
+				throw new ArgumentNullException( "bindingSocket" );
+			}
+
+			Contract.EndContractBlock();
+
+			transport.BoundSocket = bindingSocket;
+		}
+
+		/// <summary>
+		///		Invoked from the <see cref="ServerTransport"/> which was created by this manager,
+		///		returns the transport to this manager.
+		/// </summary>
+		/// <param name="transport">The <see cref="ServerTransport"/> which was created by this manager.</param>
 		internal sealed override void ReturnTransport( ServerTransport transport )
 		{
 			this.ReturnTransport( ( TTransport )transport );
 		}
 
+		/// <summary>
+		///		Invoked from the <see cref="ServerTransport"/> which was created by this manager,
+		///		returns the transport to this manager.
+		/// </summary>
+		/// <param name="transport">The <see cref="ServerTransport"/> which was created by this manager.</param>
+		/// <exception cref="ArgumentNullException">
+		///		<paramref name="transport"/> is <c>null</c>.
+		/// </exception>
+		/// <exception cref="ArgumentException">
+		///		<paramref name="transport"/> is not managed by this manager.
+		/// </exception>
+		/// <exception cref="InvalidOperationException">
+		///		<see cref="IsTransportPoolSet"/> is <c>false</c>.
+		/// </exception>
 		protected void ReturnTransport( TTransport transport )
 		{
 			if ( transport == null )
@@ -177,7 +250,7 @@ namespace MsgPack.Rpc.Server.Protocols
 
 			if ( !Object.ReferenceEquals( this, transport.Manager ) )
 			{
-				throw new ArgumentException( "The specified transport is not owned by this manager.", "transport" );
+				throw new ArgumentException( "The specified transport is not managed by this manager.", "transport" );
 			}
 
 			if ( !this.IsTransportPoolSet )
@@ -192,13 +265,32 @@ namespace MsgPack.Rpc.Server.Protocols
 			this.ReturnTransportCore( transport );
 		}
 
+		/// <summary>
+		///		Returns the transport to this manager.
+		/// </summary>
+		/// <param name="transport">The <see cref="ServerTransport"/> which was created by this manager.</param>
 		protected virtual void ReturnTransportCore( TTransport transport )
 		{
 			Contract.Requires( transport != null );
+			Contract.Requires( Object.ReferenceEquals( this, transport.Manager ) );
+			Contract.Requires( this.IsTransportPoolSet );
 
 			this._transportPool.Return( transport );
 		}
 
+		/// <summary>
+		///		Gets the <see cref="ServerRequestContext"/> to store context information.
+		/// </summary>
+		/// <param name="transport">The transport to be bound the returning context.</param>
+		/// <returns>
+		///		The <see cref="ServerRequestContext"/> to store context information.
+		/// </returns>
+		/// <exception cref="ArgumentNullException">
+		///		<paramref name="transport"/> is <c>null</c>.
+		/// </exception>
+		/// <remarks>
+		///		You can pass the returning value to the <see cref="ServerTransport.Receive"/> method.
+		/// </remarks>
 		protected ServerRequestContext GetRequestContext( TTransport transport )
 		{
 			if ( transport == null )

@@ -23,6 +23,9 @@ using System.Diagnostics.Contracts;
 
 namespace MsgPack.Rpc.Server
 {
+	/// <summary>
+	///		Represents server configuration.
+	/// </summary>
 	public sealed partial class RpcServerConfiguration : FreezableObject
 	{
 		private static readonly RpcServerConfiguration _default = new RpcServerConfiguration().Freeze();
@@ -49,6 +52,13 @@ namespace MsgPack.Rpc.Server
 		/// </summary>
 		public RpcServerConfiguration() { }
 
+		/// <summary>
+		///		Creates the <see cref="ObjectPoolConfiguration"/> for the <see cref="MsgPack.Rpc.Server.Protocols.ListeningContext"/> pool corresponds to values of this instance.
+		/// </summary>
+		/// <returns>
+		///		The <see cref="ObjectPoolConfiguration"/> for the <see cref="MsgPack.Rpc.Server.Protocols.ListeningContext"/> pool corresponds to values of this instance.
+		///		This value will not be <c>null</c>.
+		/// </returns>
 		public ObjectPoolConfiguration CreateListeningContextPoolConfiguration()
 		{
 			Contract.Ensures( Contract.Result<ObjectPoolConfiguration>() != null );
@@ -56,6 +66,13 @@ namespace MsgPack.Rpc.Server
 			return new ObjectPoolConfiguration() { ExhausionPolicy = ExhausionPolicy.ThrowException, MaximumPooled = this.MaximumConnection, MinimumReserved = this.MinimumConnection };
 		}
 
+		/// <summary>
+		///		Creates the <see cref="ObjectPoolConfiguration"/> for the TCP transport pool corresponds to values of this instance.
+		/// </summary>
+		/// <returns>
+		///		The <see cref="ObjectPoolConfiguration"/> for the TCP transport pool corresponds to values of this instance.
+		///		This value will not be <c>null</c>.
+		/// </returns>
 		public ObjectPoolConfiguration CreateTcpTransportPoolConfiguration()
 		{
 			Contract.Ensures( Contract.Result<ObjectPoolConfiguration>() != null );
@@ -63,6 +80,13 @@ namespace MsgPack.Rpc.Server
 			return new ObjectPoolConfiguration() { ExhausionPolicy = ExhausionPolicy.BlockUntilAvailable, MaximumPooled = this.MaximumConcurrentRequest, MinimumReserved = this.MinimumConcurrentRequest };
 		}
 
+		/// <summary>
+		///		Creates the <see cref="ObjectPoolConfiguration"/> for the UDP transport pool corresponds to values of this instance.
+		/// </summary>
+		/// <returns>
+		///		The <see cref="ObjectPoolConfiguration"/> for the UDP transport pool corresponds to values of this instance.
+		///		This value will not be <c>null</c>.
+		/// </returns>
 		public ObjectPoolConfiguration CreateUdpTransportPoolConfiguration()
 		{
 			Contract.Ensures( Contract.Result<ObjectPoolConfiguration>() != null );
@@ -70,6 +94,13 @@ namespace MsgPack.Rpc.Server
 			return new ObjectPoolConfiguration() { ExhausionPolicy = ExhausionPolicy.BlockUntilAvailable, MaximumPooled = this.MaximumConcurrentRequest, MinimumReserved = this.MinimumConcurrentRequest };
 		}
 
+		/// <summary>
+		///		Creates the <see cref="ObjectPoolConfiguration"/> for the <see cref="MsgPack.Rpc.Server.Protocols.ServerRequestContext"/> pool corresponds to values of this instance.
+		/// </summary>
+		/// <returns>
+		///		The <see cref="ObjectPoolConfiguration"/> for the <see cref="MsgPack.Rpc.Server.Protocols.ServerRequestContext"/> pool corresponds to values of this instance.
+		///		This value will not be <c>null</c>.
+		/// </returns>
 		public ObjectPoolConfiguration CreateRequestContextPoolConfiguration()
 		{
 			Contract.Ensures( Contract.Result<ObjectPoolConfiguration>() != null );
@@ -77,6 +108,13 @@ namespace MsgPack.Rpc.Server
 			return new ObjectPoolConfiguration() { ExhausionPolicy = ExhausionPolicy.BlockUntilAvailable, MaximumPooled = this.MaximumConcurrentRequest, MinimumReserved = this.MinimumConcurrentRequest };
 		}
 
+		/// <summary>
+		///		Creates the <see cref="ObjectPoolConfiguration"/> for the <see cref="MsgPack.Rpc.Server.Protocols.ServerResponseContext"/> pool corresponds to values of this instance.
+		/// </summary>
+		/// <returns>
+		///		The <see cref="ObjectPoolConfiguration"/> for the <see cref="MsgPack.Rpc.Server.Protocols.ServerResponseContext"/> pool corresponds to values of this instance.
+		///		This value will not be <c>null</c>.
+		/// </returns>
 		public ObjectPoolConfiguration CreateResponseContextPoolConfiguration()
 		{
 			Contract.Ensures( Contract.Result<ObjectPoolConfiguration>() != null );

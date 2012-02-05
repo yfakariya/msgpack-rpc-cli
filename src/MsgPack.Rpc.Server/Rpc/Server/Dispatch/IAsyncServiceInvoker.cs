@@ -40,7 +40,6 @@ namespace MsgPack.Rpc.Server.Dispatch
 		/// <summary>
 		///		Invokes target service operation asynchronously.
 		/// </summary>
-		/// <param name="arguments"><see cref="Unpacker"/> to unpack arguments.</param>
 		/// <param name="requestContext">
 		///		The context object to hold request data.
 		///		Note that properties of the context is only valid until this method returns.

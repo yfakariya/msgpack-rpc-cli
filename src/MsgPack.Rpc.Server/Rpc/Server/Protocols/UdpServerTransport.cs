@@ -27,8 +27,19 @@ namespace MsgPack.Rpc.Server.Protocols
 	/// </summary>
 	public sealed class UdpServerTransport : ServerTransport
 	{
+		/// <summary>
+		///		Initializes a new instance of the <see cref="UdpServerTransport"/> class.
+		/// </summary>
+		/// <param name="manager">The manager which will manage this instance.</param>
+		/// <exception cref="ArgumentNullException">
+		///		<paramref name="manager"/> is <c>null</c>.
+		/// </exception>
 		public UdpServerTransport( UdpServerTransportManager manager ) : base( manager ) { }
 
+		/// <summary>
+		///		Performs protocol specific asynchronous 'Send' operation.
+		/// </summary>
+		/// <param name="context">Context information.</param>
 		protected sealed override void SendCore( ServerResponseContext context )
 		{
 			// Manager stores the socket which is dedicated socket to this transport in the AcceptSocket property.
@@ -39,6 +50,10 @@ namespace MsgPack.Rpc.Server.Protocols
 			}
 		}
 
+		/// <summary>
+		///		Performs protocol specific asynchronous 'Receive' operation.
+		/// </summary>
+		/// <param name="context">Context information.</param>
 		protected sealed override void ReceiveCore( ServerRequestContext context )
 		{
 			// Manager stores the socket which is dedicated socket to this transport in the AcceptSocket property.

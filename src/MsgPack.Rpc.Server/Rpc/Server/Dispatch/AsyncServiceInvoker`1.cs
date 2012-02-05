@@ -41,6 +41,12 @@ namespace MsgPack.Rpc.Server.Dispatch
 	{
 		private readonly RpcServerConfiguration _configuration;
 
+		/// <summary>
+		///		Gets a value indicating whether the server is in debug mode.
+		/// </summary>
+		/// <value>
+		/// 	<c>true</c> if the server is in debug mode; otherwise, <c>false</c>.
+		/// </value>
 		protected bool IsDebugMode
 		{
 			get { return this._configuration.IsDebugMode; }
@@ -102,12 +108,42 @@ namespace MsgPack.Rpc.Server.Dispatch
 			}
 		}
 
+		/// <summary>
+		///		Initializes a new instance of the <see cref="AsyncServiceInvoker&lt;T&gt;"/> class.
+		/// </summary>
+		/// <param name="configuration">The configuration of this server stack.</param>
+		/// <param name="context">The <see cref="SerializationContext"/> which holds serializers to invoke target operation.</param>
+		/// <param name="serviceDescription">The service description which defines target operation.</param>
+		/// <param name="targetOperation">The target operation to be invoked.</param>
+		/// <exception cref="ArgumentNullException">
+		///		<paramref name="configuration"/> is <c>null</c>.
+		///		Or, <paramref name="context"/> is <c>null</c>.
+		///		Or, <paramref name="serviceDescription"/> is <c>null</c>.
+		///		Or, <paramref name="targetOperation"/> is <c>null</c>.
+		/// </exception>
 		protected AsyncServiceInvoker( RpcServerConfiguration configuration, SerializationContext context, ServiceDescription serviceDescription, MethodInfo targetOperation )
 		{
-			Contract.Requires( configuration != null );
-			Contract.Requires( context != null );
-			Contract.Requires( serviceDescription != null );
-			Contract.Requires( targetOperation != null );
+			if ( configuration == null )
+			{
+				throw new ArgumentNullException( "configuration" );
+			}
+
+			if ( context == null )
+			{
+				throw new ArgumentNullException( "context" );
+			}
+
+			if ( serviceDescription == null )
+			{
+				throw new ArgumentNullException( "serviceDescription" );
+			}
+
+			if ( targetOperation == null )
+			{
+				throw new ArgumentNullException( "targetOperation" );
+			}
+
+			Contract.EndContractBlock();
 
 			this._configuration = configuration;
 			this._serviceDescription = serviceDescription;
@@ -116,6 +152,21 @@ namespace MsgPack.Rpc.Server.Dispatch
 			this._returnValueSerializer = typeof( T ) == typeof( Missing ) ? null : context.GetSerializer<T>();
 		}
 
+		/// <summary>
+		///		Invokes target service operation asynchronously.
+		/// </summary>
+		/// <param name="requestContext">
+		///		The context object to hold request data.
+		///		Note that properties of the context is only valid until this method returns.
+		///		That is, it will be unpredectable state in the asynchronous operation.
+		///	</param>
+		/// <param name="responseContext">
+		///		The context object to pack response value or error.
+		///		This is <c>null</c> for the notification messages.
+		///	</param>
+		/// <returns>
+		///		The <see cref="Task"/> to control entire process including sending response.
+		/// </returns>
 		public Task InvokeAsync( ServerRequestContext requestContext, ServerResponseContext responseContext )
 		{
 			if ( requestContext == null )
@@ -123,7 +174,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 				throw new ArgumentNullException( "requestContext" );
 			}
 
-			Contract.EndContractBlock();
+			Contract.Ensures( Contract.Result<Task>() != null );
 
 			var messageId = requestContext.MessageId;
 			var arguments = requestContext.ArgumentsUnpacker;

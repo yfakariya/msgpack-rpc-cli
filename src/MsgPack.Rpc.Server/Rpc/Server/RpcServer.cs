@@ -19,12 +19,8 @@
 #endregion -- License Terms --
 
 using System;
-using System.Collections.Generic;
-using System.Net;
-using System.Net.Sockets;
-using System.Runtime.CompilerServices;
+using System.Diagnostics.Contracts;
 using System.Threading;
-using MsgPack.Rpc.Protocols;
 using MsgPack.Rpc.Server.Dispatch;
 using MsgPack.Rpc.Server.Protocols;
 using MsgPack.Serialization;
@@ -38,21 +34,48 @@ namespace MsgPack.Rpc.Server
 	{
 		private readonly SerializationContext _serializationContext;
 
+		/// <summary>
+		///		Gets the <see cref="SerializationContext"/> which holds serializers used in this server stack.
+		/// </summary>
+		/// <value>
+		///		The <see cref="SerializationContext"/> which holds serializers used in this server stack.
+		///		This value will not be <c>null</c>.
+		/// </value>
 		public SerializationContext SerializationContext
 		{
-			get { return this._serializationContext; }
+			get
+			{
+				Contract.Ensures( Contract.Result<SerializationContext>() != null );
+
+				return this._serializationContext;
+			}
 		}
 
 		private readonly RpcServerConfiguration _configuration;
 
+		/// <summary>
+		///		Gets the <see cref="RpcServerConfiguration"/> for this server stack.
+		/// </summary>
+		/// <value>
+		///		The <see cref="RpcServerConfiguration"/> for this server stack.
+		///		This value will not be <c>null</c>.
+		/// </value>
 		public RpcServerConfiguration Configuration
 		{
-			get { return this._configuration; }
+			get
+			{
+				Contract.Ensures( Contract.Result<RpcServerConfiguration>() != null );
+
+				return this._configuration;
+			}
 		}
 
 
 		private EventHandler<RpcClientErrorEventArgs> _clientError;
 
+		/// <summary>
+		///		Occurs when the client causes some error.
+		/// </summary>
 		public event EventHandler<RpcClientErrorEventArgs> ClientError
 		{
 			add
@@ -79,12 +102,21 @@ namespace MsgPack.Rpc.Server
 			}
 		}
 
+		/// <summary>
+		///		Raises the <see cref="E:ClientError"/> event.
+		/// </summary>
+		/// <param name="e">The <see cref="MsgPack.Rpc.Server.RpcClientErrorEventArgs"/> instance containing the event data.</param>
+		/// <exception cref="ArgumentNullException">
+		///		<paramref name="e"/> is <c>null</c>.
+		/// </exception>
 		protected virtual void OnClientError( RpcClientErrorEventArgs e )
 		{
 			if ( e == null )
 			{
 				throw new ArgumentNullException( "e" );
 			}
+
+			Contract.EndContractBlock();
 
 			var handler = Interlocked.CompareExchange( ref this._clientError, null, null );
 			if ( handler != null )
@@ -93,12 +125,17 @@ namespace MsgPack.Rpc.Server
 			}
 		}
 
+		/// <summary>
+		///		Raises the <see cref="E:ClientError"/> event.
+		/// </summary>
+		/// <param name="context">The context information.</param>
+		/// <param name="rpcError">The RPC error.</param>
 		internal void RaiseClientError( ServerRequestContext context, RpcErrorMessage rpcError )
 		{
-			this.OnClientError( 
-				new RpcClientErrorEventArgs( rpcError ) 
-				{ 
-					RemoteEndPoint = context.RemoteEndPoint, 
+			this.OnClientError(
+				new RpcClientErrorEventArgs( rpcError )
+				{
+					RemoteEndPoint = context.RemoteEndPoint,
 					SessionId = context.SessionId,
 					MessageId = context.MessageId
 				}
@@ -108,6 +145,9 @@ namespace MsgPack.Rpc.Server
 
 		private EventHandler<RpcServerErrorEventArgs> _serverError;
 
+		/// <summary>
+		///		Occurs when the server stack causes some errors.
+		/// </summary>
 		public event EventHandler<RpcServerErrorEventArgs> ServerError
 		{
 			add
@@ -134,12 +174,21 @@ namespace MsgPack.Rpc.Server
 			}
 		}
 
+		/// <summary>
+		///		Raises the <see cref="E:ServerError"/> event.
+		/// </summary>
+		/// <param name="e">The <see cref="MsgPack.Rpc.Server.RpcServerErrorEventArgs"/> instance containing the event data.</param>
+		/// <exception cref="ArgumentNullException">
+		///		<paramref name="e"/> is <c>null</c>.
+		/// </exception>
 		protected virtual void OnServerError( RpcServerErrorEventArgs e )
 		{
 			if ( e == null )
 			{
 				throw new ArgumentNullException( "e" );
 			}
+
+			Contract.EndContractBlock();
 
 			var handler = Interlocked.CompareExchange( ref this._serverError, null, null );
 			if ( handler != null )
@@ -148,6 +197,10 @@ namespace MsgPack.Rpc.Server
 			}
 		}
 
+		/// <summary>
+		///		Raises the <see cref="E:ServerError"/> event.
+		/// </summary>
+		/// <param name="exception">The occurred exception.</param>
 		internal void RaiseServerError( Exception exception )
 		{
 			this.OnServerError( new RpcServerErrorEventArgs( exception ) );
@@ -159,8 +212,18 @@ namespace MsgPack.Rpc.Server
 		private ServerTransportManager _transportManager;
 		private Dispatcher _dispatcher;
 
+		/// <summary>
+		///		Initializes a new instance of the <see cref="RpcServer"/> class with default configuration.
+		/// </summary>
 		public RpcServer() : this( null ) { }
 
+		/// <summary>
+		///		Initializes a new instance of the <see cref="RpcServer"/> class with specified configuration.
+		/// </summary>
+		/// <param name="configuration">
+		///		The <see cref="RpcServerConfiguration"/>.
+		///		Or <c>null</c> to use default configuration.
+		///	</param>
 		public RpcServer( RpcServerConfiguration configuration )
 		{
 			var safeConfiguration = ( configuration ?? RpcServerConfiguration.Default ).AsFrozen();
@@ -168,6 +231,9 @@ namespace MsgPack.Rpc.Server
 			this._serializationContext = new SerializationContext();
 		}
 
+		/// <summary>
+		///		Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
+		/// </summary>
 		public void Dispose()
 		{
 			this.Stop();
@@ -180,6 +246,13 @@ namespace MsgPack.Rpc.Server
 		}
 
 		// FIXME : Prohibit reuse.
+		/// <summary>
+		///		Starts the server stack.
+		/// </summary>
+		/// <returns>
+		///		<c>true</c> if the server starts operation; otherwise, <c>false</c>.
+		///		If the server is already started, this method returns <c>false</c>.
+		/// </returns>
 		public bool Start()
 		{
 			var currentDispatcher = Interlocked.CompareExchange( ref this._dispatcher, this._configuration.DispatcherProvider( this ), null );
@@ -188,10 +261,10 @@ namespace MsgPack.Rpc.Server
 				return false;
 			}
 
-			MsgPackRpcServerTrace.TraceEvent( 
+			MsgPackRpcServerTrace.TraceEvent(
 				MsgPackRpcServerTrace.StartServer,
-				"Start server. {{ \"Configuration\" : {0} }}", 
-				this._configuration 
+				"Start server. {{ \"Configuration\" : {0} }}",
+				this._configuration
 			);
 
 			this._transportManager = this._configuration.TransportManagerProvider( this );
@@ -199,12 +272,12 @@ namespace MsgPack.Rpc.Server
 		}
 
 		// FIXME: Change to Dispose 
-		public bool Stop()
+		private void Stop()
 		{
 			var currentDispatcher = Interlocked.Exchange( ref this._dispatcher, null );
 			if ( currentDispatcher == null )
 			{
-				return false;
+				return;
 			}
 
 			if ( this._transportManager != null )
@@ -220,7 +293,6 @@ namespace MsgPack.Rpc.Server
 				"Stop server. {{ \"Configuration\" : {0} }}",
 				this._configuration
 			);
-			return true;
 		}
 	}
 }

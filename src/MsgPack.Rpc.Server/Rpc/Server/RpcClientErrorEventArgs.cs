@@ -23,21 +23,54 @@ using System.Net;
 
 namespace MsgPack.Rpc.Server
 {
+	/// <summary>
+	///		Represents event data for the <see cref="RpcServer.ClientError"/> event.
+	/// </summary>
 	public sealed class RpcClientErrorEventArgs : EventArgs
 	{
 		private readonly RpcErrorMessage _rpcError;
 
+		/// <summary>
+		///		Gets the <see cref="RpcErrorMessage"/> represents client error.
+		/// </summary>
+		/// <value>
+		///		The <see cref="RpcErrorMessage"/> represents client error.
+		/// </value>
 		public RpcErrorMessage RpcError
 		{
-			get { return _rpcError; }
+			get { return this._rpcError; }
 		}
 
+		/// <summary>
+		///		Gets or sets the remote end point.
+		/// </summary>
+		/// <value>
+		///		The remote end point.
+		///		This value may be <c>null</c>.
+		/// </value>
 		public EndPoint RemoteEndPoint { get; set; }
 
+		/// <summary>
+		///		Gets or sets the session id.
+		/// </summary>
+		/// <value>
+		///		The session id.
+		/// </value>
 		public long SessionId { get; set; }
 
+		/// <summary>
+		///		Gets or sets the message id.
+		/// </summary>
+		/// <value>
+		///		The message id.
+		///		This value will be <c>null</c> for the notification.
+		/// </value>
 		public int? MessageId { get; set; }
 
+		/// <summary>
+		///		Initializes a new instance of the <see cref="RpcClientErrorEventArgs"/> class.
+		/// </summary>
+		/// <param name="rpcError">The <see cref="RpcErrorMessage"/> represents client error.</param>
 		public RpcClientErrorEventArgs( RpcErrorMessage rpcError )
 		{
 			this._rpcError = rpcError;

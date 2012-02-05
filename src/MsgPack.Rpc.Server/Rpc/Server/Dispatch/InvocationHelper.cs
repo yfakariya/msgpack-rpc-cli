@@ -46,6 +46,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 		/// </summary>
 		/// <param name="exception">The exception thrown by unpacker.</param>
 		/// <param name="parameterName">The parameter name failed to deserialize.</param>
+		/// <param name="isDebugMode"><c>true</c>, if the server stack is in debug mode; otherwise, <c>false</c>.</param>
 		/// <returns>
 		///		<see cref="RpcErrorMessage"/>.
 		/// </returns>
@@ -64,7 +65,12 @@ namespace MsgPack.Rpc.Server.Dispatch
 		///		<strong>This member is intended to MessagePack-RPC internal use.</strong>
 		///		Convert the exception thrown by target method to the RPC error.
 		/// </summary>
+		/// <param name="sessionId">The ID of the current session.</param>
+		/// <param name="messageType">The type of the inbound message.</param>
+		/// <param name="messageId">The ID of the request message. Specify <c>null</c> for the notification message.</param>
+		/// <param name="operationId">The ID of the target operation. This value is usually method name.</param>
 		/// <param name="exception">The exception thrown by target method.</param>
+		/// <param name="isDebugMode"><c>true</c>, if the server stack is in debug mode; otherwise, <c>false</c>.</param>
 		/// <returns>
 		///		<see cref="RpcErrorMessage"/>.
 		/// </returns>

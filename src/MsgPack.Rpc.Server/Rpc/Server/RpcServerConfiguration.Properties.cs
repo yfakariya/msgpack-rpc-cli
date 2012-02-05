@@ -326,7 +326,7 @@ namespace MsgPack.Rpc.Server
 		/// 	Gets or sets the timeout value to execute server thread.
 		/// </summary>
 		/// <value>
-		/// 	The timeout value to execute server thread. The default is 110 seconds. <c>null<c> means inifinite timeout.
+		/// 	The timeout value to execute server thread. The default is 110 seconds. <c>null</c> means inifinite timeout.
 		/// </value>
 		public TimeSpan? ExecutionTimeout
 		{
@@ -368,7 +368,7 @@ namespace MsgPack.Rpc.Server
 		/// 	Gets or sets the timeout value to abort server thread after graceful timeout is occurred.
 		/// </summary>
 		/// <value>
-		/// 	The timeout value to abort server thread after graceful timeout is occurred. The default is 20 seconds. <c>null<c> means inifinite timeout.
+		/// 	The timeout value to abort server thread after graceful timeout is occurred. The default is 20 seconds. <c>null</c> means inifinite timeout.
 		/// </value>
 		public TimeSpan? HardExecutionTimeout
 		{

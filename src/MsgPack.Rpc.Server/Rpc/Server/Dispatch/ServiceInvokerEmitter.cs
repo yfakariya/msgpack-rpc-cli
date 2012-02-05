@@ -224,11 +224,12 @@ namespace MsgPack.Rpc.Server.Dispatch
 		/// <summary>
 		///		Creates the invoke type built now and returns its new instance.
 		/// </summary>
+		/// <param name="configuration">The <see cref="RpcServerConfiguration"/> of this server stack.</param>
 		/// <param name="context">The <see cref="SerializationContext"/> which holds serializers.</param>
 		/// <param name="serviceDescription">The <see cref="ServiceDescription"/> which holds the service spec.</param>
 		/// <param name="targetOperation">The <see cref="MethodInfo"/> which holds the operation method spec.</param>
 		/// <returns>
-		///		Newly built <see cref="ServiceInvoker"/> instance.
+		///		Newly built <see cref="IAsyncServiceInvoker"/> instance.
 		///		This value will not be <c>null</c>.
 		///	</returns>
 		public IAsyncServiceInvoker CreateInstance( RpcServerConfiguration configuration, SerializationContext context, ServiceDescription serviceDescription, MethodInfo targetOperation )

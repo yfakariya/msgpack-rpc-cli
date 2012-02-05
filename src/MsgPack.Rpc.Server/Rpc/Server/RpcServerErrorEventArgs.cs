@@ -19,27 +19,49 @@
 #endregion -- License Terms --
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System.Diagnostics.Contracts;
 
 namespace MsgPack.Rpc.Server
 {
+	/// <summary>
+	///		Represents event data of the <see cref="RpcServer.ServerError"/> event.
+	/// </summary>
 	public sealed class RpcServerErrorEventArgs : EventArgs
 	{
 		private readonly Exception _exception;
 
+		/// <summary>
+		///		Gets the exception occurred in the server stack.
+		/// </summary>
+		/// <value>
+		///		The exception occurred in the server stack.
+		///		This value will not be <c>null</c>.
+		/// </value>
 		public Exception Exception
 		{
-			get { return this._exception; }
+			get
+			{
+				Contract.Ensures( Contract.Result<Exception>() != null );
+
+				return this._exception;
+			}
 		}
 
+		/// <summary>
+		///		Initializes a new instance of the <see cref="RpcServerErrorEventArgs"/> class.
+		/// </summary>
+		/// <param name="exception">The exception occurred in the server stack.</param>
+		/// <exception cref="ArgumentNullException">
+		///		<paramref name="exception"/> is <c>null</c>.
+		/// </exception>
 		public RpcServerErrorEventArgs( Exception exception )
 		{
 			if ( exception == null )
 			{
 				throw new ArgumentNullException( "exception" );
 			}
+
+			Contract.EndContractBlock();
 
 			this._exception = exception;
 		}

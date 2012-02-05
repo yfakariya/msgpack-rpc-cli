@@ -27,6 +27,9 @@ using MsgPack.Rpc.Protocols;
 
 namespace MsgPack.Rpc.Server.Protocols
 {
+	/// <summary>
+	///		Represents context information for the request or notification message.
+	/// </summary>
 	public sealed class ServerRequestContext : MessageContext
 	{
 		/// <summary>
@@ -136,6 +139,9 @@ namespace MsgPack.Rpc.Server.Protocols
 			internal set { this._argumentsUnpacker = value; }
 		}
 
+		/// <summary>
+		///		Initializes a new instance of the <see cref="ServerRequestContext"/> class.
+		/// </summary>
 		public ServerRequestContext()
 		{
 			// TODO: Configurable
@@ -146,6 +152,10 @@ namespace MsgPack.Rpc.Server.Protocols
 			this._receivedData = new List<ArraySegment<byte>>( 1 );
 		}
 
+		/// <summary>
+		///		Set bound transport to this context.
+		/// </summary>
+		/// <param name="transport">The transport to be bound.</param>
 		internal void SetTransport( ServerTransport transport )
 		{
 			Contract.Requires( transport != null );
@@ -179,6 +189,9 @@ namespace MsgPack.Rpc.Server.Protocols
 			this.SetBuffer( this._currentReceivingBuffer, this._currentReceivingBufferOffset, this._currentReceivingBuffer.Length - this._currentReceivingBufferOffset );
 		}
 
+		/// <summary>
+		///		Clears this instance internal buffers for reuse.
+		/// </summary>
 		internal sealed override void Clear()
 		{
 			this.ClearBuffers();

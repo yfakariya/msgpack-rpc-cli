@@ -36,6 +36,12 @@ namespace MsgPack.Rpc.Server.Dispatch
 	{
 		private readonly RpcServer _server;
 
+		/// <summary>
+		///		Gets a value indicating whether the server is in debug mode.
+		/// </summary>
+		/// <value>
+		/// 	<c>true</c> if the server is in debug mode; otherwise, <c>false</c>.
+		/// </value>
 		protected bool IsDebugMode
 		{
 			get { return this._server.Configuration.IsDebugMode; }

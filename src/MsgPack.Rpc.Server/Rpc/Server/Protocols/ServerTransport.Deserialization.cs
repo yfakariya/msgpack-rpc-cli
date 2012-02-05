@@ -326,7 +326,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		}
 
 		/// <summary>
-		///		Dispatch request/notification message via the <see cref="MessageRecieved"/> event.
+		///		Dispatch request/notification message via the <see cref="MsgPack.Rpc.Server.Dispatch.Dispatcher"/>.
 		/// </summary>
 		/// <param name="context">Context information.</param>
 		/// <returns>

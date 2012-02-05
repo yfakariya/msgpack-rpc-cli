@@ -24,8 +24,18 @@ using MsgPack.Rpc.Protocols;
 
 namespace MsgPack.Rpc.Server.Protocols
 {
+	/// <summary>
+	///		Defines extension methods to help server side socket error handling.
+	/// </summary>
 	public static class ServerSocketError
 	{
+		/// <summary>
+		///		Gets the <see cref="RpcErrorMessage"/> corresponds to the specified <see cref="SocketError"/>.
+		/// </summary>
+		/// <param name="socketError">The <see cref="SocketError"/>.</param>
+		/// <returns>
+		///		The <see cref="RpcErrorMessage"/> corresponds to the specified <see cref="SocketError"/>.
+		/// </returns>
 		public static RpcErrorMessage ToServerRpcError( this SocketError socketError )
 		{
 			// FIXME : "Message" Localization

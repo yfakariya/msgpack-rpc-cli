@@ -35,7 +35,7 @@ using NLiblet.Reflection;
 namespace MsgPack.Rpc.Server.Dispatch
 {
 	/// <summary>
-	///		Generates <see cref="ServiceInvoker{T}"/> implementation.
+	///		Generates <see cref="AsyncServiceInvoker{T}"/> implementation.
 	/// </summary>
 	internal sealed class ServiceInvokerGenerator : IDisposable
 	{
@@ -174,6 +174,9 @@ namespace MsgPack.Rpc.Server.Dispatch
 		///		If the concrete type is already created, returns the cached instance.
 		///		Else creates new concrete type and its instance, then returns it.
 		/// </summary>
+		/// <param name="configuration">
+		///		The <see cref="RpcServerConfiguration"/>.
+		/// </param>
 		/// <param name="context">
 		///		<see cref="SerializationContext"/> which manages serializer for arguments and return value.
 		/// </param>
@@ -181,10 +184,10 @@ namespace MsgPack.Rpc.Server.Dispatch
 		///		<see cref="ServiceDescription"/> which holds the service spec.
 		/// </param>
 		/// <param name="targetOperation">
-		///		<see cref="MethodInfp"/> of the target operation.
+		///		<see cref="MethodInfo"/> of the target operation.
 		/// </param>
 		/// <returns>
-		///		<see cref="ServiceInvoker{T}"/> where T is return type of the target method.
+		///		<see cref="AsyncServiceInvoker{T}"/> where T is return type of the target method.
 		/// </returns>
 		public IAsyncServiceInvoker GetServiceInvoker( RpcServerConfiguration configuration, SerializationContext context, ServiceDescription serviceDescription, MethodInfo targetOperation )
 		{

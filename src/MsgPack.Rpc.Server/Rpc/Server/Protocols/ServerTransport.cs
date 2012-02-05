@@ -46,7 +46,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		///		This value might be <c>null</c>.
 		/// </value>
 		/// <remarks>
-		///		This value can be set via <see cref="ServerTransportManager.SetTransport"/> utility method.
+		///		This value can be set via <see cref="ServerTransportManager{T}.BindSocket"/> utility method.
 		/// </remarks>
 		public Socket BoundSocket
 		{
@@ -695,6 +695,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		/// <summary>
 		///		Sends specified RPC error as response.
 		/// </summary>
+		/// <param name="messageId">The message ID of the inbound message.</param>
 		/// <param name="rpcError">
 		///		Error.
 		///	</param>

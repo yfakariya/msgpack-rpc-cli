@@ -29,9 +29,19 @@ namespace MsgPack.Rpc.Server.Protocols
 	/// </summary>
 	public sealed class TcpServerTransport : ServerTransport
 	{
+		/// <summary>
+		///		Initializes a new instance of the <see cref="TcpServerTransport"/> class.
+		/// </summary>
+		/// <param name="manager">The manager which will manage this instance.</param>
+		/// <exception cref="ArgumentNullException">
+		///		<paramref name="manager"/> is <c>null</c>.
+		/// </exception>
 		public TcpServerTransport( TcpServerTransportManager manager )
 			: base( manager ) { }
 
+		/// <summary>
+		///		Shutdown receiving on this transport.
+		/// </summary>
 		protected override void ShutdownReceiving()
 		{
 			Contract.Assert( this.BoundSocket != null );
@@ -40,6 +50,9 @@ namespace MsgPack.Rpc.Server.Protocols
 			base.ShutdownReceiving();
 		}
 
+		/// <summary>
+		///		Shutdown sending on this transport.
+		/// </summary>
 		protected override void ShutdownSending()
 		{
 			Contract.Assert( this.BoundSocket != null );
@@ -48,6 +61,10 @@ namespace MsgPack.Rpc.Server.Protocols
 			base.ShutdownSending();
 		}
 
+		/// <summary>
+		///		Performs protocol specific asynchronous 'Receive' operation.
+		/// </summary>
+		/// <param name="context">Context information.</param>
 		protected sealed override void ReceiveCore( ServerRequestContext context )
 		{
 			Contract.Assert( this.BoundSocket != null );
@@ -59,6 +76,10 @@ namespace MsgPack.Rpc.Server.Protocols
 			}
 		}
 
+		/// <summary>
+		///		Performs protocol specific asynchronous 'Send' operation.
+		/// </summary>
+		/// <param name="context">Context information.</param>
 		protected sealed override void SendCore( ServerResponseContext context )
 		{
 			Contract.Assert( this.BoundSocket != null );
