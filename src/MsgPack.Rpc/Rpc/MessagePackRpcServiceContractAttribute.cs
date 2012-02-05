@@ -20,6 +20,7 @@
 
 using System;
 using System.Diagnostics.Contracts;
+using System.Globalization;
 
 namespace MsgPack.Rpc
 {
@@ -29,21 +30,19 @@ namespace MsgPack.Rpc
 	[AttributeUsage( AttributeTargets.Interface | AttributeTargets.Class, AllowMultiple = false, Inherited = true )]
 	public sealed class MessagePackRpcServiceContractAttribute : Attribute
 	{
-		private readonly string _name;
+		private string _name;
 
 		/// <summary>
 		///		Gets the name of the RPC procedure.
 		/// </summary>
 		/// <value>
 		///		The name of the RPC procedure.
+		///		If the value is <c>null</c>, empty or consisted by whitespace characters only, the qualified type name will be used.
 		/// </value>
 		public string Name
 		{
-			get
-			{
-				Contract.Ensures( !String.IsNullOrEmpty( Contract.Result<string>() ) );
-				return this._name;
-			}
+			get { return this._name; }
+			set { this._name = value; }
 		}
 
 		private string _application;
@@ -67,37 +66,18 @@ namespace MsgPack.Rpc
 			}
 		}
 
-		private string _version;
-
 		/// <summary>
 		///		Gets or sets the version of the RPC procedure.
 		/// </summary>
 		/// <value>
 		///		The version of the RPC procedure.
 		/// </value>
-		public string Version
-		{
-			get
-			{
-				Contract.Ensures( Contract.Result<string>() != null );
-				return this._version ?? String.Empty;
-			}
-			set
-			{
-				this._version = value;
-			}
-		}
+		public int Version { get; set; }
 
 		/// <summary>
 		///		Initializes a new instance of the <see cref="MessagePackRpcServiceContractAttribute"/> class.
 		/// </summary>
-		/// <param name="name">The name of the RPC procedure.</param>
-		public MessagePackRpcServiceContractAttribute( string name )
-		{
-			if ( name == null )
-			{
-				throw new ArgumentNullException( "name" );
-			}
+		public MessagePackRpcServiceContractAttribute() { }
 
 		internal string ToServiceId( Type serviceType )
 		{
@@ -107,14 +87,6 @@ namespace MsgPack.Rpc
 					String.IsNullOrWhiteSpace( this._name ) ? ServiceIdentifier.TruncateGenericsSuffix( serviceType.Name ) : this._name,
 					this.Version
 				);
-			if ( name.Length == 0 )
-			{
-				throw new ArgumentException( "The argument cannot be empty.", "name" );
-			}
-
-			Contract.EndContractBlock();
-
-			this._name = name;
 		}
 	}
 }
