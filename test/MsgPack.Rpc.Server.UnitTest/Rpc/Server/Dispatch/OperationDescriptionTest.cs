@@ -35,7 +35,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 			SerializationContext serializationContext = new SerializationContext();
 			ServiceDescription service = ServiceDescription.FromServiceType( typeof( Service ) );
 
-			var result = OperationDescription.FromServiceDescription( configuration, serializationContext, service ).OrderBy( item=>item.Id).ToArray();
+			var result = OperationDescription.FromServiceDescription( configuration, serializationContext, service ).OrderBy( item => item.Id ).ToArray();
 
 			Assert.That( result, Is.Not.Null.And.Length.EqualTo( 2 ) );
 			Assert.That( result[ 0 ].Id, Is.StringEnding( Service.ExpectedOperationId1 ) );
@@ -101,7 +101,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 			OperationDescription.FromServiceDescription( configuration, serializationContext, service ).ToArray();
 		}
 
-		[MessagePackRpcServiceContract( "Service" )]
+		[MessagePackRpcServiceContract]
 		private class Service
 		{
 			public const string ExpectedOperationId1 = "AnotherPublicMethod";
@@ -125,18 +125,18 @@ namespace MsgPack.Rpc.Server.Dispatch
 			public void NotARpcMethod() { }
 		}
 
-		[MessagePackRpcServiceContract( "NoMember" )]
+		[MessagePackRpcServiceContract]
 		private sealed class NoMember
 		{
 		}
 
-		[MessagePackRpcServiceContract( "NoRpcMember" )]
+		[MessagePackRpcServiceContract]
 		private sealed class NoRpcMember
 		{
 			public void Foo() { }
 		}
 
-		[MessagePackRpcServiceContract( "Overloaded" )]
+		[MessagePackRpcServiceContract]
 		private sealed class Overloaded
 		{
 			[MessagePackRpcMethod]

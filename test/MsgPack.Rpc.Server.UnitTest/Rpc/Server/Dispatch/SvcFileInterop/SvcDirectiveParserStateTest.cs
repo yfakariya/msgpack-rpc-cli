@@ -28,7 +28,7 @@ namespace MsgPack.Rpc.Server.Dispatch.SvcFileInterop
 	public class SvcDirectiveParserStateTest
 	{
 		[Test]
-		[ExpectedException( typeof( InvalidOperationException ) )]
+		[ExpectedException( typeof( FormatException ) )]
 		public void TestParse_Empty()
 		{
 			var target = new Target();

@@ -52,7 +52,7 @@ namespace MsgPack.Rpc.Server.Dispatch.SvcFileInterop
 		}
 
 		[Test()]
-		[ExpectedException( typeof( InvalidOperationException ) )]
+		[ExpectedException( typeof( FormatException ) )]
 		public void TestParse_NotAPercentChar()
 		{
 			SvcDirectiveParserState target = new StartTagFoundState( new InitialState() );

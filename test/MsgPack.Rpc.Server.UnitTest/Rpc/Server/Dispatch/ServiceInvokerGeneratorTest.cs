@@ -29,7 +29,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 	[TestFixture()]
 	public class ServiceInvokerGeneratorTest
 	{
-		private readonly bool _isDumpEnabled = true;
+		private readonly bool _isDumpEnabled = false;
 		private readonly SerializationContext _serializationContext = new SerializationContext();
 
 		[Test()]
@@ -285,7 +285,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 
 		// FIXME: More test cases. ex. Async-based
 
-		[MessagePackRpcServiceContract( "Service" )]
+		[MessagePackRpcServiceContract()]
 		public class Service<TArg1, TArg2, TResult>
 		{
 			public event EventHandler<ServiceInvokedEventArgs<TResult>> Invoked;

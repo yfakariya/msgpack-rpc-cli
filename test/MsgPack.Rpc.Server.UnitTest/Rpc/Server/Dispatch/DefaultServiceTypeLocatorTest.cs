@@ -148,7 +148,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 			var target = new DefaultServiceTypeLocator();
 
 			var result = target.RemoveService( serviceType );
-			
+
 			Assert.That( result, Is.False );
 		}
 
@@ -193,7 +193,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 			Assert.That( target.FindServices(), Is.EqualTo( target.EnumerateServices() ) );
 		}
 
-		[MessagePackRpcServiceContract( "Svc1" )]
+		[MessagePackRpcServiceContract]
 		private sealed class Service
 		{
 			[MessagePackRpcMethod]
@@ -208,7 +208,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 			}
 		}
 
-		[MessagePackRpcServiceContract( "Svc2" )]
+		[MessagePackRpcServiceContract]
 		private sealed class Service2
 		{
 		}

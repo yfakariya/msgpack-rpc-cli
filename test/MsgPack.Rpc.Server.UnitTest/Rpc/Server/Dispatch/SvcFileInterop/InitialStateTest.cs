@@ -51,7 +51,7 @@ namespace MsgPack.Rpc.Server.Dispatch.SvcFileInterop
 		}
 
 		[Test()]
-		[ExpectedException( typeof( InvalidOperationException ) )]
+		[ExpectedException( typeof( FormatException ) )]
 		public void TestParse_NonWhitespace()
 		{
 			var target = new InitialState();

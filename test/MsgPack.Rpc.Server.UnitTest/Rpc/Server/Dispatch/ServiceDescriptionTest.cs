@@ -112,7 +112,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 			Assert.That( result.Initializer, Is.Not.Null );
 			Assert.That( result.Name, Is.EqualTo( ServiceWithApplicationName.Name ) );
 			Assert.That( result.ServiceType, Is.EqualTo( serviceType ) );
-			Assert.That( result.Version, Is.EqualTo( Int32.Parse( ServiceWithApplicationName.Version ) ) );
+			Assert.That( result.Version, Is.EqualTo( ServiceWithApplicationName.Version ) );
 
 			Assert.That( result.Initializer(), Is.Not.Null.And.TypeOf( serviceType ) );
 		}
@@ -243,19 +243,19 @@ namespace MsgPack.Rpc.Server.Dispatch
 		{
 		}
 
-		[MessagePackRpcServiceContract( "Name" )]
+		[MessagePackRpcServiceContract( Name = "Name" )]
 		private sealed class ServiceWithoutDefaultPublicConstructor
 		{
 			private ServiceWithoutDefaultPublicConstructor() { }
 		}
 
-		[MessagePackRpcServiceContract( ServiceWithoutMembers.Name )]
+		[MessagePackRpcServiceContract( Name = ServiceWithoutMembers.Name )]
 		private sealed class ServiceWithoutMembers
 		{
 			public const string Name = "Name2";
 		}
 
-		[MessagePackRpcServiceContract( ServiceWithoutApplicationName.Name )]
+		[MessagePackRpcServiceContract( Name = ServiceWithoutApplicationName.Name )]
 		private sealed class ServiceWithoutApplicationName
 		{
 			public const string Name = "Name3";
@@ -264,12 +264,12 @@ namespace MsgPack.Rpc.Server.Dispatch
 			public void Foo() { }
 		}
 
-		[MessagePackRpcServiceContract( ServiceWithApplicationName.Name, Application = ServiceWithApplicationName.ApplicationName, Version = ServiceWithApplicationName.Version )]
+		[MessagePackRpcServiceContract( Name = ServiceWithApplicationName.Name, Application = ServiceWithApplicationName.ApplicationName, Version = ServiceWithApplicationName.Version )]
 		private sealed class ServiceWithApplicationName
 		{
 			public const string Name = "Name4";
 			public const string ApplicationName = "ApplicationName4";
-			public const string Version = "1234";
+			public const int Version = 1234;
 
 			[MessagePackRpcMethod]
 			public void Foo() { }
