@@ -437,6 +437,23 @@ namespace MsgPack.Rpc.Server.Protocols
 				throw new ArgumentNullException( "context" );
 			}
 
+
+			if ( this.IsClientShutdowned )
+			{
+				// Client no longer send any additional data, so reset state.
+				TraceCancelReceiveDueToClientShutdown( context );
+				return;
+			}
+
+			if ( this.IsInShutdown )
+			{
+				// Server no longer process any subsequent retrieval.
+				TraceCancelReceiveDueToServerShutdown( context );
+				// Shutdown sending
+				this.OnProcessFinished();
+				return;
+			}
+
 			if ( MsgPackRpcServerProtocolsTrace.ShouldTrace( MsgPackRpcServerProtocolsTrace.ReceiveInboundData ) )
 			{
 				MsgPackRpcServerProtocolsTrace.TraceEvent(
