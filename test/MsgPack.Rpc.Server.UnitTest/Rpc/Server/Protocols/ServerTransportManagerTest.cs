@@ -19,8 +19,8 @@
 #endregion -- License Terms --
 
 using System;
-using NUnit.Framework;
 using System.Net.Sockets;
+using NUnit.Framework;
 
 namespace MsgPack.Rpc.Server.Protocols
 {
