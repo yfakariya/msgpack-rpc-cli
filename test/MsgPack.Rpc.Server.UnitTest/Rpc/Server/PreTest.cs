@@ -29,6 +29,7 @@ using NUnit.Framework;
 
 namespace MsgPack.Rpc.Server
 {
+	// FIXME: Move to Integration test.
 	// TODOs
 	// Error test
 	// Refactor move deserialization from transport to session.
@@ -43,6 +44,7 @@ namespace MsgPack.Rpc.Server
 	///		Prototype test.
 	/// </summary>
 	[TestFixture]
+	[Explicit]
 	public class PreTest
 	{
 		// TODO: Error packet test.
