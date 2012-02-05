@@ -21,7 +21,7 @@
 using System;
 using System.Diagnostics.Contracts;
 
-namespace MsgPack.Rpc
+namespace MsgPack.Rpc.Protocols
 {
 	/// <summary>
 	///		Holds event data for <see cref="E:MsgPack.Rpc.Server.Protocols.InProcServerTranportManager.Response"/> event.

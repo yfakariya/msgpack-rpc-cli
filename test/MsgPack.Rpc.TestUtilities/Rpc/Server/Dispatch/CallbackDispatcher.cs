@@ -19,8 +19,8 @@
 #endregion -- License Terms --
 
 using System;
-using System.Linq;
 using System.Threading.Tasks;
+using MsgPack.Rpc.Protocols;
 using MsgPack.Rpc.Server.Protocols;
 using MsgPack.Serialization;
 
@@ -66,11 +66,22 @@ namespace MsgPack.Rpc.Server.Dispatch
 								}
 								catch ( Exception exception )
 								{
-									base.SetException( responseContext, exception );
+									if ( responseContext != null )
+									{
+										base.SetException( responseContext, exception );
+									}
+									else
+									{
+										// notification
+										InvocationHelper.HandleInvocationException( requestContext.SessionId, MessageType.Notification, requestContext.MessageId, requestContext.MethodName, exception, this.IsDebugMode );
+									}
 									return;
 								}
 
-								base.SetReturnValue( responseContext, returnValue );
+								if ( responseContext != null )
+								{
+									base.SetReturnValue( responseContext, returnValue );
+								}
 							}
 						);
 				};

@@ -22,12 +22,13 @@ using System;
 using System.Globalization;
 using System.Net;
 using MsgPack.Rpc.Server.Dispatch;
+using System.Diagnostics.Contracts;
 
 namespace MsgPack.Rpc.Server
 {
 	/// <summary>
 	///		Wraps <see cref="RpcServer"/> with <see cref="CallbackDispatcher"/> and
-	///		decouple Server assembly from the caller (typically test code).
+	///		decouples Server assembly from the caller (typically test code).
 	/// </summary>
 	public sealed class CallbackServer : IDisposable
 	{
@@ -37,6 +38,16 @@ namespace MsgPack.Rpc.Server
 		public const int PortNumber = 57319;
 
 		private readonly RpcServer _server;
+
+		public object Server
+		{
+			get
+			{
+				Contract.Ensures( Contract.Result<object>() as RpcServer != null );
+
+				return this._server;
+			}
+		}
 
 		/// <summary>
 		///		Gets the bound end point to the server.
@@ -139,7 +150,9 @@ namespace MsgPack.Rpc.Server
 			{
 				throw new ArgumentNullException( "endPoint" );
 			}
-			
+
+			Contract.Ensures( Contract.Result<CallbackServer>() != null );
+
 			return
 				Create(
 					new RpcServerConfiguration()
@@ -181,6 +194,8 @@ namespace MsgPack.Rpc.Server
 			{
 				throw new ArgumentException( String.Format( CultureInfo.CurrentCulture, "Configuration is not an '{0}' type.", typeof( RpcServerConfiguration ) ), "configuration" );
 			}
+
+			Contract.Ensures( Contract.Result<CallbackServer>() != null );
 
 			return Create( realConfiguration );
 		}

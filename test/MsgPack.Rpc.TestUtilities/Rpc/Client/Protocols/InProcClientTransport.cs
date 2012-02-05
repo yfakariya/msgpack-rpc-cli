@@ -19,14 +19,35 @@
 #endregion -- License Terms --
 
 using System;
+using System.Linq;
+using MsgPack.Rpc.Server.Protocols;
+using System.Threading;
+using System.Collections.Concurrent;
+using MsgPack.Rpc.Protocols;
 
 namespace MsgPack.Rpc.Client.Protocols
 {
 	/// <summary>
 	///		Implements <see cref="ClientTransport"/> with in-proc method invocation.
 	/// </summary>
+	/// <remarks>
+	///		This transport only support one session per manager.
+	/// </remarks>
 	public sealed class InProcClientTransport : ClientTransport
 	{
+		/// <summary>
+		///		The queue for inbound data.
+		/// </summary>
+		private readonly BlockingCollection<byte[]> _inboundQueue;
+
+		/// <summary>
+		///		The queue to store pending data.
+		/// </summary>
+		private readonly ConcurrentQueue<InProcPacket> _pendingPackets;
+
+
+		private InProcServerTransport _destination;
+
 		private readonly InProcClientTransportManager _manager;
 
 		/// <summary>
@@ -40,22 +61,52 @@ namespace MsgPack.Rpc.Client.Protocols
 			: base( manager )
 		{
 			this._manager = manager;
+			this._inboundQueue = new BlockingCollection<byte[]>();
+			this._pendingPackets = new ConcurrentQueue<InProcPacket>();
+		}
+
+		protected override void Dispose( bool disposing )
+		{
+			if ( disposing )
+			{
+				var destination = Interlocked.Exchange( ref this._destination, null );
+				if ( destination != null )
+				{
+					destination.Response -= this.OnDestinationResponse;
+				}
+			}
+
+			base.Dispose( disposing );
+		}
+
+		internal void SetDestination( InProcServerTransport destination )
+		{
+			this._destination = destination;
+			destination.Response += this.OnDestinationResponse;
+		}
+
+		private void OnDestinationResponse( object sender, InProcResponseEventArgs e )
+		{
+			this._inboundQueue.Add( e.Data, this._manager.CancellationToken );
+		}
+
+		protected sealed override void ShutdownSending()
+		{
+			this._destination.FeedData( new byte[ 0 ] );
+
+			base.ShutdownSending();
 		}
 
 		protected sealed override void SendCore( ClientRequestContext context )
 		{
-			this._manager.Send( context );
+			this._destination.FeedData( context.BufferList.SelectMany( segment => segment.Array.Skip( segment.Offset ).Take( segment.Count ) ).ToArray() );
 			this.OnSent( context );
 		}
 
 		protected sealed override void ReceiveCore( ClientResponseContext context )
 		{
-			this._manager.ReceiveAsync( context ).ContinueWith( previous =>
-				{
-					previous.Dispose();
-					this.OnReceived( context );
-				}
-			);
+			InProcPacket.ProcessReceive( this._inboundQueue, this._pendingPackets, context, this._manager.CancellationToken );
+			this.OnReceived( context );
 		}
 	}
 }

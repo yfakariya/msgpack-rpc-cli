@@ -19,32 +19,22 @@
 #endregion -- License Terms --
 
 using System;
-using System.Collections.Concurrent;
-using System.IO;
-using System.Linq;
+using System.Net;
+using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using MsgPack.Rpc.Server.Protocols;
-using System.Net;
-using System.Net.Sockets;
 
 namespace MsgPack.Rpc.Client.Protocols
 {
 	/// <summary>
 	///		Implements <see cref="ClientTransportManager{T}"/> for <see cref="InProcClientTransport"/>.
 	/// </summary>
+	/// <remarks>
+	///		This transport only support one session per manager.
+	/// </remarks>
 	public sealed class InProcClientTransportManager : ClientTransportManager<InProcClientTransport>
 	{
-		/// <summary>
-		///		The queue to emulate server to client communication.
-		/// </summary>
-		private readonly BlockingCollection<byte[]> _inboundQueue;
-
-		/// <summary>
-		///		The dictionary to emulate continuous receiving.
-		/// </summary>
-		private readonly ConcurrentDictionary<ClientResponseContext, MemoryStream> _pendingResponseTable;
-
 		/// <summary>
 		///		The target server to be invoked.
 		/// </summary>
@@ -87,11 +77,9 @@ namespace MsgPack.Rpc.Client.Protocols
 				throw new ArgumentNullException( "target" );
 			}
 
-			this._inboundQueue = new BlockingCollection<byte[]>();
-			this._pendingResponseTable = new ConcurrentDictionary<ClientResponseContext, MemoryStream>();
 			this._target = target;
-			target.Response += this.OnReceiving;
 			this._cancellationTokenSource = new CancellationTokenSource();
+			this.SetTransportPool( new OnTheFlyObjectPool<InProcClientTransport>( () => new InProcClientTransport( this ), null ) );
 		}
 
 		protected sealed override void DisposeCore( bool disposing )
@@ -103,83 +91,30 @@ namespace MsgPack.Rpc.Client.Protocols
 			}
 
 			this._cancellationTokenSource.Dispose();
-			this._inboundQueue.Dispose();
 			base.DisposeCore( disposing );
 		}
 
 		protected sealed override void BeginShutdownCore()
 		{
-			this._target.SendToServer( new byte[ 0 ] );
 			this._cancellationTokenSource.Cancel();
 			base.BeginShutdownCore();
 		}
 
 		protected override Task<ClientTransport> ConnectAsyncCore( EndPoint targetEndPoint )
 		{
-			return Task.Factory.StartNew( () => this.GetTransport( new Socket( AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp ) ) as ClientTransport );
+			return Task.Factory.StartNew( () => this.GetTransport( null ) as ClientTransport );
 		}
 
-		protected sealed override InProcClientTransport GetTransportCore()
+		protected sealed override InProcClientTransport GetTransportCore( Socket bindingSocket )
 		{
-			return new InProcClientTransport( this );
+			var result = base.GetTransportCore( bindingSocket );
+			result.SetDestination( this._target.NewSession() );
+			return result;
 		}
 
 		protected sealed override void ReturnTransportCore( InProcClientTransport transport )
 		{
-			// nop
-		}
-
-		/// <summary>
-		///		Process in-proc communication sending request/notification.
-		/// </summary>
-		/// <param name="context">The <see cref="ClientRequestContext"/>.</param>
-		internal void Send( ClientRequestContext context )
-		{
-			this._target.SendToServer( context.BufferList.SelectMany( segment => segment.Array.Skip( segment.Offset ).Take( segment.Count ) ).ToArray() );
-		}
-
-		/// <summary>
-		///		Handles <see cref="E:InProcServerTransportManager.Response"/> event.
-		/// </summary>
-		/// <param name="sender">The sender.</param>
-		/// <param name="e">The <see cref="MsgPack.Rpc.InProcResponseEventArgs"/> instance containing the event data.</param>
-		private void OnReceiving( object sender, InProcResponseEventArgs e )
-		{
-			this._inboundQueue.Add( e.Data );
-		}
-
-		/// <summary>
-		///		Process in-proc communication receiving response.
-		/// </summary>
-		/// <param name="context">The <see cref="ClientResponseContext"/>.</param>
-		/// <returns>
-		///		<see cref="Task"/> to be notified async operation result.
-		/// </returns>
-		internal Task ReceiveAsync( ClientResponseContext context )
-		{
-			return Task.Factory.StartNew( this.ReceiveCore, context );
-		}
-
-		/// <summary>
-		///		Process in-proc communication receiving response.
-		/// </summary>
-		/// <param name="state"><see cref="ClientResponseContext"/>.</param>
-		private void ReceiveCore( object state )
-		{
-			var context = state as ClientResponseContext;
-			MemoryStream buffer;
-			if ( !this._pendingResponseTable.TryGetValue( context, out buffer ) )
-			{
-				buffer = new MemoryStream( this._inboundQueue.Take( this._cancellationTokenSource.Token ) );
-				this._pendingResponseTable.TryAdd( context, buffer );
-			}
-
-			buffer.Read( context.Buffer, context.Offset, context.Buffer.Length - context.Offset );
-
-			if ( buffer.Position == buffer.Length )
-			{
-				this._pendingResponseTable.TryRemove( context, out buffer );
-			}
+			transport.Dispose();
 		}
 	}
 }

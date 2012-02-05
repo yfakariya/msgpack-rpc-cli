@@ -21,10 +21,11 @@
 using System;
 using System.Collections.Concurrent;
 using System.Diagnostics.Contracts;
-using System.IO;
 using System.Linq;
+using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
+using MsgPack.Rpc.Protocols;
 
 namespace MsgPack.Rpc.Server.Protocols
 {
@@ -33,15 +34,9 @@ namespace MsgPack.Rpc.Server.Protocols
 	/// </summary>
 	public sealed class InProcServerTransportManager : ServerTransportManager<InProcServerTransport>
 	{
-		/// <summary>
-		///		The queue to emulate client to server communication.
-		/// </summary>
-		private readonly BlockingCollection<byte[]> _inboundQueue = new BlockingCollection<byte[]>();
+		private readonly ConcurrentDictionary<long, BlockingCollection<byte[]>> _arrivedQueueTable;
+		private readonly ConcurrentDictionary<long, BlockingCollection<byte[]>> _receivingQueueTable;
 
-		/// <summary>
-		///		The dictionary to emulate continuous receiving.
-		/// </summary>
-		private readonly ConcurrentDictionary<ServerRequestContext, MemoryStream> _pendingRequestTable = new ConcurrentDictionary<ServerRequestContext, MemoryStream>();
 
 		/// <summary>
 		///		<see cref="CancellationTokenSource"/> to process cancellation.
@@ -62,7 +57,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		/// <summary>
 		///		Occurs when the server send response.
 		/// </summary>
-		public event EventHandler<InProcResponseEventArgs> Response;
+		internal event EventHandler<InProcResponseEventArgs> Response;
 
 		/// <summary>
 		///		Raises the <see cref="E:Response"/> event.
@@ -84,16 +79,19 @@ namespace MsgPack.Rpc.Server.Protocols
 		/// <exception cref="ArgumentNullException">
 		///		<paramref name="server"/> is <c>null</c>.
 		/// </exception>
-		public InProcServerTransportManager( RpcServer server )
+		public InProcServerTransportManager( RpcServer server, Func<InProcServerTransportManager, ObjectPool<InProcServerTransport>> transportPoolProvider )
 			: base( server )
 		{
 			this._cancellationTokenSource = new CancellationTokenSource();
+			this._arrivedQueueTable = new ConcurrentDictionary<long, BlockingCollection<byte[]>>();
+			this._receivingQueueTable = new ConcurrentDictionary<long, BlockingCollection<byte[]>>();
+			this.SetTransportPool( ( transportPoolProvider ?? ( manager => new OnTheFlyObjectPool<InProcServerTransport>( () => new InProcServerTransport( manager ), null ) ) )( this ) );
 		}
 
 		protected sealed override void BeginShutdownCore()
 		{
-			this.RaiseResponse( new byte[ 0 ] );
 			this._cancellationTokenSource.Cancel();
+
 			base.BeginShutdownCore();
 		}
 
@@ -105,13 +103,26 @@ namespace MsgPack.Rpc.Server.Protocols
 			}
 
 			this._cancellationTokenSource.Dispose();
-			this._inboundQueue.Dispose();
-			base.DisposeCore( disposing );
-		}
 
-		protected sealed override InProcServerTransport GetTransportCore()
-		{
-			return new InProcServerTransport( this );
+			foreach ( var entry in this._arrivedQueueTable )
+			{
+				var queue = entry.Value;
+				if ( queue != null )
+				{
+					queue.Dispose();
+				}
+			}
+
+			foreach ( var entry in this._receivingQueueTable )
+			{
+				var queue = entry.Value;
+				if ( queue != null )
+				{
+					queue.Dispose();
+				}
+			}
+
+			base.DisposeCore( disposing );
 		}
 
 		protected sealed override void ReturnTransportCore( InProcServerTransport transport )
@@ -120,38 +131,18 @@ namespace MsgPack.Rpc.Server.Protocols
 		}
 
 		/// <summary>
-		///		Sends specified data to the server.
+		///		Starts new session.
 		/// </summary>
-		/// <param name="data">The data to be sent.</param>
-		internal void SendToServer( byte[] data )
+		/// <returns>
+		///		<see cref="InProcServerTransport"/> to process in-proc communication from a client.
+		/// </returns>
+		public InProcServerTransport NewSession()
 		{
-			Contract.Assert( data != null );
-			this._inboundQueue.Add( data );
+			var result = this.GetTransport( null );
+			result.StartReceive( this.GetRequestContext( result ) );
+			return result;
 		}
-
-		/// <summary>
-		///		Process in-proc communication receiving request/notification.
-		/// </summary>
-		/// <param name="context">The <see cref="ServerRequestContext"/>.</param>
-		internal void Receive( ServerRequestContext context )
-		{
-			Contract.Assert( context != null );
-
-			MemoryStream buffer;
-			if ( !this._pendingRequestTable.TryGetValue( context, out buffer ) )
-			{
-				buffer = new MemoryStream( this._inboundQueue.Take( this._cancellationTokenSource.Token ) );
-				this._pendingRequestTable.TryAdd( context, buffer );
-			}
-
-			buffer.Read( context.Buffer, context.Offset, context.Buffer.Length - context.Offset );
-
-			if ( buffer.Position == buffer.Length )
-			{
-				this._pendingRequestTable.TryRemove( context, out buffer );
-			}
-		}
-
+				
 		/// <summary>
 		///		Process in-proc communication sending response.
 		/// </summary>
@@ -162,21 +153,26 @@ namespace MsgPack.Rpc.Server.Protocols
 		internal Task SendAsync( ServerResponseContext context )
 		{
 			Contract.Assert( context != null );
+			Contract.Assert( context.BufferList != null );
+
+			var data = context.BufferList.SelectMany( b => b.Array.Skip( b.Offset ).Take( b.Count ) ).ToArray();
+			this.SendResponseData( data );
+			context.SetBytesTransferred( data.Length );
 
 			return
 				Task.Factory.StartNew(
-					this.RaiseResponse,
-					context.BufferList.SelectMany( b => b.Array.Skip( b.Offset ).Take( b.Count ) ).ToArray()
+					state => this.SendResponseData( state as byte[] ),
+					data
 				);
 		}
 
 		/// <summary>
-		///		Raises the <see cref="E:Response"/> event.
+		///		Send specified data directly and synchronously as a response.
 		/// </summary>
-		/// <param name="state">The array of <see cref="Byte"/>.</param>
-		private void RaiseResponse( object state )
+		/// <param name="data">Raw response data.</param>
+		internal void SendResponseData( byte[] data )
 		{
-			this.OnResponse( new InProcResponseEventArgs( state as byte[] ) );
+			this.OnResponse( new InProcResponseEventArgs( data ) );
 		}
 	}
 }
