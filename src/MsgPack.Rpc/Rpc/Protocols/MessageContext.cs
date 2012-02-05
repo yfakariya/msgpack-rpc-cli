@@ -131,6 +131,32 @@ namespace MsgPack.Rpc.Protocols
 			this.Completed += transport.OnSocketOperationCompleted;
 		}
 
+		private int? _bytesTransferred;
+
+		/// <summary>
+		///		Gets the bytes count of transferred data.
+		/// </summary>
+		/// <returns>The bytes count of transferred data..</returns>
+		public new int BytesTransferred
+		{
+			get { return this._bytesTransferred ?? base.BytesTransferred; }
+		}
+
+		/// <summary>
+		///		Sets the bytes count of transferred data.
+		/// </summary>
+		/// <param name="bytesTransferred">
+		///		The bytes count of transferred data.
+		///		To use actual socket's value, specify <c>null</c>.
+		/// </param>
+		/// <remarks>
+		///		This method is intented to use testing purposes or emulate socket operation on non-socket transport.
+		/// </remarks>
+		internal void SetBytesTransferred( int? bytesTransferred )
+		{
+			this._bytesTransferred = bytesTransferred;
+		}
+
 		/// <summary>
 		///		Initializes a new instance of the <see cref="MessageContext"/> class.
 		/// </summary>
@@ -169,6 +195,7 @@ namespace MsgPack.Rpc.Protocols
 			this.MessageId = null;
 			this._sessionId = 0;
 			this._sessionStartedAt = default( DateTimeOffset );
+			this._bytesTransferred = null;
 		}
 	}
 }
