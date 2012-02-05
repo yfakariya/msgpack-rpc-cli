@@ -96,6 +96,8 @@ namespace MsgPack.Rpc.Server.Protocols
 					target.InvokeSetTransportPool( transportPool );
 					// activate
 					var activeTransport = target.InvokeGetTransport( socket );
+					// maually set transport
+					activeTransport.BoundSocket = socket;
 
 					using ( var waitHandle = new ManualResetEventSlim() )
 					{
@@ -141,13 +143,13 @@ namespace MsgPack.Rpc.Server.Protocols
 			{
 				target.InvokeSetTransportPool( transportPool );
 				var result = target.InvokeGetTransport( socket );
-				Assert.That( result.BoundSocket, Is.SameAs( socket ) );
+				// Default implementation does not treat bindingSocket
+				Assert.That( result.BoundSocket, Is.Null );
 			}
 		}
 
 		[Test]
-		[ExpectedException( typeof( ArgumentNullException ) )]
-		public void TestGetTransport_Null_Fail()
+		public void TestGetTransport_Null_Halmless()
 		{
 			using ( var server = new RpcServer() )
 			using ( var target = new Target( server ) )
@@ -155,7 +157,9 @@ namespace MsgPack.Rpc.Server.Protocols
 			using ( var transportPool = new SingletonObjectPool<NullServerTransport>( transport ) )
 			{
 				target.InvokeSetTransportPool( transportPool );
-				target.InvokeGetTransport( null );
+				var result = target.InvokeGetTransport( null );
+				// Default implementation does not treat bindingSocket
+				Assert.That( result.BoundSocket, Is.Null );
 			}
 		}
 

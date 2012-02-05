@@ -19,6 +19,8 @@
 #endregion -- License Terms --
 
 using System;
+using System.Globalization;
+using System.Net.Sockets;
 
 namespace MsgPack.Rpc.Server.Protocols
 {
@@ -30,6 +32,18 @@ namespace MsgPack.Rpc.Server.Protocols
 #if !API_SIGNATURE_TEST
 			base.SetTransportPool( server.Configuration.UdpTransportPoolProvider( () => new UdpServerTransport( this ), server.Configuration.CreateUdpTransportPoolConfiguration() ) );
 #endif
+		}
+
+		protected sealed override UdpServerTransport GetTransportCore( Socket bindingSocket )
+		{
+			if ( bindingSocket == null )
+			{
+				throw new InvalidOperationException( String.Format( CultureInfo.CurrentCulture, "'bindingSocket' is required in {0}.", this.GetType() ) );
+			}
+
+			var transport = base.GetTransportCore( bindingSocket );
+			transport.BoundSocket = bindingSocket;
+			return transport;
 		}
 	}
 }

@@ -20,12 +20,9 @@
 
 using System;
 using System.Diagnostics.Contracts;
-using System.Linq;
-using System.Net;
+using System.Globalization;
 using System.Net.Sockets;
-using System.Net.NetworkInformation;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace MsgPack.Rpc.Server.Protocols
 {
@@ -191,6 +188,18 @@ namespace MsgPack.Rpc.Server.Protocols
 			context.AcceptSocket = null;
 			this.Accept( context );
 			transport.Receive( this.GetRequestContext( transport ) );
+		}
+
+		protected sealed override TcpServerTransport GetTransportCore( Socket bindingSocket )
+		{
+			if ( bindingSocket == null )
+			{
+				throw new InvalidOperationException( String.Format( CultureInfo.CurrentCulture, "'bindingSocket' is required in {0}.", this.GetType() ) );
+			}
+
+			var transport = base.GetTransportCore( bindingSocket );
+			transport.BoundSocket = bindingSocket;
+			return transport;
 		}
 	}
 }

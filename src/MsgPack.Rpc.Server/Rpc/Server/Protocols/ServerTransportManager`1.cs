@@ -148,11 +148,6 @@ namespace MsgPack.Rpc.Server.Protocols
 
 		protected TTransport GetTransport( Socket bindingSocket )
 		{
-			if ( bindingSocket == null )
-			{
-				throw new ArgumentNullException( "bindingSocket" );
-			}
-
 			if ( !this.IsTransportPoolSet )
 			{
 				throw new InvalidOperationException( "Transport pool must be set via SetTransportPool()." );
@@ -161,18 +156,18 @@ namespace MsgPack.Rpc.Server.Protocols
 			Contract.Ensures( Contract.Result<TTransport>() != null );
 			Contract.Ensures( Contract.Result<TTransport>().BoundSocket == bindingSocket );
 
-			TTransport transport = GetTransportCore();
-			transport.BoundSocket = bindingSocket;
+			TTransport transport = this.GetTransportCore( bindingSocket );
 			this._activeTransports.TryAdd( transport, null );
 
 			return transport;
 		}
 
-		protected virtual TTransport GetTransportCore()
+		protected virtual TTransport GetTransportCore( Socket bindingSocket )
 		{
 			Contract.Ensures( Contract.Result<TTransport>() != null );
 
-			return this._transportPool.Borrow();
+			var transport= this._transportPool.Borrow();
+			return transport;
 		}
 
 		internal sealed override void ReturnTransport( ServerTransport transport )
