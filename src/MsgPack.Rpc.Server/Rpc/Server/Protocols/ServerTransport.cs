@@ -110,6 +110,14 @@ namespace MsgPack.Rpc.Server.Protocols
 
 		protected virtual void OnShutdownCompleted()
 		{
+			MsgPackRpcServerProtocolsTrace.TraceEvent(
+				MsgPackRpcServerProtocolsTrace.TransportShutdownCompleted,
+				"Transport shutdown is completed. {{ \"Socket\" : 0x{0:X}, \"RemoteEndPoint\" : \"{1}\", \"LocalEndPoint\" : \"{2}\" }}",
+				this._boundSocket == null ? IntPtr.Zero : this._boundSocket.Handle,
+				this._boundSocket == null ? null : this._boundSocket.RemoteEndPoint,
+				this._boundSocket == null ? null : this._boundSocket.LocalEndPoint
+			);
+
 			var handler = Interlocked.CompareExchange( ref this._shutdownCompleted, null, null );
 			if ( handler != null )
 			{
@@ -164,7 +172,26 @@ namespace MsgPack.Rpc.Server.Protocols
 		{
 			if ( disposing )
 			{
-				Interlocked.Exchange( ref this._isDisposed, 1 );
+				if ( Interlocked.Exchange( ref this._isDisposed, 1 ) == 0 )
+				{
+					try
+					{
+						MsgPackRpcServerProtocolsTrace.TraceEvent(
+							MsgPackRpcServerProtocolsTrace.DisposeTransport,
+							"Dispose transport. {{ \"Socket\" : 0x{0:X}, \"RemoteEndPoint\" : \"{1}\", \"LocalEndPoint\" : \"{2}\" }}",
+							this._boundSocket == null ? IntPtr.Zero : this._boundSocket.Handle,
+							this._boundSocket == null ? null : this._boundSocket.RemoteEndPoint,
+							this._boundSocket == null ? null : this._boundSocket.LocalEndPoint
+						);
+					}
+					catch ( ObjectDisposedException )
+					{
+						MsgPackRpcServerProtocolsTrace.TraceEvent(
+							MsgPackRpcServerProtocolsTrace.DisposeTransport,
+							"Dispose transport. {{ \"Socket\" : \"Disposed\", \"RemoteEndPoint\" : \"Disposed\", \"LocalEndPoint\" : \"Disposed\" }}"
+						);
+					}
+				}
 			}
 		}
 
@@ -172,6 +199,13 @@ namespace MsgPack.Rpc.Server.Protocols
 		{
 			if ( Interlocked.CompareExchange( ref this._isInShutdown, 1, 0 ) == 0 )
 			{
+				MsgPackRpcServerProtocolsTrace.TraceEvent(
+					MsgPackRpcServerProtocolsTrace.BeginShutdownTransport,
+					"Begin shutdown transport. {{ \"Socket\" : 0x{0:X}, \"RemoteEndPoint\" : \"{1}\", \"LocalEndPoint\" : \"{2}\" }}",
+					this._boundSocket == null ? IntPtr.Zero : this._boundSocket.Handle,
+					this._boundSocket == null ? null : this._boundSocket.RemoteEndPoint,
+					this._boundSocket == null ? null : this._boundSocket.LocalEndPoint
+				);
 				this._boundSocket.Shutdown( SocketShutdown.Receive );
 
 				if ( Interlocked.CompareExchange( ref this._processing, 0, 0 ) == 0 )
@@ -310,26 +344,14 @@ namespace MsgPack.Rpc.Server.Protocols
 		{
 			if ( this.IsClientShutdowned )
 			{
-				MsgPackRpcServerProtocolsTrace.TraceEvent(
-					MsgPackRpcServerProtocolsTrace.ReceiveCanceledDueToClientShutdown,
-					"Cancel receive due to client shutdown. {{ \"Socket\" : 0x{0:X} \"RemoteEndPoint\" : \"{1}\", \"LocalEndPoint\" : \"{2}\" }}",
-					this._boundSocket == null ? IntPtr.Zero : this._boundSocket.Handle,
-					this._boundSocket == null ? null : this._boundSocket.RemoteEndPoint,
-					this._boundSocket == null ? null : this._boundSocket.LocalEndPoint
-				);
+				TraceCancelReceiveDueToClientShutdown( context );
 				return;
 			}
 
 			if ( this.IsInShutdown )
 			{
 				// Subsequent receival cannot be processed now.
-				MsgPackRpcServerProtocolsTrace.TraceEvent(
-					MsgPackRpcServerProtocolsTrace.ReceiveCanceledDueToServerShutdown,
-					"Cancel receive due to server shutdown. {{ \"Socket\" : 0x{0:X}, \"RemoteEndPoint\" : \"{1}\", \"LocalEndPoint\" : \"{2}\" }}",
-					this._boundSocket == null ? IntPtr.Zero : this._boundSocket.Handle,
-					this._boundSocket == null ? null : this._boundSocket.RemoteEndPoint,
-					this._boundSocket == null ? null : this._boundSocket.LocalEndPoint
-				);
+				TraceCancelReceiveDueToServerShutdown( context );
 				return;
 			}
 
@@ -445,14 +467,16 @@ namespace MsgPack.Rpc.Server.Protocols
 				if ( this.IsClientShutdowned )
 				{
 					// Client no longer send any additional data, so reset state.
-					// TODO: Tracing
+					TraceCancelReceiveDueToClientShutdown( context );
 					return;
 				}
 
 				if ( this.IsInShutdown )
 				{
 					// Server no longer process any subsequent retrieval.
-					// TODO: Tracing
+					TraceCancelReceiveDueToServerShutdown( context );
+					// Shutdown sending
+					this.OnProcessFinished();
 					return;
 				}
 
@@ -460,6 +484,30 @@ namespace MsgPack.Rpc.Server.Protocols
 				this.ReceiveCore( context );
 				return;
 			}
+		}
+
+		private void TraceCancelReceiveDueToClientShutdown( ServerRequestContext context )
+		{
+			MsgPackRpcServerProtocolsTrace.TraceEvent(
+				MsgPackRpcServerProtocolsTrace.ReceiveCanceledDueToClientShutdown,
+				"Cancel receive due to client shutdown. {{ \"Socket\" : 0x{0:X} \"RemoteEndPoint\" : \"{1}\", \"LocalEndPoint\" : \"{2}\", \"SessionID\" : {3} }}",
+				this._boundSocket == null ? IntPtr.Zero : this._boundSocket.Handle,
+				this._boundSocket == null ? null : this._boundSocket.RemoteEndPoint,
+				this._boundSocket == null ? null : this._boundSocket.LocalEndPoint,
+				context.SessionId
+			);
+		}
+
+		private void TraceCancelReceiveDueToServerShutdown( ServerRequestContext context )
+		{
+			MsgPackRpcServerProtocolsTrace.TraceEvent(
+				MsgPackRpcServerProtocolsTrace.ReceiveCanceledDueToServerShutdown,
+				"Cancel receive due to server shutdown. {{ \"Socket\" : 0x{0:X}, \"RemoteEndPoint\" : \"{1}\", \"LocalEndPoint\" : \"{2}\", \"SessionID\" : {3} }}",
+				this._boundSocket == null ? IntPtr.Zero : this._boundSocket.Handle,
+				this._boundSocket == null ? null : this._boundSocket.RemoteEndPoint,
+				this._boundSocket == null ? null : this._boundSocket.LocalEndPoint,
+				context.SessionId
+			);
 		}
 
 		// TODO: Move to other layer e.g. Server.

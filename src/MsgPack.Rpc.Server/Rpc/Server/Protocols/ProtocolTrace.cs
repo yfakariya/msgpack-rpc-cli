@@ -33,7 +33,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		private static readonly TraceSource _source = new TraceSource( "MsgPack.Rpc.Server.Protocols" );
 
 		private static readonly Dictionary<MessageId, TraceEventType> _typeTable = 
-			new Dictionary<MessageId, TraceEventType> ( 24 )
+			new Dictionary<MessageId, TraceEventType> ( 33 )
 			{
 				{ MessageId.DetectClientShutdown, TraceEventType.Information },
 				{ MessageId.SocketError, TraceEventType.Warning },
@@ -45,6 +45,7 @@ namespace MsgPack.Rpc.Server.Protocols
 				{ MessageId.ReceiveCanceledDueToClientShutdown, TraceEventType.Verbose },
 				{ MessageId.ReceiveCanceledDueToServerShutdown, TraceEventType.Verbose },
 				{ MessageId.DeserializeRequest, TraceEventType.Verbose },
+				{ MessageId.NewSession, TraceEventType.Verbose },
 				{ MessageId.NeedRequestHeader, TraceEventType.Verbose },
 				{ MessageId.NeedMessageType, TraceEventType.Verbose },
 				{ MessageId.NeedMessageId, TraceEventType.Verbose },
@@ -59,6 +60,14 @@ namespace MsgPack.Rpc.Server.Protocols
 				{ MessageId.SerializeResponse, TraceEventType.Verbose },
 				{ MessageId.SendOutboundData, TraceEventType.Verbose },
 				{ MessageId.SentOutboundData, TraceEventType.Verbose },
+				{ MessageId.BeginShutdownManager, TraceEventType.Verbose },
+				{ MessageId.ManagerShutdownCompleted, TraceEventType.Verbose },
+				{ MessageId.DisposeManager, TraceEventType.Verbose },
+				{ MessageId.BeginShutdownTransport, TraceEventType.Verbose },
+				{ MessageId.TransportShutdownCompleted, TraceEventType.Verbose },
+				{ MessageId.ShutdownSending, TraceEventType.Verbose },
+				{ MessageId.ShutdownReceiving, TraceEventType.Verbose },
+				{ MessageId.DisposeTransport, TraceEventType.Verbose },
 			};
 
 		/// <summary>
@@ -158,6 +167,10 @@ namespace MsgPack.Rpc.Server.Protocols
 		/// </summary>
 		public const MessageId DeserializeRequest = MessageId.DeserializeRequest;
 		/// <summary>
+		/// 	<see cref="MessageId" /> of .NewSession (ID:1102) message.
+		/// </summary>
+		public const MessageId NewSession = MessageId.NewSession;
+		/// <summary>
 		/// 	<see cref="MessageId" /> of .NeedRequestHeader (ID:1111) message.
 		/// </summary>
 		public const MessageId NeedRequestHeader = MessageId.NeedRequestHeader;
@@ -213,6 +226,38 @@ namespace MsgPack.Rpc.Server.Protocols
 		/// 	<see cref="MessageId" /> of .SentOutboundData (ID:2202) message.
 		/// </summary>
 		public const MessageId SentOutboundData = MessageId.SentOutboundData;
+		/// <summary>
+		/// 	<see cref="MessageId" /> of .BeginShutdownManager (ID:3001) message.
+		/// </summary>
+		public const MessageId BeginShutdownManager = MessageId.BeginShutdownManager;
+		/// <summary>
+		/// 	<see cref="MessageId" /> of .ManagerShutdownCompleted (ID:3002) message.
+		/// </summary>
+		public const MessageId ManagerShutdownCompleted = MessageId.ManagerShutdownCompleted;
+		/// <summary>
+		/// 	<see cref="MessageId" /> of .DisposeManager (ID:3009) message.
+		/// </summary>
+		public const MessageId DisposeManager = MessageId.DisposeManager;
+		/// <summary>
+		/// 	<see cref="MessageId" /> of .BeginShutdownTransport (ID:3011) message.
+		/// </summary>
+		public const MessageId BeginShutdownTransport = MessageId.BeginShutdownTransport;
+		/// <summary>
+		/// 	<see cref="MessageId" /> of .TransportShutdownCompleted (ID:3012) message.
+		/// </summary>
+		public const MessageId TransportShutdownCompleted = MessageId.TransportShutdownCompleted;
+		/// <summary>
+		/// 	<see cref="MessageId" /> of .ShutdownSending (ID:3013) message.
+		/// </summary>
+		public const MessageId ShutdownSending = MessageId.ShutdownSending;
+		/// <summary>
+		/// 	<see cref="MessageId" /> of .ShutdownReceiving (ID:3014) message.
+		/// </summary>
+		public const MessageId ShutdownReceiving = MessageId.ShutdownReceiving;
+		/// <summary>
+		/// 	<see cref="MessageId" /> of .DisposeTransport (ID:3019) message.
+		/// </summary>
+		public const MessageId DisposeTransport = MessageId.DisposeTransport;
 		public enum MessageId
 		{
 			DetectClientShutdown = 11,
@@ -225,6 +270,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			ReceiveCanceledDueToClientShutdown = 1003,
 			ReceiveCanceledDueToServerShutdown = 1004,
 			DeserializeRequest = 1101,
+			NewSession = 1102,
 			NeedRequestHeader = 1111,
 			NeedMessageType = 1112,
 			NeedMessageId = 1113,
@@ -239,6 +285,14 @@ namespace MsgPack.Rpc.Server.Protocols
 			SerializeResponse = 2101,
 			SendOutboundData = 2201,
 			SentOutboundData = 2202,
+			BeginShutdownManager = 3001,
+			ManagerShutdownCompleted = 3002,
+			DisposeManager = 3009,
+			BeginShutdownTransport = 3011,
+			TransportShutdownCompleted = 3012,
+			ShutdownSending = 3013,
+			ShutdownReceiving = 3014,
+			DisposeTransport = 3019,
 		}
 	}
 }

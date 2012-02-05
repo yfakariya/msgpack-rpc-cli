@@ -47,6 +47,7 @@
 	new TraceMessage( "ReceiveCanceledDueToClientShutdown", TraceEventType.Verbose, 1003 ),
 	new TraceMessage( "ReceiveCanceledDueToServerShutdown", TraceEventType.Verbose,  1004 ),
 	new TraceMessage( "DeserializeRequest", TraceEventType.Verbose, 1101 ),
+	new TraceMessage( "NewSession", TraceEventType.Verbose, 1102 ),
 	new TraceMessage( "NeedRequestHeader", TraceEventType.Verbose, 1111 ),
 	new TraceMessage( "NeedMessageType", TraceEventType.Verbose, 1112 ),
 	new TraceMessage( "NeedMessageId", TraceEventType.Verbose, 1113 ),
@@ -60,5 +61,13 @@
 	new TraceMessage( "ErrorWhenSendResponse", TraceEventType.Verbose, 2001 ),
 	new TraceMessage( "SerializeResponse", TraceEventType.Verbose, 2101 ),
 	new TraceMessage( "SendOutboundData", TraceEventType.Verbose, 2201 ),
-	new TraceMessage( "SentOutboundData", TraceEventType.Verbose, 2202 )
+	new TraceMessage( "SentOutboundData", TraceEventType.Verbose, 2202 ),
+	new TraceMessage( "BeginShutdownManager", TraceEventType.Verbose, 3001 ),
+	new TraceMessage( "ManagerShutdownCompleted", TraceEventType.Verbose, 3002 ),
+	new TraceMessage( "DisposeManager", TraceEventType.Verbose, 3009 ),
+	new TraceMessage( "BeginShutdownTransport", TraceEventType.Verbose, 3011 ),
+	new TraceMessage( "TransportShutdownCompleted", TraceEventType.Verbose, 3012 ),
+	new TraceMessage( "ShutdownSending", TraceEventType.Verbose, 3013 ),
+	new TraceMessage( "ShutdownReceiving", TraceEventType.Verbose, 3014 ),
+	new TraceMessage( "DisposeTransport", TraceEventType.Verbose, 3019 )
 ) #>

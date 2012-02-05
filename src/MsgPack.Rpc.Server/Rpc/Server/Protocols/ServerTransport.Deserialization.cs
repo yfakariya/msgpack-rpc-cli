@@ -48,6 +48,15 @@ namespace MsgPack.Rpc.Server.Protocols
 				context.RootUnpacker = Unpacker.Create( context.UnpackingBuffer, false );
 				Interlocked.Increment( ref this._processing );
 				context.RenewSessionId();
+
+				if ( MsgPackRpcServerProtocolsTrace.ShouldTrace( MsgPackRpcServerProtocolsTrace.NewSession ) )
+				{
+					MsgPackRpcServerProtocolsTrace.TraceEvent(
+						MsgPackRpcServerProtocolsTrace.NewSession,
+						"New session is created. {{ \"SessionID\" : {0} }}",
+						context.SessionId
+					);
+				}
 			}
 
 			if ( !context.RootUnpacker.Read() )

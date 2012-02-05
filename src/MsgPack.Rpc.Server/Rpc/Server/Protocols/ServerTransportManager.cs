@@ -170,6 +170,12 @@ namespace MsgPack.Rpc.Server.Protocols
 		/// </summary>
 		protected virtual void OnShutdownCompleted()
 		{
+			MsgPackRpcServerProtocolsTrace.TraceEvent(
+				MsgPackRpcServerProtocolsTrace.ManagerShutdownCompleted,
+				"Manager shutdown is completed. {{ \"Manager\" : \"{0}\" }}",
+				this
+			);
+
 			var handler = Interlocked.CompareExchange( ref this._shutdownCompleted, null, null );
 			if ( handler != null )
 			{
@@ -252,6 +258,11 @@ namespace MsgPack.Rpc.Server.Protocols
 		{
 			if ( Interlocked.CompareExchange( ref this._isDisposed, 1, 0 ) == 0 )
 			{
+				MsgPackRpcServerProtocolsTrace.TraceEvent(
+					MsgPackRpcServerProtocolsTrace.DisposeManager,
+					"Dispose. {{ \"Manager\" : \"{0}\" }}",
+					this
+				);
 				this.DisposeCore( disposing );
 			}
 		}
@@ -276,6 +287,11 @@ namespace MsgPack.Rpc.Server.Protocols
 		public void BeginShutdown()
 		{
 			Interlocked.Exchange( ref this._isInShutdown, 1 );
+			MsgPackRpcServerProtocolsTrace.TraceEvent(
+				MsgPackRpcServerProtocolsTrace.BeginShutdownManager,
+				"Begin shutdown. {{ \"Manager\" : \"{0}\" }}",
+				this
+			);
 			this.BeginShutdownCore();
 		}
 
