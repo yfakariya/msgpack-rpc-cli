@@ -97,11 +97,6 @@ namespace MsgPack.Rpc.Server
 		/// </summary>
 		public void Dispose()
 		{
-			if ( !this._server.Stop() )
-			{
-				return;
-			}
-
 			this._server.ClientError -= this.OnClientError;
 			this._server.ServerError -= this.OnServerError;
 			this._server.Dispose();
