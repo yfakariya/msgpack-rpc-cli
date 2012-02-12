@@ -40,10 +40,15 @@
     <Reference Include="MsgPack">
       <HintPath>..\..\lib\MsgPack.dll</HintPath>
     </Reference>
-    <Reference Include="nunit.core">
+    <Reference Include="nunit.core, Version=2.5.10.11092, Culture=neutral, PublicKeyToken=96d09a1eb7f44a77, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\lib\nunit.core.dll</HintPath>
     </Reference>
-    <Reference Include="nunit.framework">
+    <Reference Include="nunit.core.interfaces, Version=2.5.10.11092, Culture=neutral, PublicKeyToken=96d09a1eb7f44a77, processorArchitecture=MSIL">
+      <HintPath>..\..\lib\nunit.core.interfaces.dll</HintPath>
+    </Reference>
+    <Reference Include="nunit.framework, Version=2.5.10.11092, Culture=neutral, PublicKeyToken=96d09a1eb7f44a77, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\lib\nunit.framework.dll</HintPath>
     </Reference>
     <Reference Include="System" />
@@ -61,6 +66,7 @@
     <Compile Include="Rpc\Server\Dispatch\DefaultServiceTypeLocatorTest.cs" />
     <Compile Include="Rpc\Server\Dispatch\DispatcherTest.cs" />
     <Compile Include="Rpc\Server\Dispatch\DispatchTestHelper.cs" />
+    <Compile Include="Rpc\Server\Dispatch\FileBasedServiceTypeLocatorTest.cs" />
     <Compile Include="Rpc\Server\Dispatch\InvocationHelperTest.cs">
       <SubType>Code</SubType>
     </Compile>
@@ -71,10 +77,10 @@
     <Compile Include="Rpc\Server\Dispatch\SvcFileInterop\InitialStateTest.cs" />
     <Compile Include="Rpc\Server\Dispatch\SvcFileInterop\RuntimeDirectiveIndicatorFoundStateTest.cs" />
     <Compile Include="Rpc\Server\Dispatch\SvcFileInterop\ServerDirectiveIndicatorFoundStateTest.cs" />
-    <Compile Include="Rpc\Server\Dispatch\SvcFileInterop\ServiceHostDirectiveTest.cs" />
     <Compile Include="Rpc\Server\Dispatch\SvcFileInterop\StartTagFoundStateTest.cs" />
     <Compile Include="Rpc\Server\Dispatch\SvcFileInterop\SvcDirectiveParserStateTest.cs" />
     <Compile Include="Rpc\Server\Dispatch\SvcFileInterop\SvcFileParserTest.cs" />
+    <Compile Include="Rpc\Server\Protocols\ListeningContextTest.cs" />
     <Compile Include="Rpc\Server\Protocols\NullServerTransport.cs" />
     <Compile Include="Rpc\Server\Protocols\NullServerTransportManager.cs" />
     <Compile Include="Rpc\Server\Dispatch\OperationDescriptionTest.cs">
@@ -88,6 +94,18 @@
     </Compile>
     <Compile Include="Rpc\Server\Dispatch\ServiceInvokerGeneratorTest.cs" />
     <Compile Include="Rpc\Server\PreTest.cs" />
+    <Compile Include="Rpc\Server\Protocols\ServerRequestContextTest.cs" />
+    <Compile Include="Rpc\Server\Protocols\ServerResponseContextTest.cs" />
+    <Compile Include="Rpc\Server\Protocols\ServerTransportManagerTest.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Rpc\Server\Protocols\ServerTransportManager`1Test.cs" />
+    <Compile Include="Rpc\Server\Protocols\ServerTransportTest.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Rpc\Server\Protocols\TcpServerTransportTest.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Rpc\Server\Protocols\_SetUpFixture.cs" />
     <Compile Include="Rpc\Server\_SetUpFixture.cs" />
   </ItemGroup>
