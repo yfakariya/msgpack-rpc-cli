@@ -169,6 +169,8 @@ namespace MsgPack.Rpc.Server.Protocols
 				this._boundSocket == null ? null : this._boundSocket.LocalEndPoint
 			);
 
+			this.Manager.ReturnTransport( this );
+
 			var handler = Interlocked.CompareExchange( ref this._shutdownCompleted, null, null );
 			if ( handler != null )
 			{
