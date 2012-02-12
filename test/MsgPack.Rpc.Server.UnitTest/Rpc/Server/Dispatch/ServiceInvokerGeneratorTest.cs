@@ -221,7 +221,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 				var arg2 = Environment.TickCount;
 				var message = Guid.NewGuid().ToString();
 				var debugInformation = Guid.NewGuid().ToString();
-				var rpcError = RpcError.CustomError( Guid.NewGuid().ToString(), Environment.TickCount );
+				var rpcError = RpcError.CustomError( Guid.NewGuid().ToString(), Math.Abs( Environment.TickCount ) );
 
 				this.TestGetServiceInvokerCore<string, int, bool>(
 					( sender, e ) =>
@@ -257,7 +257,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 				var arg2 = Environment.TickCount;
 				var message = Guid.NewGuid().ToString();
 				var debugInformation = Guid.NewGuid().ToString();
-				var rpcError = RpcError.CustomError( Guid.NewGuid().ToString(), Environment.TickCount );
+				var rpcError = RpcError.CustomError( Guid.NewGuid().ToString(), Math.Abs( Environment.TickCount ) );
 
 				this.TestGetServiceInvokerCore<string, int, bool>(
 					( sender, e ) =>

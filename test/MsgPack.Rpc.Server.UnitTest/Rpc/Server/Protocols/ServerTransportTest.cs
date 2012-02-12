@@ -121,7 +121,7 @@ namespace MsgPack.Rpc.Server.Protocols
 								waitHandle.Set();
 							};
 
-						int messageId = Environment.TickCount % 10;
+						int messageId = Math.Abs( Environment.TickCount % 10 );
 						using ( var buffer = new MemoryStream() )
 						{
 							using ( var packer = Packer.Create( buffer, false ) )
