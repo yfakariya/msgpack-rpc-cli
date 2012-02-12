@@ -178,6 +178,143 @@ namespace MsgPack.Rpc.Server.Protocols
 			);
 		}
 
+		private static void TestSendNotify( int concurrency, Action<IPEndPoint, CountdownEvent, IProducerConsumerCollection<string>> test )
+		{
+			var endPoint = new IPEndPoint( IPAddress.Loopback, 57319 );
+			var config = new RpcServerConfiguration();
+			config.BindingEndPoint = endPoint;
+
+			using ( var arrivalLatch = new CountdownEvent( concurrency ) )
+			{
+				var arriveds = new ConcurrentQueue<string>();
+				config.DispatcherProvider =
+					s =>
+						new CallbackDispatcher(
+							s,
+							( id, args ) =>
+							{
+								arriveds.Enqueue( args[ 0 ].ToString() );
+								arrivalLatch.Signal();
+								return args;
+							}
+						);
+				config.PreferIPv4 = true;
+
+				using ( var server = new RpcServer( config ) )
+				using ( var transportManager = new TcpServerTransportManager( server ) )
+				{
+					test( endPoint, arrivalLatch, arriveds );
+				}
+			}
+		}
+
+		private static void PackNotify( Packer packer, string id )
+		{
+			packer.PackArrayHeader( 3 );
+			packer.Pack( 2 );
+			packer.PackString( "Test" );
+			packer.PackArrayHeader( 1 );
+			packer.PackString( id );
+		}
+
+		private static void TestSendNotifyCore( IPEndPoint endPoint, CountdownEvent arrivalLatch, IProducerConsumerCollection<string> arrivedIds, int count )
+		{
+			using ( var tcpClient = new TcpClient( AddressFamily.InterNetwork ) )
+			using ( var concurrencyLatch = new CountdownEvent( arrivalLatch.InitialCount ) )
+			{
+				tcpClient.Connect( endPoint );
+
+				using ( var stream = tcpClient.GetStream() )
+				{
+					for ( int i = 0; i < count; i++ )
+					{
+						if ( concurrencyLatch != null )
+						{
+							concurrencyLatch.Reset();
+						}
+
+						// Clear ids.
+						string dummy;
+						while ( arrivedIds.TryTake( out dummy ) ) { }
+
+						var ids = Enumerable.Repeat( 0, concurrencyLatch == null ? 1 : concurrencyLatch.InitialCount ).Select( _ => Guid.NewGuid().ToString() ).ToArray();
+
+						if ( !Task.WaitAll(
+							ids.Select(
+								id =>
+									Task.Factory.StartNew(
+										_ =>
+										{
+											using ( var buffer = new MemoryStream() )
+											{
+												using ( var packer = Packer.Create( buffer, false ) )
+												{
+													PackRequest( packer, id );
+												}
+
+												buffer.Position = 0;
+
+												if ( concurrencyLatch != null )
+												{
+													concurrencyLatch.Signal();
+													if ( !concurrencyLatch.Wait( Debugger.IsAttached ? Timeout.Infinite : TimeoutMilliseconds ) )
+													{
+														throw new TimeoutException();
+													}
+												}
+
+												// send
+												buffer.CopyTo( stream );
+											}
+										},
+										id
+									)
+							).ToArray(),
+							Debugger.IsAttached ? Timeout.Infinite : TimeoutMilliseconds
+						) )
+						{
+							throw new TimeoutException();
+						}
+
+						// wait
+						if ( !arrivalLatch.Wait( Debugger.IsAttached ? Timeout.Infinite : TimeoutMilliseconds ) )
+						{
+							throw new TimeoutException();
+						}
+
+						Assert.That( arrivedIds, Is.EquivalentTo( ids ) );
+					}
+				}
+			}
+		}
+
+		[Test()]
+		public void TestSendNotify_Once_Ok()
+		{
+			TestSendNotify(
+				1,
+				( endPoint, arrivalLatch, arrivedIds ) => TestSendNotifyCore( endPoint, arrivalLatch, arrivedIds, 1 )
+			);
+		}
+
+		[Test()]
+		public void TestSendNotify_Twice_Ok()
+		{
+			TestSendNotify(
+				1,
+				( endPoint, arrivalLatch, arrivedIds ) => TestSendNotifyCore( endPoint, arrivalLatch, arrivedIds, 2 )
+			);
+		}
+
+		[Test()]
+		public void TestSendNotify_Parallel_Ok()
+		{
+			TestSendNotify(
+				2,
+				( endPoint, arrivalLatch, arrivedIds ) => TestSendNotifyCore( endPoint, arrivalLatch, arrivedIds, 1 )
+			);
+		}
+
 		[Test()]
 		public void TestClientShutdown_NotAffectOthers()
 		{
