@@ -655,7 +655,11 @@ namespace MsgPack.Rpc.Server.Protocols
 
 				// Wait to arrive more data from client.
 				this.ReceiveCore( context );
-				return;
+			}
+			else
+			{
+				// try next receive
+				this.PrivateReceive( context );
 			}
 		}
 

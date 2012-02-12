@@ -357,10 +357,11 @@ namespace MsgPack.Rpc.Server.Protocols
 				}
 			}
 
+			context.NextProcess = this.UnpackRequestHeader;
+
 			if ( context.UnpackingBuffer.Length > 0 )
 			{
 				// Subsequent request is already arrived.
-				context.NextProcess = this.UnpackRequestHeader;
 				return context.NextProcess( context );
 			}
 			else
