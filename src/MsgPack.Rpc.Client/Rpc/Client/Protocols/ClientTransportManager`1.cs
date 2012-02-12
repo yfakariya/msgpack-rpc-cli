@@ -125,6 +125,32 @@ namespace MsgPack.Rpc.Client.Protocols
 			return this._transportPool.Borrow();
 		}
 
+		/// <summary>
+		///		Binds the specified socket to the specified transport.
+		/// </summary>
+		/// <param name="transport">The transport to be bound.</param>
+		/// <param name="bindingSocket">The socket to be bound.</param>
+		/// <exception cref="ArgumentNullException">
+		///		<paramref name="transport"/> is <c>null</c>.
+		///		Or <paramref name="bindingSocket"/> is <c>null</c>.
+		/// </exception>
+		protected void BindSocket( TTransport transport, Socket bindingSocket )
+		{
+			if ( transport == null )
+			{
+				throw new ArgumentNullException( "transport" );
+			}
+
+			if ( bindingSocket == null )
+			{
+				throw new ArgumentNullException( "bindingSocket" );
+			}
+
+			Contract.EndContractBlock();
+
+			transport.BoundSocket = bindingSocket;
+		}
+
 		internal sealed override void ReturnTransport( ClientTransport transport )
 		{
 			this.ReturnTransport( ( TTransport )transport );

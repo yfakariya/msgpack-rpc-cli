@@ -123,7 +123,7 @@ namespace MsgPack.Rpc.Client.Protocols
 			}
 
 			var transport = base.GetTransportCore( bindingSocket );
-			transport.BoundSocket = bindingSocket;
+			this.BindSocket( transport, bindingSocket );
 			return transport;
 		}
 	}
