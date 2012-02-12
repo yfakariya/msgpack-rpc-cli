@@ -164,7 +164,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			var context = state as ServerRequestContext;
 			try
 			{
-				while ( !this.IsDisposed && !this.IsInShutdown && !this.IsClientShutdowned && !this._receivingCancellationTokenSource.IsCancellationRequested )
+				while ( !this.IsDisposed && !this.IsInShutdown && !this.IsClientShutdown && !this._receivingCancellationTokenSource.IsCancellationRequested )
 				{
 					this.Receive( context );
 				}

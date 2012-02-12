@@ -249,7 +249,7 @@ namespace MsgPack.Rpc.Server.Protocols
 						waitHandle.Wait();
 					}
 
-					Assert.That( target.IsClientShutdowned );
+					Assert.That( target.IsClientShutdown );
 				},
 				( id, args ) =>
 				{
