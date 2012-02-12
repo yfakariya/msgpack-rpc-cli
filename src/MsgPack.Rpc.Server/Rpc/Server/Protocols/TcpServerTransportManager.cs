@@ -198,6 +198,8 @@ namespace MsgPack.Rpc.Server.Protocols
 			);
 #endif
 
+			Contract.Assert( context.BytesTransferred == 0, context.BytesTransferred.ToString() );
+
 			var transport = this.GetTransport( context.AcceptSocket );
 			context.AcceptSocket = null;
 			this.Accept( context );
