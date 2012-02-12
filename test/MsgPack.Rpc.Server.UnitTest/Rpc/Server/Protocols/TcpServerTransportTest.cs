@@ -19,6 +19,7 @@
 #endregion -- License Terms --
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -38,12 +39,12 @@ namespace MsgPack.Rpc.Server.Protocols
 	{
 		public const int TimeoutMilliseconds = 3000;
 
-		private static void TestSendReceiveCore( Action<IPEndPoint> test )
+		private static void TestSendReceiveRequest( Action<IPEndPoint> test )
 		{
-			TestSendReceiveCore( ( endPoint, _ ) => test( endPoint ) );
+			TestSendReceiveRequest( ( endPoint, _ ) => test( endPoint ) );
 		}
 
-		private static void TestSendReceiveCore( Action<IPEndPoint, TcpServerTransportManager> test )
+		private static void TestSendReceiveRequest( Action<IPEndPoint, TcpServerTransportManager> test )
 		{
 			var endPoint = new IPEndPoint( IPAddress.Loopback, 57319 );
 			var config = new RpcServerConfiguration();
@@ -85,7 +86,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			Assert.That( ids.Contains( result[ 3 ].AsList()[ 0 ].ToString() ), "[{0}] contains '{1}'", String.Join( ", ", ids ), result[ 3 ].AsList()[ 0 ].ToString() );
 		}
 
-		private static void TestSendReceiveCore( IPEndPoint endPoint, int count, CountdownEvent latch )
+		private static void TestSendReceiveRequestCore( IPEndPoint endPoint, int count, CountdownEvent latch )
 		{
 			using ( var tcpClient = new TcpClient( AddressFamily.InterNetwork ) )
 			{
@@ -148,30 +149,30 @@ namespace MsgPack.Rpc.Server.Protocols
 		}
 
 		[Test()]
-		public void TestSendReceive_Once_Ok()
+		public void TestSendReceiveRequest_Once_Ok()
 		{
-			TestSendReceiveCore(
-				endPoint => TestSendReceiveCore( endPoint, 1, null )
+			TestSendReceiveRequest(
+				endPoint => TestSendReceiveRequestCore( endPoint, 1, null )
 			);
 		}
 
 		[Test()]
-		public void TestSendReceive_Twice_Ok()
+		public void TestSendReceiveRequest_Twice_Ok()
 		{
-			TestSendReceiveCore(
-				endPoint => TestSendReceiveCore( endPoint, 2, null )
+			TestSendReceiveRequest(
+				endPoint => TestSendReceiveRequestCore( endPoint, 2, null )
 			);
 		}
 
 		[Test()]
-		public void TestSendReceive_Parallel_Ok()
+		public void TestSendReceiveRequest_Parallel_Ok()
 		{
-			TestSendReceiveCore(
+			TestSendReceiveRequest(
 				endPoint =>
 				{
 					using ( var latch = new CountdownEvent( 2 ) )
 					{
-						TestSendReceiveCore( endPoint, 1, latch );
+						TestSendReceiveRequestCore( endPoint, 1, latch );
 					}
 				}
 			);
@@ -180,7 +181,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		[Test()]
 		public void TestClientShutdown_NotAffectOthers()
 		{
-			TestSendReceiveCore(
+			TestSendReceiveRequest(
 				endPoint =>
 				{
 					using ( var activeTcpClient = new TcpClient( AddressFamily.InterNetwork ) )
@@ -239,7 +240,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		[Test()]
 		public void TestServerShutdown_Shutdowned()
 		{
-			TestSendReceiveCore(
+			TestSendReceiveRequest(
 				( endPoint, manager ) =>
 				{
 					using ( var tcpClient = new TcpClient( AddressFamily.InterNetwork ) )
