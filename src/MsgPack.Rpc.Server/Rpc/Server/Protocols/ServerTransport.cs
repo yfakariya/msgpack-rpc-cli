@@ -823,14 +823,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			}
 
 			context.Clear();
-			try
-			{
-				this.OnSessionFinished();
-			}
-			finally
-			{
-				this.Manager.ReturnTransport( this );
-			}
+			this.OnSessionFinished();
 		}
 
 		#endregion
