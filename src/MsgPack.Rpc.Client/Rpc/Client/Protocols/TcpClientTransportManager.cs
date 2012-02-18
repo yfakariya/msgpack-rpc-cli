@@ -41,7 +41,7 @@ namespace MsgPack.Rpc.Client.Protocols
 			: base( configuration )
 		{
 #if !API_SIGNATURE_TEST
-			base.SetTransportPool( configuration.TcpTransportPoolProvider( () => new TcpClientTransport( this ), configuration.CreateTcpTransportPoolConfiguration() ) );
+			base.SetTransportPool( configuration.TcpTransportPoolProvider( () => new TcpClientTransport( this ), configuration.CreateTransportPoolConfiguration() ) );
 #endif
 		}
 

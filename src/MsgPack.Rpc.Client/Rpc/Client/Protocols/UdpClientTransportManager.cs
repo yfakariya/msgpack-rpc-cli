@@ -42,7 +42,7 @@ namespace MsgPack.Rpc.Client.Protocols
 			: base( configuration )
 		{
 #if !API_SIGNATURE_TEST
-			base.SetTransportPool( configuration.UdpTransportPoolProvider( () => new UdpClientTransport( this ), configuration.CreateUdpTransportPoolConfiguration() ) );
+			base.SetTransportPool( configuration.UdpTransportPoolProvider( () => new UdpClientTransport( this ), configuration.CreateTransportPoolConfiguration() ) );
 #endif
 		}
 

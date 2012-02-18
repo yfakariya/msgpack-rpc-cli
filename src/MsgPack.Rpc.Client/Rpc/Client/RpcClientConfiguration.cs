@@ -55,13 +55,10 @@ namespace MsgPack.Rpc.Client
 		///		The <see cref="ObjectPoolConfiguration"/> for the transport pool corresponds to values of this instance.
 		///		This value will not be <c>null</c>.
 		/// </returns>
-		public ObjectPoolConfiguration CreateTcpTransportPoolConfiguration()
+		public ObjectPoolConfiguration CreateTransportPoolConfiguration()
 		{
-			return new ObjectPoolConfiguration() { ExhausionPolicy = ExhausionPolicy.BlockUntilAvailable, MaximumPooled = this.MaximumConcurrentRequest, MinimumReserved = this.MinimumConcurrentRequest };
-		}
+			Contract.Ensures( Contract.Result<ObjectPoolConfiguration>() != null );
 
-		public ObjectPoolConfiguration CreateUdpTransportPoolConfiguration()
-		{
 			return new ObjectPoolConfiguration() { ExhausionPolicy = ExhausionPolicy.BlockUntilAvailable, MaximumPooled = this.MaximumConcurrentRequest, MinimumReserved = this.MinimumConcurrentRequest };
 		}
 
