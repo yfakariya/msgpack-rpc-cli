@@ -189,6 +189,20 @@ namespace MsgPack.Rpc.Client.Protocols
 		/// </summary>
 		internal void ClearBuffers()
 		{
+			if ( this.ErrorBuffer != null )
+			{
+				this.ErrorBuffer.Dispose();
+				this.ErrorBuffer = null;
+			}
+
+			if ( this.ResultBuffer != null )
+			{
+				this.ResultBuffer.Dispose();
+				this.ResultBuffer = null;
+			}
+
+			this.MessageId = 0;
+
 			if ( this.HeaderUnpacker != null )
 			{
 				this.HeaderUnpacker.Dispose();
@@ -208,24 +222,6 @@ namespace MsgPack.Rpc.Client.Protocols
 			{
 				this.TruncateUsedReceivedData();
 			}
-		}
-
-
-		internal void ClearDispatchContext()
-		{
-			if ( this.ErrorBuffer != null )
-			{
-				this.ErrorBuffer.Dispose();
-				this.ErrorBuffer = null;
-			}
-
-			if ( this.ResultBuffer != null )
-			{
-				this.ResultBuffer.Dispose();
-				this.ResultBuffer = null;
-			}
-
-			this.MessageId = 0;
 		}
 
 		/// <summary>
