@@ -202,6 +202,13 @@ namespace MsgPack.Rpc.Client.Protocols
 				this._isInShutdown = true;
 				Thread.MemoryBarrier();
 				this.ShutdownSending();
+
+				// TODO: This seems to cause race condition...
+				if ( this._pendingNotificationTable.Count == 0 && this._pendingRequestTable.Count == 0 )
+				{
+					this.ShutdownReceiving();
+					this.OnShutdownCompleted();
+				}
 			}
 		}
 
