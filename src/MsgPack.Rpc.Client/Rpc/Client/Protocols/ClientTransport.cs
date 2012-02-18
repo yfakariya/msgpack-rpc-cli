@@ -457,7 +457,7 @@ namespace MsgPack.Rpc.Client.Protocols
 				throw new ArgumentNullException( "context" );
 			}
 
-			if ( context.BoundTransport != this )
+			if ( !Object.ReferenceEquals( context.BoundTransport, this ) )
 			{
 				throw new ArgumentException( "Context is not bound to this object.", "context" );
 			}
