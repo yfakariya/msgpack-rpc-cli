@@ -270,13 +270,7 @@ namespace MsgPack.Rpc.Client.Protocols
 		protected virtual void ReturnTransportCore( TTransport transport )
 		{
 			this._transportPool.Return( transport );
-		}
 
-		internal ClientRequestContext GetRequetContext( TTransport transport )
-		{
-			var requestContext = this.RequestContextPool.Borrow();
-			requestContext.SetTransport( transport );
-			return requestContext;
 		}
 	}
 }
