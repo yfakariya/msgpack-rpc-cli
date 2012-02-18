@@ -148,11 +148,6 @@ namespace MsgPack.Rpc.Client.Protocols
 		/// </exception>
 		protected TTransport GetTransport( Socket bindingSocket )
 		{
-			if ( this._transportPool == null )
-			{
-				throw new InvalidOperationException( "Transport pool must be set via SetTransportPool()." );
-			}
-
 			Contract.Ensures( Contract.Result<TTransport>() != null );
 
 			TTransport transport;
@@ -185,6 +180,11 @@ namespace MsgPack.Rpc.Client.Protocols
 		/// </remarks>
 		protected virtual TTransport GetTransportCore( Socket bindingSocket )
 		{
+			if ( !this.IsTransportPoolSet )
+			{
+				throw new InvalidOperationException( "Transport pool must be set via SetTransportPool()." );
+			}
+
 			return this._transportPool.Borrow();
 		}
 
@@ -249,7 +249,7 @@ namespace MsgPack.Rpc.Client.Protocols
 				throw new ArgumentException( "The specified transport is not owned by this manager.", "transport" );
 			}
 
-			if ( this._transportPool == null )
+			if ( !this.IsTransportPoolSet )
 			{
 				throw new InvalidOperationException( "Transport pool must be set via SetTransportPool()." );
 			}
