@@ -19,13 +19,9 @@
 #endregion -- License Terms --
 
 using System;
-using System.Globalization;
-using System.IO;
-using System.Linq;
-using MsgPack.Rpc.Protocols;
 using System.Diagnostics.Contracts;
-using System.Threading;
-using System.Collections.Generic;
+using System.Globalization;
+using MsgPack.Rpc.Protocols;
 
 namespace MsgPack.Rpc.Client.Protocols
 {
