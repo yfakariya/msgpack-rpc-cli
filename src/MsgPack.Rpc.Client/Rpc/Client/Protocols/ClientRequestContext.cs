@@ -152,11 +152,23 @@ namespace MsgPack.Rpc.Client.Protocols
 		/// </remarks>
 		internal readonly ArraySegment<byte>[] SendingBuffer;
 
-		private Action<Exception, bool> _notificationComplectionCallback;
+		private Action<Exception, bool> _notificationCompletionCallback;
 
-		public Action<Exception, bool> NotificationComplectionCallback
+		/// <summary>
+		///		Gets the callback delegate which will be called when the notification is sent.
+		/// </summary>
+		/// <value>
+		///		The callback delegate which will be called when the notification is sent.
+		///		The 1st argument is an <see cref="Exception"/> which represents sending error, or <c>null</c> for success.
+		///		The 2nd argument indicates that the operation is completed synchronously.
+		///		This value will be <c>null</c> if both of <see cref="SetRequest"/> and <see cref="SetNotification"/> have not been called after previous cleanup or initialization.
+		/// </value>
+		/// <remarks>
+		///		This value can be set via <see cref="SetNotification"/> method.
+		/// </remarks>
+		public Action<Exception, bool> NotificationCompletionCallback
 		{
-			get { return this._notificationComplectionCallback; }
+			get { return this._notificationCompletionCallback; }
 		}
 
 		private Action<ClientResponseContext, Exception, bool> _requestCompletionCallback;
@@ -229,7 +241,7 @@ namespace MsgPack.Rpc.Client.Protocols
 			this.MessageId = messageId;
 			this._methodName =methodName;
 			this._requestCompletionCallback = completionCallback;
-			this._notificationComplectionCallback = null;
+			this._notificationCompletionCallback = null;
 		}
 
 		/// <summary>
@@ -265,7 +277,7 @@ namespace MsgPack.Rpc.Client.Protocols
 			}
 
 			this._methodName = methodName;
-			this._notificationComplectionCallback = completionCallback;
+			this._notificationCompletionCallback = completionCallback;
 			this._requestCompletionCallback = null;
 		}
 
@@ -303,7 +315,7 @@ namespace MsgPack.Rpc.Client.Protocols
 			}
 			else
 			{
-				Contract.Assert( this._notificationComplectionCallback != null );
+				Contract.Assert( this._notificationCompletionCallback != null );
 
 				this.SendingBuffer[ 0 ] = _notificationHeader;
 				this.SendingBuffer[ 1 ] = new ArraySegment<byte>( this._methodNameBuffer.GetBuffer(), 0, unchecked( ( int )this._methodNameBuffer.Length ) );
@@ -329,7 +341,7 @@ namespace MsgPack.Rpc.Client.Protocols
 			this._methodName = null;
 			this._messageType = MessageType.Response; // Invalid.
 			this._requestCompletionCallback = null;
-			this._notificationComplectionCallback = null;
+			this._notificationCompletionCallback = null;
 			base.Clear();
 		}
 	}
