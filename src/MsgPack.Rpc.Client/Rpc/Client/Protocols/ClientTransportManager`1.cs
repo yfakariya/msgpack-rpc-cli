@@ -39,6 +39,20 @@ namespace MsgPack.Rpc.Client.Protocols
 
 		private ObjectPool<TTransport> _transportPool;
 
+		/// <summary>
+		///		Gets a value indicating whether the transport pool is set.
+		/// </summary>
+		/// <value>
+		/// 	<c>true</c> if the transport pool is set; otherwise, <c>false</c>.
+		/// </value>
+		/// <remarks>
+		///		To set transport pool, invoke <see cref="SetTransportPool"/> method.
+		/// </remarks>
+		public bool IsTransportPoolSet
+		{
+			get { return this._transportPool != null; }
+		}
+
 		private int _tranportIsInShutdown;
 
 		/// <summary>
