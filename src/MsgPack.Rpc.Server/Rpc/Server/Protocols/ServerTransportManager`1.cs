@@ -152,11 +152,6 @@ namespace MsgPack.Rpc.Server.Protocols
 		/// </exception>
 		protected TTransport GetTransport( Socket bindingSocket )
 		{
-			if ( !this.IsTransportPoolSet )
-			{
-				throw new InvalidOperationException( "Transport pool must be set via SetTransportPool()." );
-			}
-
 			Contract.Ensures( Contract.Result<TTransport>() != null );
 			Contract.Ensures( Contract.Result<TTransport>().BoundSocket == null || Contract.Result<TTransport>().BoundSocket == bindingSocket );
 
@@ -175,7 +170,8 @@ namespace MsgPack.Rpc.Server.Protocols
 		///		Note that <see cref="ServerTransport.BoundSocket"/> might be <c>null</c> depends on <see cref="GetTransportCore"/> implementation.
 		/// </returns>
 		/// <exception cref="InvalidOperationException">
-		///		<paramref name="bindingSocket"/> cannot be <c>null</c> for the current transport.
+		///		<see cref="IsTransportPoolSet"/> is <c>false</c>.
+		///		Or <paramref name="bindingSocket"/> cannot be <c>null</c> for the current transport.
 		/// </exception>
 		/// <remarks>
 		///		This implementation does not bind <paramref name="bindingSocket"/> to the returning transport.
@@ -185,6 +181,11 @@ namespace MsgPack.Rpc.Server.Protocols
 		{
 			Contract.Ensures( Contract.Result<TTransport>() != null );
 			Contract.Ensures( Contract.Result<TTransport>().BoundSocket == null || Contract.Result<TTransport>().BoundSocket == bindingSocket );
+
+			if ( !this.IsTransportPoolSet )
+			{
+				throw new InvalidOperationException( "Transport pool must be set via SetTransportPool()." );
+			}
 
 			var transport = this._transportPool.Borrow();
 			return transport;
