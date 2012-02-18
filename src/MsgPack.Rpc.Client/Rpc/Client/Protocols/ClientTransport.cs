@@ -195,6 +195,9 @@ namespace MsgPack.Rpc.Client.Protocols
 			}
 		}
 
+		/// <summary>
+		///		Initiates shutdown process.
+		/// </summary>
 		public void BeginShutdown()
 		{
 			if ( !this._isInShutdown )
@@ -212,8 +215,14 @@ namespace MsgPack.Rpc.Client.Protocols
 			}
 		}
 
+		/// <summary>
+		///		When overridden in the derived class, shutdowns the sending.
+		/// </summary>
 		protected virtual void ShutdownSending() { }
 
+		/// <summary>
+		///		When overridden in the derived class, shutdowns the receiving.
+		/// </summary>
 		protected virtual void ShutdownReceiving() { }
 
 		private void OnProcessFinished()
@@ -404,6 +413,15 @@ namespace MsgPack.Rpc.Client.Protocols
 #endif
 		}
 
+		/// <summary>
+		///		Gets the <see cref="ClientRequestContext"/> to store context information for request or notification.
+		/// </summary>
+		/// <returns>
+		///		The <see cref="ClientRequestContext"/> to store context information for request or notification.
+		/// </returns>
+		/// <exception cref="InvalidOperationException">
+		///		This object is not ready to invoke this method.
+		/// </exception>
 		public virtual ClientRequestContext GetClientRequestContext()
 		{
 			var context = this.Manager.RequestContextPool.Borrow();
@@ -412,6 +430,26 @@ namespace MsgPack.Rpc.Client.Protocols
 			return context;
 		}
 
+		/// <summary>
+		///		Sends a request or notification message with the specified context.
+		/// </summary>
+		/// <param name="context">The context information.</param>
+		/// <exception cref="ArgumentNullException">
+		///		<paramref name="context"/> is <c>null</c>.
+		/// </exception>
+		/// <exception cref="ArgumentException">
+		///		<paramref name="context"/> is not bound to this transport.
+		/// </exception>
+		/// <exception cref="ObjectDisposedException">
+		///		This instance has been disposed.
+		/// </exception>
+		/// <exception cref="InvalidOperationException">
+		///		This instance is in shutdown.
+		///		Or the message ID or session ID is duplicated.
+		/// </exception>
+		/// <exception cref="RpcException">
+		///		Failed to send request or notification to the server.
+		/// </exception>
 		public void Send( ClientRequestContext context )
 		{
 			if ( context == null )
@@ -681,6 +719,16 @@ namespace MsgPack.Rpc.Client.Protocols
 			}
 		}
 
+		/// <summary>
+		///		Returns the specified context to the <see cref="Manager"/>.
+		/// </summary>
+		/// <param name="context">The <see cref="ClientRequestContext"/> to be returned.</param>
+		/// <exception cref="ArgumentNullException">
+		///		<paramref name="context"/> is <c>null</c>.
+		/// </exception>
+		/// <exception cref="ArgumentException">
+		///		<paramref name="context"/> is not bound to this transport.
+		/// </exception>
 		public void ReturnContext( ClientRequestContext context )
 		{
 			if ( context == null )
@@ -698,6 +746,16 @@ namespace MsgPack.Rpc.Client.Protocols
 			this._manager.RequestContextPool.Return( context );
 		}
 
+		/// <summary>
+		///		Returns the specified context to the <see cref="Manager"/>.
+		/// </summary>
+		/// <param name="context">The <see cref="ClientResponseContext"/> to be returned.</param>
+		/// <exception cref="ArgumentNullException">
+		///		<paramref name="context"/> is <c>null</c>.
+		/// </exception>
+		/// <exception cref="ArgumentException">
+		///		<paramref name="context"/> is not bound to this transport.
+		/// </exception>
 		public void ReturnContext( ClientResponseContext context )
 		{
 			if ( context == null )
