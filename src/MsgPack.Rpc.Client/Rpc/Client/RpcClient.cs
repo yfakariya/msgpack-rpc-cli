@@ -178,7 +178,13 @@ namespace MsgPack.Rpc.Client
 		/// </summary>
 		public void Shutdown()
 		{
-			this.ShutdownAsync().Wait();
+			using ( var task = this.ShutdownAsync() )
+			{
+				if ( task != null )
+				{
+					task.Wait();
+				}
+			}
 		}
 
 		/// <summary>
