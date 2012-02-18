@@ -58,6 +58,7 @@
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Rpc\Client\AsyncResult.cs" />
+    <Compile Include="Rpc\Client\DynamicRpcProxy.cs" />
     <Compile Include="Rpc\Client\ErrorInterpreter.cs" />
     <Compile Include="Rpc\Client\FileSystem.cs" />
     <Compile Include="Rpc\Client\MessageAsyncResult.cs" />
