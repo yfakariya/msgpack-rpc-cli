@@ -29,6 +29,7 @@ namespace MsgPack.Rpc.Client
 	///		Prototype test.
 	/// </summary>
 	[TestFixture]
+	[Explicit]
 	public class PreTest
 	{
 		[Test]
