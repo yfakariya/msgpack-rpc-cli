@@ -738,7 +738,7 @@ namespace MsgPack.Rpc.Client.Protocols
 
 			if ( !Object.ReferenceEquals( context.BoundTransport, this ) )
 			{
-				throw new InvalidOperationException( "Context is not bound to this transport." );
+				throw new ArgumentException( "Context is not bound to this transport.", "context" );
 			}
 
 			Contract.EndContractBlock();
@@ -765,7 +765,7 @@ namespace MsgPack.Rpc.Client.Protocols
 
 			if ( !Object.ReferenceEquals( context.BoundTransport, this ) )
 			{
-				throw new InvalidOperationException( "Context is not bound to this transport." );
+				throw new ArgumentException( "Context is not bound to this transport.", "context" );
 			}
 
 			Contract.EndContractBlock();
