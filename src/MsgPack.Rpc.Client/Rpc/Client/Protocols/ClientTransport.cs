@@ -147,20 +147,6 @@ namespace MsgPack.Rpc.Client.Protocols
 			}
 		}
 
-		private void OnProcessFinished()
-		{
-			if ( this._isInShutdown )
-			{
-				if ( this._pendingNotificationTable.Count == 0 && this._pendingRequestTable.Count == 0 )
-				{
-					this.ShutdownReceiving();
-					this.OnShutdownCompleted();
-				}
-			}
-		}
-
-		protected virtual void ShutdownReceiving() { }
-
 		/// <summary>
 		///		Initializes a new instance of the <see cref="ClientTransport"/> class.
 		/// </summary>
@@ -220,6 +206,20 @@ namespace MsgPack.Rpc.Client.Protocols
 		}
 
 		protected virtual void ShutdownSending() { }
+
+		protected virtual void ShutdownReceiving() { }
+
+		private void OnProcessFinished()
+		{
+			if ( this._isInShutdown )
+			{
+				if ( this._pendingNotificationTable.Count == 0 && this._pendingRequestTable.Count == 0 )
+				{
+					this.ShutdownReceiving();
+					this.OnShutdownCompleted();
+				}
+			}
+		}
 
 		private void OnSocketOperationCompleted( object sender, SocketAsyncEventArgs e )
 		{
