@@ -440,7 +440,7 @@ namespace MsgPack.Rpc.Client.Protocols
 			}
 			else
 			{
-				if ( !this._pendingNotificationTable.TryAdd( context.SessionId, context.NotificationComplectionCallback ) )
+				if ( !this._pendingNotificationTable.TryAdd( context.SessionId, context.NotificationCompletionCallback ) )
 				{
 					throw new InvalidOperationException( String.Format( CultureInfo.CurrentCulture, "Session ID '{0}' is already used.", context.MessageId ) );
 				}
