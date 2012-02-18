@@ -176,14 +176,10 @@ namespace MsgPack.Rpc.Client.Protocols
 		/// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
 		protected void Dispose( bool disposing )
 		{
-			this.OnDisposing( disposing );
-
 			if ( Interlocked.CompareExchange( ref this._isDisposed, 1, 0 ) == 0 )
 			{
 				this.DisposeCore( disposing );
 			}
-
-			this.OnDisposed( disposing );
 		}
 
 		/// <summary>
@@ -195,9 +191,7 @@ namespace MsgPack.Rpc.Client.Protocols
 		/// <remarks>
 		///		This method is guaranteed that this is invoked exactly once and after <see cref="IsDisposed"/> changed <c>true</c>.
 		/// </remarks>
-		protected virtual void OnDisposing( bool disposing ) { }
 		protected virtual void DisposeCore( bool disposing ) { }
-		protected virtual void OnDisposed( bool disposing ) { }
 
 		/// <summary>
 		///		Initiates client shutdown.
