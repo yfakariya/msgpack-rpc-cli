@@ -79,7 +79,13 @@ namespace MsgPack.Rpc.Client.Protocols
 
 		private int _isDisposed;
 
-		protected bool IsDisposed
+		/// <summary>
+		///		Gets a value indicating whether this instance is disposed.
+		/// </summary>
+		/// <value>
+		/// 	<c>true</c> if this instance is disposed; otherwise, <c>false</c>.
+		/// </value>
+		public bool IsDisposed
 		{
 			get { return Interlocked.CompareExchange( ref this._isDisposed, 0, 0 ) != 0; }
 		}
