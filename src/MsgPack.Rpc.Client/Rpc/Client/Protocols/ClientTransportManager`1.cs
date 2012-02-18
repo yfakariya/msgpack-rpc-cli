@@ -91,6 +91,8 @@ namespace MsgPack.Rpc.Client.Protocols
 				throw new ArgumentNullException( "transportPool" );
 			}
 
+			Contract.EndContractBlock();
+
 			if ( this._transportPool != null )
 			{
 				throw new InvalidOperationException( "Already set." );
@@ -149,6 +151,8 @@ namespace MsgPack.Rpc.Client.Protocols
 		protected TTransport GetTransport( Socket bindingSocket )
 		{
 			Contract.Ensures( Contract.Result<TTransport>() != null );
+			Contract.Ensures( Contract.Result<TTransport>().BoundSocket == null || Contract.Result<TTransport>().BoundSocket == bindingSocket );
+
 
 			TTransport transport;
 			try { }
@@ -180,6 +184,9 @@ namespace MsgPack.Rpc.Client.Protocols
 		/// </remarks>
 		protected virtual TTransport GetTransportCore( Socket bindingSocket )
 		{
+			Contract.Ensures( Contract.Result<TTransport>() != null );
+			Contract.Ensures( Contract.Result<TTransport>().BoundSocket == null || Contract.Result<TTransport>().BoundSocket == bindingSocket );
+
 			if ( !this.IsTransportPoolSet )
 			{
 				throw new InvalidOperationException( "Transport pool must be set via SetTransportPool()." );
@@ -254,6 +261,8 @@ namespace MsgPack.Rpc.Client.Protocols
 				throw new InvalidOperationException( "Transport pool must be set via SetTransportPool()." );
 			}
 
+			Contract.EndContractBlock();
+
 			try { }
 			finally
 			{
@@ -269,8 +278,11 @@ namespace MsgPack.Rpc.Client.Protocols
 		/// <param name="transport">The <see cref="ClientTransport"/> which was created by this manager.</param>
 		protected virtual void ReturnTransportCore( TTransport transport )
 		{
-			this._transportPool.Return( transport );
+			Contract.Requires( transport != null );
+			Contract.Requires( Object.ReferenceEquals( this, transport.Manager ) );
+			Contract.Requires( this.IsTransportPoolSet );
 
+			this._transportPool.Return( transport );
 		}
 	}
 }

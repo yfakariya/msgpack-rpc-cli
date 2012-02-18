@@ -19,14 +19,12 @@
 #endregion -- License Terms --
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Net.Sockets;
-using MsgPack.Rpc.Protocols;
-using System.Threading.Tasks;
+using System.Diagnostics.Contracts;
 using System.Net;
+using System.Net.Sockets;
+using System.Threading;
+using System.Threading.Tasks;
+using MsgPack.Rpc.Protocols;
 
 namespace MsgPack.Rpc.Client.Protocols
 {
@@ -46,7 +44,12 @@ namespace MsgPack.Rpc.Client.Protocols
 		/// </value>
 		public ObjectPool<ClientRequestContext> RequestContextPool
 		{
-			get { return this._requestContextPool; }
+			get
+			{
+				Contract.Ensures( Contract.Result<ObjectPool<ClientRequestContext>>() != null );
+
+				return this._requestContextPool;
+			}
 		}
 
 		private readonly ObjectPool<ClientResponseContext> _responseContextPool;
@@ -60,7 +63,12 @@ namespace MsgPack.Rpc.Client.Protocols
 		/// </value>
 		public ObjectPool<ClientResponseContext> ResponseContextPool
 		{
-			get { return this._responseContextPool; }
+			get
+			{
+				Contract.Ensures( Contract.Result<ObjectPool<ClientResponseContext>>() != null );
+
+				return this._responseContextPool;
+			}
 		}
 
 		private readonly RpcClientConfiguration _configuration;
@@ -74,7 +82,12 @@ namespace MsgPack.Rpc.Client.Protocols
 		/// </value>
 		protected RpcClientConfiguration Configuration
 		{
-			get { return this._configuration; }
+			get
+			{
+				Contract.Ensures( Contract.Result<RpcClientConfiguration>() != null );
+
+				return this._configuration;
+			}
 		}
 
 		private int _isDisposed;
@@ -162,6 +175,8 @@ namespace MsgPack.Rpc.Client.Protocols
 				throw new ArgumentNullException( "configuration" );
 			}
 
+			Contract.EndContractBlock();
+
 			this._configuration = configuration;
 			this._requestContextPool = configuration.RequestContextPoolProvider( () => new ClientRequestContext(), configuration.CreateRequestContextPoolConfiguration() );
 			this._responseContextPool = configuration.ResponseContextPoolProvider( () => new ClientResponseContext(), configuration.CreateResponseContextPoolConfiguration() );
@@ -233,6 +248,8 @@ namespace MsgPack.Rpc.Client.Protocols
 			{
 				throw new ArgumentNullException( "targetEndPoint" );
 			}
+
+			Contract.Ensures( Contract.Result<Task<ClientTransport>>() != null );
 
 			return this.ConnectAsyncCore( targetEndPoint );
 		}

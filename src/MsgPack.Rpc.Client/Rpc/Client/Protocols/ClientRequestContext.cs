@@ -61,7 +61,12 @@ namespace MsgPack.Rpc.Client.Protocols
 		/// </remarks>
 		public MessageType MessageType
 		{
-			get { return this._messageType; }
+			get
+			{
+				Contract.Ensures( Contract.Result<MessageType>() == Rpc.Protocols.MessageType.Request || Contract.Result<MessageType>() == Rpc.Protocols.MessageType.Notification );
+
+				return this._messageType;
+			}
 		}
 
 		private Packer _argumentsPacker;
@@ -75,7 +80,12 @@ namespace MsgPack.Rpc.Client.Protocols
 		/// </value>
 		public Packer ArgumentsPacker
 		{
-			get { return this._argumentsPacker; }
+			get
+			{
+				Contract.Ensures( Contract.Result<Packer>() != null );
+
+				return this._argumentsPacker;
+			}
 		}
 
 		private string _methodName;
@@ -238,8 +248,15 @@ namespace MsgPack.Rpc.Client.Protocols
 				throw new ArgumentNullException( "completionCallback" );
 			}
 
+			Contract.Ensures( this.MessageType == Rpc.Protocols.MessageType.Request );
+			Contract.Ensures( this.MessageId != null );
+			Contract.Ensures( !String.IsNullOrEmpty( this.MethodName ) );
+			Contract.Ensures( this.RequestCompletionCallback != null );
+			Contract.Ensures( this.NotificationCompletionCallback == null );
+
+			this._messageType = Rpc.Protocols.MessageType.Request;
 			this.MessageId = messageId;
-			this._methodName =methodName;
+			this._methodName = methodName;
 			this._requestCompletionCallback = completionCallback;
 			this._notificationCompletionCallback = null;
 		}
@@ -276,6 +293,14 @@ namespace MsgPack.Rpc.Client.Protocols
 				throw new ArgumentNullException( "completionCallback" );
 			}
 
+			Contract.Ensures( this.MessageType == Rpc.Protocols.MessageType.Notification );
+			Contract.Ensures( this.MessageId == null );
+			Contract.Ensures( !String.IsNullOrEmpty( this.MethodName ) );
+			Contract.Ensures( this.RequestCompletionCallback == null );
+			Contract.Ensures( this.NotificationCompletionCallback != null );
+
+			this._messageType = Rpc.Protocols.MessageType.Notification;
+			this.MessageId = null;
 			this._methodName = methodName;
 			this._notificationCompletionCallback = completionCallback;
 			this._requestCompletionCallback = null;

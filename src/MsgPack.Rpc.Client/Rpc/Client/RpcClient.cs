@@ -19,14 +19,11 @@
 #endregion -- License Terms --
 
 using System;
-using System.Collections.Concurrent;
 using System.Diagnostics.Contracts;
-using System.Globalization;
 using System.Net;
-using System.Threading.Tasks;
-using MsgPack.Rpc.Protocols;
-using MsgPack.Rpc.Client.Protocols;
 using System.Threading;
+using System.Threading.Tasks;
+using MsgPack.Rpc.Client.Protocols;
 using MsgPack.Serialization;
 
 namespace MsgPack.Rpc.Client
@@ -75,7 +72,14 @@ namespace MsgPack.Rpc.Client
 		/// </exception>
 		public static RpcClient Create( EndPoint targetEndPoint )
 		{
-			return Create( targetEndPoint, RpcClientConfiguration.Default );
+			if ( targetEndPoint == null )
+			{
+				throw new ArgumentNullException( "targetEndPoint" );
+			}
+
+			Contract.Ensures( Contract.Result<RpcClient>() != null );
+
+			return CreateCore( targetEndPoint, RpcClientConfiguration.Default, new SerializationContext() );
 		}
 
 		/// <summary>
@@ -97,7 +101,19 @@ namespace MsgPack.Rpc.Client
 		/// </exception>
 		public static RpcClient Create( EndPoint targetEndPoint, RpcClientConfiguration configuration )
 		{
-			return Create( targetEndPoint, configuration, new SerializationContext() );
+			if ( targetEndPoint == null )
+			{
+				throw new ArgumentNullException( "targetEndPoint" );
+			}
+
+			if ( configuration == null )
+			{
+				throw new ArgumentNullException( "configuration" );
+			}
+
+			Contract.Ensures( Contract.Result<RpcClient>() != null );
+
+			return CreateCore( targetEndPoint, configuration, new SerializationContext() );
 		}
 
 		/// <summary>
@@ -119,7 +135,19 @@ namespace MsgPack.Rpc.Client
 		/// </exception>
 		public static RpcClient Create( EndPoint targetEndPoint, SerializationContext serializationContext )
 		{
-			return Create( targetEndPoint, RpcClientConfiguration.Default, serializationContext );
+			if ( targetEndPoint == null )
+			{
+				throw new ArgumentNullException( "targetEndPoint" );
+			}
+
+			if ( serializationContext == null )
+			{
+				throw new ArgumentNullException( "configuration" );
+			}
+
+			Contract.Ensures( Contract.Result<RpcClient>() != null );
+
+			return CreateCore( targetEndPoint, RpcClientConfiguration.Default, serializationContext );
 		}
 
 		/// <summary>
@@ -155,13 +183,20 @@ namespace MsgPack.Rpc.Client
 				throw new ArgumentNullException( "configuration" );
 			}
 
-			var manager = configuration.TransportManagerProvider( configuration );
-			var transport = manager.ConnectAsync( targetEndPoint ).Result;
-			return RpcClient.Create( transport, serializationContext );
+			if ( serializationContext == null )
+			{
+				throw new ArgumentNullException( "serializationContext" );
+			}
+
+			Contract.Ensures( Contract.Result<RpcClient>() != null );
+
+			return CreateCore( targetEndPoint, configuration, serializationContext );
 		}
 
-		public static RpcClient Create( ClientTransport transport, SerializationContext serializationContext )
+		private static RpcClient CreateCore( EndPoint targetEndPoint, RpcClientConfiguration configuration, SerializationContext serializationContext )
 		{
+			var manager = configuration.TransportManagerProvider( configuration );
+			var transport = manager.ConnectAsync( targetEndPoint ).Result;
 			return new RpcClient( transport, serializationContext );
 		}
 

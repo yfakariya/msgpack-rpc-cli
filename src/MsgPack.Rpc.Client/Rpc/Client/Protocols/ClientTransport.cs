@@ -86,7 +86,12 @@ namespace MsgPack.Rpc.Client.Protocols
 		/// </value>
 		protected internal ClientTransportManager Manager
 		{
-			get { return this._manager; }
+			get
+			{
+				Contract.Ensures( Contract.Result<ClientTransportManager>() != null );
+
+				return this._manager;
+			}
 		}
 
 		private bool _isInShutdown;
@@ -160,6 +165,8 @@ namespace MsgPack.Rpc.Client.Protocols
 			{
 				throw new ArgumentNullException( "manager" );
 			}
+
+			Contract.EndContractBlock();
 
 			this._manager = manager;
 			this._pendingRequestTable = new ConcurrentDictionary<int, Action<ClientResponseContext, Exception, bool>>();
@@ -468,6 +475,8 @@ namespace MsgPack.Rpc.Client.Protocols
 			{
 				throw new InvalidOperationException( "This transport is in shutdown." );
 			}
+
+			Contract.EndContractBlock();
 
 			if ( this._isServerShutdowned )
 			{

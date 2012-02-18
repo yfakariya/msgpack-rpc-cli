@@ -19,6 +19,7 @@
 #endregion -- License Terms --
 
 using System;
+using System.Diagnostics.Contracts;
 using System.Net;
 using MsgPack.Rpc.Client.Protocols;
 
@@ -40,7 +41,12 @@ namespace MsgPack.Rpc.Client
 		/// </value>
 		public static RpcClientConfiguration Default
 		{
-			get { return RpcClientConfiguration._default; }
+			get
+			{
+				Contract.Ensures( Contract.Result<RpcClientConfiguration>() != null );
+
+				return RpcClientConfiguration._default;
+			}
 		}
 
 		/// <summary>
@@ -71,6 +77,8 @@ namespace MsgPack.Rpc.Client
 		/// </returns>
 		public ObjectPoolConfiguration CreateRequestContextPoolConfiguration()
 		{
+			Contract.Ensures( Contract.Result<ObjectPoolConfiguration>() != null );
+
 			return new ObjectPoolConfiguration() { ExhausionPolicy = ExhausionPolicy.BlockUntilAvailable, MaximumPooled = this.MaximumConcurrentRequest, MinimumReserved = this.MinimumConcurrentRequest };
 		}
 
@@ -83,6 +91,8 @@ namespace MsgPack.Rpc.Client
 		/// </returns>
 		public ObjectPoolConfiguration CreateResponseContextPoolConfiguration()
 		{
+			Contract.Ensures( Contract.Result<ObjectPoolConfiguration>() != null );
+
 			return new ObjectPoolConfiguration() { ExhausionPolicy = ExhausionPolicy.BlockUntilAvailable, MaximumPooled = this.MaximumConcurrentRequest, MinimumReserved = this.MinimumConcurrentRequest };
 		}
 
@@ -94,6 +104,10 @@ namespace MsgPack.Rpc.Client
 		/// </returns>
 		public RpcClientConfiguration Clone()
 		{
+			Contract.Ensures( Contract.Result<RpcClientConfiguration>() != null );
+			Contract.Ensures( !Object.ReferenceEquals( Contract.Result<RpcClientConfiguration>(), this ) );
+			Contract.Ensures( Contract.Result<RpcClientConfiguration>().IsFrozen == this.IsFrozen );
+
 			return this.CloneCore() as RpcClientConfiguration;
 		}
 
@@ -105,6 +119,9 @@ namespace MsgPack.Rpc.Client
 		/// </returns>
 		public RpcClientConfiguration Freeze()
 		{
+			Contract.Ensures( Object.ReferenceEquals( Contract.Result<RpcClientConfiguration>(), this ) );
+			Contract.Ensures( this.IsFrozen );
+
 			return this.FreezeCore() as RpcClientConfiguration;
 		}
 
@@ -117,6 +134,11 @@ namespace MsgPack.Rpc.Client
 		/// </returns>
 		public RpcClientConfiguration AsFrozen()
 		{
+			Contract.Ensures( Contract.Result<RpcClientConfiguration>() != null );
+			Contract.Ensures( !Object.ReferenceEquals( Contract.Result<RpcClientConfiguration>(), this ) );
+			Contract.Ensures( Contract.Result<RpcClientConfiguration>().IsFrozen );
+			Contract.Ensures( this.IsFrozen == Contract.OldValue( this.IsFrozen ) );
+
 			return this.AsFrozenCore() as RpcClientConfiguration;
 		}
 	}
