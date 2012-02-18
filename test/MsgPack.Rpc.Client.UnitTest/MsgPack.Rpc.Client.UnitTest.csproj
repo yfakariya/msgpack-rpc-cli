@@ -58,7 +58,13 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Rpc\Client\AsyncResultTest.cs" />
+    <Compile Include="Rpc\Client\ErrorInterpreterTest.cs" />
+    <Compile Include="Rpc\Client\FileSystemTest.cs" />
+    <Compile Include="Rpc\Client\MessageAsyncResultTest.cs" />
+    <Compile Include="Rpc\Client\NotificationMessageAsyncResultTest.cs" />
     <Compile Include="Rpc\Client\PreTest.cs" />
+    <Compile Include="Rpc\Client\RequestMessageAsyncResultTest.cs" />
     <Compile Include="Rpc\Client\_SetUpFixture.cs" />
   </ItemGroup>
   <ItemGroup>
