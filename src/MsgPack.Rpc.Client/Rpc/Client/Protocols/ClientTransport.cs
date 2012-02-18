@@ -35,12 +35,19 @@ namespace MsgPack.Rpc.Client.Protocols
 {
 	// FIXME: timeout -> close transport
 	/// <summary>
-	///		Define interface of client protocol binding.
+	///		Defines interface of client protocol binding.
 	/// </summary>
 	public abstract partial class ClientTransport : IDisposable, IContextBoundableTransport
 	{
 		private Socket _boundSocket;
 
+		/// <summary>
+		///		Gets the bound <see cref="Socket"/>.
+		/// </summary>
+		/// <value>
+		///		The bound <see cref="Socket"/>.
+		///		This value might be <c>null</c> when any sockets have not been bound, or underlying protocol does not rely socket.
+		/// </value>
 		public Socket BoundSocket
 		{
 			get { return this._boundSocket; }
@@ -54,6 +61,12 @@ namespace MsgPack.Rpc.Client.Protocols
 
 		private int _isDisposed;
 
+		/// <summary>
+		///		Gets a value indicating whether this instance is disposed.
+		/// </summary>
+		/// <value>
+		/// 	<c>true</c> if this instance is disposed; otherwise, <c>false</c>.
+		/// </value>
 		public bool IsDisposed
 		{
 			get { return Interlocked.CompareExchange( ref this._isDisposed, 0, 0 ) != 0; }
@@ -64,6 +77,13 @@ namespace MsgPack.Rpc.Client.Protocols
 
 		private readonly ClientTransportManager _manager;
 
+		/// <summary>
+		///		Gets the <see cref="ClientTransportManager"/> which manages this instance.
+		/// </summary>
+		/// <value>
+		///		The <see cref="ClientTransportManager"/> which manages this instance.
+		///		This value will not be <c>null</c>.
+		/// </value>
 		protected internal ClientTransportManager Manager
 		{
 			get { return this._manager; }
@@ -71,6 +91,12 @@ namespace MsgPack.Rpc.Client.Protocols
 
 		private bool _isInShutdown;
 
+		/// <summary>
+		///		Gets a value indicating whether this instance is in shutdown.
+		/// </summary>
+		/// <value>
+		/// 	<c>true</c> if this instance is in shutdown; otherwise, <c>false</c>.
+		/// </value>
 		public bool IsInShutdown
 		{
 			get { return this._isInShutdown; }
@@ -80,6 +106,9 @@ namespace MsgPack.Rpc.Client.Protocols
 
 		private EventHandler<EventArgs> _shutdownCompleted;
 
+		/// <summary>
+		///		Occurs when the initiated shutdown process is completed.
+		/// </summary>
 		internal event EventHandler<EventArgs> ShutdownCompleted
 		{
 			add
@@ -106,6 +135,9 @@ namespace MsgPack.Rpc.Client.Protocols
 			}
 		}
 
+		/// <summary>
+		///		Raises internal shutdown completion routine.
+		/// </summary>
 		protected virtual void OnShutdownCompleted()
 		{
 			var handler = Interlocked.CompareExchange( ref this._shutdownCompleted, null, null );

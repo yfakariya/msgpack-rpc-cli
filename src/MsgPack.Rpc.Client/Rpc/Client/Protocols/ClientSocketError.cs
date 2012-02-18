@@ -23,8 +23,18 @@ using System.Net.Sockets;
 
 namespace MsgPack.Rpc.Client.Protocols
 {
+	/// <summary>
+	///		Defines utility methods to handle <see cref="SocketError"/>.
+	/// </summary>
 	public static class ClientSocketError
 	{
+		/// <summary>
+		///		Creates a <see cref="RpcErrorMessage"/> based on the specified <see cref="SocketError"/>.
+		/// </summary>
+		/// <param name="socketError">The underlying <see cref="SocketError"/>.</param>
+		/// <returns>
+		///		A <see cref="RpcErrorMessage"/> based on the specified <see cref="SocketError"/>.
+		/// </returns>
 		public static RpcErrorMessage ToClientRpcError( this SocketError socketError )
 		{
 			// FIXME : IMPL

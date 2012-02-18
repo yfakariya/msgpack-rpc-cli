@@ -18,17 +18,26 @@
 //
 #endregion -- License Terms --
 
+using System;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using MsgPack.Rpc.Client.Protocols;
 
 namespace MsgPack.Rpc.Client
 {
+	/// <summary>
+	///		Interprets error stream.
+	/// </summary>
 	internal static class ErrorInterpreter
 	{
 		// TODO: Configurable
 		private const int _unknownErrorQuota = 1024;
 
+		/// <summary>
+		///		Unpacks <see cref="RpcErrorMessage"/> from stream in the specified context.
+		/// </summary>
+		/// <param name="context"><see cref="ClientResponseContext"/> which stores serialized error.</param>
+		/// <returns>An unpacked <see cref="RpcErrorMessage"/>.</returns>
 		internal static RpcErrorMessage UnpackError( ClientResponseContext context )
 		{
 			Contract.Assert( context.ErrorBuffer.Length > 0 );

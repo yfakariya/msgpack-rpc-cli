@@ -27,8 +27,17 @@ using System.Diagnostics.Contracts;
 
 namespace MsgPack.Rpc.Client.Protocols
 {
+	/// <summary>
+	///		Implements <see cref="ClientTransportManager{T}"/> for <see cref="TcpClientTransport"/>.
+	/// </summary>
 	public sealed class UdpClientTransportManager : ClientTransportManager<UdpClientTransport>
 	{
+		/// <summary>
+		///		Initializes a new instance of the <see cref="UdpClientTransportManager"/> class.
+		/// </summary>
+		/// <param name="configuration">
+		///		The <see cref="RpcClientConfiguration"/> which describes transport configuration.
+		/// </param>
 		public UdpClientTransportManager( RpcClientConfiguration configuration )
 			: base( configuration )
 		{
@@ -37,7 +46,15 @@ namespace MsgPack.Rpc.Client.Protocols
 #endif
 		}
 
-		protected sealed override Task<ClientTransport> ConnectAsyncCore(EndPoint targetEndPoint )
+		/// <summary>
+		///		Establishes logical connection, which specified to the managed transport protocol, for the server.
+		/// </summary>
+		/// <param name="targetEndPoint">The end point of target server.</param>
+		/// <returns>
+		///		<see cref="Task{T}"/> of <see cref="ClientTransport"/> which represents asynchronous establishment process specific to the managed transport.
+		///		This value will not be <c>null</c>.
+		/// </returns>
+		protected sealed override Task<ClientTransport> ConnectAsyncCore( EndPoint targetEndPoint )
 		{
 			var task = new Task<ClientTransport>( this.CreateTransport, targetEndPoint );
 			task.RunSynchronously( TaskScheduler.Default );
@@ -58,6 +75,18 @@ namespace MsgPack.Rpc.Client.Protocols
 			return transport;
 		}
 
+		/// <summary>
+		///		Gets the transport managed by this instance.
+		/// </summary>
+		/// <param name="bindingSocket">The <see cref="Socket"/> to be bind the returning transport.</param>
+		/// <returns>
+		///		The transport managed by this instance.
+		///		This implementation binds a valid <see cref="Socket"/> to the returning transport.
+		/// </returns>
+		/// <exception cref="InvalidOperationException">
+		///		<see cref="P:IsTransportPoolSet"/> is <c>false</c>.
+		///		Or <paramref name="bindingSocket"/> is <c>null</c>.
+		/// </exception>
 		protected sealed override UdpClientTransport GetTransportCore( Socket bindingSocket )
 		{
 			if ( bindingSocket == null )

@@ -26,6 +26,9 @@ using MsgPack.Rpc.Protocols;
 
 namespace MsgPack.Rpc.Client.Protocols
 {
+	/// <summary>
+	///		Represents context information for the client side response.
+	/// </summary>
 	public sealed class ClientResponseContext : MessageContext
 	{
 		/// <summary>
@@ -55,6 +58,12 @@ namespace MsgPack.Rpc.Client.Protocols
 
 		private int _currentReceivingBufferOffset;
 
+		/// <summary>
+		///		Gets the current offset of the <see cref="CurrentReceivingBuffer"/>.
+		/// </summary>
+		/// <value>
+		///		The current offset of the <see cref="CurrentReceivingBuffer"/>.
+		/// </value>
 		internal int CurrentReceivingBufferOffset
 		{
 			get { return _currentReceivingBufferOffset; }
@@ -110,6 +119,9 @@ namespace MsgPack.Rpc.Client.Protocols
 		/// </summary>
 		internal Stream DumpStream;
 
+		/// <summary>
+		///		Initializes a new instance of the <see cref="ClientResponseContext"/> class.
+		/// </summary>
 		public ClientResponseContext()
 		{
 			// TODO: Configurable
@@ -120,6 +132,10 @@ namespace MsgPack.Rpc.Client.Protocols
 			this.ResultStartAt = -1;
 		}
 
+		/// <summary>
+		///		Sets the bound <see cref="ClientTransport"/>.
+		/// </summary>
+		/// <param name="transport">The binding transport.</param>
 		internal void SetTransport( ClientTransport transport )
 		{
 			this._initialProcess = transport.UnpackResponseHeader;
@@ -133,6 +149,10 @@ namespace MsgPack.Rpc.Client.Protocols
 		}
 
 
+		/// <summary>
+		///		Shifts the current receiving buffer offset with transferred bytes,
+		///		and reallocates buffer for receiving if necessary.
+		/// </summary>
 		public void ShiftCurrentReceivingBuffer()
 		{
 			int shift = this.BytesTransferred;
@@ -149,6 +169,9 @@ namespace MsgPack.Rpc.Client.Protocols
 			this.SetBuffer( this._currentReceivingBuffer, this._currentReceivingBufferOffset, this._currentReceivingBuffer.Length - this._currentReceivingBufferOffset );
 		}
 
+		/// <summary>
+		///		Clears this instance internal buffers for reuse.
+		/// </summary>
 		internal sealed override void Clear()
 		{
 			this.ClearBuffers();

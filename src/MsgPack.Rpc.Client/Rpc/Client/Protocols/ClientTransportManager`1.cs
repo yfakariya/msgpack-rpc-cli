@@ -28,6 +28,10 @@ using System.Threading.Tasks;
 
 namespace MsgPack.Rpc.Client.Protocols
 {
+	/// <summary>
+	///		Manages <see cref="ClientTransport"/>s.
+	/// </summary>
+	/// <typeparam name="TTransport"></typeparam>
 	public abstract class ClientTransportManager<TTransport> : ClientTransportManager
 		where TTransport : ClientTransport
 	{
@@ -46,12 +50,28 @@ namespace MsgPack.Rpc.Client.Protocols
 		/// <exception cref="ArgumentNullException">
 		///		<paramref name="configuration"/> is <c>null</c>.
 		/// </exception>
+		/// <remarks>
+		///		The derived class must call <see cref="SetTransportPool"/> in the end of constructor
+		///		unless it implements special process which does not use transport pool at all.
+		/// </remarks>
 		protected ClientTransportManager( RpcClientConfiguration configuration )
 			: base( configuration )
 		{
 			this._activeTransports = new ConcurrentDictionary<TTransport, object>();
 		}
 
+		/// <summary>
+		///		Sets the <see cref="ObjectPool{T}"/> of <typeparamref name="TTransport"/> to this instance.
+		/// </summary>
+		/// <param name="transportPool">
+		///		The <see cref="ObjectPool{T}"/> of <typeparamref name="TTransport"/> to be set.
+		/// </param>
+		/// <exception cref="ArgumentNullException">
+		///		<paramref name="transportPool"/> is <c>null</c>.
+		/// </exception>
+		/// <exception cref="InvalidOperationException">
+		///		This method is called more than once for this instance.
+		/// </exception>
 		protected void SetTransportPool( ObjectPool<TTransport> transportPool )
 		{
 			if ( transportPool == null )
@@ -67,6 +87,9 @@ namespace MsgPack.Rpc.Client.Protocols
 			this._transportPool = transportPool;
 		}
 
+		/// <summary>
+		///		Initiates protocol specific shutdown process.
+		/// </summary>
 		protected override void BeginShutdownCore()
 		{
 			foreach ( var transport in this._activeTransports )
@@ -99,6 +122,18 @@ namespace MsgPack.Rpc.Client.Protocols
 			}
 		}
 
+		/// <summary>
+		///		Gets the transport managed by this instance.
+		/// </summary>
+		/// <param name="bindingSocket">The <see cref="Socket"/> to be bind the returning transport.</param>
+		/// <returns>
+		///		The transport managed by this instance.
+		///		Note that <see cref="ClientTransport.BoundSocket"/> might be <c>null</c> depends on <see cref="GetTransportCore"/> implementation.
+		/// </returns>
+		/// <exception cref="InvalidOperationException">
+		///		<see cref="IsTransportPoolSet"/> is <c>false</c>.
+		///		Or <paramref name="bindingSocket"/> cannot be <c>null</c> for the current transport.
+		/// </exception>
 		protected TTransport GetTransport( Socket bindingSocket )
 		{
 			if ( this._transportPool == null )
@@ -120,6 +155,22 @@ namespace MsgPack.Rpc.Client.Protocols
 			return transport;
 		}
 
+		/// <summary>
+		///		Gets the transport managed by this instance.
+		/// </summary>
+		/// <param name="bindingSocket">The <see cref="Socket"/> to be bind the returning transport.</param>
+		/// <returns>
+		///		The transport managed by this instance.
+		///		Note that <see cref="ClientTransport.BoundSocket"/> might be <c>null</c> depends on <see cref="GetTransportCore"/> implementation.
+		/// </returns>
+		/// <exception cref="InvalidOperationException">
+		///		<see cref="IsTransportPoolSet"/> is <c>false</c>.
+		///		Or <paramref name="bindingSocket"/> cannot be <c>null</c> for the current transport.
+		/// </exception>
+		/// <remarks>
+		///		This implementation does not bind <paramref name="bindingSocket"/> to the returning transport.
+		///		The derived class which uses <see cref="Socket"/> for its communication, must set the transport via <see cref="BindSocket"/> method.
+		/// </remarks>
 		protected virtual TTransport GetTransportCore( Socket bindingSocket )
 		{
 			return this._transportPool.Borrow();
@@ -151,11 +202,29 @@ namespace MsgPack.Rpc.Client.Protocols
 			transport.BoundSocket = bindingSocket;
 		}
 
+		/// <summary>
+		///		Returns specified <see cref="ClientTransport"/> to the internal pool.
+		/// </summary>
+		/// <param name="transport">The <see cref="ClientTransport"/> to be returned.</param>
 		internal sealed override void ReturnTransport( ClientTransport transport )
 		{
 			this.ReturnTransport( ( TTransport )transport );
 		}
 
+		/// <summary>
+		///		Invoked from the <see cref="ClientTransport"/> which was created by this manager,
+		///		returns the transport to this manager.
+		/// </summary>
+		/// <param name="transport">The <see cref="ClientTransport"/> which was created by this manager.</param>
+		/// <exception cref="ArgumentNullException">
+		///		<paramref name="transport"/> is <c>null</c>.
+		/// </exception>
+		/// <exception cref="ArgumentException">
+		///		<paramref name="transport"/> is not managed by this manager.
+		/// </exception>
+		/// <exception cref="InvalidOperationException">
+		///		<see cref="IsTransportPoolSet"/> is <c>false</c>.
+		/// </exception>
 		protected void ReturnTransport( TTransport transport )
 		{
 			if ( transport == null )
@@ -182,6 +251,10 @@ namespace MsgPack.Rpc.Client.Protocols
 			}
 		}
 
+		/// <summary>
+		///		Invoked from <see cref="ReturnTransport(TTransport)"/>, returns the transport to this manager.
+		/// </summary>
+		/// <param name="transport">The <see cref="ClientTransport"/> which was created by this manager.</param>
 		protected virtual void ReturnTransportCore( TTransport transport )
 		{
 			this._transportPool.Return( transport );

@@ -197,7 +197,7 @@ namespace MsgPack.Rpc.Client
 		/// 	Gets or sets the timeout value to connect.
 		/// </summary>
 		/// <value>
-		/// 	The timeout value to connect. The default is 120 seconds. <c>null<c> means inifinite timeout.
+		/// 	The timeout value to connect. The default is 120 seconds. <c>null</c> means inifinite timeout.
 		/// </value>
 		public TimeSpan? ConnectTimeout
 		{
@@ -239,7 +239,7 @@ namespace MsgPack.Rpc.Client
 		/// 	Gets or sets the timeout value to wait response.
 		/// </summary>
 		/// <value>
-		/// 	The timeout value to wait response. The default is 120 seconds. <c>null<c> means inifinite timeout.
+		/// 	The timeout value to wait response. The default is 120 seconds. <c>null</c> means inifinite timeout.
 		/// </value>
 		public TimeSpan? WaitTimeout
 		{

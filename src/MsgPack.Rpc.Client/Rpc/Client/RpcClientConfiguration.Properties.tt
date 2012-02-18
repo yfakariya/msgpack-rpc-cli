@@ -78,7 +78,7 @@ new List<Property>()
 		Default = "TimeSpan.FromSeconds( 120 )",
 		Summary = "Gets or sets the timeout value to connect.",
 		Value = "The timeout value to connect. " +
-			"The default is 120 seconds. <c>null<c> means inifinite timeout.",
+			"The default is 120 seconds. <c>null</c> means inifinite timeout.",
 		Precondition = Constraints.NullOrPositive,
 		Postcondition = Constraints.NullOrPositive
 	},
@@ -89,7 +89,7 @@ new List<Property>()
 		Default = "TimeSpan.FromSeconds( 120 )",
 		Summary = "Gets or sets the timeout value to wait response.",
 		Value = "The timeout value to wait response. " +
-			"The default is 120 seconds. <c>null<c> means inifinite timeout.",
+			"The default is 120 seconds. <c>null</c> means inifinite timeout.",
 		Precondition = Constraints.NullOrPositive,
 		Postcondition = Constraints.NullOrPositive
 	},

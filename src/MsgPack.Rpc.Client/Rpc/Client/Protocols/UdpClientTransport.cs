@@ -19,19 +19,41 @@
 #endregion -- License Terms --
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Net;
 
 namespace MsgPack.Rpc.Client.Protocols
 {
+	/// <summary>
+	///		Implements <see cref="ClientTransport"/> for UDP/IP protocol.
+	/// </summary>
 	public sealed class UdpClientTransport : ClientTransport
 	{
+		/// <summary>
+		///		Gets the remote end point.
+		/// </summary>
+		/// <value>
+		///		The remote end point.
+		/// </value>
 		public EndPoint RemoteEndPoint { get; internal set; }
 
+		/// <summary>
+		///		Initializes a new instance of the <see cref="UdpClientTransport"/> class.
+		/// </summary>
+		/// <param name="manager">The manager which will manage this instance.</param>
+		/// <exception cref="ArgumentNullException">
+		///		<paramref name="manager"/> is <c>null</c>.
+		/// </exception>
 		public UdpClientTransport( UdpClientTransportManager manager ) : base( manager ) { }
 
+		/// <summary>
+		///		Gets the <see cref="ClientRequestContext"/> to store context information for request or notification.
+		/// </summary>
+		/// <returns>
+		///		The <see cref="ClientRequestContext"/> to store context information for request or notification.
+		/// </returns>
+		/// <exception cref="InvalidOperationException">
+		///		This object is not ready to invoke this method.
+		/// </exception>
 		public sealed override ClientRequestContext GetClientRequestContext()
 		{
 			if ( this.RemoteEndPoint == null )
@@ -44,6 +66,10 @@ namespace MsgPack.Rpc.Client.Protocols
 			return result;
 		}
 
+		/// <summary>
+		///		Performs protocol specific asynchronous 'Send' operation.
+		/// </summary>
+		/// <param name="context">Context information.</param>
 		protected sealed override void SendCore( ClientRequestContext context )
 		{
 			// Manager stores the socket which is dedicated socket to this transport in the AcceptSocket property.
@@ -54,6 +80,10 @@ namespace MsgPack.Rpc.Client.Protocols
 			}
 		}
 
+		/// <summary>
+		///		Performs protocol specific asynchronous 'Receive' operation.
+		/// </summary>
+		/// <param name="context">Context information.</param>
 		protected sealed override void ReceiveCore( ClientResponseContext context )
 		{
 			// Manager stores the socket which is dedicated socket to this transport in the AcceptSocket property.

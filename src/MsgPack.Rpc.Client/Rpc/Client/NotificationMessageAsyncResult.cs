@@ -48,7 +48,6 @@ namespace MsgPack.Rpc.Client
 		/// <param name="owner">
 		///		Owner of asynchrnous invocation. This value will not be null.
 		/// </param>
-		/// <param name="messageId">ID of message.</param>
 		/// <param name="asyncCallback">
 		///		Callback of asynchrnous invocation which should be called in completion.
 		///		This value can be null.

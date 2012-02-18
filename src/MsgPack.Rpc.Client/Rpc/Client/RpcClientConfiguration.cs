@@ -24,6 +24,9 @@ using MsgPack.Rpc.Client.Protocols;
 
 namespace MsgPack.Rpc.Client
 {
+	/// <summary>
+	///		Represents client side configuration settings.
+	/// </summary>
 	public sealed partial class RpcClientConfiguration : FreezableObject
 	{
 		private static readonly RpcClientConfiguration _default = new RpcClientConfiguration().Freeze();
@@ -41,10 +44,17 @@ namespace MsgPack.Rpc.Client
 		}
 
 		/// <summary>
-		/// Initializes a new instance of the <see cref="RpcClientConfiguration"/> class.
+		///		Initializes a new instance of the <see cref="RpcClientConfiguration"/> class.
 		/// </summary>
 		public RpcClientConfiguration() { }
 
+		/// <summary>
+		///		Creates the <see cref="ObjectPoolConfiguration"/> for the transport pool corresponds to values of this instance.
+		/// </summary>
+		/// <returns>
+		///		The <see cref="ObjectPoolConfiguration"/> for the transport pool corresponds to values of this instance.
+		///		This value will not be <c>null</c>.
+		/// </returns>
 		public ObjectPoolConfiguration CreateTcpTransportPoolConfiguration()
 		{
 			return new ObjectPoolConfiguration() { ExhausionPolicy = ExhausionPolicy.BlockUntilAvailable, MaximumPooled = this.MaximumConcurrentRequest, MinimumReserved = this.MinimumConcurrentRequest };
@@ -55,11 +65,25 @@ namespace MsgPack.Rpc.Client
 			return new ObjectPoolConfiguration() { ExhausionPolicy = ExhausionPolicy.BlockUntilAvailable, MaximumPooled = this.MaximumConcurrentRequest, MinimumReserved = this.MinimumConcurrentRequest };
 		}
 
+		/// <summary>
+		///		Creates the <see cref="ObjectPoolConfiguration"/> for the <see cref="MsgPack.Rpc.Client.Protocols.ClientRequestContext"/> pool corresponds to values of this instance.
+		/// </summary>
+		/// <returns>
+		///		The <see cref="ObjectPoolConfiguration"/> for the <see cref="MsgPack.Rpc.Client.Protocols.ClientRequestContext"/> pool corresponds to values of this instance.
+		///		This value will not be <c>null</c>.
+		/// </returns>
 		public ObjectPoolConfiguration CreateRequestContextPoolConfiguration()
 		{
 			return new ObjectPoolConfiguration() { ExhausionPolicy = ExhausionPolicy.BlockUntilAvailable, MaximumPooled = this.MaximumConcurrentRequest, MinimumReserved = this.MinimumConcurrentRequest };
 		}
 
+		/// <summary>
+		///		Creates the <see cref="ObjectPoolConfiguration"/> for the <see cref="MsgPack.Rpc.Client.Protocols.ClientResponseContext"/> pool corresponds to values of this instance.
+		/// </summary>
+		/// <returns>
+		///		The <see cref="ObjectPoolConfiguration"/> for the <see cref="MsgPack.Rpc.Client.Protocols.ClientResponseContext"/> pool corresponds to values of this instance.
+		///		This value will not be <c>null</c>.
+		/// </returns>
 		public ObjectPoolConfiguration CreateResponseContextPoolConfiguration()
 		{
 			return new ObjectPoolConfiguration() { ExhausionPolicy = ExhausionPolicy.BlockUntilAvailable, MaximumPooled = this.MaximumConcurrentRequest, MinimumReserved = this.MinimumConcurrentRequest };

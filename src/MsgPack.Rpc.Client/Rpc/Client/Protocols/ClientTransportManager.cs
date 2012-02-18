@@ -30,10 +30,20 @@ using System.Net;
 
 namespace MsgPack.Rpc.Client.Protocols
 {
-	public abstract class ClientTransportManager :  IDisposable
+	/// <summary>
+	///		Defines non-generic interface of <see cref="ClientTransportManager{T}"/> and provides related features.
+	/// </summary>
+	public abstract class ClientTransportManager : IDisposable
 	{
 		private readonly ObjectPool<ClientRequestContext> _requestContextPool;
 
+		/// <summary>
+		///		Gets the <see cref="ObjectPool{T}"/> of <see cref="ClientRequestContext"/>.
+		/// </summary>
+		/// <value>
+		///		The <see cref="ObjectPool{T}"/> of <see cref="ClientRequestContext"/>.
+		///		This value will not be <c>null</c>.
+		/// </value>
 		public ObjectPool<ClientRequestContext> RequestContextPool
 		{
 			get { return this._requestContextPool; }
@@ -41,6 +51,13 @@ namespace MsgPack.Rpc.Client.Protocols
 
 		private readonly ObjectPool<ClientResponseContext> _responseContextPool;
 
+		/// <summary>
+		///		Gets the <see cref="ObjectPool{T}"/> of <see cref="ClientResponseContext"/>.
+		/// </summary>
+		/// <value>
+		///		The <see cref="ObjectPool{T}"/> of <see cref="ClientResponseContext"/>.
+		///		This value will not be <c>null</c>.
+		/// </value>
 		public ObjectPool<ClientResponseContext> ResponseContextPool
 		{
 			get { return this._responseContextPool; }
@@ -48,6 +65,13 @@ namespace MsgPack.Rpc.Client.Protocols
 
 		private readonly RpcClientConfiguration _configuration;
 
+		/// <summary>
+		///		Gets the <see cref="RpcClientConfiguration"/> which describes transport configuration.
+		/// </summary>
+		/// <value>
+		///		The <see cref="RpcClientConfiguration"/> which describes transport configuration.
+		///		This value will not be <c>null</c>.
+		/// </value>
 		protected RpcClientConfiguration Configuration
 		{
 			get { return this._configuration; }
@@ -62,6 +86,12 @@ namespace MsgPack.Rpc.Client.Protocols
 
 		private int _isInShutdown;
 
+		/// <summary>
+		///		Gets a value indicating whether this instance is in shutdown.
+		/// </summary>
+		/// <value>
+		/// 	<c>true</c> if this instance is in shutdown; otherwise, <c>false</c>.
+		/// </value>
 		public bool IsInShutdown
 		{
 			get { return Interlocked.CompareExchange( ref this._isInShutdown, 0, 0 ) != 0; }
@@ -69,6 +99,9 @@ namespace MsgPack.Rpc.Client.Protocols
 
 		private EventHandler<EventArgs> _shutdownCompleted;
 
+		/// <summary>
+		///		Occurs when client shutdown is completed.
+		/// </summary>
 		public event EventHandler<EventArgs> ShutdownCompleted
 		{
 			add
@@ -95,6 +128,9 @@ namespace MsgPack.Rpc.Client.Protocols
 			}
 		}
 
+		/// <summary>
+		///		Raises <see cref="ShutdownCompleted"/> event.
+		/// </summary>
 		protected virtual void OnShutdownCompleted()
 		{
 			var handler = Interlocked.CompareExchange( ref this._shutdownCompleted, null, null );
@@ -125,12 +161,19 @@ namespace MsgPack.Rpc.Client.Protocols
 			this._responseContextPool = configuration.ResponseContextPoolProvider( () => new ClientResponseContext(), configuration.CreateResponseContextPoolConfiguration() );
 		}
 
+		/// <summary>
+		///		Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
+		/// </summary>
 		public void Dispose()
 		{
 			this.Dispose( true );
 			GC.SuppressFinalize( this );
 		}
 
+		/// <summary>
+		///		Releases unmanaged and - optionally - managed resources.
+		/// </summary>
+		/// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
 		protected void Dispose( bool disposing )
 		{
 			this.OnDisposing( disposing );
@@ -143,20 +186,47 @@ namespace MsgPack.Rpc.Client.Protocols
 			this.OnDisposed( disposing );
 		}
 
+		/// <summary>
+		///		When overridden in derived class, releases unmanaged and - optionally - managed resources
+		/// </summary>
+		/// <param name="disposing">
+		///		<c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.
+		///	</param>
+		/// <remarks>
+		///		This method is guaranteed that this is invoked exactly once and after <see cref="IsDisposed"/> changed <c>true</c>.
+		/// </remarks>
 		protected virtual void OnDisposing( bool disposing ) { }
 		protected virtual void DisposeCore( bool disposing ) { }
 		protected virtual void OnDisposed( bool disposing ) { }
 
+		/// <summary>
+		///		Initiates client shutdown.
+		/// </summary>
 		public void BeginShutdown()
 		{
 			this.BeginShutdownCore();
 		}
 
+		/// <summary>
+		///		When overridden in derived class, initiates protocol specific shutdown process.
+		/// </summary>
 		protected virtual void BeginShutdownCore()
 		{
 			Interlocked.Exchange( ref this._isInShutdown, 1 );
 		}
 
+		/// <summary>
+		///		Establishes logical connection, which specified to the managed transport protocol, for the server.
+		/// </summary>
+		/// <param name="targetEndPoint">The end point of target server.</param>
+		/// <returns>
+		///		<see cref="Task{T}"/> of <see cref="ClientTransport"/> which represents asynchronous establishment process
+		///		specific to the managed transport.
+		///		This value will not be <c>null</c>.
+		/// </returns>
+		/// <exception cref="ArgumentNullException">
+		///		<paramref name="targetEndPoint"/> is <c>null</c>.
+		/// </exception>
 		public Task<ClientTransport> ConnectAsync( EndPoint targetEndPoint )
 		{
 			if ( targetEndPoint == null )
@@ -167,9 +237,26 @@ namespace MsgPack.Rpc.Client.Protocols
 			return this.ConnectAsyncCore( targetEndPoint );
 		}
 
+		/// <summary>
+		///		Establishes logical connection, which specified to the managed transport protocol, for the server.
+		/// </summary>
+		/// <param name="targetEndPoint">The end point of target server.</param>
+		/// <returns>
+		///		<see cref="Task{T}"/> of <see cref="ClientTransport"/> which represents asynchronous establishment process
+		///		specific to the managed transport.
+		///		This value will not be <c>null</c>.
+		/// </returns>
 		protected abstract Task<ClientTransport> ConnectAsyncCore( EndPoint targetEndPoint );
 
-
+		/// <summary>
+		///		Handles socket error.
+		/// </summary>
+		/// <param name="socket">The <see cref="Socket"/> which might cause socket error.</param>
+		/// <param name="context">The <see cref="SocketAsyncEventArgs"/> which holds actual error information.</param>
+		/// <returns>
+		///		<see cref="RpcErrorMessage"/> corresponds for the socket error.
+		///		<c>null</c> if the operation result is not socket error.
+		/// </returns>
 		protected internal RpcErrorMessage? HandleSocketError( Socket socket, SocketAsyncEventArgs context )
 		{
 			if ( context.SocketError.IsError() == false )
@@ -201,6 +288,10 @@ namespace MsgPack.Rpc.Client.Protocols
 			return context.SocketError.ToClientRpcError();
 		}
 
+		/// <summary>
+		///		Returns specified <see cref="ClientTransport"/> to the internal pool.
+		/// </summary>
+		/// <param name="transport">The <see cref="ClientTransport"/> to be returned.</param>
 		internal abstract void ReturnTransport( ClientTransport transport );
 	}
 }

@@ -39,10 +39,10 @@ namespace MsgPack.Rpc
 		private readonly object _owner;
 
 		/// <summary>
-		///		Get owner of asynchrnous invocation.
+		///		Gets an owner of asynchrnous invocation.
 		/// </summary>
 		/// <value>
-		///		Owner of asynchrnous invocation. This value will not be null.
+		///		An owner of asynchrnous invocation. This value will not be null.
 		/// </value>
 		internal object Owner
 		{
@@ -52,10 +52,10 @@ namespace MsgPack.Rpc
 		private readonly AsyncCallback _asyncCallback;
 
 		/// <summary>
-		///		Get callback of asynchrnous invocation which should be called in completion.
+		///		Gets a callback of asynchrnous invocation which should be called in completion.
 		/// </summary>
 		/// <value>
-		///		Callback of asynchrnous invocation which should be called in completion.
+		///		A callback of asynchrnous invocation which should be called in completion.
 		///		This value could be null.
 		/// </value>
 		public AsyncCallback AsyncCallback
@@ -66,10 +66,10 @@ namespace MsgPack.Rpc
 		private readonly object _asyncState;
 
 		/// <summary>
-		///		Get state object of asynchrnous invocation which will be passed to <see cref="AsyncCallback"/>.
+		///		Gets a state object of asynchrnous invocation which will be passed to <see cref="AsyncCallback"/>.
 		/// </summary>
 		/// <value>
-		///		State object of asynchrnous invocation which will be passed to <see cref="AsyncCallback"/>.
+		///		A state object of asynchrnous invocation which will be passed to <see cref="AsyncCallback"/>.
 		///		This value could be null.
 		/// </value>
 		public object AsyncState
@@ -80,10 +80,10 @@ namespace MsgPack.Rpc
 		private ManualResetEvent _asyncWaitHandle;
 
 		/// <summary>
-		///		Get <see cref="WaitHandle"/> to be used coordinate multiple asynchronous invocation.
+		///		Gets a <see cref="WaitHandle"/> to be used coordinate multiple asynchronous invocation.
 		/// </summary>
 		/// <value>
-		///		<see cref="WaitHandle"/> to be used coordinate multiple asynchronous invocation.
+		///		A <see cref="WaitHandle"/> to be used coordinate multiple asynchronous invocation.
 		/// </value>
 		public WaitHandle AsyncWaitHandle
 		{
@@ -99,7 +99,7 @@ namespace MsgPack.Rpc
 		}
 
 		/// <summary>
-		///		Get value asynchronous invocation is completed.
+		///		Gets a value asynchronous invocation is completed.
 		/// </summary>
 		/// <value>
 		///		If asynchronous invocation is completed, that is, BeginInvoke is finished then true.
@@ -110,7 +110,7 @@ namespace MsgPack.Rpc
 		}
 
 		/// <summary>
-		///		Get value asynchronous invocation is finished.
+		///		Gets a value asynchronous invocation is finished.
 		/// </summary>
 		/// <value>
 		///		If asynchronous invocation is finished, that is, EncInvoke is finished then true.
@@ -123,10 +123,10 @@ namespace MsgPack.Rpc
 		private Exception _error;
 
 		/// <summary>
-		///		Get error corresponds to this message.
+		///		Gets an error corresponds to this message.
 		/// </summary>
 		/// <value>
-		///		Error corresponds to this message.
+		///		An error corresponds to this message.
 		/// </value>
 		public Exception Error
 		{
@@ -134,7 +134,7 @@ namespace MsgPack.Rpc
 		}
 
 		/// <summary>
-		///		Initialize new instance.
+		///		Initializes new instance.
 		/// </summary>
 		/// <param name="owner">
 		///		Owner of asynchrnous invocation. This value will not be null.
@@ -163,10 +163,10 @@ namespace MsgPack.Rpc
 		}
 
 		/// <summary>
-		///		Record asynchronous invocation result and set completion.
+		///		Records asynchronous invocation result and set completion.
 		/// </summary>
 		/// <param name="completedSynchronously">
-		///		When operation is completed same thread as initiater then true.
+		///		When operation is completed same thread as initiater then <c>true</c>; otherwise, <c>false</c>.
 		/// </param>
 		internal void Complete( bool completedSynchronously )
 		{
@@ -182,13 +182,13 @@ namespace MsgPack.Rpc
 		}
 
 		/// <summary>
-		///		Complete this invocation as error.
+		///		Completes this invocation as error.
 		/// </summary>
 		/// <param name="error">
 		///		Occurred exception.
 		///	</param>
 		/// <param name="completedSynchronously">
-		///		When operation is completed same thread as initiater then true.
+		///		When operation is completed same thread as initiater then <c>true</c>; otherwise, <c>false</c>.
 		/// </param>
 		public void OnError( Exception error, bool completedSynchronously )
 		{
@@ -200,6 +200,9 @@ namespace MsgPack.Rpc
 			}
 		}
 
+		/// <summary>
+		///		Waits until asynchronous operation is completed.
+		/// </summary>
 		public void WaitForCompletion()
 		{
 			var current = Interlocked.CompareExchange( ref this._state, _neverSet, _neverSet );
@@ -210,7 +213,7 @@ namespace MsgPack.Rpc
 		}
 
 		/// <summary>
-		///		Record all operation is finished.
+		///		Records all operation is finished and clean ups internal resources.
 		/// </summary>
 		public void Finish()
 		{
@@ -241,7 +244,7 @@ namespace MsgPack.Rpc
 		}
 
 		/// <summary>
-		///		Verify ownership and return typed instance.
+		///		Verifies ownership and return typed instance.
 		/// </summary>
 		/// <typeparam name="TAsyncResult">Type of returning <paramref name="asyncResult"/>.</typeparam>
 		/// <param name="asyncResult"><see cref="IAsyncResult"/> passed to EndInvoke.</param>

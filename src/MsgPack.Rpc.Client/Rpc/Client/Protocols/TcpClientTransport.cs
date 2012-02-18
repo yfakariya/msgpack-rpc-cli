@@ -18,15 +18,29 @@
 //
 #endregion -- License Terms --
 
+using System;
 using System.Net.Sockets;
 
 namespace MsgPack.Rpc.Client.Protocols
 {
+	/// <summary>
+	///		Implements <see cref="ClientTransport"/> for TCP/IP protocol.
+	/// </summary>
 	public sealed class TcpClientTransport : ClientTransport
 	{
+		/// <summary>
+		///		Initializes a new instance of the <see cref="TcpClientTransport"/> class.
+		/// </summary>
+		/// <param name="manager">The manager which will manage this instance.</param>
+		/// <exception cref="ArgumentNullException">
+		///		<paramref name="manager"/> is <c>null</c>.
+		/// </exception>
 		public TcpClientTransport( TcpClientTransportManager manager )
 			: base( manager ) { }
 
+		/// <summary>
+		///		Shutdowns the sending.
+		/// </summary>
 		protected sealed override void ShutdownSending()
 		{
 			this.BoundSocket.Shutdown( SocketShutdown.Send );
@@ -34,6 +48,9 @@ namespace MsgPack.Rpc.Client.Protocols
 			base.ShutdownSending();
 		}
 
+		/// <summary>
+		///		Shutdowns the receiving.
+		/// </summary>
 		protected sealed override void ShutdownReceiving()
 		{
 			this.BoundSocket.Shutdown( SocketShutdown.Receive );
@@ -41,6 +58,10 @@ namespace MsgPack.Rpc.Client.Protocols
 			base.ShutdownReceiving();
 		}
 
+		/// <summary>
+		///		Performs protocol specific asynchronous 'Send' operation.
+		/// </summary>
+		/// <param name="context">Context information.</param>
 		protected sealed override void SendCore( ClientRequestContext context )
 		{
 			if ( !this.BoundSocket.SendAsync( context ) )
@@ -50,6 +71,10 @@ namespace MsgPack.Rpc.Client.Protocols
 			}
 		}
 
+		/// <summary>
+		///		Performs protocol specific asynchronous 'Receive' operation.
+		/// </summary>
+		/// <param name="context">Context information.</param>
 		protected sealed override void ReceiveCore( ClientResponseContext context )
 		{
 			if ( !this.BoundSocket.ReceiveAsync( context ) )

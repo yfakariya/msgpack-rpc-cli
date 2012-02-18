@@ -32,9 +32,9 @@ namespace MsgPack.Rpc
 		private readonly int? _messageId;
 
 		/// <summary>
-		///		Get ID of message.
+		///		Gets the ID of message.
 		/// </summary>
-		/// <value>ID of message.</value>
+		/// <value>The ID of message.</value>
 		public int? MessageId
 		{
 			get { return this._messageId; }
@@ -44,15 +44,15 @@ namespace MsgPack.Rpc
 		///		Initialize new instance.
 		/// </summary>
 		/// <param name="owner">
-		///		Owner of asynchrnous invocation. This value will not be null.
+		///		The owner of asynchrnous invocation. This value will not be null.
 		/// </param>
-		/// <param name="messageId">ID of message.</param>
+		/// <param name="messageId">The ID of message.</param>
 		/// <param name="asyncCallback">
-		///		Callback of asynchrnous invocation which should be called in completion.
+		///		The callback of asynchrnous invocation which should be called in completion.
 		///		This value can be null.
 		/// </param>
 		/// <param name="asyncState">
-		///		State object of asynchrnous invocation which will be passed to <see cref="AsyncCallback"/>.
+		///		The state object of asynchrnous invocation which will be passed to <see cref="AsyncCallback"/>.
 		///		This value can be null.
 		/// </param>
 		/// <exception cref="ArgumentNullException">

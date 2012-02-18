@@ -25,6 +25,9 @@ using MsgPack.Rpc.Protocols;
 
 namespace MsgPack.Rpc.Client.Protocols
 {
+	/// <summary>
+	///		Represents context information for the client side request including notification.
+	/// </summary>
 	public sealed class ClientRequestContext : MessageContext
 	{
 		/// <summary>
@@ -39,11 +42,23 @@ namespace MsgPack.Rpc.Client.Protocols
 		private static readonly ArraySegment<byte> _notificationHeader =
 			new ArraySegment<byte>( new byte[] { 0x94, 0x02 } ); // [FixArray4], [Notification:2]
 
+		/// <summary>
+		///		Empty array of <see cref="ArraySegment{T}"/> of <see cref="Byte"/>.
+		/// </summary>
 		private static readonly ArraySegment<byte> _emptyBuffer =
 			new ArraySegment<byte>( new byte[ 0 ], 0, 0 );
 
 		private MessageType _messageType;
 
+		/// <summary>
+		///		Gets the type of the message.
+		/// </summary>
+		/// <value>
+		///		The type of the message.
+		/// </value>
+		/// <remarks>
+		///		This value can be set via <see cref="SetRequest"/> or <see cref="SetNotification"/> method.
+		/// </remarks>
 		public MessageType MessageType
 		{
 			get { return this._messageType; }
@@ -51,6 +66,13 @@ namespace MsgPack.Rpc.Client.Protocols
 
 		private Packer _argumentsPacker;
 
+		/// <summary>
+		///		Gets the <see cref="Packer"/> to pack arguments array.
+		/// </summary>
+		/// <value>
+		///		The <see cref="Packer"/> to pack arguments array.
+		///		This value will not be <c>null</c>.
+		/// </value>
 		public Packer ArgumentsPacker
 		{
 			get { return this._argumentsPacker; }
@@ -58,13 +80,23 @@ namespace MsgPack.Rpc.Client.Protocols
 
 		private string _methodName;
 
+		/// <summary>
+		///		Gets the name of the calling method.
+		/// </summary>
+		/// <value>
+		///		The name of the calling method.
+		///		This value will be <c>null</c> if both of <see cref="SetRequest"/> and <see cref="SetNotification"/> have not been called after previous cleanup or initialization.
+		/// </value>
+		/// <remarks>
+		///		This value can be set via <see cref="SetRequest"/> or <see cref="SetNotification"/> method.
+		/// </remarks>
 		public string MethodName
 		{
 			get { return this._methodName; }
 		}
 
 		/// <summary>
-		///		The reusable buffer to pack <see cref="Id"/>.
+		///		The reusable buffer to pack message ID.
 		///		This value will not be <c>null</c>.
 		/// </summary>
 		private readonly MemoryStream _idBuffer;
@@ -129,11 +161,27 @@ namespace MsgPack.Rpc.Client.Protocols
 
 		private Action<ClientResponseContext, Exception, bool> _requestCompletionCallback;
 
+		/// <summary>
+		///		Gets the callback delegate which will be called when the response is received.
+		/// </summary>
+		/// <value>
+		///		The callback delegate which will be called when the notification sent.
+		///		The 1st argument is a <see cref="ClientResponseContext"/> which stores any information of the response, it will not be <c>null</c>.
+		///		The 2nd argument is an <see cref="Exception"/> which represents sending error, or <c>null</c> for success.
+		///		The 3rd argument indicates that the operation is completed synchronously.
+		///		This value will be <c>null</c> if both of <see cref="SetRequest"/> and <see cref="SetNotification"/> have not been called after previous cleanup or initialization.
+		/// </value>
+		/// <remarks>
+		///		This value can be set via <see cref="SetRequest"/> method.
+		/// </remarks>
 		public Action<ClientResponseContext, Exception, bool> RequestCompletionCallback
 		{
 			get { return this._requestCompletionCallback; }
 		}
 
+		/// <summary>
+		///		Initializes a new instance of the <see cref="ClientRequestContext"/> class.
+		/// </summary>
 		public ClientRequestContext()
 		{
 			this._idBuffer = new MemoryStream( 5 );
@@ -145,6 +193,22 @@ namespace MsgPack.Rpc.Client.Protocols
 			this._argumentsPacker = Packer.Create( this._argumentsBuffer, false );
 		}
 
+		/// <summary>
+		///		Set ups this context for request message.
+		/// </summary>
+		/// <param name="messageId">The message id which identifies request/response and associates request and response.</param>
+		/// <param name="methodName">Name of the method to be called.</param>
+		/// <param name="completionCallback">
+		///		The callback which will be called when the response is received.
+		///		For details, see <see cref="RequestCompletionCallback"/>.
+		///	</param>
+		/// <exception cref="ArgumentNullException">
+		///		<paramref name="methodName"/> is <c>null</c>.
+		///		Or <paramref name="completionCallback"/> is <c>null</c>.
+		/// </exception>
+		/// <exception cref="ArgumentException">
+		///		<paramref name="methodName"/> is empty.
+		/// </exception>
 		public void SetRequest( int messageId, string methodName, Action<ClientResponseContext, Exception, bool> completionCallback )
 		{
 			if ( methodName == null )
@@ -168,6 +232,21 @@ namespace MsgPack.Rpc.Client.Protocols
 			this._notificationComplectionCallback = null;
 		}
 
+		/// <summary>
+		///		Set ups this context for notification message.
+		/// </summary>
+		/// <param name="methodName">Name of the method to be called.</param>
+		/// <param name="completionCallback">
+		///		The callback which will be called when the response is received.
+		///		For details, see <see cref="NotificationCompletionCallback"/>.
+		///	</param>
+		/// <exception cref="ArgumentNullException">
+		///		<paramref name="methodName"/> is <c>null</c>.
+		///		Or <paramref name="completionCallback"/> is <c>null</c>.
+		/// </exception>
+		/// <exception cref="ArgumentException">
+		///		<paramref name="methodName"/> is empty.
+		/// </exception>
 		public void SetNotification( string methodName, Action<Exception, bool> completionCallback )
 		{
 			if ( methodName == null )
@@ -189,7 +268,10 @@ namespace MsgPack.Rpc.Client.Protocols
 			this._notificationComplectionCallback = completionCallback;
 			this._requestCompletionCallback = null;
 		}
-				
+
+		/// <summary>
+		///		Prepares this instance to send request or notification message.
+		/// </summary>
 		internal void Prepare()
 		{
 			if ( this._messageType == MessageType.Response )
@@ -233,6 +315,9 @@ namespace MsgPack.Rpc.Client.Protocols
 			this.BufferList = this.SendingBuffer;
 		}
 
+		/// <summary>
+		///		Clears this instance internal buffers for reuse.
+		/// </summary>
 		internal sealed override void Clear()
 		{
 			this._idBuffer.SetLength( 0 );

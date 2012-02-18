@@ -32,11 +32,23 @@ namespace MsgPack.Rpc.Client
 	{
 		private ClientResponseContext _responseContext;
 
+		/// <summary>
+		///		Gets a response context which holds response data.
+		/// </summary>
+		/// <value>
+		///		A response context which holds response data.
+		/// </value>
 		public ClientResponseContext ResponseContext
 		{
 			get { return this._responseContext; }
 		}
 
+		/// <summary>
+		///		Processes asynchronous operation completion logic.
+		/// </summary>
+		/// <param name="context">The response context which holds response data.</param>
+		/// <param name="exception">The exception occured.</param>
+		/// <param name="completedSynchronously">When operation is completed same thread as initiater then <c>true</c>; otherwise, <c>false</c>.</param>
 		public void OnCompleted( ClientResponseContext context, Exception exception, bool completedSynchronously )
 		{
 			if ( exception != null )
@@ -64,6 +76,24 @@ namespace MsgPack.Rpc.Client
 			}
 		}
 
+		/// <summary>
+		///		Initializes a new instance of the <see cref="RequestMessageAsyncResult"/> class.
+		/// </summary>
+		/// <param name="owner">
+		///		The owner of asynchrnous invocation. This value will not be null.
+		/// </param>
+		/// <param name="messageId">The ID of message.</param>
+		/// <param name="asyncCallback">
+		///		The callback of asynchrnous invocation which should be called in completion.
+		///		This value can be null.
+		/// </param>
+		/// <param name="asyncState">
+		///		The state object of asynchrnous invocation which will be passed to <see cref="AsyncCallback"/>.
+		///		This value can be null.
+		/// </param>
+		/// <exception cref="ArgumentNullException">
+		///		<paramref name="owner"/> is null.
+		/// </exception>
 		public RequestMessageAsyncResult( Object owner, int messageId, AsyncCallback asyncCallback, object asyncState )
 			: base( owner, messageId, asyncCallback, asyncState ) { }
 	}
