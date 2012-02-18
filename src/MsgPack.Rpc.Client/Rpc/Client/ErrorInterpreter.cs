@@ -40,7 +40,11 @@ namespace MsgPack.Rpc.Client
 		/// <returns>An unpacked <see cref="RpcErrorMessage"/>.</returns>
 		internal static RpcErrorMessage UnpackError( ClientResponseContext context )
 		{
+			Contract.Assert( context != null );
+			Contract.Assert( context.ErrorBuffer != null );
 			Contract.Assert( context.ErrorBuffer.Length > 0 );
+			Contract.Assert( context.ResultBuffer != null );
+			Contract.Assert( context.ResultBuffer.Length > 0 );
 
 			MessagePackObject error;
 			try
