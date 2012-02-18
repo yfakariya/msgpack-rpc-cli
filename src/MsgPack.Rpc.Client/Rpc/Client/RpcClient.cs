@@ -217,7 +217,30 @@ namespace MsgPack.Rpc.Client
 			}
 		}
 
-		public MessagePackObject? Call( string methodName, params object[] arguments )
+		/// <summary>
+		///		Calls specified remote method with specified argument and returns its result synchronously. 
+		/// </summary>
+		/// <param name="methodName">
+		///		The name of target method.
+		/// </param>
+		/// <param name="arguments">
+		///		Argument to be passed to the server.
+		///		All values must be able to be serialized with MessagePack serializer.
+		/// </param>
+		/// <returns>
+		///		The <see cref="MessagePackObject"/> which represents the return value.
+		///		Note that <c>nil</c> object will be returned when the remote method does not return any values (a.k.a. void).
+		/// </returns>
+		/// <exception cref="ArgumentNullException">
+		///		<paramref name="methodName"/> is <c>null</c>.
+		/// </exception>
+		/// <exception cref="ArgumentException">
+		///		<paramref name="methodName"/> is not valid.
+		/// </exception>
+		/// <exception cref="RpcException">
+		///		Failed to execute specified remote method.
+		/// </exception>
+		public MessagePackObject Call( string methodName, params object[] arguments )
 		{
 			return this.EndCall( this.BeginCall( methodName, arguments, null, null ) );
 		}
