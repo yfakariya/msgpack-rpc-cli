@@ -95,7 +95,7 @@ namespace MsgPack.Rpc
 
 		bool IAsyncResult.CompletedSynchronously
 		{
-			get { return ( this._state & _completedSynchronously ) != 0; }
+			get { return ( this._state & _completedSynchronously ) == _completedSynchronously; }
 		}
 
 		/// <summary>
@@ -106,7 +106,7 @@ namespace MsgPack.Rpc
 		/// </value>
 		public bool IsCompleted
 		{
-			get { return ( this._state & _completed ) != 0; }
+			get { return ( this._state & _completed ) == _completed; }
 		}
 
 		/// <summary>
@@ -117,7 +117,7 @@ namespace MsgPack.Rpc
 		/// </value>
 		public bool IsFinished
 		{
-			get { return ( this._state & _finished ) != 0; }
+			get { return ( this._state & _finished ) == _finished; }
 		}
 
 		private Exception _error;
