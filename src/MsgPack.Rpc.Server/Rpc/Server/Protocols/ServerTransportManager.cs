@@ -279,7 +279,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		protected virtual void DisposeCore( bool disposing ) { }
 
 		/// <summary>
-		///		Begins the shutdown process.
+		///		Initiates server shutdown process.
 		/// </summary>
 		/// <remarks>
 		///		To observe shutdown completion, subscribe <see cref="ShutdownCompleted"/> event.
@@ -296,7 +296,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		}
 
 		/// <summary>
-		///		When overridden in derived class, begins the shutdown process.
+		///		When overridden in derived class, initiates protocol specific shutdown process.
 		/// </summary>
 		/// <remarks>
 		///		This method might be called more than once.

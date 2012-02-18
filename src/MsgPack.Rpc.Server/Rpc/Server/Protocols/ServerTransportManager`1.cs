@@ -102,7 +102,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		}
 
 		/// <summary>
-		///		When overridden in derived class, begins the shutdown process.
+		///		Initiates protocol specific shutdown process.
 		/// </summary>
 		/// <remarks>
 		///		This method begins shutdown on the all active transports managed by this instance.
@@ -266,7 +266,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		}
 
 		/// <summary>
-		///		Returns the transport to this manager.
+		///		Invoked from <see cref="ReturnTransport(TTransport)"/>, returns the transport to this manager.
 		/// </summary>
 		/// <param name="transport">The <see cref="ServerTransport"/> which was created by this manager.</param>
 		protected virtual void ReturnTransportCore( TTransport transport )
