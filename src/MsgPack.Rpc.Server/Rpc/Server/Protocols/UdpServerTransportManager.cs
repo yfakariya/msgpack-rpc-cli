@@ -40,8 +40,9 @@ namespace MsgPack.Rpc.Server.Protocols
 			: base( server )
 		{
 #if !API_SIGNATURE_TEST
-			base.SetTransportPool( server.Configuration.UdpTransportPoolProvider( () => new UdpServerTransport( this ), server.Configuration.CreateUdpTransportPoolConfiguration() ) );
+			base.SetTransportPool( server.Configuration.UdpTransportPoolProvider( () => new UdpServerTransport( this ), server.Configuration.CreateTransportPoolConfiguration() ) );
 #endif
+			// FIXME: Start UDP polling...
 		}
 
 		/// <summary>

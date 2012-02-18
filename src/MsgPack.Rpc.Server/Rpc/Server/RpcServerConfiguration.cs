@@ -67,27 +67,13 @@ namespace MsgPack.Rpc.Server
 		}
 
 		/// <summary>
-		///		Creates the <see cref="ObjectPoolConfiguration"/> for the TCP transport pool corresponds to values of this instance.
+		///		Creates the <see cref="ObjectPoolConfiguration"/> for the transport pool corresponds to values of this instance.
 		/// </summary>
 		/// <returns>
-		///		The <see cref="ObjectPoolConfiguration"/> for the TCP transport pool corresponds to values of this instance.
+		///		The <see cref="ObjectPoolConfiguration"/> for the transport pool corresponds to values of this instance.
 		///		This value will not be <c>null</c>.
 		/// </returns>
-		public ObjectPoolConfiguration CreateTcpTransportPoolConfiguration()
-		{
-			Contract.Ensures( Contract.Result<ObjectPoolConfiguration>() != null );
-
-			return new ObjectPoolConfiguration() { ExhausionPolicy = ExhausionPolicy.BlockUntilAvailable, MaximumPooled = this.MaximumConcurrentRequest, MinimumReserved = this.MinimumConcurrentRequest };
-		}
-
-		/// <summary>
-		///		Creates the <see cref="ObjectPoolConfiguration"/> for the UDP transport pool corresponds to values of this instance.
-		/// </summary>
-		/// <returns>
-		///		The <see cref="ObjectPoolConfiguration"/> for the UDP transport pool corresponds to values of this instance.
-		///		This value will not be <c>null</c>.
-		/// </returns>
-		public ObjectPoolConfiguration CreateUdpTransportPoolConfiguration()
+		public ObjectPoolConfiguration CreateTransportPoolConfiguration()
 		{
 			Contract.Ensures( Contract.Result<ObjectPoolConfiguration>() != null );
 
