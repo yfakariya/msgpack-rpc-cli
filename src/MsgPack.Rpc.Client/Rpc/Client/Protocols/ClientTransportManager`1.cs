@@ -21,10 +21,8 @@
 using System;
 using System.Collections.Concurrent;
 using System.Diagnostics.Contracts;
-using System.Net;
 using System.Net.Sockets;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace MsgPack.Rpc.Client.Protocols
 {
@@ -261,7 +259,7 @@ namespace MsgPack.Rpc.Client.Protocols
 			{
 				object dummy;
 				this._activeTransports.TryRemove( transport, out dummy );
-				ReturnTransportCore( transport );
+				this.ReturnTransportCore( transport );
 			}
 		}
 
