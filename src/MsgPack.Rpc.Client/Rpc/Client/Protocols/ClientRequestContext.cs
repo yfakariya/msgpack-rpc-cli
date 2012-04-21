@@ -213,6 +213,7 @@ namespace MsgPack.Rpc.Client.Protocols
 			this._argumentsBuffer = new MemoryStream( 65536 );
 			this.SendingBuffer = new ArraySegment<byte>[ 4 ];
 			this._argumentsPacker = Packer.Create( this._argumentsBuffer, false );
+			this._messageType = MessageType.Response;
 		}
 
 		/// <summary>
