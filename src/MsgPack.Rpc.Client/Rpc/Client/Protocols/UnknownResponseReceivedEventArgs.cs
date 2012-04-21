@@ -28,7 +28,7 @@ namespace MsgPack.Rpc.Client.Protocols
 	/// </summary>
 	public sealed class UnknownResponseReceivedEventArgs : EventArgs
 	{
-		private readonly int _messageId;
+		private readonly int? _messageId;
 
 		/// <summary>
 		///		Gets the message ID.
@@ -36,7 +36,7 @@ namespace MsgPack.Rpc.Client.Protocols
 		/// <value>
 		///		The received message ID.
 		/// </value>
-		public int MessageId
+		public int? MessageId
 		{
 			get { return this._messageId; }
 		}
@@ -69,7 +69,7 @@ namespace MsgPack.Rpc.Client.Protocols
 			get { return this._returnValue; }
 		}
 
-		internal UnknownResponseReceivedEventArgs( int messageId, RpcErrorMessage error, MessagePackObject? returnValue )
+		internal UnknownResponseReceivedEventArgs( int? messageId, RpcErrorMessage error, MessagePackObject? returnValue )
 		{
 			this._messageId = messageId;
 			this._error = error;

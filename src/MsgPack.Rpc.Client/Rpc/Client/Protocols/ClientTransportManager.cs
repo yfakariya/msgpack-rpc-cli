@@ -344,7 +344,7 @@ namespace MsgPack.Rpc.Client.Protocols
 
 		internal void HandleOrphan( int? messageId, long sessionId, RpcErrorMessage rpcError, MessagePackObject? returnValue )
 		{
-			this.OnUnknownResponseReceived( new UnknownResponseReceivedEventArgs( messageId.GetValueOrDefault(), rpcError, returnValue ) );
+			this.OnUnknownResponseReceived( new UnknownResponseReceivedEventArgs( messageId, rpcError, returnValue ) );
 		}
 	}
 }
