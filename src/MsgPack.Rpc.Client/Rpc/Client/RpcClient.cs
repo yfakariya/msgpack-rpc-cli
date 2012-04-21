@@ -59,38 +59,13 @@ namespace MsgPack.Rpc.Client
 
 		/// <summary>
 		///		Creates new <see cref="RpcClient"/> to communicate with specified <see cref="EndPoint"/>
-		///		using default configuration and default serialization context.
-		/// </summary>
-		/// <param name="targetEndPoint">
-		///		<see cref="EndPoint"/> for the target.
-		/// </param>
-		/// <returns>
-		///		A new <see cref="RpcClient"/> to communicate with specified <see cref="EndPoint"/>.
-		/// </returns>
-		/// <exception cref="ArgumentNullException">
-		///		<paramref name="targetEndPoint"/> is <c>null</c>.
-		/// </exception>
-		public static RpcClient Create( EndPoint targetEndPoint )
-		{
-			if ( targetEndPoint == null )
-			{
-				throw new ArgumentNullException( "targetEndPoint" );
-			}
-
-			Contract.Ensures( Contract.Result<RpcClient>() != null );
-
-			return CreateCore( targetEndPoint, RpcClientConfiguration.Default, new SerializationContext() );
-		}
-
-		/// <summary>
-		///		Creates new <see cref="RpcClient"/> to communicate with specified <see cref="EndPoint"/>
 		///		using specified configuration and default serialization context.
 		/// </summary>
 		/// <param name="targetEndPoint">
 		///		<see cref="EndPoint"/> for the target.
 		/// </param>
-		/// <param name="configuration">
-		///		A <see cref="RpcClientConfiguration"/> which holds client settings.
+		/// <param name="transportManager">
+		///		A <see cref="ClientTransportManager"/> which manages <see cref="ClientTransport"/> to be used to connect to the server.
 		/// </param>
 		/// <returns>
 		///		A new <see cref="RpcClient"/> to communicate with specified <see cref="EndPoint"/>.
@@ -99,55 +74,21 @@ namespace MsgPack.Rpc.Client
 		///		<paramref name="targetEndPoint"/> is <c>null</c>.
 		///		Or <paramref name="configuration"/> is <c>null</c>.
 		/// </exception>
-		public static RpcClient Create( EndPoint targetEndPoint, RpcClientConfiguration configuration )
+		public static RpcClient Create( EndPoint targetEndPoint, ClientTransportManager transportManager )
 		{
 			if ( targetEndPoint == null )
 			{
 				throw new ArgumentNullException( "targetEndPoint" );
 			}
 
-			if ( configuration == null )
+			if ( transportManager == null )
 			{
-				throw new ArgumentNullException( "configuration" );
+				throw new ArgumentNullException( "transportManager" );
 			}
 
 			Contract.Ensures( Contract.Result<RpcClient>() != null );
 
-			return CreateCore( targetEndPoint, configuration, new SerializationContext() );
-		}
-
-		/// <summary>
-		///		Creates new <see cref="RpcClient"/> to communicate with specified <see cref="EndPoint"/>
-		///		using default configuration and specified serialization context.
-		/// </summary>
-		/// <param name="targetEndPoint">
-		///		<see cref="EndPoint"/> for the target.
-		/// </param>
-		/// <param name="serializationContext">
-		///		A <see cref="SerializationContext"/> to holds serializers.
-		/// </param>
-		/// <returns>
-		///		A new <see cref="RpcClient"/> to communicate with specified <see cref="EndPoint"/>.
-		/// </returns>
-		/// <exception cref="ArgumentNullException">
-		///		<paramref name="targetEndPoint"/> is <c>null</c>.
-		///		Or <paramref name="serializationContext"/> is <c>null</c>.
-		/// </exception>
-		public static RpcClient Create( EndPoint targetEndPoint, SerializationContext serializationContext )
-		{
-			if ( targetEndPoint == null )
-			{
-				throw new ArgumentNullException( "targetEndPoint" );
-			}
-
-			if ( serializationContext == null )
-			{
-				throw new ArgumentNullException( "configuration" );
-			}
-
-			Contract.Ensures( Contract.Result<RpcClient>() != null );
-
-			return CreateCore( targetEndPoint, RpcClientConfiguration.Default, serializationContext );
+			return CreateCore( targetEndPoint, transportManager, new SerializationContext() );
 		}
 
 		/// <summary>
@@ -157,8 +98,8 @@ namespace MsgPack.Rpc.Client
 		/// <param name="targetEndPoint">
 		///		<see cref="EndPoint"/> for the target.
 		/// </param>
-		/// <param name="configuration">
-		///		A <see cref="RpcClientConfiguration"/> which holds client settings.
+		/// <param name="transportManager">
+		///		A <see cref="ClientTransportManager"/> which manages <see cref="ClientTransport"/> to be used to connect to the server.
 		/// </param>
 		/// <param name="serializationContext">
 		///		A <see cref="SerializationContext"/> to holds serializers.
@@ -168,19 +109,19 @@ namespace MsgPack.Rpc.Client
 		/// </returns>
 		/// <exception cref="ArgumentNullException">
 		///		<paramref name="targetEndPoint"/> is <c>null</c>.
-		///		Or <paramref name="configuration"/> is <c>null</c>.
+		///		Or <paramref name="transportManager"/> is <c>null</c>.
 		///		Or <paramref name="serializationContext"/> is <c>null</c>.
 		/// </exception>
-		public static RpcClient Create( EndPoint targetEndPoint, RpcClientConfiguration configuration, SerializationContext serializationContext )
+		public static RpcClient Create( EndPoint targetEndPoint, ClientTransportManager transportManager, SerializationContext serializationContext )
 		{
 			if ( targetEndPoint == null )
 			{
 				throw new ArgumentNullException( "targetEndPoint" );
 			}
 
-			if ( configuration == null )
+			if ( transportManager == null )
 			{
-				throw new ArgumentNullException( "configuration" );
+				throw new ArgumentNullException( "transportManager" );
 			}
 
 			if ( serializationContext == null )
@@ -190,13 +131,12 @@ namespace MsgPack.Rpc.Client
 
 			Contract.Ensures( Contract.Result<RpcClient>() != null );
 
-			return CreateCore( targetEndPoint, configuration, serializationContext );
+			return CreateCore( targetEndPoint, transportManager, serializationContext );
 		}
 
-		private static RpcClient CreateCore( EndPoint targetEndPoint, RpcClientConfiguration configuration, SerializationContext serializationContext )
+		private static RpcClient CreateCore( EndPoint targetEndPoint, ClientTransportManager transportManager, SerializationContext serializationContext )
 		{
-			var manager = configuration.TransportManagerProvider( configuration );
-			var transport = manager.ConnectAsync( targetEndPoint ).Result;
+			var transport = transportManager.ConnectAsync( targetEndPoint ).Result;
 			return new RpcClient( transport, serializationContext );
 		}
 
@@ -428,15 +368,9 @@ namespace MsgPack.Rpc.Client
 			var requestAsyncResult = AsyncResult.Verify<RequestMessageAsyncResult>( asyncResult, this );
 			requestAsyncResult.WaitForCompletion();
 			requestAsyncResult.Finish();
-			var responseContext = requestAsyncResult.ResponseContext;
-			try
-			{
-				return Unpacking.UnpackObject( responseContext.ResultBuffer );
-			}
-			finally
-			{
-				responseContext.Clear();
-			}
+			var result = requestAsyncResult.Result;
+			Contract.Assert( result != null );
+			return result.Value;
 		}
 
 		/// <summary>
