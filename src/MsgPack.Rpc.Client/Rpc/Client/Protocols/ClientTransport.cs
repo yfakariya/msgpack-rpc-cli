@@ -331,7 +331,7 @@ namespace MsgPack.Rpc.Client.Protocols
 				{
 					if ( handler == null )
 					{
-						this.HandleOrphan( messageId, sessionId, rpcError );
+						this.HandleOrphan( messageId, sessionId, rpcError, null );
 					}
 					else
 					{
@@ -350,7 +350,7 @@ namespace MsgPack.Rpc.Client.Protocols
 				{
 					if ( handler == null )
 					{
-						this.HandleOrphan( messageId, sessionId, rpcError );
+						this.HandleOrphan( messageId, sessionId, rpcError, null );
 					}
 					else
 					{
@@ -362,22 +362,32 @@ namespace MsgPack.Rpc.Client.Protocols
 
 		private void HandleOrphan( ClientResponseContext context )
 		{
-			this.HandleOrphan( context.MessageId, context.SessionId, ErrorInterpreter.UnpackError( context ) );
+			var error = ErrorInterpreter.UnpackError( context );
+			MessagePackObject? returnValue = null;
+			if ( error.IsSuccess )
+			{
+				returnValue = Unpacking.UnpackObject( context.ResultBuffer );
+			}
+
+			this.HandleOrphan( context.MessageId, context.SessionId, error, returnValue );
 		}
 
-		private void HandleOrphan( int? messageId, long sessionId, RpcErrorMessage rpcError )
+		private void HandleOrphan( int? messageId, long sessionId, RpcErrorMessage rpcError, MessagePackObject? returnValue )
 		{
 			MsgPackRpcClientProtocolsTrace.TraceEvent(
 				MsgPackRpcClientProtocolsTrace.OrphanError,
-				"Cannot notify error for MessageID:{0}, SessionID:{1}. This may indicate runtime problem. {{ \"Socket\" : 0x{2:X}, \"RemoteEndPoint\" : \"{3}\", \"LocalEndPoint\" : \"{4}\", \"SessionID\" :{1}, \"MessageID\" : {0}, \"Error\" : {5}, \"CallStack\" : \"{6}\" }}",
+				"There are no handlers to handle message which has MessageID:{0}, SessionID:{1}. This may indicate runtime problem or due to client recycling. {{ \"Socket\" : 0x{2:X}, \"RemoteEndPoint\" : \"{3}\", \"LocalEndPoint\" : \"{4}\", \"SessionID\" :{1}, \"MessageID\" : {0}, \"Error\" : {5}, \"ReturnValue\" : {6}, \"CallStack\" : \"{7}\" }}",
 				messageId == null ? "(null)" : messageId.Value.ToString(),
 				sessionId,
 				this._boundSocket == null ? IntPtr.Zero : this._boundSocket.Handle,
 				this._boundSocket == null ? null : this._boundSocket.RemoteEndPoint,
 				this._boundSocket == null ? null : this._boundSocket.LocalEndPoint,
 				rpcError,
+				returnValue,
 				new StackTrace( 0, true )
 			);
+
+			this._manager.HandleOrphan( messageId, sessionId, rpcError, returnValue );
 		}
 
 		private void DumpRequestData( DateTimeOffset sessionStartedAt, EndPoint destination, long sessionId, MessageType type, int? messageId, IList<ArraySegment<byte>> requestData )
