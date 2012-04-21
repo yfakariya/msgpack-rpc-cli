@@ -94,7 +94,7 @@ namespace MsgPack.Rpc.Client.Protocols
 			}
 		}
 
-		private bool _isInShutdown;
+		private int _isInShutdown;
 
 		/// <summary>
 		///		Gets a value indicating whether this instance is in shutdown.
@@ -104,7 +104,7 @@ namespace MsgPack.Rpc.Client.Protocols
 		/// </value>
 		public bool IsInShutdown
 		{
-			get { return this._isInShutdown; }
+			get { return this._isInShutdown != 0; }
 		}
 
 		private bool _isServerShutdowned;
@@ -207,10 +207,8 @@ namespace MsgPack.Rpc.Client.Protocols
 		/// </summary>
 		public void BeginShutdown()
 		{
-			if ( !this._isInShutdown )
+			if ( Interlocked.Exchange( ref this._isInShutdown, 1 ) == 0 )
 			{
-				this._isInShutdown = true;
-				Thread.MemoryBarrier();
 				this.ShutdownSending();
 
 				// TODO: This seems to cause race condition...
@@ -234,7 +232,7 @@ namespace MsgPack.Rpc.Client.Protocols
 
 		private void OnProcessFinished()
 		{
-			if ( this._isInShutdown )
+			if ( this._isInShutdown != 0 )
 			{
 				if ( this._pendingNotificationTable.Count == 0 && this._pendingRequestTable.Count == 0 )
 				{
