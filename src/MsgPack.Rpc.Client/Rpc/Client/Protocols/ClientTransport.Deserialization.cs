@@ -223,7 +223,6 @@ namespace MsgPack.Rpc.Client.Protocols
 		private bool Dispatch( ClientResponseContext context )
 		{
 			Contract.Assert( context.MessageId != null );
-			context.ClearBuffers();
 
 			try
 			{
@@ -241,19 +240,13 @@ namespace MsgPack.Rpc.Client.Protocols
 					}
 					else
 					{
-						try
-						{
-							this.HandleOrphan( context );
-						}
-						finally
-						{
-							context.Clear();
-						}
+						this.HandleOrphan( context );
 					}
 				}
 			}
 			finally
 			{
+				context.ClearBuffers();
 				this.OnProcessFinished();
 			}
 

@@ -353,10 +353,7 @@ namespace MsgPack.Rpc.Client.Protocols
 			this.BufferList = this.SendingBuffer;
 		}
 
-		/// <summary>
-		///		Clears this instance internal buffers for reuse.
-		/// </summary>
-		internal sealed override void Clear()
+		internal void ClearBuffers()
 		{
 			this._idBuffer.SetLength( 0 );
 			this._methodNameBuffer.SetLength( 0 );
@@ -364,6 +361,18 @@ namespace MsgPack.Rpc.Client.Protocols
 			this.BufferList = null;
 			this._argumentsPacker.Dispose();
 			this._argumentsPacker = Packer.Create( this._argumentsBuffer, false );
+			this.SendingBuffer[ 0 ] = new ArraySegment<byte>();
+			this.SendingBuffer[ 1 ] = new ArraySegment<byte>();
+			this.SendingBuffer[ 2 ] = new ArraySegment<byte>();
+			this.SendingBuffer[ 3 ] = new ArraySegment<byte>();
+		}
+
+		/// <summary>
+		///		Clears this instance internal buffers for reuse.
+		/// </summary>
+		internal sealed override void Clear()
+		{
+			this.ClearBuffers();
 			this._methodName = null;
 			this._messageType = MessageType.Response; // Invalid.
 			this._requestCompletionCallback = null;

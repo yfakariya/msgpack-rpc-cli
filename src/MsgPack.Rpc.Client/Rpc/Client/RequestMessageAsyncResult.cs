@@ -30,17 +30,17 @@ namespace MsgPack.Rpc.Client
 	/// </summary>
 	internal sealed class RequestMessageAsyncResult : MessageAsyncResult
 	{
-		private ClientResponseContext _responseContext;
+		private ResultHolder _result;
 
 		/// <summary>
-		///		Gets a response context which holds response data.
+		///		Gets a response data.
 		/// </summary>
 		/// <value>
-		///		A response context which holds response data.
+		///		A response data.
 		/// </value>
-		public ClientResponseContext ResponseContext
+		public ResultHolder Result
 		{
-			get { return this._responseContext; }
+			get { return this._result; }
 		}
 
 		/// <summary>
@@ -64,7 +64,7 @@ namespace MsgPack.Rpc.Client
 				}
 				else
 				{
-					Interlocked.Exchange( ref this._responseContext, context );
+					Interlocked.CompareExchange( ref this._result, new ResultHolder( Unpacking.UnpackObject( context.ResultBuffer ) ), null );
 					base.Complete( completedSynchronously );
 				}
 			}
@@ -96,5 +96,20 @@ namespace MsgPack.Rpc.Client
 		/// </exception>
 		public RequestMessageAsyncResult( Object owner, int messageId, AsyncCallback asyncCallback, object asyncState )
 			: base( owner, messageId, asyncCallback, asyncState ) { }
+
+		public sealed class ResultHolder
+		{
+			private readonly MessagePackObject _value;
+
+			public MessagePackObject Value
+			{
+				get { return this._value; }
+			}
+
+			public ResultHolder( MessagePackObject value )
+			{
+				this._value = value;
+			}
+		}
 	}
 }

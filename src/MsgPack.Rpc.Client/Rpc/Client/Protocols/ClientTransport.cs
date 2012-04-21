@@ -565,7 +565,7 @@ namespace MsgPack.Rpc.Client.Protocols
 					);
 			}
 
-			context.Clear();
+			context.ClearBuffers();
 			try
 			{
 				try
@@ -600,6 +600,7 @@ namespace MsgPack.Rpc.Client.Protocols
 			}
 			finally
 			{
+				context.Clear();
 				this.Manager.ReturnTransport( this );
 			}
 		}
