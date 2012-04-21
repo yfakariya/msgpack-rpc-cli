@@ -24,6 +24,7 @@ using System.Linq;
 using System.Threading;
 using MsgPack.Rpc.Protocols;
 using MsgPack.Rpc.Server.Protocols;
+using System.Net.Sockets;
 
 namespace MsgPack.Rpc.Client.Protocols
 {
@@ -140,6 +141,14 @@ namespace MsgPack.Rpc.Client.Protocols
 			if ( handler != null )
 			{
 				handler( this, new InProcMessageSentEventArgs( context ) );
+			}
+
+			using ( var dummySocket = new Socket( AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp ) )
+			{
+				if ( !this.HandleSocketError( dummySocket, context ) )
+				{
+					return;
+				}
 			}
 
 			this.OnSent( context );
