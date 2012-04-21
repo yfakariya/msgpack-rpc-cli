@@ -176,7 +176,8 @@ namespace MsgPack.Rpc.Protocols
 		protected internal RpcMethodInvocationException( RpcError rpcError, MessagePackObject unpackedException )
 			: base( rpcError, unpackedException )
 		{
-			this._methodName = unpackedException.GetString( _methodNameKeyUtf8 );
+			this._methodName = unpackedException.GetString( _methodNameKeyUtf8 ) ?? String.Empty;
+			Contract.Assume( !String.IsNullOrEmpty( this._methodName ) );
 		}
 
 		/// <summary>
