@@ -62,17 +62,6 @@ new List<Property>()
 	},
 	new Property()
 	{
-		Name = "TargetEndPoint",
-		Type = "EndPoint",
-		Default = "null",
-		Summary = "Gets or sets the local end point to be bound.",
-		Value = "The target end point. " +
-			"The default is <c>null</c>. The client will select appropriate version loopback IP address and bind to it with port 10912.",
-		Precondition = Constraints.NotNull,
-		Postcondition = Constraints.NotNull
-	},
-	new Property()
-	{
 		Name = "ConnectTimeout",
 		Type = "TimeSpan?",
 		Default = "TimeSpan.FromSeconds( 120 )",

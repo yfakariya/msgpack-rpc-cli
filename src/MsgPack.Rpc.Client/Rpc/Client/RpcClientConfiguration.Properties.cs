@@ -149,48 +149,6 @@ namespace MsgPack.Rpc.Client
 		
 		static partial void CoerceMaximumConcurrentRequestValue( ref int value );
 
-		private EndPoint _targetEndPoint = null;
-		
-		/// <summary>
-		/// 	Gets or sets the local end point to be bound.
-		/// </summary>
-		/// <value>
-		/// 	The target end point. The default is <c>null</c>. The client will select appropriate version loopback IP address and bind to it with port 10912.
-		/// </value>
-		public EndPoint TargetEndPoint
-		{
-			get
-			{
-				Contract.Ensures( Contract.Result<EndPoint>() != null );
-
-				return this._targetEndPoint;
-			}
-			set
-			{
-				if ( !( value != null ) )
-				{
-					throw new ArgumentNullException( "value" );
-				}
-
-				Contract.Ensures( Contract.Result<EndPoint>() != null );
-
-				this.VerifyIsNotFrozen();
-				var coerced = value;
-				CoerceTargetEndPointValue( ref coerced );
-				this._targetEndPoint = coerced;
-			}
-		}
-		
-		/// <summary>
-		/// 	Resets the TargetEndPoint property value.
-		/// </summary>
-		public void ResetTargetEndPoint()
-		{
-			this._targetEndPoint = null;
-		}
-		
-		static partial void CoerceTargetEndPointValue( ref EndPoint value );
-
 		private TimeSpan? _connectTimeout = TimeSpan.FromSeconds( 120 );
 		
 		/// <summary>
@@ -503,9 +461,6 @@ namespace MsgPack.Rpc.Client
 			buffer.Append( ", " );
 			buffer.Append( "\"MaximumConcurrentRequest\" : " );
 			ToString( this.MaximumConcurrentRequest, buffer );
-			buffer.Append( ", " );
-			buffer.Append( "\"TargetEndPoint\" : " );
-			ToString( this.TargetEndPoint, buffer );
 			buffer.Append( ", " );
 			buffer.Append( "\"ConnectTimeout\" : " );
 			ToString( this.ConnectTimeout, buffer );
