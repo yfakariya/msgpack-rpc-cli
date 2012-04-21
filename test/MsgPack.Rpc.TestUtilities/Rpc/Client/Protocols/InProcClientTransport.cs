@@ -19,11 +19,11 @@
 #endregion -- License Terms --
 
 using System;
-using System.Linq;
-using MsgPack.Rpc.Server.Protocols;
-using System.Threading;
 using System.Collections.Concurrent;
+using System.Linq;
+using System.Threading;
 using MsgPack.Rpc.Protocols;
+using MsgPack.Rpc.Server.Protocols;
 
 namespace MsgPack.Rpc.Client.Protocols
 {
@@ -45,10 +45,19 @@ namespace MsgPack.Rpc.Client.Protocols
 		/// </summary>
 		private readonly ConcurrentQueue<InProcPacket> _pendingPackets;
 
-
 		private InProcServerTransport _destination;
 
 		private readonly InProcClientTransportManager _manager;
+
+		/// <summary>
+		///		Occurs when message sent.
+		/// </summary>
+		public event EventHandler<InProcMessageSentEventArgs> MessageSent;
+
+		/// <summary>
+		///		Occurs when response received.
+		/// </summary>
+		public event EventHandler<InProcResponseReceivedEventArgs> ResponseReceived;
 
 		/// <summary>
 		///		Initializes a new instance of the <see cref="InProcClientTransport"/> class.
@@ -87,7 +96,27 @@ namespace MsgPack.Rpc.Client.Protocols
 
 		private void OnDestinationResponse( object sender, InProcResponseEventArgs e )
 		{
-			this._inboundQueue.Add( e.Data, this._manager.CancellationToken );
+			var handler = this.ResponseReceived;
+
+			if ( handler == null )
+			{
+				this._inboundQueue.Add( e.Data, this._manager.CancellationToken );
+				return;
+			}
+
+			var eventArgs = new InProcResponseReceivedEventArgs( e.Data );
+			handler( this, eventArgs );
+			if ( eventArgs.ChunkedReceivedData == null )
+			{
+				this._inboundQueue.Add( e.Data, this._manager.CancellationToken );
+			}
+			else
+			{
+				foreach ( var data in eventArgs.ChunkedReceivedData )
+				{
+					this._inboundQueue.Add( data, this._manager.CancellationToken );
+				}
+			}
 		}
 
 		protected sealed override void ShutdownSending()
@@ -99,7 +128,20 @@ namespace MsgPack.Rpc.Client.Protocols
 
 		protected sealed override void SendCore( ClientRequestContext context )
 		{
-			this._destination.FeedData( context.BufferList.SelectMany( segment => segment.Array.Skip( segment.Offset ).Take( segment.Count ) ).ToArray() );
+			var destination = this._destination;
+			if ( destination == null )
+			{
+				throw new ObjectDisposedException( this.ToString() );
+			}
+
+			destination.FeedData( context.BufferList.SelectMany( segment => segment.Array.Skip( segment.Offset ).Take( segment.Count ) ).ToArray() );
+
+			var handler = this.MessageSent;
+			if ( handler != null )
+			{
+				handler( this, new InProcMessageSentEventArgs( context ) );
+			}
+
 			this.OnSent( context );
 		}
 

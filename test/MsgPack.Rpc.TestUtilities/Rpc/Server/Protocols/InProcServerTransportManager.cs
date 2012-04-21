@@ -156,6 +156,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			Contract.Assert( context.BufferList != null );
 
 			var data = context.BufferList.SelectMany( b => b.Array.Skip( b.Offset ).Take( b.Count ) ).ToArray();
+#warning TODO: Delete
 			this.SendResponseData( data );
 			context.SetBytesTransferred( data.Length );
 
@@ -170,7 +171,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		///		Send specified data directly and synchronously as a response.
 		/// </summary>
 		/// <param name="data">Raw response data.</param>
-		internal void SendResponseData( byte[] data )
+		public void SendResponseData( byte[] data )
 		{
 			this.OnResponse( new InProcResponseEventArgs( data ) );
 		}
