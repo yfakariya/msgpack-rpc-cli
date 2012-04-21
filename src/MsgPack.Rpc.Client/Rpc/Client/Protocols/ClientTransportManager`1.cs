@@ -106,6 +106,8 @@ namespace MsgPack.Rpc.Client.Protocols
 		/// </summary>
 		protected override void BeginShutdownCore()
 		{
+			int registered = 0;
+
 			foreach ( var transport in this._activeTransports )
 			{
 				try { }
@@ -113,12 +115,18 @@ namespace MsgPack.Rpc.Client.Protocols
 				{
 					transport.Key.ShutdownCompleted += this.OnTransportShutdownCompleted;
 					Interlocked.Increment( ref this._tranportIsInShutdown );
+					Interlocked.Increment( ref registered );
 				}
 
 				transport.Key.BeginShutdown();
 			}
 
 			base.BeginShutdownCore();
+
+			if ( registered == 0 )
+			{
+				this.OnShutdownCompleted();
+			}
 		}
 
 		private void OnTransportShutdownCompleted( object sender, EventArgs e )
