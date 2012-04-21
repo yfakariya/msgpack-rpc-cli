@@ -102,70 +102,78 @@ namespace MsgPack.Rpc.Client.Protocols
 							var responseTable = new ConcurrentDictionary<int, string>();
 							var exceptions = new ConcurrentBag<Exception>();
 
-							if ( Task.Factory.ContinueWhenAll(
-									idAndArgs.Select(
-										idAndArg =>
-											Task.Factory.StartNew(
-												() =>
-												{
-													var requestContext = new ClientRequestContext();
-													requestTable[ idAndArg.MessageId ] = idAndArg.Guid;
-													requestContext.SetRequest(
-														idAndArg.MessageId,
-														"Dummy",
-														( responseContext, exception, completedSynchronously ) =>
+							if ( !Task.Factory.ContinueWhenAll(
+								idAndArgs.Select(
+									idAndArg =>
+										Task.Factory.StartNew(
+											() =>
+											{
+												var requestContext = clientTransport.GetClientRequestContext();
+												requestTable[ idAndArg.MessageId ] = idAndArg.Guid;
+												requestContext.SetRequest(
+													idAndArg.MessageId,
+													"Dummy",
+													( responseContext, exception, completedSynchronously ) =>
+													{
+														try
 														{
-															try
+															if ( exception != null )
 															{
-																if ( exception != null )
-																{
-																	exceptions.Add( exception );
-																}
-																else
-																{
-																	responseTable[ responseContext.MessageId.Value ] = MessagePackConvert.DecodeStringStrict( responseContext.ResultBuffer.ToArray() );
-																}
+																exceptions.Add( exception );
 															}
-															finally
+															else
 															{
-																latch.Signal();
+																// Server returns args as array, so store only first element.
+																responseTable[ responseContext.MessageId.Value ] = Unpacking.UnpackArray( responseContext.ResultBuffer )[ 0 ].AsString();
 															}
 														}
-													);
-													requestContext.ArgumentsPacker.PackArrayHeader( 1 );
-													requestContext.ArgumentsPacker.Pack( idAndArg.Guid );
+														finally
+														{
+															latch.Signal();
+														}
+													}
+												);
+												requestContext.ArgumentsPacker.PackArrayHeader( 1 );
+												requestContext.ArgumentsPacker.Pack( idAndArg.Guid );
 
-													return requestContext;
-												}
-											)
-									).ToArray(),
-									previouses =>
+												return requestContext;
+											}
+										)
+								).ToArray(),
+								previouses =>
+								{
+									var contexts = previouses.Select( previous => previous.Result ).ToArray();
+									foreach ( var context in contexts )
 									{
-										var contexts = previouses.Select( previous => previous.Result ).ToArray();
-										foreach ( var context in contexts )
-										{
-											clientTransport.Send( context );
-										}
+										clientTransport.Send( context );
 									}
-								).Wait( Debugger.IsAttached ? Timeout.Infinite : TimeoutMilliseconds )
-							)
-							{
-								throw new TimeoutException( "Send" );
-							}
+								}
+							).ContinueWith(
+								previous =>
+								{
+									if ( previous.IsFaulted )
+									{
+										throw previous.Exception;
+									}
 
-							// receive
-							if ( !latch.Wait( Debugger.IsAttached ? Timeout.Infinite : TimeoutMilliseconds ) )
-							{
-								throw new TimeoutException( "Receive" );
-							}
+									// receive
+									if ( !latch.Wait( Debugger.IsAttached ? Timeout.Infinite : TimeoutMilliseconds ) )
+									{
+										throw new TimeoutException( "Receive" );
+									}
 
-							if ( exceptions.Any() )
-							{
-								throw new AggregateException( exceptions );
-							}
+									if ( exceptions.Any() )
+									{
+										throw new AggregateException( exceptions );
+									}
 
-							Assert.That( requestTable.Count, Is.EqualTo( concurrency ) );
-							Assert.That( requestTable, Is.EquivalentTo( responseTable ) );
+									Assert.That( requestTable.Count, Is.EqualTo( concurrency ) );
+									Assert.That( requestTable, Is.EquivalentTo( responseTable ) );
+								}
+							).Wait( Debugger.IsAttached ? Timeout.Infinite : TimeoutMilliseconds ) )
+							{
+								throw new TimeoutException();
+							}
 						}
 					}
 				}
@@ -249,54 +257,62 @@ namespace MsgPack.Rpc.Client.Protocols
 						var args = Enumerable.Repeat( 0, arrivalLatch.InitialCount ).Select( _ => Guid.NewGuid().ToString() ).ToArray();
 						var exceptions = new ConcurrentBag<Exception>();
 
-						if ( Task.Factory.ContinueWhenAll(
-								args.Select(
-									arg =>
-										Task.Factory.StartNew(
-											() =>
-											{
-												var requestContext = new ClientRequestContext();
-												requestContext.SetNotification(
-													"Dummy",
-													( exception, completedSynchronously ) =>
+						if ( !Task.Factory.ContinueWhenAll(
+							args.Select(
+								arg =>
+									Task.Factory.StartNew(
+										() =>
+										{
+											var requestContext = clientTransport.GetClientRequestContext();
+											requestContext.SetNotification(
+												"Dummy",
+												( exception, completedSynchronously ) =>
+												{
+													if ( exception != null )
 													{
-														if ( exception != null )
-														{
-															exceptions.Add( exception );
-															arrivalLatch.Signal();
-														}
+														exceptions.Add( exception );
 													}
-												);
-												requestContext.ArgumentsPacker.PackArrayHeader( 1 );
-												requestContext.ArgumentsPacker.Pack( arg );
 
-												return requestContext;
-											}
-										)
-								).ToArray(),
-								previouses =>
+													arrivalLatch.Signal();
+												}
+											);
+											requestContext.ArgumentsPacker.PackArrayHeader( 1 );
+											requestContext.ArgumentsPacker.Pack( arg );
+
+											return requestContext;
+										}
+									)
+							).ToArray(),
+							previouses =>
+							{
+								var contexts = previouses.Select( previous => previous.Result ).ToArray();
+								foreach ( var context in contexts )
 								{
-									var contexts = previouses.Select( previous => previous.Result ).ToArray();
-									foreach ( var context in contexts )
-									{
-										clientTransport.Send( context );
-									}
+									clientTransport.Send( context );
 								}
-							).Wait( Debugger.IsAttached ? Timeout.Infinite : TimeoutMilliseconds )
-						)
-						{
-							throw new TimeoutException( "Send" );
-						}
+							}
+						).ContinueWith(
+							previous =>
+							{
+								if ( previous.IsFaulted )
+								{
+									throw previous.Exception;
+								}
 
-						// receive
-						if ( !arrivalLatch.Wait( Debugger.IsAttached ? Timeout.Infinite : TimeoutMilliseconds ) )
-						{
-							throw new TimeoutException( "Receive" );
-						}
+								// receive
+								if ( !arrivalLatch.Wait( Debugger.IsAttached ? Timeout.Infinite : TimeoutMilliseconds ) )
+								{
+									throw new TimeoutException( "Receive" );
+								}
 
-						if ( exceptions.Any() )
+								if ( exceptions.Any() )
+								{
+									throw new AggregateException( exceptions );
+								}
+							}
+						).Wait( Debugger.IsAttached ? Timeout.Infinite : TimeoutMilliseconds ) )
 						{
-							throw new AggregateException( exceptions );
+							throw new TimeoutException();
 						}
 					}
 				}
