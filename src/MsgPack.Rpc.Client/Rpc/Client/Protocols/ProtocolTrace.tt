@@ -38,7 +38,7 @@
 #>
 <#= Generate( "MsgPack.Rpc.Client.Protocols",
 	new TraceMessage( "DetectServerShutdown", TraceEventType.Information, 11 ),
-	new TraceMessage( "OrphanError", TraceEventType.Critical, 91 ),
+	new TraceMessage( "OrphanError", TraceEventType.Error, 91 ),
 	new TraceMessage( "SocketError", TraceEventType.Warning, 101 ),
 	new TraceMessage( "IgnoreableError", TraceEventType.Verbose, 102 ),
 	new TraceMessage( "UnexpectedLastOperation", TraceEventType.Critical, 103 ),

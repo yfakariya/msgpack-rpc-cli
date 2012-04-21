@@ -36,7 +36,7 @@ namespace MsgPack.Rpc.Client.Protocols
 			new Dictionary<MessageId, TraceEventType> ( 19 )
 			{
 				{ MessageId.DetectServerShutdown, TraceEventType.Information },
-				{ MessageId.OrphanError, TraceEventType.Critical },
+				{ MessageId.OrphanError, TraceEventType.Error },
 				{ MessageId.SocketError, TraceEventType.Warning },
 				{ MessageId.IgnoreableError, TraceEventType.Verbose },
 				{ MessageId.UnexpectedLastOperation, TraceEventType.Critical },
