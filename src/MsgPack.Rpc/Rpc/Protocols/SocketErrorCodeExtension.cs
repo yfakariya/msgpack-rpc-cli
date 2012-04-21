@@ -54,6 +54,11 @@ namespace MsgPack.Rpc.Protocols
 
 		public static RpcError ToRpcError( this SocketError source )
 		{
+			if ( !source.IsError().GetValueOrDefault() )
+			{
+				return null;
+			}
+
 			switch ( source )
 			{
 				case SocketError.ConnectionRefused:
