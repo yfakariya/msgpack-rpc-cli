@@ -23,6 +23,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using MsgPack.Rpc.Protocols;
+using System.Diagnostics.Contracts;
 
 namespace MsgPack.Rpc.Client.Protocols
 {
@@ -138,6 +139,8 @@ namespace MsgPack.Rpc.Client.Protocols
 		/// <param name="transport">The binding transport.</param>
 		internal void SetTransport( ClientTransport transport )
 		{
+			Contract.Requires( transport != null );
+
 			this._initialProcess = transport.UnpackResponseHeader;
 			this.NextProcess = transport.UnpackResponseHeader;
 			base.SetTransport( transport );
