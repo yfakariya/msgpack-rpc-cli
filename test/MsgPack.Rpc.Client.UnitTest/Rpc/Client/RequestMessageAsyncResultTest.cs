@@ -52,7 +52,7 @@ namespace MsgPack.Rpc.Client
 			var target = new RequestMessageAsyncResult( owner, 1, null, null );
 			var context = CreateContext();
 			target.OnCompleted( context, null, false );
-			Assert.That( target.ResponseContext, Is.SameAs( context ) );
+			Assert.That( target.Result, Is.Not.Null );
 		}
 
 		[Test]

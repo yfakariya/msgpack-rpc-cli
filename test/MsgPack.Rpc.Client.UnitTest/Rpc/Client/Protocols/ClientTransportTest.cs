@@ -33,7 +33,7 @@ using NUnit.Framework;
 namespace MsgPack.Rpc.Client.Protocols
 {
 	[TestFixture]
-	[Timeout( 1000 )]
+	[Timeout( 3000 )]
 	public class ClientTransportTest
 	{
 		private sealed class EchoServer : IDisposable
@@ -458,7 +458,7 @@ namespace MsgPack.Rpc.Client.Protocols
 						"Test",
 						( responseContext, error, completedSynchronously ) =>
 						{
-							result = Unpacking.UnpackObject( responseContext.ResultBuffer );
+							result = responseContext == null ? default( MessagePackObject? ) : Unpacking.UnpackObject( responseContext.ResultBuffer );
 							clientRuntimeError = error;
 							waitHandle.Set();
 						}
@@ -502,7 +502,7 @@ namespace MsgPack.Rpc.Client.Protocols
 				{
 					Assert.That( result, Is.Not.Null );
 					Assert.That( result.Value.AsList().Count, Is.EqualTo( 1 ) );
-					Assert.That( result.Value.AsList()[ 0 ], Is.EqualTo( argument ) );
+					Assert.That( result.Value.AsList()[ 0 ] == argument, "{0} != {1}", result.Value.AsList()[ 0 ], argument );
 				}
 			}
 		}
@@ -548,10 +548,11 @@ namespace MsgPack.Rpc.Client.Protocols
 			RpcError expectedError,
 			MessagePackObject? expectedResult,
 			Action<InProcResponseReceivedEventArgs> receivedBinaryModifier,
-			bool willBeShutdown
+			bool willBeUnknown
 		)
 		{
-			int? messageId = messageType == MessageType.Request ? Math.Abs( Environment.TickCount % 1000 ) : default( int? );
+			Console.WriteLine( "===={0}====", new StackTrace( 1 ).GetFrames().Select( f => f.GetMethod() ).FirstOrDefault( m => m.IsDefined( typeof( TestAttribute ), false ) ) );
+			int? messageId = messageType == MessageType.Request ? Math.Abs( Environment.TickCount % 100 ) : default( int? );
 			string argument = Guid.NewGuid().ToString();
 			Func<int?, MessagePackObject[], MessagePackObject> callback =
 				( id, args ) =>
@@ -586,8 +587,11 @@ namespace MsgPack.Rpc.Client.Protocols
 				}
 
 				var context = transport.GetClientRequestContext();
-				ClientResponseContext returnedResponseContext = null;
+				int? resultMessageId = null;
+				MessagePackObject? resultReturn = null;
+				RpcErrorMessage resultError = RpcErrorMessage.Success;
 				Exception clientRuntimeError = null;
+				bool wasUnknown = false;
 
 				if ( messageType == MessageType.Request )
 				{
@@ -596,7 +600,9 @@ namespace MsgPack.Rpc.Client.Protocols
 						"Test",
 						( responseContext, error, completedSynchronously ) =>
 						{
-							returnedResponseContext = responseContext;
+							resultMessageId = responseContext.MessageId;
+							resultReturn = Unpacking.UnpackObject( responseContext.ResultBuffer );
+							resultError = ErrorInterpreter.UnpackError( responseContext );
 							clientRuntimeError = error;
 							waitHandle.Set();
 						}
@@ -614,6 +620,16 @@ namespace MsgPack.Rpc.Client.Protocols
 					);
 				}
 
+				manager.UnknownResponseReceived +=
+					( sender, e ) =>
+					{
+						resultMessageId = e.MessageId;
+						resultReturn = e.ReturnValue;
+						resultError = e.Error;
+						wasUnknown = true;
+						waitHandle.Set();
+					};
+
 				context.ArgumentsPacker.PackArrayHeader( 1 );
 				context.ArgumentsPacker.Pack( argument );
 
@@ -625,29 +641,26 @@ namespace MsgPack.Rpc.Client.Protocols
 				}
 				else
 				{
-					Assert.That( waitHandle.Wait( TimeSpan.FromSeconds( 3 ) ), "timeout" );
+					Assert.That( waitHandle.Wait( TimeSpan.FromSeconds( 1 ) ), "timeout" );
 				}
 
 				Assert.That( clientRuntimeError, Is.Null, "Unexpected runtime error:{0}", clientRuntimeError );
 
-				if ( messageType == MessageType.Request )
+				if ( willBeUnknown )
 				{
-					Assert.That( returnedResponseContext, Is.Not.Null );
+					Assert.That( wasUnknown, "Received known handler." );
+				}
+				else if ( messageType == MessageType.Request )
+				{
+					Assert.That( resultMessageId, Is.EqualTo( messageId ) );
 					if ( expectedError == null )
 					{
-						var result = Unpacking.UnpackObject( returnedResponseContext.ResultBuffer );
-						Assert.That( result == expectedResult, "{0} != {1}", result, expectedResult );
+						Assert.That( resultReturn == expectedResult, "{0} != {1}", resultReturn, expectedResult );
 					}
 					else
 					{
-						var error = ErrorInterpreter.UnpackError( returnedResponseContext );
-						Assert.That( error.Error, Is.EqualTo( expectedError ) );
+						Assert.That( resultError.Error.Identifier, Is.EqualTo( expectedError.Identifier ), resultError.ToString() );
 					}
-				}
-
-				if ( willBeShutdown )
-				{
-					Assert.That( transport.IsInShutdown, Is.True );
 				}
 			}
 		}
@@ -726,6 +739,7 @@ namespace MsgPack.Rpc.Client.Protocols
 					using ( var packer = Packer.Create( buffer, false ) )
 					{
 						invalidRequestPacking( packer, originalResult[ 1 ].AsInt32(), originalResult[ 2 ].IsNil ? null : RpcError.FromIdentifier( originalResult[ 2 ].AsString(), null ), originalResult[ 3 ] );
+						e.ChunkedReceivedData = new byte[][] { buffer.ToArray() };
 					}
 				},
 				willBeConnectionReset
@@ -735,7 +749,7 @@ namespace MsgPack.Rpc.Client.Protocols
 		#region ------ Entire Array ------
 
 		[Test]
-		public void TestReceive_RequestNotArray_RemoteRuntimeErrorAndConnectionIsReset()
+		public void TestReceive_RequestNotArray_Orphan()
 		{
 			TestReceiveInvalidRequestCore(
 				( packer, originalMessageId, originalError, originalReturnValue ) => packer.PackString( "Request" ),
@@ -745,7 +759,7 @@ namespace MsgPack.Rpc.Client.Protocols
 		}
 
 		[Test]
-		public void TestReceive_EmptyArray_RemoteRuntimeErrorAndConnectionIsReset()
+		public void TestReceive_EmptyArray_Orphan()
 		{
 			TestReceiveInvalidRequestCore(
 				( packer, originalMessageId, originalError, originalReturnValue ) => packer.PackArrayHeader( 0 ),
@@ -755,7 +769,7 @@ namespace MsgPack.Rpc.Client.Protocols
 		}
 
 		[Test]
-		public void TestReceive_ArrayLengthIs3_RemoteRuntimeErrorAndConnectionIsReset()
+		public void TestReceive_ArrayLengthIs3_Orphan()
 		{
 			TestReceiveInvalidRequestCore(
 				( packer, originalMessageId, originalError, originalReturnValue ) =>
@@ -771,7 +785,7 @@ namespace MsgPack.Rpc.Client.Protocols
 		}
 
 		[Test]
-		public void TestReceive_ArrayLengthIs5_RemoteRuntimErrorAndConnectionIsReset()
+		public void TestReceive_ArrayLengthIs5_Orphan()
 		{
 			TestReceiveInvalidRequestCore(
 				( packer, originalMessageId, originalError, originalReturnValue ) =>
@@ -793,7 +807,7 @@ namespace MsgPack.Rpc.Client.Protocols
 		#region ------ Message Type ------
 
 		[Test]
-		public void TestReceive_RequestMessageType_RemoteRuntimErrorAndConnectionIsNotReset()
+		public void TestReceive_RequestMessageType_Orphan()
 		{
 			TestReceiveInvalidRequestCore(
 				( packer, originalMessageId, originalError, originalReturnValue ) =>
@@ -805,12 +819,12 @@ namespace MsgPack.Rpc.Client.Protocols
 					packer.Pack( originalReturnValue );
 				},
 				RpcError.RemoteRuntimeError,
-				false
+				true
 			);
 		}
 
 		[Test]
-		public void TestReceive_UnknownMessageType_RemoteRuntimErrorAndConnectionIsNotReset()
+		public void TestReceive_UnknownMessageType_Orphan()
 		{
 			TestReceiveInvalidRequestCore(
 				( packer, originalMessageId, originalError, originalReturnValue ) =>
@@ -822,7 +836,7 @@ namespace MsgPack.Rpc.Client.Protocols
 					packer.Pack( originalReturnValue );
 				},
 				RpcError.RemoteRuntimeError,
-				false
+				true
 			);
 		}
 
@@ -837,37 +851,48 @@ namespace MsgPack.Rpc.Client.Protocols
 			MessagePackObject result = Guid.NewGuid().ToString();
 			using ( var server = new EchoServer() )
 			using ( var manager = new InProcClientTransportManager( RpcClientConfiguration.Default, server.TransportManager ) )
-			using ( var transport = manager.ConnectAsync( _endPoint ).Result )
+			using ( var transport = manager.ConnectAsync( _endPoint ).Result as InProcClientTransport )
+			using ( var waitHandle = new ManualResetEventSlim() )
 			{
-				bool isEventOccurred = false;
 				manager.UnknownResponseReceived +=
 					( sender, e ) =>
 					{
-						isEventOccurred = true;
-
 						if ( error == null )
 						{
 							Assert.That( e.Error.IsSuccess );
-							Assert.That( e.ReturnValue == result, "{0} != {1}", e.ReturnValue, result );
+							Assert.That( e.ReturnValue == result, "{0}({1}) != {2}({3})", e.ReturnValue, e.ReturnValue.Value.UnderlyingType, result, result.UnderlyingType );
 						}
 						else
 						{
-							Assert.That( e.Error.Error, Is.EqualTo( error ) );
+							Assert.That( e.Error.Error.Identifier, Is.EqualTo( error.Identifier ) );
+						}
+
+						waitHandle.Set();
+					};
+
+				transport.ResponseReceived +=
+					( sender, e ) =>
+					{
+						var originalResult = Unpacking.UnpackArray( e.ReceivedData ).Value;
+
+						using ( var buffer = new MemoryStream() )
+						using ( var packer = Packer.Create( buffer, false ) )
+						{
+							packer.PackArrayHeader( 4 );
+							packer.Pack( ( int )MessageType.Response );
+							packer.Pack( 2 );
+							packer.Pack( error == null ? MessagePackObject.Nil : error.Identifier );
+							packer.Pack( originalResult[ 3 ].AsList()[ 0 ] ); // EchoServer returns args as MPO[], so pick up first element.
+							e.ChunkedReceivedData = new byte[][] { buffer.ToArray() };
 						}
 					};
-				using ( var buffer = new MemoryStream() )
-				using ( var packer = Packer.Create( buffer, false ) )
-				{
-					packer.PackArrayHeader( 4 );
-					packer.Pack( ( int )MessageType.Response );
-					packer.Pack( 1 );
-					packer.Pack( error == null ? MessagePackObject.Nil : error.Identifier );
-					packer.Pack( Guid.NewGuid().ToString() );
 
-					server.TransportManager.SendResponseData( buffer.ToArray() );
-				}
-
-				Assert.That( isEventOccurred );
+				var context = transport.GetClientRequestContext();
+				context.SetRequest( 1, "Test", ( responseContext, exception, completedSynchronously ) => { } );
+				context.ArgumentsPacker.PackArrayHeader( 1 );
+				context.ArgumentsPacker.Pack( result );
+				transport.Send( context );
+				Assert.That( waitHandle.Wait( TimeSpan.FromSeconds( 1 ) ) );
 			}
 		}
 
@@ -910,7 +935,8 @@ namespace MsgPack.Rpc.Client.Protocols
 				error.Detail,
 				e =>
 				{
-					e.ChunkedReceivedData = splitter( ( byte )( Math.Abs( Environment.TickCount ) % 100 ), error.Error, error.Detail );
+					var response = Unpacking.UnpackObject( e.ReceivedData );
+					e.ChunkedReceivedData = splitter( response.Value.AsList()[ 1 ].AsByte(), RpcError.FromIdentifier( response.Value.AsList()[ 2 ].AsString(), null ), response.Value.AsList()[ 3 ] );
 				},
 				false
 			);
@@ -936,7 +962,7 @@ namespace MsgPack.Rpc.Client.Protocols
 					new byte[][]
 					{
 						new byte[]{ 0xDC },
-						new byte[]{ 0x0, 0x4, ( byte )MessageType.Response, messageId }.Concat( ToBytes( error ) ).Concat( ToBytes( returnValue ) ).ToArray()
+						new byte[]{ 0x0, 0x4, ( byte )MessageType.Response, messageId }.Concat( ToBytes( error.Identifier ) ).Concat( ToBytes( returnValue ) ).ToArray()
 					}
 			);
 		}
@@ -950,7 +976,7 @@ namespace MsgPack.Rpc.Client.Protocols
 					new byte[][]
 					{
 						new byte[]{ 0xDC },
-						new byte[]{ 0x0, 0x4, ( byte )MessageType.Response, messageId }.Concat( ToBytes( error ) ).Concat( ToBytes( returnValue ) ).ToArray()
+						new byte[]{ 0x0, 0x4, ( byte )MessageType.Response, messageId }.Concat( ToBytes( error.Identifier ) ).Concat( ToBytes( returnValue ) ).ToArray()
 					}
 			);
 		}
@@ -963,7 +989,7 @@ namespace MsgPack.Rpc.Client.Protocols
 					new byte[][]
 					{
 						new byte[]{ 0x94 },
-						new byte[]{ ( byte )MessageType.Response, messageId }.Concat( ToBytes( error ) ).Concat( ToBytes( returnValue ) ).ToArray()
+						new byte[]{ ( byte )MessageType.Response, messageId }.Concat( ToBytes( error.Identifier ) ).Concat( ToBytes( returnValue ) ).ToArray()
 					}
 			);
 		}
@@ -977,7 +1003,7 @@ namespace MsgPack.Rpc.Client.Protocols
 					new byte[][]
 					{
 						new byte[]{ 0x94 },
-						new byte[]{ ( byte )MessageType.Response, messageId }.Concat( ToBytes( error ) ).Concat( ToBytes( returnValue ) ).ToArray()
+						new byte[]{ ( byte )MessageType.Response, messageId }.Concat( ToBytes( error.Identifier ) ).Concat( ToBytes( returnValue ) ).ToArray()
 					}
 			);
 		}
@@ -994,7 +1020,7 @@ namespace MsgPack.Rpc.Client.Protocols
 					new byte[][]
 					{
 						new byte[]{ 0x94, 0xD0 },
-						new byte[]{ ( byte )MessageType.Response, messageId }.Concat( ToBytes( error ) ).Concat( ToBytes( returnValue ) ).ToArray()
+						new byte[]{ ( byte )MessageType.Response, messageId }.Concat( ToBytes( error.Identifier ) ).Concat( ToBytes( returnValue ) ).ToArray()
 					}
 			);
 		}
@@ -1008,7 +1034,7 @@ namespace MsgPack.Rpc.Client.Protocols
 					new byte[][]
 					{
 						new byte[]{ 0x94, 0xD0 },
-						new byte[]{ ( byte )MessageType.Response, messageId }.Concat( ToBytes( error ) ).Concat( ToBytes( returnValue ) ).ToArray()
+						new byte[]{ ( byte )MessageType.Response, messageId }.Concat( ToBytes( error.Identifier ) ).Concat( ToBytes( returnValue ) ).ToArray()
 					}
 			);
 		}
@@ -1021,7 +1047,7 @@ namespace MsgPack.Rpc.Client.Protocols
 					new byte[][]
 					{
 						new byte[]{ 0x94, ( byte )MessageType.Response },
-						new byte[]{ messageId }.Concat( ToBytes( error ) ).Concat( ToBytes( returnValue ) ).ToArray()
+						new byte[]{ messageId }.Concat( ToBytes( error.Identifier ) ).Concat( ToBytes( returnValue ) ).ToArray()
 					}
 			);
 		}
@@ -1035,7 +1061,7 @@ namespace MsgPack.Rpc.Client.Protocols
 					new byte[][]
 					{
 						new byte[]{ 0x94, ( byte )MessageType.Response },
-						new byte[]{ messageId }.Concat( ToBytes( error ) ).Concat( ToBytes( returnValue ) ).ToArray()
+						new byte[]{ messageId }.Concat( ToBytes( error.Identifier ) ).Concat( ToBytes( returnValue ) ).ToArray()
 					}
 			);
 		}
@@ -1052,7 +1078,7 @@ namespace MsgPack.Rpc.Client.Protocols
 					new byte[][]
 					{
 						new byte[]{ 0x94, ( byte )MessageType.Response, 0xD0 },
-						new byte[]{ messageId }.Concat( ToBytes( error ) ).Concat( ToBytes( returnValue ) ).ToArray()
+						new byte[]{ messageId }.Concat( ToBytes( error.Identifier ) ).Concat( ToBytes( returnValue ) ).ToArray()
 					}
 			);
 		}
@@ -1066,7 +1092,7 @@ namespace MsgPack.Rpc.Client.Protocols
 					new byte[][]
 					{
 						new byte[]{ 0x94, ( byte )MessageType.Response, 0xD0 },
-						new byte[]{ messageId }.Concat( ToBytes( error ) ).Concat( ToBytes( returnValue ) ).ToArray()
+						new byte[]{ messageId }.Concat( ToBytes( error.Identifier ) ).Concat( ToBytes( returnValue ) ).ToArray()
 					}
 			);
 		}
@@ -1079,7 +1105,7 @@ namespace MsgPack.Rpc.Client.Protocols
 					new byte[][]
 					{
 						new byte[]{ 0x94, ( byte )MessageType.Response, messageId },
-						ToBytes( error ).Concat( ToBytes( returnValue ) ).ToArray()
+						ToBytes( error.Identifier ).Concat( ToBytes( returnValue ) ).ToArray()
 					}
 			);
 		}
@@ -1093,7 +1119,7 @@ namespace MsgPack.Rpc.Client.Protocols
 					new byte[][]
 					{
 						new byte[]{ 0x94, ( byte )MessageType.Response, messageId },
-						ToBytes( error ).Concat( ToBytes( returnValue ) ).ToArray()
+						ToBytes( error.Identifier ).Concat( ToBytes( returnValue ) ).ToArray()
 					}
 			);
 		}
@@ -1108,7 +1134,7 @@ namespace MsgPack.Rpc.Client.Protocols
 			TestReceive_InterruptCore(
 				( messageId, error, returnValue ) =>
 				{
-					var errorBytes = ToBytes( error );
+					var errorBytes = ToBytes( error.Identifier );
 					return
 						new byte[][]
 						{
@@ -1144,7 +1170,7 @@ namespace MsgPack.Rpc.Client.Protocols
 				( messageId, error, returnValue ) =>
 					new byte[][]
 					{
-						new byte[]{ 0x94, ( byte )MessageType.Response, messageId }.Concat( ToBytes( error ) ).ToArray(),
+						new byte[]{ 0x94, ( byte )MessageType.Response, messageId }.Concat( ToBytes( error.Identifier ) ).ToArray(),
 						ToBytes( returnValue )
 					}
 			);
@@ -1158,7 +1184,7 @@ namespace MsgPack.Rpc.Client.Protocols
 				( messageId, error, returnValue ) =>
 					new byte[][]
 					{
-						new byte[]{ 0x94, ( byte )MessageType.Response, messageId }.Concat( ToBytes( error ) ).ToArray(),
+						new byte[]{ 0x94, ( byte )MessageType.Response, messageId }.Concat( ToBytes( error.Identifier ) ).ToArray(),
 						ToBytes( returnValue )
 					}
 			);
@@ -1178,7 +1204,7 @@ namespace MsgPack.Rpc.Client.Protocols
 					return
 						new byte[][]
 						{
-							new byte[]{ 0x94, ( byte )MessageType.Response, messageId }.Concat( ToBytes( error ) ).Concat( returnValueBytes.Take( 1 ) ).ToArray(),
+							new byte[]{ 0x94, ( byte )MessageType.Response, messageId }.Concat( ToBytes( error.Identifier ) ).Concat( returnValueBytes.Take( 1 ) ).ToArray(),
 							returnValueBytes.Skip( 1 ).ToArray()
 						};
 				}
@@ -1196,7 +1222,7 @@ namespace MsgPack.Rpc.Client.Protocols
 					return
 						new byte[][]
 						{
-							new byte[]{ 0x94, ( byte )MessageType.Response, messageId }.Concat( ToBytes( error ) ).Concat( returnValueBytes.Take( 1 ) ).ToArray(),
+							new byte[]{ 0x94, ( byte )MessageType.Response, messageId }.Concat( ToBytes( error.Identifier ) ).Concat( returnValueBytes.Take( 1 ) ).ToArray(),
 							returnValueBytes.Skip( 1 ).ToArray()
 						};
 				}
