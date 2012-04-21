@@ -157,6 +157,37 @@ namespace MsgPack.Rpc.Client.Protocols
 			{
 				handler( this, EventArgs.Empty );
 			}
+
+			Interlocked.Exchange( ref this._isInShutdown, 0 );
+		}
+
+		/// <summary>
+		///		Occurs when unknown response received.
+		/// </summary>
+		/// <remarks>
+		///		When the client restart between the server accepts request and sends response,
+		///		the orphan message might be occurred.
+		/// </remarks>
+		public event EventHandler<UnknownResponseReceivedEventArgs> UnknownResponseReceived;
+
+		/// <summary>
+		///		Raises the <see cref="E:UnknownResponseReceived"/> event.
+		/// </summary>
+		/// <param name="e">The <see cref="MsgPack.Rpc.Client.Protocols.UnknownResponseReceivedEventArgs"/> instance containing the event data.</param>
+		protected virtual void OnUnknownResponseReceived( UnknownResponseReceivedEventArgs e )
+		{
+			if ( e == null )
+			{
+				throw new ArgumentNullException( "e" );
+			}
+
+			Contract.EndContractBlock();
+
+			var handler = Interlocked.CompareExchange( ref this.UnknownResponseReceived, null, null );
+			if ( handler != null )
+			{
+				handler( this, e );
+			}
 		}
 
 		/// <summary>
@@ -310,5 +341,10 @@ namespace MsgPack.Rpc.Client.Protocols
 		/// </summary>
 		/// <param name="transport">The <see cref="ClientTransport"/> to be returned.</param>
 		internal abstract void ReturnTransport( ClientTransport transport );
+
+		internal void HandleOrphan( int? messageId, long sessionId, RpcErrorMessage rpcError, MessagePackObject? returnValue )
+		{
+			this.OnUnknownResponseReceived( new UnknownResponseReceivedEventArgs( messageId.GetValueOrDefault(), rpcError, returnValue ) );
+		}
 	}
 }

@@ -83,6 +83,7 @@
     <Compile Include="Rpc\Client\Protocols\TcpClientTransportManager.cs" />
     <Compile Include="Rpc\Client\Protocols\UdpClientTransport.cs" />
     <Compile Include="Rpc\Client\Protocols\UdpClientTransportManager.cs" />
+    <Compile Include="Rpc\Client\Protocols\UnknownResponseReceivedEventArgs.cs" />
     <Compile Include="Rpc\Client\RequestMessageAsyncResult.cs" />
     <Compile Include="Rpc\Client\RpcClient.cs" />
     <Compile Include="Rpc\Client\RpcClientConfiguration.cs" />
