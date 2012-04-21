@@ -275,6 +275,39 @@ namespace MsgPack.Rpc.Client
 		
 		static partial void CoerceTransportManagerProviderValue( ref Func<RpcClientConfiguration, ClientTransportManager> value );
 
+		private Boolean _dumpCorruptResponse = false;
+		
+		/// <summary>
+		/// 	Gets or sets the value whether transport should dump invalid response stream for debugging purposes.
+		/// </summary>
+		/// <value>
+		/// 	<c>true</c>, if the corrupt response dumping is enabled; <c>false</c>, otherwise.
+		/// </value>
+		public Boolean DumpCorruptResponse
+		{
+			get
+			{
+				return this._dumpCorruptResponse;
+			}
+			set
+			{
+				this.VerifyIsNotFrozen();
+				var coerced = value;
+				CoerceDumpCorruptResponseValue( ref coerced );
+				this._dumpCorruptResponse = coerced;
+			}
+		}
+		
+		/// <summary>
+		/// 	Resets the DumpCorruptResponse property value.
+		/// </summary>
+		public void ResetDumpCorruptResponse()
+		{
+			this._dumpCorruptResponse = false;
+		}
+		
+		static partial void CoerceDumpCorruptResponseValue( ref Boolean value );
+
 		private Func<Func<ClientRequestContext>, ObjectPoolConfiguration, ObjectPool<ClientRequestContext>> _requestContextPoolProvider = ( factory, configuration ) => new StandardObjectPool<ClientRequestContext>( factory, configuration );
 		
 		/// <summary>
@@ -470,6 +503,9 @@ namespace MsgPack.Rpc.Client
 			buffer.Append( ", " );
 			buffer.Append( "\"TransportManagerProvider\" : " );
 			ToString( this.TransportManagerProvider, buffer );
+			buffer.Append( ", " );
+			buffer.Append( "\"DumpCorruptResponse\" : " );
+			ToString( this.DumpCorruptResponse, buffer );
 			buffer.Append( ", " );
 			buffer.Append( "\"RequestContextPoolProvider\" : " );
 			ToString( this.RequestContextPoolProvider, buffer );

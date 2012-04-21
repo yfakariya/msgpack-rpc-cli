@@ -92,6 +92,16 @@ new List<Property>()
 			"The default is the delegate which creates <see cref=\"TcpClientTransportManager\" /> instance.",
 		Precondition = Constraints.NotNull,
 		Postcondition = Constraints.NotNull
+	},
+	new Property()
+	{
+		Name = "DumpCorruptResponse",
+		Type = "Boolean",
+		Default = "false",
+		Summary = "Gets or sets the value whether transport should dump invalid response stream for debugging purposes.",
+		Value = "<c>true</c>, if the corrupt response dumping is enabled; <c>false</c>, otherwise.",
+		Precondition = Constraints.None,
+		Postcondition = Constraints.None
 	}
 };
 

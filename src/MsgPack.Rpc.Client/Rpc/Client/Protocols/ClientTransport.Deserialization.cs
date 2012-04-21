@@ -271,15 +271,20 @@ namespace MsgPack.Rpc.Client.Protocols
 				context.Clear();
 				return false;
 			}
-
-			if ( context.DumpStream != null )
+			
+			if ( this.Manager.Configuration.DumpCorruptResponse )
 			{
-				// TODO: Trace
-				context.DumpStream = OpenDumpStream( context.SessionStartedAt, context.RemoteEndPoint, context.SessionId, MessageType.Response, context.MessageId );
+				if ( context.DumpStream == null )
+				{
+					// TODO: Trace
+					context.DumpStream = OpenDumpStream( context.SessionStartedAt, context.RemoteEndPoint, context.SessionId, MessageType.Response, context.MessageId );
+				}
+
+				context.DumpStream.Write( context.CurrentReceivingBuffer, context.CurrentReceivingBufferOffset, context.BytesTransferred );
 			}
 
-			context.DumpStream.Write( context.CurrentReceivingBuffer, context.CurrentReceivingBufferOffset, context.BytesTransferred );
 			context.ShiftCurrentReceivingBuffer();
+
 			return true;
 		}
 
