@@ -579,9 +579,10 @@ namespace MsgPack.Rpc.Client.Protocols
 						}
 						finally
 						{
+							var rpcError = context.SocketError.ToClientRpcError();
 							if ( handler != null )
 							{
-								handler( null, context.CompletedSynchronously );
+								handler( rpcError.IsSuccess ? null : rpcError.ToException(), context.CompletedSynchronously );
 							}
 						}
 					}
