@@ -80,7 +80,7 @@ namespace MsgPack.Rpc.Client.Protocols
 		///		The <see cref="RpcClientConfiguration"/> which describes transport configuration.
 		///		This value will not be <c>null</c>.
 		/// </value>
-		protected RpcClientConfiguration Configuration
+		protected internal RpcClientConfiguration Configuration
 		{
 			get
 			{
