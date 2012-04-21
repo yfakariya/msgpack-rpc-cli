@@ -41,10 +41,22 @@ namespace MsgPack.Rpc.Client
 		}
 
 		private readonly SerializationContext _serializationContext;
+
+		internal SerializationContext SerializationContext
+		{
+			get { return this._serializationContext; }
+		}
+
 		private readonly ClientTransport _transport;
+
+		internal ClientTransport Transport
+		{
+			get { return this._transport; }
+		}
+
 		private TaskCompletionSource<object> _transportShutdownCompletionSource;
 
-		internal RpcClient( ClientTransport transport, SerializationContext serializationContext )
+		public RpcClient( ClientTransport transport, SerializationContext serializationContext )
 		{
 			if ( transport == null )
 			{
