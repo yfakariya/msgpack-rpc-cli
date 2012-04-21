@@ -292,7 +292,7 @@ namespace MsgPack.Rpc.Client.Protocols
 			this.OnSocketOperationCompleted( sender, e );
 		}
 
-		private bool HandleSocketError( Socket socket, MessageContext context )
+		internal bool HandleSocketError( Socket socket, MessageContext context )
 		{
 			var rpcError = this.Manager.HandleSocketError( socket, context );
 			if ( rpcError != null )
@@ -314,7 +314,6 @@ namespace MsgPack.Rpc.Client.Protocols
 			var rpcError = new RpcErrorMessage( RpcError.RemoteRuntimeError, "Invalid stream.", message );
 			this.RaiseError( context.MessageId, context.SessionId, rpcError, context.CompletedSynchronously );
 			// TODO: configurable
-			// context.Clear();
 			context.NextProcess = this.DumpCorrupttedData;
 		}
 
@@ -392,6 +391,11 @@ namespace MsgPack.Rpc.Client.Protocols
 
 		private void DumpRequestData( DateTimeOffset sessionStartedAt, EndPoint destination, long sessionId, MessageType type, int? messageId, IList<ArraySegment<byte>> requestData )
 		{
+			if ( !this.Manager.Configuration.DumpCorruptResponse )
+			{
+				return;
+			}
+
 			using ( var stream = OpenDumpStream( sessionStartedAt, destination, sessionId, type, messageId ) )
 			{
 				foreach ( var segment in requestData )
@@ -406,17 +410,26 @@ namespace MsgPack.Rpc.Client.Protocols
 		private static Stream OpenDumpStream( DateTimeOffset sessionStartedAt, EndPoint destination, long sessionId, MessageType type, int? messageId )
 		{
 			// TODO: configurable
+			var filePath =
+				Path.Combine(
+					Environment.GetFolderPath( Environment.SpecialFolder.LocalApplicationData ),
+					"MsgPack",
+					"v" + typeof( ClientTransport ).Assembly.GetName().Version,
+					"Client",
+					"Dump",
+					String.Format( CultureInfo.InvariantCulture, "{0:yyyy-MM-dd_HH-mm-ss}-{1}-{2}-{3}{4}.dat", sessionStartedAt, destination == null ? String.Empty : FileSystem.EscapeInvalidPathChars( destination.ToString(), "_" ), sessionId, type, messageId == null ? String.Empty : "-" + messageId )
+				);
+
+			var directoryPath = Path.GetDirectoryName( filePath );
+			if ( !Directory.Exists( directoryPath ) )
+			{
+				Directory.CreateDirectory( directoryPath );
+			}
+
 #if !SILVERLIGHT
 			return
 				new FileStream(
-					Path.Combine(
-						Environment.GetFolderPath( Environment.SpecialFolder.LocalApplicationData ),
-						"MsgPack",
-						"v" + typeof( ClientTransport ).Assembly.GetName().Version,
-						"Client",
-						"Dump",
-						String.Format( CultureInfo.InvariantCulture, "{0:o}-{1}-{2}-{3}{4}.dat", sessionStartedAt, FileSystem.EscapeInvalidPathChars( destination.ToString(), "_" ), sessionId, type, messageId == null ? String.Empty : "-" + messageId )
-					),
+					filePath,
 					FileMode.Append,
 					FileAccess.Write,
 					FileShare.Read,
@@ -685,7 +698,7 @@ namespace MsgPack.Rpc.Client.Protocols
 			{
 				MsgPackRpcClientProtocolsTrace.TraceEvent(
 					MsgPackRpcClientProtocolsTrace.ReceiveInboundData,
-					"Receive request. {{ \"SessionID\" : {0}, \"Socket\" : 0x{1:X}, \"RemoteEndPoint\" : \"{2}\", \"LocalEndPoint\" : \"{3}\", \"BytesTransfered\" : {4} }}",
+					"Receive response. {{ \"SessionID\" : {0}, \"Socket\" : 0x{1:X}, \"RemoteEndPoint\" : \"{2}\", \"LocalEndPoint\" : \"{3}\", \"BytesTransfered\" : {4} }}",
 					context.SessionId,
 					this._boundSocket == null ? IntPtr.Zero : this._boundSocket.Handle,
 					this._boundSocket == null ? null : this._boundSocket.RemoteEndPoint,
