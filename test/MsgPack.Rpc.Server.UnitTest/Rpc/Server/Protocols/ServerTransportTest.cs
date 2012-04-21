@@ -70,29 +70,23 @@ namespace MsgPack.Rpc.Server.Protocols
 			);
 		}
 
-		#region -- BeginShutdown --
-
-		[Test()]
-		public void TestBeginShutdown_NoPendingRequest_Harmless()
-		{
-			TestCore( target => target.BeginShutdown() );
-		}
-
-		private void TestBeginShutdownCore(
-			Action<InProcServerTransport> onReceive,
-			Action<InProcServerTransport> onExecute,
-			Action<InProcServerTransport> onSend,
-			bool willBeConnectionReset
+		private void TestShutdownCore<T>(
+			Action<T> onReceive,
+			Action<T> onExecute,
+			Action<T> onSend,
+			bool willBeConnectionReset,
+			Func<Tuple<InProcServerTransport, InProcServerTransportController>, T> callbackArgumentSelector
 		)
 		{
 			var arg = Environment.TickCount % 3;
 			var returnValue = Environment.TickCount % 5;
 			bool isExecuted = false;
-			InProcServerTransport targetTransport = null;
+			Tuple<InProcServerTransport, InProcServerTransportController> tuple = null;
 			TestCore(
 				( target, controller ) =>
 				{
-					targetTransport = target;
+					tuple = Tuple.Create( target, controller );
+
 					using ( var waitHandle = new ManualResetEventSlim() )
 					using ( var receivedWaitHandle = new ManualResetEventSlim() )
 					{
@@ -115,7 +109,7 @@ namespace MsgPack.Rpc.Server.Protocols
 
 								if ( onSend != null )
 								{
-									onSend( targetTransport );
+									onSend( callbackArgumentSelector( tuple ) );
 								}
 
 								waitHandle.Set();
@@ -146,7 +140,7 @@ namespace MsgPack.Rpc.Server.Protocols
 									Assert.That( receivedWaitHandle.Wait( TimeSpan.FromSeconds( 1 ) ), Is.True, "Not receiving second packets." );
 								}
 
-								onReceive( targetTransport );
+								onReceive( callbackArgumentSelector( tuple ) );
 							}
 
 							using ( var packer = Packer.Create( buffer, false ) )
@@ -189,13 +183,31 @@ namespace MsgPack.Rpc.Server.Protocols
 
 					if ( onExecute != null )
 					{
-						onExecute( targetTransport );
+						onExecute( callbackArgumentSelector( tuple ) );
 					}
 
 					isExecuted = true;
 					return returnValue;
 				}
 			);
+		}
+
+		#region -- BeginShutdown --
+
+		[Test()]
+		public void TestBeginShutdown_NoPendingRequest_Harmless()
+		{
+			TestCore( target => target.BeginShutdown() );
+		}
+
+		private void TestBeginShutdownCore(
+			Action<InProcServerTransport> onReceive,
+			Action<InProcServerTransport> onExecute,
+			Action<InProcServerTransport> onSend,
+			bool willBeConnectionReset
+		)
+		{
+			TestShutdownCore( onReceive, onExecute, onSend, willBeConnectionReset, tuple => tuple.Item1 );
 		}
 
 		[Test]
@@ -235,9 +247,8 @@ namespace MsgPack.Rpc.Server.Protocols
 
 		#region -- Client shutdown --
 
-
 		[Test]
-		public void TestClientShutdown()
+		public void TestClientShutdown_NoPendingRequest_Harmless()
 		{
 			TestCore(
 				( target, controller ) =>
@@ -258,8 +269,49 @@ namespace MsgPack.Rpc.Server.Protocols
 			);
 		}
 
-		// FIXME: Client shutdown during request
-		// FIXME: Client shutdown after request
+
+		private void TestClientShutdownCore(
+			Action<InProcServerTransportController> onReceive,
+			Action<InProcServerTransportController> onExecute,
+			Action<InProcServerTransportController> onSend,
+			bool willBeConnectionReset
+		)
+		{
+			TestShutdownCore( onReceive, onExecute, onSend, willBeConnectionReset, tuple => tuple.Item2 );
+		}
+
+		[Test]
+		public void TestClientShutdown_DuringReceiving_ConnectionReset()
+		{
+			TestClientShutdownCore(
+				controller => controller.FeedReceiveBuffer( new byte[ 0 ] ),
+				null,
+				null,
+				true
+			);
+		}
+
+		[Test]
+		public void TestClientShutdown_DuringExecuting_ConnectionReset()
+		{
+			TestClientShutdownCore(
+				null,
+				controller => controller.FeedReceiveBuffer( new byte[ 0 ] ),
+				null,
+				true
+			);
+		}
+
+		[Test]
+		public void TestClientShutdown_DuringSending_ConnectionReset()
+		{
+			TestClientShutdownCore(
+				null,
+				null,
+				controller => controller.FeedReceiveBuffer( new byte[ 0 ] ),
+				true
+			);
+		}
 
 		#endregion
 
@@ -899,7 +951,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		{
 			TestReceive_InterruptCore( willExecute, expectedError, willResetConnection, MessageType.Notification, null, arguments, partitionedSendings );
 		}
-		
+
 		private void TestReceive_InterruptCore(
 			bool willExecute,
 			RpcError expectedError,
@@ -1382,11 +1434,10 @@ namespace MsgPack.Rpc.Server.Protocols
 				{
 					buffer.WriteByte( 0x94 ); // fixed array-4
 					buffer.WriteByte( messageType );
-					buffer.WriteByte( 0xD0 ); // int8
+					buffer.WriteByte( messageId.Value );
 				},
 				( packer, buffer, messageType, messageId, arguments ) =>
 				{
-					buffer.WriteByte( messageId.Value );
 					buffer.WriteByte( 0xA1 );// fixed-raw 1
 					buffer.WriteByte( ( byte )'A' );
 					buffer.WriteByte( 0x90 ); // empty array
@@ -1407,11 +1458,10 @@ namespace MsgPack.Rpc.Server.Protocols
 				{
 					buffer.WriteByte( 0x94 ); // fixed array-4
 					buffer.WriteByte( messageType );
-					buffer.WriteByte( 0xD0 ); // int8
+					buffer.WriteByte( messageId.Value );
 				},
 				( packer, buffer, messageType, messageId, arguments ) =>
 				{
-					buffer.WriteByte( messageId.Value );
 					buffer.WriteByte( 0xA1 );// fixed-raw 1
 					buffer.WriteByte( ( byte )'A' );
 					buffer.WriteByte( 0x90 ); // empty array
@@ -1926,21 +1976,6 @@ namespace MsgPack.Rpc.Server.Protocols
 		#endregion
 
 		#region -- Send --
-
-		/// <summary>
-		/// Tests the Send 
-		/// </summary>
-		[Test()]
-		public void TestSend()
-		{
-			/*
-			 * void
-			 * error
-			 * normal
-			 * timeout
-			 */
-			Assert.Inconclusive();
-		}
 
 		private void TestSendCore(
 			MessagePackObject returnValue,

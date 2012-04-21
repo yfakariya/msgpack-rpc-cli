@@ -215,8 +215,6 @@ namespace MsgPack.Rpc.Server.Protocols
 			using ( var server = new RpcServer() )
 			using ( var target = new Target( server ) )
 			using ( var transport = new NullServerTransport( target ) )
-			using ( var transportPool = new SingletonObjectPool<NullServerTransport>( transport ) )
-			using ( var socket = new Socket( AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp ) )
 			{
 				target.ReturnTransport( transport );
 			}
@@ -231,7 +229,6 @@ namespace MsgPack.Rpc.Server.Protocols
 			using ( var another = new Target( server ) )
 			using ( var transport = new NullServerTransport( another ) )
 			using ( var transportPool = new SingletonObjectPool<NullServerTransport>( transport ) )
-			using ( var socket = new Socket( AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp ) )
 			{
 				target.InvokeSetTransportPool( transportPool );
 				target.ReturnTransport( transport );
@@ -259,13 +256,11 @@ namespace MsgPack.Rpc.Server.Protocols
 		{
 			using ( var server = new RpcServer() )
 			using ( var target = new Target( server ) )
-			using ( var transport = new NullServerTransport( target ) )
-			using ( var transportPool = new SingletonObjectPool<NullServerTransport>( transport ) )
-			using ( var socket = new Socket( AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp ) )
 			{
 				target.InvokeGetRequestContext( null );
 			}
 		}
+
 		private sealed class Target : ServerTransportManager<NullServerTransport>
 		{
 			public Target( RpcServer server ) : base( server ) { }

@@ -108,7 +108,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		}
 
 		[Test]
-		public void HandleSocketError_IgnoreableError_True()
+		public void TestHandleSocketError_IgnoreableError_True()
 		{
 			using ( var server = new RpcServer() )
 			using ( var target = new Target( server ) )
@@ -123,7 +123,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		}
 
 		[Test]
-		public void HandleSocketError_NotError_True()
+		public void TestHandleSocketError_NotError_True()
 		{
 			using ( var server = new RpcServer() )
 			using ( var target = new Target( server ) )
@@ -138,7 +138,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		}
 
 		[Test]
-		public void HandleSocketError_FatalError_False()
+		public void TestHandleSocketError_FatalError_False()
 		{
 			using ( var server = new RpcServer() )
 			using ( var target = new Target( server ) )
@@ -154,7 +154,7 @@ namespace MsgPack.Rpc.Server.Protocols
 
 		[Test]
 		[ExpectedException( typeof( ArgumentNullException ) )]
-		public void HandleSocketError_SocketIsNull_Fail()
+		public void TestHandleSocketError_SocketIsNull_Fail()
 		{
 			using ( var server = new RpcServer() )
 			using ( var target = new Target( server ) )
@@ -166,7 +166,7 @@ namespace MsgPack.Rpc.Server.Protocols
 
 		[Test]
 		[ExpectedException( typeof( ArgumentNullException ) )]
-		public void HandleSocketError_SocketAsyncEventArgsIsNull_Fail()
+		public void TestHandleSocketError_SocketAsyncEventArgsIsNull_Fail()
 		{
 			using ( var server = new RpcServer() )
 			using ( var target = new Target( server ) )
