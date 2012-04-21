@@ -179,23 +179,27 @@ namespace MsgPack.Rpc.Protocols
 		/// </summary>
 		internal virtual void Clear()
 		{
-			Contract.Ensures( this.BoundTransport == null );
 			Contract.Ensures( this.CompletedSynchronously == false );
 			Contract.Ensures( this.MessageId == null );
 			Contract.Ensures( this.SessionId == 0 );
 			Contract.Ensures( this.SessionStartedAt == default( DateTimeOffset ) );
-
-			var boundTransport = Interlocked.Exchange( ref this._boundTransport, null );
-			if ( boundTransport != null )
-			{
-				this.Completed -= boundTransport.OnSocketOperationCompleted;
-			}
 
 			this._completedSynchronously = false;
 			this.MessageId = null;
 			this._sessionId = 0;
 			this._sessionStartedAt = default( DateTimeOffset );
 			this._bytesTransferred = null;
+		}
+
+		internal void UnboundTransport()
+		{
+			Contract.Ensures( this.BoundTransport == null );
+
+			var boundTransport = Interlocked.Exchange( ref this._boundTransport, null );
+			if ( boundTransport != null )
+			{
+				this.Completed -= boundTransport.OnSocketOperationCompleted;
+			}
 		}
 	}
 }

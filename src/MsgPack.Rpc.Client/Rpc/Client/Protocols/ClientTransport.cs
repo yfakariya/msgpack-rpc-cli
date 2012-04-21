@@ -761,6 +761,7 @@ namespace MsgPack.Rpc.Client.Protocols
 
 			Contract.EndContractBlock();
 
+			context.UnboundTransport();
 			this._manager.RequestContextPool.Return( context );
 		}
 
