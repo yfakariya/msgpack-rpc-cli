@@ -21,6 +21,7 @@
 using System;
 using System.Diagnostics.Contracts;
 using System.Threading;
+using System.Diagnostics;
 
 namespace MsgPack.Rpc
 {
@@ -87,7 +88,16 @@ namespace MsgPack.Rpc
 		/// </value>
 		public WaitHandle AsyncWaitHandle
 		{
-			get { return LazyInitializer.EnsureInitialized( ref this._asyncWaitHandle, () => new ManualResetEvent( false ) ); }
+			get
+			{
+				var waitHandle = LazyInitializer.EnsureInitialized( ref this._asyncWaitHandle, () => new ManualResetEvent( false ) );
+				if ( this.IsCompleted )
+				{
+					waitHandle.Set();
+				}
+
+				return waitHandle;
+			}
 		}
 
 		// manipulated via Interlocked methods.
