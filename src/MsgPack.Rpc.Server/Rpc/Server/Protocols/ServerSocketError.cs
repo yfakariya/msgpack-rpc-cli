@@ -38,9 +38,16 @@ namespace MsgPack.Rpc.Server.Protocols
 		/// </returns>
 		public static RpcErrorMessage ToServerRpcError( this SocketError socketError )
 		{
-			// FIXME : "Message" Localization
-			RpcError rpcError = socketError.ToRpcError();
-			return new RpcErrorMessage( rpcError, rpcError == RpcError.TransportError ? "Unexpected socket error." : rpcError.DefaultMessageInvariant, new SocketException( ( int )socketError ).Message );
+			if ( socketError.IsError().GetValueOrDefault() )
+			{
+				// FIXME : "Message" Localization
+				RpcError rpcError = socketError.ToRpcError();
+				return new RpcErrorMessage( rpcError, rpcError == RpcError.TransportError ? "Unexpected socket error." : rpcError.DefaultMessageInvariant, new SocketException( ( int )socketError ).Message );
+			}
+			else
+			{
+				return RpcErrorMessage.Success;
+			}
 		}
 	}
 }
