@@ -51,10 +51,11 @@ namespace MsgPack.Rpc.Client
 			{
 				server.Error += ( sender, e ) => Console.Error.WriteLine( "{0} Error:{1}", e.IsClientError ? "Client" : "Server", e.Exception );
 
-				using ( var client = RpcClient.Create( new IPEndPoint( IPAddress.Loopback, CallbackServer.PortNumber ) ) )
+				using ( var clientTransportManager = RpcClientConfiguration.Default.TransportManagerProvider( RpcClientConfiguration.Default ) )
+				using ( var client = RpcClient.Create( new IPEndPoint( IPAddress.Loopback, CallbackServer.PortNumber ), clientTransportManager ) )
 				{
 					var result = client.Call( "Echo", timeStamp, mesage );
-					var asArray = result.Value.AsList();
+					var asArray = result.AsList();
 					Assert.That( asArray[ 0 ].Equals( timeStamp ) );
 					Assert.That( asArray[ 1 ].Equals( mesage ) );
 				}

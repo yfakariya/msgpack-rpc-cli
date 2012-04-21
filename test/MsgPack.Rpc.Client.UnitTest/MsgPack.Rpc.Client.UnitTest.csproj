@@ -64,7 +64,22 @@
     <Compile Include="Rpc\Client\MessageAsyncResultTest.cs" />
     <Compile Include="Rpc\Client\NotificationMessageAsyncResultTest.cs" />
     <Compile Include="Rpc\Client\PreTest.cs" />
+    <Compile Include="Rpc\Client\Protocols\ClientRequestContextTest.cs" />
+    <Compile Include="Rpc\Client\Protocols\ClientResponseContextTest.cs" />
+    <Compile Include="Rpc\Client\Protocols\ClientSocketErrorTest.cs" />
+    <Compile Include="Rpc\Client\Protocols\ClientTransportManagerTest.cs" />
+    <Compile Include="Rpc\Client\Protocols\ClientTransportTest.cs" />
+    <Compile Include="Rpc\Client\Protocols\NullClientTransport.cs" />
+    <Compile Include="Rpc\Client\Protocols\NullClientTransportManager.cs" />
+    <Compile Include="Rpc\Client\Protocols\TcpClientTransportTest.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Rpc\Client\Protocols\_SetUpFixture.cs" />
+    <Compile Include="Rpc\Client\Protocols\ClientTransportManager`1Test.cs" />
     <Compile Include="Rpc\Client\RequestMessageAsyncResultTest.cs" />
+    <Compile Include="Rpc\Client\RpcClientTest.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Rpc\Client\_SetUpFixture.cs" />
   </ItemGroup>
   <ItemGroup>
