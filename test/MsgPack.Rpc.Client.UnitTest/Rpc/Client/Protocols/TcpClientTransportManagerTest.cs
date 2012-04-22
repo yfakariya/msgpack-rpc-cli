@@ -1,48 +1,71 @@
-﻿namespace MsgPack.Rpc.Client.Protocols
+﻿#region -- License Terms --
+//
+// MessagePack for CLI
+//
+// Copyright (C) 2010 FUJIWARA, Yusuke
+//
+//    Licensed under the Apache License, Version 2.0 (the "License");
+//    you may not use this file except in compliance with the License.
+//    You may obtain a copy of the License at
+//
+//        http://www.apache.org/licenses/LICENSE-2.0
+//
+//    Unless required by applicable law or agreed to in writing, software
+//    distributed under the License is distributed on an "AS IS" BASIS,
+//    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//    See the License for the specific language governing permissions and
+//    limitations under the License.
+//
+#endregion -- License Terms --
+
+using System;
+using System.Net;
+using System.Net.Sockets;
+using NUnit.Framework;
+
+namespace MsgPack.Rpc.Client.Protocols
 {
-	using System;
-	using NUnit.Framework;
-
-
-	/// <summary>
-	///Tests the Tcp Client Transport Manager 
-	/// </summary>
 	[TestFixture()]
 	public class TcpClientTransportManagerTest
 	{
-
-		private TcpClientTransportManager _testClass;
-
-		/// <summary>
-		/// <see cref="NUnit"/> Set Up 
-		/// </summary>
-		[SetUp()]
-		public void SetUp()
+		[Test]
+		public void TestConnectAsync_Success()
 		{
-			MsgPack.Rpc.Client.RpcClientConfiguration configuration = null;
-			_testClass = new TcpClientTransportManager( configuration );
+			var endPoint = new IPEndPoint( IPAddress.Loopback, 57319 );
+
+			var listener = new TcpListener( endPoint );
+			try
+			{
+				listener.Start();
+
+				using ( var target = new TcpClientTransportManager( new RpcClientConfiguration() ) )
+				using ( var result = target.ConnectAsync( endPoint ) )
+				{
+					Assert.That( result.Wait( TimeSpan.FromSeconds( 1 ) ) );
+					try
+					{
+						Assert.That( result.Result.BoundSocket.RemoteEndPoint, Is.EqualTo( endPoint ) );
+					}
+					finally
+					{
+						result.Result.Dispose();
+					}
+				}
+			}
+			finally
+			{
+				listener.Stop();
+			}
 		}
 
-		/// <summary>
-		/// <see cref="NUnit"/> Tear Down 
-		/// </summary>
-		[TearDown()]
-		public void TearDown()
+		[Test]
+		[ExpectedException( typeof( ArgumentNullException ) )]
+		public void TestConnectAsync_Null()
 		{
-			_testClass = null;
-		}
-
-		/// <summary>
-		/// Tests the Constructor Tcp Client Transport Manager 
-		/// </summary>
-		[Test()]
-		public void TestConstructorTcpClientTransportManager()
-		{
-			MsgPack.Rpc.Client.RpcClientConfiguration configuration = null;
-			TcpClientTransportManager testTcpClientTransportManager = new TcpClientTransportManager( configuration );
-			Assert.IsNotNull( testTcpClientTransportManager, "Constructor of type, TcpClientTransportManager failed to create instance." );
-			Assert.Fail( "Create or modify test(s)." );
-
+			using ( var target = new TcpClientTransportManager( new RpcClientConfiguration() ) )
+			{
+				target.ConnectAsync( null );
+			}
 		}
 	}
 }
