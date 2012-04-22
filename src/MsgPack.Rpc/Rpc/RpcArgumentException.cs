@@ -35,7 +35,7 @@ namespace MsgPack.Rpc
 	public sealed class RpcArgumentException : RpcMethodInvocationException
 	{
 		private const string _parameterNameKey = "ParameterName";
-		private static readonly MessagePackObject _parameterNameKeyUtf8 = MessagePackConvert.EncodeString( _parameterNameKey );
+		internal static readonly MessagePackObject ParameterNameKeyUtf8 = MessagePackConvert.EncodeString( _parameterNameKey );
 
 		// NOT readonly for safe deserialization
 		private string _parameterName;
@@ -175,7 +175,8 @@ namespace MsgPack.Rpc
 		internal RpcArgumentException( MessagePackObject unpackedException )
 			: base( RpcError.ArgumentError, unpackedException )
 		{
-			this._parameterName = unpackedException.GetString( _parameterNameKeyUtf8 );
+			this._parameterName = unpackedException.GetString( ParameterNameKeyUtf8 );
+			Contract.Assume( this._parameterName != null, "Unpacked data does not have ParameterName." );
 		}
 
 		/// <summary>
@@ -190,7 +191,7 @@ namespace MsgPack.Rpc
 		protected sealed override void GetExceptionMessage( IDictionary<MessagePackObject, MessagePackObject> store, bool includesDebugInformation )
 		{
 			base.GetExceptionMessage( store, includesDebugInformation );
-			store.Add( _parameterNameKeyUtf8, MessagePackConvert.EncodeString( this._parameterName ) );
+			store.Add( ParameterNameKeyUtf8, MessagePackConvert.EncodeString( this._parameterName ) );
 		}
 
 #if !SILVERLIGHT

@@ -32,7 +32,7 @@ namespace MsgPack.Rpc
 	public sealed class RpcTimeoutException : RpcException
 	{
 		private const string _clientTimeoutKey = "ClientTimeout";
-		private static readonly MessagePackObject _clientTimeoutKeyUtf8 = MessagePackConvert.EncodeString( _clientTimeoutKey );
+		internal static readonly MessagePackObject ClientTimeoutKeyUtf8 = MessagePackConvert.EncodeString( _clientTimeoutKey );
 
 		// NOT readonly for safe deserialization
 		private TimeSpan? _clientTimeout;
@@ -120,7 +120,9 @@ namespace MsgPack.Rpc
 		internal RpcTimeoutException( MessagePackObject unpackedException )
 			: base( RpcError.TimeoutError, unpackedException )
 		{
-			this._clientTimeout = unpackedException.GetTimeSpan( _clientTimeoutKeyUtf8 );
+			this._clientTimeout = unpackedException.GetTimeSpan( ClientTimeoutKeyUtf8 );
+			Contract.Assume( this._clientTimeout != null, "Unpacked data does not have ClientTimeout." );
+		}
 		}
 
 #if !SILVERLIGHT

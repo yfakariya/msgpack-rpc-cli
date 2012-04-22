@@ -34,7 +34,7 @@ namespace MsgPack.Rpc.Protocols
 	public class RpcMethodInvocationException : RpcException
 	{
 		private const string _methodNameKey = "MethodName";
-		private static readonly MessagePackObject _methodNameKeyUtf8 = MessagePackConvert.EncodeString( "MethodName" );
+		internal static readonly MessagePackObject MethodNameKeyUtf8 = MessagePackConvert.EncodeString( _methodNameKey );
 
 		// NOT readonly for safe deserialization
 		private string _methodName;
@@ -176,8 +176,8 @@ namespace MsgPack.Rpc.Protocols
 		protected internal RpcMethodInvocationException( RpcError rpcError, MessagePackObject unpackedException )
 			: base( rpcError, unpackedException )
 		{
-			this._methodName = unpackedException.GetString( _methodNameKeyUtf8 ) ?? String.Empty;
-			Contract.Assume( !String.IsNullOrEmpty( this._methodName ) );
+			this._methodName = unpackedException.GetString( MethodNameKeyUtf8 );
+			Contract.Assume( this._methodName != null, "Unpacked data does not have MethodName." );
 		}
 
 		/// <summary>
@@ -192,7 +192,7 @@ namespace MsgPack.Rpc.Protocols
 		protected override void GetExceptionMessage( IDictionary<MessagePackObject, MessagePackObject> store, bool includesDebugInformation )
 		{
 			base.GetExceptionMessage( store, includesDebugInformation );
-			store.Add( _methodNameKeyUtf8, MessagePackConvert.EncodeString( this._methodName ) );
+			store.Add( MethodNameKeyUtf8, MessagePackConvert.EncodeString( this._methodName ) );
 		}
 
 #if !SILVERLIGHT
