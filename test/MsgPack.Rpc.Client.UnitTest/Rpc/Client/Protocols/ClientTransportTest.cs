@@ -265,7 +265,7 @@ namespace MsgPack.Rpc.Client.Protocols
 							}
 							else
 							{
-								Assert.That( waitHandle.Wait( TimeSpan.FromSeconds( 1 ) ), Is.True, "Not respond." );
+								Assert.That( waitHandle.Wait( TimeSpan.FromSeconds( 2 ) ), Is.True, "Not respond." );
 							}
 
 							if ( willBeConnectionReset )
@@ -551,7 +551,6 @@ namespace MsgPack.Rpc.Client.Protocols
 			bool willBeUnknown
 		)
 		{
-			Console.WriteLine( "===={0}====", new StackTrace( 1 ).GetFrames().Select( f => f.GetMethod() ).FirstOrDefault( m => m.IsDefined( typeof( TestAttribute ), false ) ) );
 			int? messageId = messageType == MessageType.Request ? Math.Abs( Environment.TickCount % 100 ) : default( int? );
 			string argument = Guid.NewGuid().ToString();
 			Func<int?, MessagePackObject[], MessagePackObject> callback =
