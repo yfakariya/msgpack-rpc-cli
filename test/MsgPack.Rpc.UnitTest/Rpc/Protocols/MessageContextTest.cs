@@ -35,7 +35,6 @@ namespace MsgPack.Rpc.Protocols
 
 		private static void AssertAreInitialzed( Target target )
 		{
-			Assert.That( target.BoundTransport, Is.Null );
 			Assert.That( target.CompletedSynchronously, Is.False );
 			Assert.That( target.MessageId, Is.Null );
 			Assert.That( target.SessionId, Is.EqualTo( 0L ) );
