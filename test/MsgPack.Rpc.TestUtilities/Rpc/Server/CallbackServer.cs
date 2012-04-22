@@ -94,7 +94,7 @@ namespace MsgPack.Rpc.Server
 
 		/// <summary>
 		///		Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
-		/// </summary>
+		/// </summary> 
 		public void Dispose()
 		{
 			this._server.ClientError -= this.OnClientError;
@@ -105,28 +105,30 @@ namespace MsgPack.Rpc.Server
 		/// <summary>
 		///		Creates a <see cref="CallbackServer"/> for any IP and <see cref="PortNumber"/>.
 		/// </summary>
-		/// <param name="callback">The callback.</param>
+		/// <param name="callback">The callback without method name.</param>
+		/// <param name="isDebugMode"><c>true</c> to enable debug mode;<c>false</c>, otherwise.</param>
 		/// <returns>
 		///		The <see cref="CallbackServer"/> for any IP and <see cref="PortNumber"/>.
 		/// </returns>
 		/// <exception cref="ArgumentNullException">
 		///		<paramref name="callback"/> is <c>null</c>.
 		/// </exception>
-		public static CallbackServer Create( Func<int?, MessagePackObject[], MessagePackObject> callback )
+		public static CallbackServer Create( Func<int?, MessagePackObject[], MessagePackObject> callback, bool isDebugMode )
 		{
-			return Create( callback, new IPEndPoint( IPAddress.Any, PortNumber ), true );
+			return Create( callback, new IPEndPoint( IPAddress.Any, PortNumber ), true, isDebugMode );
 		}
 
 		/// <summary>
 		///		Creates a <see cref="CallbackServer"/> with specified <see cref="EndPoint"/>.
 		/// </summary>
-		/// <param name="callback">The callback.</param>
+		/// <param name="callback">The callback without method name.</param>
 		/// <param name="endPoint">
 		///		The <see cref="EndPoint"/> to be bound.
 		/// </param>
 		/// <param name="preferIPv4">
 		///		<c>true</c> if use IP v4; otherwise, <c>false</c>.
 		/// </param>
+		/// <param name="isDebugMode"><c>true</c> to enable debug mode;<c>false</c>, otherwise.</param>
 		/// <returns>
 		///		The <see cref="CallbackServer"/> with specified <see cref="EndPoint"/>.
 		/// </returns>
@@ -134,7 +136,7 @@ namespace MsgPack.Rpc.Server
 		///		<paramref name="callback"/> is <c>null</c>.
 		///		Or, <paramref name="endPoint"/> is <c>null</c>.
 		/// </exception>
-		public static CallbackServer Create( Func<int?, MessagePackObject[], MessagePackObject> callback, EndPoint endPoint, bool preferIPv4 )
+		public static CallbackServer Create( Func<int?, MessagePackObject[], MessagePackObject> callback, EndPoint endPoint, bool preferIPv4, bool isDebugMode )
 		{
 			if ( callback == null )
 			{
@@ -158,11 +160,75 @@ namespace MsgPack.Rpc.Server
 						MaximumConcurrentRequest = 10,
 						MinimumConnection = 1,
 						MaximumConnection = 1,
-						DispatcherProvider = server => new CallbackDispatcher( server, callback )
+						DispatcherProvider = server => new CallbackDispatcher( server, callback ),
+						IsDebugMode = isDebugMode,
 					}
 				);
 		}
 
+		/// <summary>
+		///		Creates a <see cref="CallbackServer"/> for any IP and <see cref="PortNumber"/>.
+		/// </summary>
+		/// <param name="callback">The callback without method name.</param>
+		/// <param name="isDebugMode"><c>true</c> to enable debug mode;<c>false</c>, otherwise.</param>
+		/// <returns>
+		///		The <see cref="CallbackServer"/> for any IP and <see cref="PortNumber"/>.
+		/// </returns>
+		/// <exception cref="ArgumentNullException">
+		///		<paramref name="callback"/> is <c>null</c>.
+		/// </exception>
+		public static CallbackServer Create( Func<string, int?, MessagePackObject[], MessagePackObject> dispatch, bool isDebugMode )
+		{
+			return Create( dispatch, new IPEndPoint( IPAddress.Any, PortNumber ), true, isDebugMode );
+		}
+
+		/// <summary>
+		///		Creates a <see cref="CallbackServer"/> with specified <see cref="EndPoint"/>.
+		/// </summary>
+		/// <param name="dispatch">The callback with method name.</param>
+		/// <param name="endPoint">
+		///		The <see cref="EndPoint"/> to be bound.
+		/// </param>
+		/// <param name="preferIPv4">
+		///		<c>true</c> if use IP v4; otherwise, <c>false</c>.
+		/// </param>
+		/// <param name="isDebugMode"><c>true</c> to enable debug mode;<c>false</c>, otherwise.</param>
+		/// <returns>
+		///		The <see cref="CallbackServer"/> with specified <see cref="EndPoint"/>.
+		/// </returns>
+		/// <exception cref="ArgumentNullException">
+		///		<paramref name="callback"/> is <c>null</c>.
+		///		Or, <paramref name="endPoint"/> is <c>null</c>.
+		/// </exception>
+		public static CallbackServer Create( Func<string, int?, MessagePackObject[], MessagePackObject> dispatch, EndPoint endPoint, bool preferIPv4, bool isDebugMode )
+		{
+			if ( dispatch == null )
+			{
+				throw new ArgumentNullException( "dispatch" );
+			}
+
+			if ( endPoint == null )
+			{
+				throw new ArgumentNullException( "endPoint" );
+			}
+
+			Contract.Ensures( Contract.Result<CallbackServer>() != null );
+
+			return
+				Create(
+					new RpcServerConfiguration()
+					{
+						PreferIPv4 = preferIPv4,
+						BindingEndPoint = endPoint,
+						MinimumConcurrentRequest = 1,
+						MaximumConcurrentRequest = 10,
+						MinimumConnection = 1,
+						MaximumConnection = 1,
+						DispatcherProvider = server => new CallbackDispatcher( server, dispatch ),
+						IsDebugMode = isDebugMode,
+					}
+				);
+		}
 		/// <summary>
 		///		Creates a <see cref="CallbackServer"/> with specified <see cref="RpcServerConfiguration"/>.
 		/// </summary>

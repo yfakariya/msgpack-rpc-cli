@@ -46,7 +46,8 @@ namespace MsgPack.Rpc.Client
 						Assert.That( args[ 0 ].Equals( timeStamp ) );
 						Assert.That( args[ 1 ].Equals( mesage ) );
 						return args;
-					}
+					},
+					isDebugMode: true
 				) )
 			{
 				server.Error += ( sender, e ) => Console.Error.WriteLine( "{0} Error:{1}", e.IsClientError ? "Client" : "Server", e.Exception );

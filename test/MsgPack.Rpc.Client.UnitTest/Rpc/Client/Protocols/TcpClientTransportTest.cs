@@ -46,7 +46,7 @@ namespace MsgPack.Rpc.Client.Protocols
 
 		private static void TestSendReceiveRequest( Action<IPEndPoint, TcpClientTransportManager> test )
 		{
-			using ( var server = MsgPack.Rpc.Server.CallbackServer.Create( ( id, args ) => args ) )
+			using ( var server = MsgPack.Rpc.Server.CallbackServer.Create( ( id, args ) => args, isDebugMode: true ) )
 			{
 				var ipEndPoint = new IPEndPoint( IPAddress.Loopback, MsgPack.Rpc.Server.CallbackServer.PortNumber );
 
@@ -213,7 +213,8 @@ namespace MsgPack.Rpc.Client.Protocols
 					{
 						arriveds.Enqueue( args[ 0 ].ToString() );
 						return MessagePackObject.Nil;
-					}
+					},
+					isDebugMode: true
 				)
 			)
 			{

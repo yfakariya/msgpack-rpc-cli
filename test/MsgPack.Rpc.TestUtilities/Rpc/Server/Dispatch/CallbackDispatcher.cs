@@ -32,17 +32,28 @@ namespace MsgPack.Rpc.Server.Dispatch
 	public sealed class CallbackDispatcher : Dispatcher
 	{
 		private static readonly SerializationContext _serializationContext = new SerializationContext();
-		private readonly Func<int?, MessagePackObject[], MessagePackObject> _callback;
+		private readonly Func<string, int?, MessagePackObject[], MessagePackObject> _dispatch;
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="CallbackDispatcher"/> class.
 		/// </summary>
 		/// <param name="server">The server.</param>
-		/// <param name="callback">The callback.</param>
+		/// <param name="dispatch">The callback with method name.</param>
+		public CallbackDispatcher( RpcServer server, Func<string, int?, MessagePackObject[], MessagePackObject> dispatch )
+			: base( server )
+		{
+			this._dispatch = dispatch;
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the <see cref="CallbackDispatcher"/> class.
+		/// </summary>
+		/// <param name="server">The server.</param>
+		/// <param name="callback">The callback without method name.</param>
 		public CallbackDispatcher( RpcServer server, Func<int?, MessagePackObject[], MessagePackObject> callback )
 			: base( server )
 		{
-			this._callback = callback;
+			this._dispatch = ( method, id, args ) => callback( id, args );
 		}
 
 		protected sealed override Func<ServerRequestContext, ServerResponseContext, Task> Dispatch( string methodName )
@@ -62,13 +73,13 @@ namespace MsgPack.Rpc.Server.Dispatch
 								MessagePackObject returnValue;
 								try
 								{
-									returnValue = this._callback( messageId, args );
+									returnValue = this._dispatch( methodName, messageId, args );
 								}
 								catch ( Exception exception )
 								{
 									if ( responseContext != null )
 									{
-										base.SetException( responseContext, exception );
+										base.SetException( responseContext, methodName, exception );
 									}
 									else
 									{
