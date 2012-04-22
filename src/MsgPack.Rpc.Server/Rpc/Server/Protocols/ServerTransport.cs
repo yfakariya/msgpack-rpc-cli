@@ -672,6 +672,9 @@ namespace MsgPack.Rpc.Server.Protocols
 				{
 					// There are not data to handle.
 					context.Clear();
+					// Shutdown sending
+					this.BeginShutdown();
+					this.OnSessionFinished();
 					return;
 				}
 			}
@@ -698,6 +701,9 @@ namespace MsgPack.Rpc.Server.Protocols
 				{
 					// Client no longer send any additional data, so reset state.
 					TraceCancelReceiveDueToClientShutdown( context );
+					// Shutdown sending
+					this.BeginShutdown();
+					this.OnSessionFinished();
 					return;
 				}
 
