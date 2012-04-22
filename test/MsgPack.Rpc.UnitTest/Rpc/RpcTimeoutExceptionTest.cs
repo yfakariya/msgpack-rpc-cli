@@ -38,11 +38,11 @@ namespace MsgPack.Rpc
 				case ConstructorKind.Serialization:
 				case ConstructorKind.WithInnerException:
 				{
-					return new RpcTimeoutException( ( TimeSpan )( properties[ "Timeout" ] ?? TimeSpan.Zero ), GetMessage( properties ), GetDebugInformation( properties ), GetInnerException( properties ) );
+					return new RpcTimeoutException( ( TimeSpan )( properties[ "ClientTimeout" ] ?? TimeSpan.Zero ), GetMessage( properties ), GetDebugInformation( properties ), GetInnerException( properties ) );
 				}
 				default:
 				{
-					return new RpcTimeoutException( ( TimeSpan )( properties[ "Timeout" ] ?? TimeSpan.Zero ), GetMessage( properties ), GetDebugInformation( properties ) );
+					return new RpcTimeoutException( ( TimeSpan )( properties[ "ClientTimeout" ] ?? TimeSpan.Zero ), GetMessage( properties ), GetDebugInformation( properties ) );
 				}
 			}
 		}
@@ -55,21 +55,21 @@ namespace MsgPack.Rpc
 		protected override System.Collections.Generic.IDictionary<string, object> GetTestArguments()
 		{
 			var result = base.GetTestArguments();
-			result.Add( "Timeout", TimeSpan.FromSeconds( 123 ) );
+			result.Add( "ClientTimeout", TimeSpan.FromSeconds( 123 ) );
 			return result;
 		}
 
 		protected override System.Collections.Generic.IDictionary<string, object> GetTestArgumentsWithAllNullValue()
 		{
 			var result = base.GetTestArgumentsWithAllNullValue();
-			result.Add( "Timeout", null );
+			result.Add( "ClientTimeout", null );
 			return result;
 		}
 
 		protected override System.Collections.Generic.IDictionary<string, object> GetTestArgumentsWithDefaultValue()
 		{
 			var result = base.GetTestArgumentsWithDefaultValue();
-			result.Add( "Timeout", TimeSpan.Zero );
+			result.Add( "ClientTimeout", TimeSpan.Zero );
 			return result;
 		}
 
