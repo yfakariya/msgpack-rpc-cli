@@ -110,18 +110,22 @@ namespace MsgPack.Rpc.Server.Dispatch
 			else
 			{
 				// TODO: More cases?
+				var details =
+					new MessagePackObjectDictionary( isDebugMode ? 3 : 1 )
+					{
+						{ RpcException.MessageKeyUtf8, isDebugMode ? exception.Message : RpcError.CallError.DefaultMessageInvariant } 
+					};
+
+				if ( isDebugMode )
+				{
+					details.Add( RpcException.DebugInformationKeyUtf8, exception.ToString() );
+					details.Add( RpcMethodInvocationException.MethodNameKeyUtf8, operationId );
+				}
+
 				return
 					new RpcErrorMessage(
 						RpcError.CallError,
-						new MessagePackObject(
-							new MessagePackObjectDictionary( 3 )
-							{
-								{ RpcException.MessageKeyUtf8, isDebugMode ? exception.Message : RpcError.CallError.DefaultMessageInvariant },
-								{ RpcException.DebugInformationKeyUtf8, isDebugMode ? exception.ToString() : null },
-								{ RpcMethodInvocationException.MethodNameKeyUtf8, isDebugMode ? operationId : String.Empty },
-							},
-							true
-						)
+						new MessagePackObject( details, true )
 					);
 			}
 		}
