@@ -102,8 +102,6 @@ namespace MsgPack.Rpc.Server.Protocols
 					this._cancellationTokenSource.Cancel( true );
 					this._receivingTask.Wait( TimeSpan.FromSeconds( 1 ) );
 					this._receivingCancellationTokenSource.Dispose();
-					this._cancellationTokenSource.Dispose();
-					this._receivingTask.Dispose();
 					this._inboundQueue.Dispose();
 					this._manager.Response -= this.OnManagerResponse;
 				}
