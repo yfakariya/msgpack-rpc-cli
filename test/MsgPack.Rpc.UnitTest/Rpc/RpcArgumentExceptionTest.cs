@@ -63,16 +63,16 @@ namespace MsgPack.Rpc
 		{
 			var result = base.GetTestArgumentsWithAllNullValue();
 			result.Add( "MethodName", "Dummy" );
-				result.Add( "ParameterName", "Dummy" );
-		return result;
+			result.Add( "ParameterName", "Dummy" );
+			return result;
 		}
 
 		protected override System.Collections.Generic.IDictionary<string, object> GetTestArgumentsWithDefaultValue()
 		{
 			var result = base.GetTestArgumentsWithDefaultValue();
 			result.Add( "MethodName", "Dummy" );
-				result.Add( "ParameterName", "Dummy" );
-		return result;
+			result.Add( "ParameterName", "Dummy" );
+			return result;
 		}
 
 		[Test]
