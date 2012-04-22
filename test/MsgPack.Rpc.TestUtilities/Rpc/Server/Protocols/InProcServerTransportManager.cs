@@ -156,8 +156,6 @@ namespace MsgPack.Rpc.Server.Protocols
 			Contract.Assert( context.BufferList != null );
 
 			var data = context.BufferList.SelectMany( b => b.Array.Skip( b.Offset ).Take( b.Count ) ).ToArray();
-#warning TODO: Delete
-			this.SendResponseData( data );
 			context.SetBytesTransferred( data.Length );
 
 			return
