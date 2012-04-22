@@ -23,6 +23,7 @@ using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using NUnit.Framework;
+using MsgPack.Rpc.Protocols;
 
 namespace MsgPack.Rpc
 {
@@ -62,7 +63,10 @@ namespace MsgPack.Rpc
 						new MessagePackObjectDictionary()
 						{
 							{ RpcException.MessageKeyUtf8, message },
-							{ RpcException.DebugInformationKeyUtf8, debugInformation }
+							{ RpcException.DebugInformationKeyUtf8, debugInformation },
+							{ RpcArgumentException.ParameterNameKeyUtf8, "test" },
+							{ RpcMethodInvocationException.MethodNameKeyUtf8, "Test" },
+							{ RpcTimeoutException.ClientTimeoutKeyUtf8, TimeSpan.FromSeconds( 15 ).Ticks }
 						}
 					);
 				var exception = target.ToException( detail );
