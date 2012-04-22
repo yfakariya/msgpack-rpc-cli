@@ -19,6 +19,8 @@
 #endregion -- License Terms --
 
 using System;
+using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Runtime.Serialization;
 
 namespace MsgPack.Rpc
@@ -123,6 +125,20 @@ namespace MsgPack.Rpc
 			this._clientTimeout = unpackedException.GetTimeSpan( ClientTimeoutKeyUtf8 );
 			Contract.Assume( this._clientTimeout != null, "Unpacked data does not have ClientTimeout." );
 		}
+
+		/// <summary>
+		///		Stores derived type specific information to specified dictionary.
+		/// </summary>
+		/// <param name="store">
+		///		Dictionary to be stored. This value will not be <c>null</c>.
+		///	</param>
+		/// <param name="includesDebugInformation">
+		///		<c>true</c>, when this method should include debug information; otherwise, <c>false</c>.
+		///	</param>
+		protected sealed override void GetExceptionMessage( IDictionary<MessagePackObject, MessagePackObject> store, bool includesDebugInformation )
+		{
+			base.GetExceptionMessage( store, includesDebugInformation );
+			store.Add( ClientTimeoutKeyUtf8, this._clientTimeout == null ? MessagePackObject.Nil : this._clientTimeout.Value.Ticks );
 		}
 
 #if !SILVERLIGHT
