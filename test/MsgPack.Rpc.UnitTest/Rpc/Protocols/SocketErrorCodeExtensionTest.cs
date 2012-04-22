@@ -119,7 +119,15 @@ namespace MsgPack.Rpc.Protocols
 			foreach ( SocketError value in Enum.GetValues( typeof( SocketError ) ) )
 			{
 				RpcError expected;
-				Assert.IsTrue( _rpcErrorMapping.TryGetValue( value, out expected ), "No Mapping" );
+				if ( value.IsError().GetValueOrDefault() )
+				{
+					Assert.IsTrue( _rpcErrorMapping.TryGetValue( value, out expected ), "No Mapping" );
+				}
+				else
+				{
+					expected = null;
+				}
+
 				var actual = value.ToRpcError();
 				Assert.AreEqual( expected, actual, value.ToString() );
 			}
