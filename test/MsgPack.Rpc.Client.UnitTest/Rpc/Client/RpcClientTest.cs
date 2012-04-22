@@ -501,7 +501,7 @@ namespace MsgPack.Rpc.Client
 			public InProcTestEnvironment( Func<int?, MessagePackObject[], MessagePackObject> callback )
 			{
 				this._endPoint = new IPEndPoint( IPAddress.Loopback, MsgPack.Rpc.Server.CallbackServer.PortNumber );
-				this._server = MsgPack.Rpc.Server.CallbackServer.Create( callback );
+				this._server = MsgPack.Rpc.Server.CallbackServer.Create( callback, true );
 				this._serverTransportManager = new MsgPack.Rpc.Server.Protocols.InProcServerTransportManager( this._server.Server as Server.RpcServer, mgr => new SingletonObjectPool<Server.Protocols.InProcServerTransport>( new Server.Protocols.InProcServerTransport( mgr ) ) );
 				this._clientTransportManager = new InProcClientTransportManager( new RpcClientConfiguration(), this._serverTransportManager );
 			}
