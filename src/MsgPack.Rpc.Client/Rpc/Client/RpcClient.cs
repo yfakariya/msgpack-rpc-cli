@@ -56,6 +56,18 @@ namespace MsgPack.Rpc.Client
 
 		private TaskCompletionSource<object> _transportShutdownCompletionSource;
 
+		/// <summary>
+		///		Initializes a new instance of the <see cref="RpcClient"/> class.
+		/// </summary>
+		/// <param name="transport">
+		///		The transport to be used for communicating to the server.
+		///	</param>
+		/// <param name="serializationContext">
+		///		A <see cref="SerializationContext"/> to hold serializers.
+		///	</param>
+		///	<exception cref="ArgumentNullException">
+		///		<paramref name="transport"/> is <c>null</c>.
+		///	</exception>
 		public RpcClient( ClientTransport transport, SerializationContext serializationContext )
 		{
 			if ( transport == null )
@@ -84,7 +96,7 @@ namespace MsgPack.Rpc.Client
 		/// </returns>
 		/// <exception cref="ArgumentNullException">
 		///		<paramref name="targetEndPoint"/> is <c>null</c>.
-		///		Or <paramref name="configuration"/> is <c>null</c>.
+		///		Or <paramref name="transportManager"/> is <c>null</c>.
 		/// </exception>
 		public static RpcClient Create( EndPoint targetEndPoint, ClientTransportManager transportManager )
 		{
@@ -114,7 +126,7 @@ namespace MsgPack.Rpc.Client
 		///		A <see cref="ClientTransportManager"/> which manages <see cref="ClientTransport"/> to be used to connect to the server.
 		/// </param>
 		/// <param name="serializationContext">
-		///		A <see cref="SerializationContext"/> to holds serializers.
+		///		A <see cref="SerializationContext"/> to hold serializers.
 		/// </param>
 		/// <returns>
 		///		A new <see cref="RpcClient"/> to communicate with specified <see cref="EndPoint"/>.

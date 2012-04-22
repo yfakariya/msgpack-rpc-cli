@@ -206,7 +206,7 @@ namespace MsgPack.Rpc.Client
 		/// </returns>
 		/// <exception cref="ArgumentNullException">
 		///		<paramref name="targetEndPoint"/> is <c>null</c>.
-		///		Or <paramref name="configuration"/> is <c>null</c>.
+		///		Or <paramref name="transportManager"/> is <c>null</c>.
 		/// </exception>
 		public static DynamicRpcProxy Create( EndPoint targetEndPoint, ClientTransportManager transportManager )
 		{
@@ -243,8 +243,7 @@ namespace MsgPack.Rpc.Client
 		/// </returns>
 		/// <exception cref="ArgumentNullException">
 		///		<paramref name="targetEndPoint"/> is <c>null</c>.
-		///		Or <paramref name="configuration"/> is <c>null</c>.
-		///		Or <paramref name="serializationContext"/> is <c>null</c>.
+		///		Or <paramref name="transportManager"/> is <c>null</c>.
 		/// </exception>
 		public static DynamicRpcProxy Create( EndPoint targetEndPoint, ClientTransportManager transportManager, SerializationContext serializationContext )
 		{
@@ -256,11 +255,6 @@ namespace MsgPack.Rpc.Client
 			if ( transportManager == null )
 			{
 				throw new ArgumentNullException( "transportManager" );
-			}
-
-			if ( serializationContext == null )
-			{
-				throw new ArgumentNullException( "serializationContext" );
 			}
 
 			Contract.Ensures( Contract.Result<DynamicRpcProxy>() != null );
