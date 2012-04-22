@@ -106,7 +106,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 		{
 			var exception = new ArgumentException( Guid.NewGuid().ToString(), Guid.NewGuid().ToString() );
 
-			var result = InvocationHelper.HandleInvocationException( exception, true );
+			var result = InvocationHelper.HandleInvocationException( exception, "Method", true );
 
 			Assert.That( result.Error, Is.EqualTo( RpcError.ArgumentError ) );
 			Assert.That( result.Detail.AsDictionary()[ RpcException.MessageKeyUtf8 ].AsString(), Is.StringContaining( exception.ParamName ) );
@@ -118,7 +118,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 		{
 			var exception = new ArgumentException( Guid.NewGuid().ToString(), Guid.NewGuid().ToString() );
 
-			var result = InvocationHelper.HandleInvocationException( exception, false );
+			var result = InvocationHelper.HandleInvocationException( exception, "Method", false );
 
 			Assert.That( result.Error, Is.EqualTo( RpcError.ArgumentError ) );
 			Assert.That( result.Detail.AsDictionary()[ RpcException.MessageKeyUtf8 ].AsString(), Is.StringContaining( exception.ParamName ) );
@@ -130,7 +130,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 		{
 			var exception = new RpcException( RpcError.MessageTooLargeError, Guid.NewGuid().ToString(), Guid.NewGuid().ToString() );
 
-			var result = InvocationHelper.HandleInvocationException( exception, true );
+			var result = InvocationHelper.HandleInvocationException( exception, "Method", true );
 
 			Assert.That( result.Error, Is.EqualTo( exception.RpcError ) );
 			Assert.That( result.Detail.AsDictionary()[ RpcException.MessageKeyUtf8 ].AsString(), Is.StringContaining( exception.Message ) );
@@ -142,7 +142,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 		{
 			var exception = new RpcException( RpcError.MessageTooLargeError, Guid.NewGuid().ToString(), Guid.NewGuid().ToString() );
 
-			var result = InvocationHelper.HandleInvocationException( exception, false );
+			var result = InvocationHelper.HandleInvocationException( exception, "Method", false );
 
 			Assert.That( result.Error, Is.EqualTo( exception.RpcError ) );
 			Assert.That( result.Detail.AsDictionary()[ RpcException.MessageKeyUtf8 ].AsString(), Is.Not.Null.And.No.Empty.And.Not.StringContaining( exception.Message ).And.Not.StringContaining( exception.DebugInformation ) );
@@ -154,7 +154,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 		{
 			var exception = new Exception( Guid.NewGuid().ToString() );
 
-			var result = InvocationHelper.HandleInvocationException( exception, true );
+			var result = InvocationHelper.HandleInvocationException( exception, "Method", true );
 
 			Assert.That( result.Error, Is.EqualTo( RpcError.CallError ) );
 			Assert.That( result.Detail.AsDictionary()[ RpcException.MessageKeyUtf8 ].AsString(), Is.Not.Null.And.Not.Empty.And.StringContaining( exception.Message ) );
@@ -166,7 +166,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 		{
 			var exception = new Exception( Guid.NewGuid().ToString() );
 
-			var result = InvocationHelper.HandleInvocationException( exception, false );
+			var result = InvocationHelper.HandleInvocationException( exception, "Method", false );
 
 			Assert.That( result.Error, Is.EqualTo( RpcError.CallError ) );
 			Assert.That( result.Detail.AsDictionary()[ RpcException.MessageKeyUtf8 ].AsString(), Is.Not.Null.And.Not.Empty.And.No.StringContaining( exception.Message ) );
@@ -176,7 +176,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 		[Test()]
 		public void TestHandleInvocationException_Null_IsDebugMode_AsRemoteRuntimeError()
 		{
-			var result = InvocationHelper.HandleInvocationException( null, false );
+			var result = InvocationHelper.HandleInvocationException( null, "Method", false );
 
 			Assert.That( result.Error, Is.EqualTo( RpcError.CallError ) );
 			Assert.That( result.Detail.AsDictionary()[ RpcException.MessageKeyUtf8 ].AsString(), Is.Not.Null.And.Not.Empty );
@@ -186,7 +186,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 		[Test()]
 		public void TestHandleInvocationException_Null_IsNotDebugMode_AsRemoteRuntimeError()
 		{
-			var result = InvocationHelper.HandleInvocationException( null, false );
+			var result = InvocationHelper.HandleInvocationException( null, "Method", false );
 
 			Assert.That( result.Error, Is.EqualTo( RpcError.CallError ) );
 			Assert.That( result.Detail.AsDictionary()[ RpcException.MessageKeyUtf8 ].AsString(), Is.Not.Null.And.Not.Empty );

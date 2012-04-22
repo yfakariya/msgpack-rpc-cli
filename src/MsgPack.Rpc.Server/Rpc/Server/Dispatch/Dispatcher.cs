@@ -278,6 +278,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 		///		Sets the exception to the <see cref="ServerResponseContext"/> as called method failure.
 		/// </summary>
 		/// <param name="context">The <see cref="ServerResponseContext"/> to be set the error.</param>
+		/// <param name="operationId">The ID of operation which causes <paramref name="exception"/>.</param>
 		/// <param name="exception">The exception to be set as the RPC error.</param>
 		/// <exception cref="ArgumentNullException">
 		///		<paramref name="context"/> is <c>null</c>.
@@ -289,7 +290,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 		///		so they are represented as <see cref="RpcError.CallError"/> in the lump.
 		///		(<see cref="ArgumentException"/> derviced class is transformed to <see cref="P:RpcError.ArgumentError"/>.
 		/// </remarks>
-		protected void SetException( ServerResponseContext context, Exception exception )
+		protected void SetException( ServerResponseContext context, string operationId, Exception exception )
 		{
 			if ( context == null )
 			{
@@ -303,7 +304,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 
 			Contract.EndContractBlock();
 
-			context.Serialize<MessagePackObject>( MessagePackObject.Nil, InvocationHelper.HandleInvocationException( exception, this.IsDebugMode ), this.SerializationContext.GetSerializer<MessagePackObject>() );
+			context.Serialize<MessagePackObject>( MessagePackObject.Nil, InvocationHelper.HandleInvocationException( exception, operationId, this.IsDebugMode ), this.SerializationContext.GetSerializer<MessagePackObject>() );
 		}
 	}
 

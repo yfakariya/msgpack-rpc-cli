@@ -87,10 +87,10 @@ namespace MsgPack.Rpc.Server.Dispatch
 				exception
 			);
 
-			return HandleInvocationException( exception, isDebugMode );
+			return HandleInvocationException( exception, operationId, isDebugMode );
 		}
 
-		internal static RpcErrorMessage HandleInvocationException( Exception exception, bool isDebugMode )
+		internal static RpcErrorMessage HandleInvocationException( Exception exception, string operationId, bool isDebugMode )
 		{
 			ArgumentException asArgumentException;
 			RpcException rpcException;
@@ -111,10 +111,17 @@ namespace MsgPack.Rpc.Server.Dispatch
 			{
 				// TODO: More cases?
 				return
-					new RpcErrorMessage( 
+					new RpcErrorMessage(
 						RpcError.CallError,
-						isDebugMode ? exception.Message : RpcError.CallError.DefaultMessageInvariant,
-						isDebugMode ? exception.ToString() : null
+						new MessagePackObject(
+							new MessagePackObjectDictionary( 3 )
+							{
+								{ RpcException.MessageKeyUtf8, isDebugMode ? exception.Message : RpcError.CallError.DefaultMessageInvariant },
+								{ RpcException.DebugInformationKeyUtf8, isDebugMode ? exception.ToString() : null },
+								{ RpcMethodInvocationException.MethodNameKeyUtf8, isDebugMode ? operationId : String.Empty },
+							},
+							true
+						)
 					);
 			}
 		}

@@ -113,7 +113,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 			using ( var responseContext = DispatchTestHelper.CreateResponseContext() )
 			{
 				var target = new Target( server );
-				target.InvokeSetException( responseContext, new RpcMissingMethodException( "Method" ) );
+				target.InvokeSetException( responseContext, "Method", new RpcMissingMethodException( "Method" ) );
 
 				// Details should be tested in ServerResponseContextTest.TestSerialize...
 				Assert.That( Unpacking.UnpackString( responseContext.GetErrorData() ).Value == RpcError.NoMethodError.Identifier );
@@ -128,7 +128,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 			using ( var responseContext = DispatchTestHelper.CreateResponseContext() )
 			{
 				var target = new Target( server );
-				target.InvokeSetException( responseContext, null );
+				target.InvokeSetException( responseContext, "Method", null );
 			}
 		}
 
@@ -139,7 +139,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 			using ( var server = new RpcServer() )
 			{
 				var target = new Target( server );
-				target.InvokeSetException( null, new RpcMissingMethodException( "Method" ) );
+				target.InvokeSetException( null, "Method", new RpcMissingMethodException( "Method" ) );
 			}
 		}
 
@@ -165,9 +165,9 @@ namespace MsgPack.Rpc.Server.Dispatch
 				this.SetReturnValue( responseContext, returnValue );
 			}
 
-			public void InvokeSetException( ServerResponseContext responseContext, Exception exception )
+			public void InvokeSetException( ServerResponseContext responseContext, string operationId, Exception exception )
 			{
-				this.SetException( responseContext, exception );
+				this.SetException( responseContext, operationId, exception );
 			}
 		}
 
