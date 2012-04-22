@@ -125,6 +125,58 @@ namespace MsgPack.Rpc.Server.Protocols
 
 		#region -- Events --
 
+		private EventHandler<ClientShutdownEventArgs> _clientShutdown;
+
+		/// <summary>
+		/// Occurs when detects client shutdown.
+		/// </summary>
+		public event EventHandler<ClientShutdownEventArgs> ClientShutdown
+		{
+			add
+			{
+				EventHandler<ClientShutdownEventArgs> oldHandler;
+				EventHandler<ClientShutdownEventArgs> currentHandler = this._clientShutdown;
+				do
+				{
+					oldHandler = currentHandler;
+					var newHandler = Delegate.Combine( oldHandler, value ) as EventHandler<ClientShutdownEventArgs>;
+					currentHandler = Interlocked.CompareExchange( ref this._clientShutdown, newHandler, oldHandler );
+				} while ( oldHandler != currentHandler );
+			}
+			remove
+			{
+				EventHandler<ClientShutdownEventArgs> oldHandler;
+				EventHandler<ClientShutdownEventArgs> currentHandler = this._clientShutdown;
+				do
+				{
+					oldHandler = currentHandler;
+					var newHandler = Delegate.Remove( oldHandler, value ) as EventHandler<ClientShutdownEventArgs>;
+					currentHandler = Interlocked.CompareExchange( ref this._clientShutdown, newHandler, oldHandler );
+				} while ( oldHandler != currentHandler );
+			}
+		}
+
+		/// <summary>
+		///		Raises the <see cref="E:ClientShutdown"/> event.
+		/// </summary>
+		/// <param name="e">The <see cref="MsgPack.Rpc.Server.Protocols.ClientShutdownEventArgs"/> instance containing the event data.</param>
+		/// <exception cref="ArgumentNullException">
+		///		<paramref name="e"/> is <c>null</c>.
+		/// </exception>
+		protected virtual void OnClientShutdown( ClientShutdownEventArgs e )
+		{
+			if ( e == null )
+			{
+				throw new ArgumentNullException( "e" );
+			}
+
+			var handler = Interlocked.CompareExchange( ref this._clientShutdown, null, null );
+			if ( handler != null )
+			{
+				handler( this, e );
+			}
+		}
+
 		private EventHandler<EventArgs> _shutdownCompleted;
 
 		/// <summary>
@@ -614,6 +666,8 @@ namespace MsgPack.Rpc.Server.Protocols
 					this._boundSocket == null ? null : this._boundSocket.LocalEndPoint
 				);
 				Interlocked.Exchange( ref this._isClientShutdown, 1 );
+				this.OnClientShutdown( new ClientShutdownEventArgs( this, context.RemoteEndPoint ) );
+
 				if ( !context.ReceivedData.Any( segment => 0 < segment.Count ) )
 				{
 					// There are not data to handle.

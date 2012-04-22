@@ -87,32 +87,36 @@ namespace MsgPack.Rpc.Server.Protocols
 				{
 					tuple = Tuple.Create( target, controller );
 
-					using ( var waitHandle = new ManualResetEventSlim() )
+					using ( var serverShutdownWaitHandle = new ManualResetEventSlim() )
 					using ( var receivedWaitHandle = new ManualResetEventSlim() )
 					{
 						byte[] response = null;
+						bool isShutdownPacketSent = false;
 
 						if ( onReceive != null )
 						{
 							target.Received += ( sender, e ) => receivedWaitHandle.Set();
 						}
 
+						target.ShutdownCompleted += ( sender, e ) => serverShutdownWaitHandle.Set();
+
 						controller.Response +=
 							( sender, e ) =>
 							{
-								if ( response != null )
+								Console.WriteLine( "Response: {0}bytes", e.Data.Length );
+								if ( e.Data.Length == 0 )
 								{
-									return;
+									isShutdownPacketSent = true;
 								}
-
-								response = e.Data;
+								else
+								{
+									response = e.Data;
+								}
 
 								if ( onSend != null )
 								{
 									onSend( callbackArgumentSelector( tuple ) );
 								}
-
-								waitHandle.Set();
 							};
 
 						int messageId = Math.Abs( Environment.TickCount % 10 );
@@ -153,16 +157,16 @@ namespace MsgPack.Rpc.Server.Protocols
 
 							if ( Debugger.IsAttached )
 							{
-								waitHandle.Wait();
+								serverShutdownWaitHandle.Wait();
 							}
 							else
 							{
-								Assert.That( waitHandle.Wait( TimeSpan.FromSeconds( 1 ) ), Is.True, "Not respond." );
+								Assert.That( serverShutdownWaitHandle.Wait( TimeSpan.FromSeconds( 1 ) ), Is.True, "Not respond." );
 							}
 
 							if ( willBeConnectionReset )
 							{
-								Assert.That( response, Is.Not.Null.And.Empty );
+								Assert.That( isShutdownPacketSent );
 								return;
 							}
 
@@ -255,9 +259,9 @@ namespace MsgPack.Rpc.Server.Protocols
 				{
 					using ( var waitHandle = new ManualResetEventSlim() )
 					{
-						target.Received += ( sender, e ) => waitHandle.Set();
+						target.ClientShutdown += ( sender, e ) => waitHandle.Set();
 						controller.FeedReceiveBuffer( new byte[ 0 ] );
-						waitHandle.Wait();
+						Assert.That( waitHandle.Wait( TimeSpan.FromSeconds( 1 ) ) );
 					}
 
 					Assert.That( target.IsClientShutdown );

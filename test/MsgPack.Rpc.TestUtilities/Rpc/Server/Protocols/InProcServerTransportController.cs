@@ -56,7 +56,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		{
 			this._transportManager = transportManager;
 			this._transport = transportManager.NewSession();
-			this._transport.Response += this.OnTransportResponse;
+			this._transportManager.Response += this.OnTransportResponse;
 			this._ownsTransportManager = ownsTransportManager;
 		}
 
