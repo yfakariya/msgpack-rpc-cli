@@ -1,142 +1,112 @@
-﻿namespace MsgPack.Rpc.Client
+﻿#region -- License Terms --
+//
+// MessagePack for CLI
+//
+// Copyright (C) 2010 FUJIWARA, Yusuke
+//
+//    Licensed under the Apache License, Version 2.0 (the "License");
+//    you may not use this file except in compliance with the License.
+//    You may obtain a copy of the License at
+//
+//        http://www.apache.org/licenses/LICENSE-2.0
+//
+//    Unless required by applicable law or agreed to in writing, software
+//    distributed under the License is distributed on an "AS IS" BASIS,
+//    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//    See the License for the specific language governing permissions and
+//    limitations under the License.
+//
+#endregion -- License Terms --
+
+using System;
+using System.Diagnostics;
+using System.Net;
+using System.Threading;
+using MsgPack.Rpc.Client.Protocols;
+using MsgPack.Serialization;
+using NUnit.Framework;
+using MsgPack.Rpc.Protocols;
+
+namespace MsgPack.Rpc.Client
 {
-	using System;
-	using NUnit.Framework;
-
-
-	/// <summary>
-	///Tests the Dynamic Rpc Proxy 
-	/// </summary>
-	[TestFixture()]
 	public class DynamicRpcProxyTest
 	{
+		private const int TimeoutMilliseconds = 3000;
 
-		private DynamicRpcProxy _testClass;
-
-		/// <summary>
-		/// <see cref="NUnit"/> Set Up 
-		/// </summary>
-		[SetUp()]
-		public void SetUp()
+		[Test]
+		public void TestDynamicInvocation_Success()
 		{
-			MsgPack.Rpc.Client.RpcClient client = null;
-			_testClass = new DynamicRpcProxy( client );
+			string arg = Guid.NewGuid().ToString();
+			int messageId = Environment.TickCount % 1000;
+			string methodName = "SomeMethod";
+			using ( var environment = new InProcTestEnvironment( ( method, id, args ) => method == methodName && args[ 0 ].AsString() == arg ) )
+			using ( var client = environment.CreateClient() )
+			using ( dynamic target = new DynamicRpcProxy( client ) )
+			{
+				MessagePackObject result = target.SomeMethod( arg );
+				Assert.That( result == true );
+			}
 		}
 
-		/// <summary>
-		/// <see cref="NUnit"/> Tear Down 
-		/// </summary>
-		[TearDown()]
-		public void TearDown()
+		[Test]
+		public void TestDynamicInvocation_ServerError()
 		{
-			_testClass = null;
+			using ( var environment = new InProcTestEnvironment( ( method, id, args ) => { throw new InvalidOperationException( "DUMMY" ); } ) )
+			using ( var client = environment.CreateClient() )
+			using ( dynamic target = new DynamicRpcProxy( client ) )
+			{
+				try
+				{
+					target.SomeMethod();
+					Assert.Fail();
+				}
+				catch ( RpcMethodInvocationException ex )
+				{
+					Assert.That( ex.MethodName, Is.StringContaining( "SomeMethod" ) );
+					Assert.That( ex.Message, Is.StringContaining( "DUMMY" ) );
+				}
+			}
 		}
-
-		/// <summary>
-		/// Tests the Constructor Dynamic Rpc Proxy 
-		/// </summary>
-		[Test()]
-		public void TestConstructorDynamicRpcProxy()
+		private sealed class InProcTestEnvironment : IDisposable
 		{
-			MsgPack.Rpc.Client.RpcClient client = null;
-			DynamicRpcProxy testDynamicRpcProxy = new DynamicRpcProxy( client );
-			Assert.IsNotNull( testDynamicRpcProxy, "Constructor of type, DynamicRpcProxy failed to create instance." );
-			Assert.Fail( "Create or modify test(s)." );
+			private readonly EndPoint _endPoint;
+			private readonly MsgPack.Rpc.Server.CallbackServer _server;
+			private readonly MsgPack.Rpc.Server.Protocols.InProcServerTransportManager _serverTransportManager;
+			private readonly InProcClientTransportManager _clientTransportManager;
 
-		}
+			public ClientTransportManager ClientTransportManager
+			{
+				get { return this._clientTransportManager; }
+			}
 
-		/// <summary>
-		/// Tests the Dispose 
-		/// </summary>
-		[Test()]
-		public void TestDispose()
-		{
-			_testClass.Dispose();
-			Assert.Fail( "Create or modify test(s)." );
+			public InProcTestEnvironment( Func<string, int?, MessagePackObject[], MessagePackObject> callback )
+			{
+				this._endPoint = new IPEndPoint( IPAddress.Loopback, MsgPack.Rpc.Server.CallbackServer.PortNumber );
+				this._server = MsgPack.Rpc.Server.CallbackServer.Create( callback, true );
+				this._serverTransportManager = new MsgPack.Rpc.Server.Protocols.InProcServerTransportManager( this._server.Server as Server.RpcServer, mgr => new SingletonObjectPool<Server.Protocols.InProcServerTransport>( new Server.Protocols.InProcServerTransport( mgr ) ) );
+				this._clientTransportManager = new InProcClientTransportManager( new RpcClientConfiguration(), this._serverTransportManager );
+			}
 
-		}
+			public void Dispose()
+			{
+				this._clientTransportManager.Dispose();
+				this._serverTransportManager.Dispose();
+				this._server.Dispose();
+			}
 
-		/// <summary>
-		/// Tests the Try Invoke Member 
-		/// </summary>
-		[Test()]
-		public void TestTryInvokeMember()
-		{
-			System.Dynamic.InvokeMemberBinder binder = null;
-			object[] args = null;
-			object result = null;
-			object expectedresult = null;
-			bool expectedBoolean = null;
-			bool resultBoolean = null;
-			resultBoolean = _testClass.TryInvokeMember( binder, args, out result );
-			Assert.AreEqual( expectedBoolean, resultBoolean, "TryInvokeMember method returned unexpected result." );
-			Assert.IsNotNull( expectedresult, "result out parameter should not be null" );
-			Assert.Fail( "Create or modify test(s)." );
+			public RpcClient CreateClient()
+			{
+				return new RpcClient( this.Connect(), new SerializationContext() );
+			}
 
-		}
-
-		/// <summary>
-		/// Tests the Create Target End Point 
-		/// </summary>
-		[Test()]
-		public void TestCreateTargetEndPoint()
-		{
-			System.Net.EndPoint targetEndPoint = null;
-			MsgPack.Rpc.Client.DynamicRpcProxy expectedDynamicRpcProxy = null;
-			MsgPack.Rpc.Client.DynamicRpcProxy resultDynamicRpcProxy = null;
-			resultDynamicRpcProxy = DynamicRpcProxy.Create( targetEndPoint );
-			Assert.AreEqual( expectedDynamicRpcProxy, resultDynamicRpcProxy, "Create method returned unexpected result." );
-			Assert.Fail( "Create or modify test(s)." );
-
-		}
-
-		/// <summary>
-		/// Tests the Create Target End Point Configuration 
-		/// </summary>
-		[Test()]
-		public void TestCreateTargetEndPointConfiguration()
-		{
-			System.Net.EndPoint targetEndPoint = null;
-			MsgPack.Rpc.Client.RpcClientConfiguration configuration = null;
-			MsgPack.Rpc.Client.DynamicRpcProxy expectedDynamicRpcProxy = null;
-			MsgPack.Rpc.Client.DynamicRpcProxy resultDynamicRpcProxy = null;
-			resultDynamicRpcProxy = DynamicRpcProxy.Create( targetEndPoint, configuration );
-			Assert.AreEqual( expectedDynamicRpcProxy, resultDynamicRpcProxy, "Create method returned unexpected result." );
-			Assert.Fail( "Create or modify test(s)." );
-
-		}
-
-		/// <summary>
-		/// Tests the Create Target End Point Serialization Context 
-		/// </summary>
-		[Test()]
-		public void TestCreateTargetEndPointSerializationContext()
-		{
-			System.Net.EndPoint targetEndPoint = null;
-			MsgPack.Serialization.SerializationContext serializationContext = null;
-			MsgPack.Rpc.Client.DynamicRpcProxy expectedDynamicRpcProxy = null;
-			MsgPack.Rpc.Client.DynamicRpcProxy resultDynamicRpcProxy = null;
-			resultDynamicRpcProxy = DynamicRpcProxy.Create( targetEndPoint, serializationContext );
-			Assert.AreEqual( expectedDynamicRpcProxy, resultDynamicRpcProxy, "Create method returned unexpected result." );
-			Assert.Fail( "Create or modify test(s)." );
-
-		}
-
-		/// <summary>
-		/// Tests the Create Target End Point Configuration Serialization Context 
-		/// </summary>
-		[Test()]
-		public void TestCreateTargetEndPointConfigurationSerializationContext()
-		{
-			System.Net.EndPoint targetEndPoint = null;
-			MsgPack.Rpc.Client.RpcClientConfiguration configuration = null;
-			MsgPack.Serialization.SerializationContext serializationContext = null;
-			MsgPack.Rpc.Client.DynamicRpcProxy expectedDynamicRpcProxy = null;
-			MsgPack.Rpc.Client.DynamicRpcProxy resultDynamicRpcProxy = null;
-			resultDynamicRpcProxy = DynamicRpcProxy.Create( targetEndPoint, configuration, serializationContext );
-			Assert.AreEqual( expectedDynamicRpcProxy, resultDynamicRpcProxy, "Create method returned unexpected result." );
-			Assert.Fail( "Create or modify test(s)." );
-
+			public ClientTransport Connect()
+			{
+				using ( var task = this._clientTransportManager.ConnectAsync( this._endPoint ) )
+				{
+					task.Wait( Debugger.IsAttached ? Timeout.Infinite : TimeoutMilliseconds );
+					return task.Result;
+				}
+			}
 		}
 	}
 }
