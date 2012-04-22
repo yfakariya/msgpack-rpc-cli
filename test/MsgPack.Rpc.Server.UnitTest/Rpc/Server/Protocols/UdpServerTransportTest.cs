@@ -328,54 +328,48 @@ namespace MsgPack.Rpc.Server.Protocols
 			TestSendReceiveRequest(
 				endPoint =>
 				{
-					using ( var activeTcpClient = new TcpClient( AddressFamily.InterNetwork ) )
-					using ( var inactiveTcpClient = new TcpClient( AddressFamily.InterNetwork ) )
+					using ( var activeUdpClient = new UdpClient( AddressFamily.InterNetwork ) )
+					using ( var inactiveUdpClient = new UdpClient( AddressFamily.InterNetwork ) )
 					{
-						activeTcpClient.Connect( endPoint );
-						inactiveTcpClient.Connect( endPoint );
+						var id1 = Guid.NewGuid().ToString();
 
-						using ( var stream = activeTcpClient.GetStream() )
+						using ( var buffer = new MemoryStream() )
 						{
-							var id1 = Guid.NewGuid().ToString();
-
-							using ( var buffer = new MemoryStream() )
+							using ( var packer = Packer.Create( buffer, false ) )
 							{
-								using ( var packer = Packer.Create( buffer, false ) )
-								{
-									PackRequest( packer, id1 );
-								}
-
-								buffer.Position = 0;
-
-								// send
-								buffer.CopyTo( stream );
+								PackRequest( packer, id1 );
 							}
 
-							// receive
-							var result1 = Unpacking.UnpackArray( stream );
-							AssertResponse( result1, id1 );
+							buffer.Position = 0;
 
-							inactiveTcpClient.Client.Shutdown( SocketShutdown.Send );
-
-							var id2 = Guid.NewGuid().ToString();
-
-							using ( var buffer = new MemoryStream() )
-							{
-								using ( var packer = Packer.Create( buffer, false ) )
-								{
-									PackRequest( packer, id2 );
-								}
-
-								buffer.Position = 0;
-
-								// send
-								buffer.CopyTo( stream );
-							}
-
-							// receive
-							var result2 = Unpacking.UnpackArray( stream );
-							AssertResponse( result2, id2 );
+							// send
+							activeUdpClient.Send( buffer.ToArray(), ( int )buffer.Length, endPoint );
 						}
+
+						// receive
+						var result1 = Unpacking.UnpackArray( activeUdpClient.Receive( ref endPoint ) ).Value;
+						AssertResponse( result1, id1 );
+
+						inactiveUdpClient.Client.Shutdown( SocketShutdown.Send );
+
+						var id2 = Guid.NewGuid().ToString();
+
+						using ( var buffer = new MemoryStream() )
+						{
+							using ( var packer = Packer.Create( buffer, false ) )
+							{
+								PackRequest( packer, id2 );
+							}
+
+							buffer.Position = 0;
+
+							// send
+							activeUdpClient.Send( buffer.ToArray(), ( int )buffer.Length, endPoint );
+						}
+
+						// receive
+						var result2 = Unpacking.UnpackArray( activeUdpClient.Receive( ref endPoint ) ).Value;
+						AssertResponse( result2, id2 );
 					}
 				}
 			);
@@ -387,37 +381,32 @@ namespace MsgPack.Rpc.Server.Protocols
 			TestSendReceiveRequest(
 				( endPoint, manager ) =>
 				{
-					using ( var tcpClient = new TcpClient( AddressFamily.InterNetwork ) )
+					using ( var udpClient = new UdpClient( AddressFamily.InterNetwork ) )
 					{
-						tcpClient.Connect( endPoint );
+						var id = Guid.NewGuid().ToString();
 
-						using ( var stream = tcpClient.GetStream() )
+						using ( var buffer = new MemoryStream() )
 						{
-							var id = Guid.NewGuid().ToString();
-
-							using ( var buffer = new MemoryStream() )
+							using ( var packer = Packer.Create( buffer, false ) )
 							{
-								using ( var packer = Packer.Create( buffer, false ) )
-								{
-									PackRequest( packer, id );
-								}
-
-								buffer.Position = 0;
-
-								// send
-								buffer.CopyTo( stream );
+								PackRequest( packer, id );
 							}
 
-							// receive
-							var result = Unpacking.UnpackArray( stream );
-							AssertResponse( result, id );
+							buffer.Position = 0;
 
-							manager.BeginShutdown();
-
-							byte[] bytes = new byte[ 1 ];
-							int received = stream.Read( bytes, 0, bytes.Length );
-							Assert.That( received, Is.EqualTo( 0 ) );
+							// send
+							udpClient.Send( buffer.ToArray(), ( int )buffer.Length, endPoint );
 						}
+
+						// receive
+						var result = Unpacking.UnpackArray( udpClient.Receive( ref endPoint ) ).Value;
+						AssertResponse( result, id );
+
+						manager.BeginShutdown();
+
+						byte[] bytes = new byte[ 1 ];
+						int received = udpClient.Receive( ref endPoint ).Length;
+						Assert.That( received, Is.EqualTo( 0 ) );
 					}
 				}
 			);
