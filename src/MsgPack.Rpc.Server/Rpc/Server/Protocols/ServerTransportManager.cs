@@ -134,32 +134,32 @@ namespace MsgPack.Rpc.Server.Protocols
 			get { return Interlocked.CompareExchange( ref this._isInShutdown, 0, 0 ) != 0; }
 		}
 
-		private EventHandler<EventArgs> _shutdownCompleted;
+		private EventHandler<ShutdownCompletedEventArgs> _shutdownCompleted;
 
 		/// <summary>
 		///		Occurs when the shutdown process is completed.
 		/// </summary>
-		public event EventHandler<EventArgs> ShutdownCompleted
+		public event EventHandler<ShutdownCompletedEventArgs> ShutdownCompleted
 		{
 			add
 			{
-				EventHandler<EventArgs> oldHandler;
-				EventHandler<EventArgs> currentHandler = this._shutdownCompleted;
+				EventHandler<ShutdownCompletedEventArgs> oldHandler;
+				EventHandler<ShutdownCompletedEventArgs> currentHandler = this._shutdownCompleted;
 				do
 				{
 					oldHandler = currentHandler;
-					var newHandler = Delegate.Combine( oldHandler, value ) as EventHandler<EventArgs>;
+					var newHandler = Delegate.Combine( oldHandler, value ) as EventHandler<ShutdownCompletedEventArgs>;
 					currentHandler = Interlocked.CompareExchange( ref this._shutdownCompleted, newHandler, oldHandler );
 				} while ( oldHandler != currentHandler );
 			}
 			remove
 			{
-				EventHandler<EventArgs> oldHandler;
-				EventHandler<EventArgs> currentHandler = this._shutdownCompleted;
+				EventHandler<ShutdownCompletedEventArgs> oldHandler;
+				EventHandler<ShutdownCompletedEventArgs> currentHandler = this._shutdownCompleted;
 				do
 				{
 					oldHandler = currentHandler;
-					var newHandler = Delegate.Remove( oldHandler, value ) as EventHandler<EventArgs>;
+					var newHandler = Delegate.Remove( oldHandler, value ) as EventHandler<ShutdownCompletedEventArgs>;
 					currentHandler = Interlocked.CompareExchange( ref this._shutdownCompleted, newHandler, oldHandler );
 				} while ( oldHandler != currentHandler );
 			}
@@ -168,8 +168,19 @@ namespace MsgPack.Rpc.Server.Protocols
 		/// <summary>
 		///		Raises <see cref="ShutdownCompleted"/> event.
 		/// </summary>
-		protected virtual void OnShutdownCompleted()
+		/// <param name="e">The <see cref="MsgPack.Rpc.Protocols.ShutdownCompletedEventArgs"/> instance containing the event data.</param>
+		/// <exception cref="ArgumentNullException">
+		///		<paramref name="e"/> is <c>null</c>.
+		/// </exception>
+		protected virtual void OnShutdownCompleted( ShutdownCompletedEventArgs e )
 		{
+			if ( e == null )
+			{
+				throw new ArgumentNullException( "e" );
+			}
+
+			Contract.EndContractBlock();
+
 			MsgPackRpcServerProtocolsTrace.TraceEvent(
 				MsgPackRpcServerProtocolsTrace.ManagerShutdownCompleted,
 				"Manager shutdown is completed. {{ \"Manager\" : \"{0}\" }}",
@@ -179,7 +190,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			var handler = Interlocked.CompareExchange( ref this._shutdownCompleted, null, null );
 			if ( handler != null )
 			{
-				handler( this, EventArgs.Empty );
+				handler( this, e );
 			}
 		}
 
@@ -286,13 +297,15 @@ namespace MsgPack.Rpc.Server.Protocols
 		/// </remarks>
 		public void BeginShutdown()
 		{
-			Interlocked.Exchange( ref this._isInShutdown, 1 );
-			MsgPackRpcServerProtocolsTrace.TraceEvent(
-				MsgPackRpcServerProtocolsTrace.BeginShutdownManager,
-				"Begin shutdown. {{ \"Manager\" : \"{0}\" }}",
-				this
-			);
-			this.BeginShutdownCore();
+			if ( Interlocked.Exchange( ref this._isInShutdown, 1 ) == 0 )
+			{
+				MsgPackRpcServerProtocolsTrace.TraceEvent(
+					MsgPackRpcServerProtocolsTrace.BeginShutdownManager,
+					"Begin shutdown. {{ \"Manager\" : \"{0}\" }}",
+					this
+				);
+				this.BeginShutdownCore();
+			}
 		}
 
 		/// <summary>

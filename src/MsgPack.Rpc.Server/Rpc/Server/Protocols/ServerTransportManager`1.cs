@@ -23,6 +23,7 @@ using System.Collections.Concurrent;
 using System.Diagnostics.Contracts;
 using System.Net.Sockets;
 using System.Threading;
+using MsgPack.Rpc.Protocols;
 
 namespace MsgPack.Rpc.Server.Protocols
 {
@@ -123,7 +124,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			base.BeginShutdownCore();
 		}
 
-		private void OnTransportShutdownCompleted( object sender, EventArgs e )
+		private void OnTransportShutdownCompleted( object sender, ShutdownCompletedEventArgs e )
 		{
 			var transport = sender as TTransport;
 			Contract.Assert( transport != null );
@@ -133,7 +134,7 @@ namespace MsgPack.Rpc.Server.Protocols
 				transport.ShutdownCompleted -= this.OnTransportShutdownCompleted;
 				if ( Interlocked.Decrement( ref this._tranportIsInShutdown ) == 0 )
 				{
-					this.OnShutdownCompleted();
+					this.OnShutdownCompleted( e );
 				}
 			}
 		}

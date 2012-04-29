@@ -82,6 +82,8 @@
     <Compile Include="Rpc\OnTheFlyObjectPool`1.cs" />
     <Compile Include="Rpc\Protocols\IContextBoundableTransport.cs" />
     <Compile Include="Rpc\Protocols\MessageContext.cs" />
+    <Compile Include="Rpc\Protocols\ShutdownCompletedEventArgs.cs" />
+    <Compile Include="Rpc\Protocols\ShutdownSource.cs" />
     <Compile Include="Rpc\RpcException.PreserveStackTrace.cs" />
     <Compile Include="Rpc\RpcIdentifierUtility.cs" />
     <Compile Include="Rpc\MessagePackObjectExtension.cs" />

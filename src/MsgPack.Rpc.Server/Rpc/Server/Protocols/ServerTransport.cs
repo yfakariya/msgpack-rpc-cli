@@ -61,6 +61,8 @@ namespace MsgPack.Rpc.Server.Protocols
 
 		private int _processing;
 
+		private int _shutdownSource = ( int )ShutdownSource.Unknown;
+
 		private int _isClientShutdown;
 
 		/// <summary>
@@ -177,32 +179,32 @@ namespace MsgPack.Rpc.Server.Protocols
 			}
 		}
 
-		private EventHandler<EventArgs> _shutdownCompleted;
+		private EventHandler<ShutdownCompletedEventArgs> _shutdownCompleted;
 
 		/// <summary>
 		///		Occurs when shutdown completed.
 		/// </summary>
-		internal event EventHandler<EventArgs> ShutdownCompleted
+		internal event EventHandler<ShutdownCompletedEventArgs> ShutdownCompleted
 		{
 			add
 			{
-				EventHandler<EventArgs> oldHandler;
-				EventHandler<EventArgs> currentHandler = this._shutdownCompleted;
+				EventHandler<ShutdownCompletedEventArgs> oldHandler;
+				EventHandler<ShutdownCompletedEventArgs> currentHandler = this._shutdownCompleted;
 				do
 				{
 					oldHandler = currentHandler;
-					var newHandler = Delegate.Combine( oldHandler, value ) as EventHandler<EventArgs>;
+					var newHandler = Delegate.Combine( oldHandler, value ) as EventHandler<ShutdownCompletedEventArgs>;
 					currentHandler = Interlocked.CompareExchange( ref this._shutdownCompleted, newHandler, oldHandler );
 				} while ( oldHandler != currentHandler );
 			}
 			remove
 			{
-				EventHandler<EventArgs> oldHandler;
-				EventHandler<EventArgs> currentHandler = this._shutdownCompleted;
+				EventHandler<ShutdownCompletedEventArgs> oldHandler;
+				EventHandler<ShutdownCompletedEventArgs> currentHandler = this._shutdownCompleted;
 				do
 				{
 					oldHandler = currentHandler;
-					var newHandler = Delegate.Remove( oldHandler, value ) as EventHandler<EventArgs>;
+					var newHandler = Delegate.Remove( oldHandler, value ) as EventHandler<ShutdownCompletedEventArgs>;
 					currentHandler = Interlocked.CompareExchange( ref this._shutdownCompleted, newHandler, oldHandler );
 				} while ( oldHandler != currentHandler );
 			}
@@ -211,9 +213,19 @@ namespace MsgPack.Rpc.Server.Protocols
 		/// <summary>
 		///		Raises internal shutdown completion event to achieve graceful shutdown.
 		/// </summary>
-		protected virtual void OnShutdownCompleted()
+		/// <param name="e">The <see cref="MsgPack.Rpc.Protocols.ShutdownCompletedEventArgs"/> instance containing the event data.</param>
+		/// <exception cref="ArgumentNullException">
+		///		<paramref name="e"/> is <c>null</c>.
+		/// </exception>
+		protected virtual void OnShutdownCompleted( ShutdownCompletedEventArgs e )
 		{
-			// FIXME: ShutdownCompletedEventArgs.Reason
+			if ( e == null )
+			{
+				throw new ArgumentNullException( "e" );
+			}
+
+			Contract.EndContractBlock();
+
 			MsgPackRpcServerProtocolsTrace.TraceEvent(
 				MsgPackRpcServerProtocolsTrace.TransportShutdownCompleted,
 				"Transport shutdown is completed. {{ \"Socket\" : 0x{0:X}, \"RemoteEndPoint\" : \"{1}\", \"LocalEndPoint\" : \"{2}\" }}",
@@ -227,7 +239,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			var handler = Interlocked.CompareExchange( ref this._shutdownCompleted, null, null );
 			if ( handler != null )
 			{
-				handler( this, EventArgs.Empty );
+				handler( this, e );
 			}
 		}
 
@@ -312,8 +324,10 @@ namespace MsgPack.Rpc.Server.Protocols
 		/// </summary>
 		internal void BeginShutdown()
 		{
-			if ( Interlocked.CompareExchange( ref this._isInShutdown, 1, 0 ) == 0 )
+			if ( Interlocked.Exchange( ref this._isInShutdown, 1 ) == 0 )
 			{
+				Interlocked.Exchange( ref this._shutdownSource, ( int )ShutdownSource.Server );
+
 				MsgPackRpcServerProtocolsTrace.TraceEvent(
 					MsgPackRpcServerProtocolsTrace.BeginShutdownTransport,
 					"Begin shutdown transport. {{ \"Socket\" : 0x{0:X}, \"RemoteEndPoint\" : \"{1}\", \"LocalEndPoint\" : \"{2}\" }}",
@@ -368,7 +382,7 @@ namespace MsgPack.Rpc.Server.Protocols
 				this._boundSocket == null ? null : this._boundSocket.LocalEndPoint
 			);
 
-			this.OnShutdownCompleted();
+			this.OnShutdownCompleted( new ShutdownCompletedEventArgs( ( ShutdownSource )this._shutdownSource ) );
 		}
 
 		/// <summary>
@@ -673,29 +687,32 @@ namespace MsgPack.Rpc.Server.Protocols
 
 			if ( context.BytesTransferred == 0 )
 			{
-				// recv() returns 0 when the client socket shutdown gracefully.
-				MsgPackRpcServerProtocolsTrace.TraceEvent(
-					MsgPackRpcServerProtocolsTrace.DetectClientShutdown,
-					"Client shutdown current socket. {{ \"Socket\" : 0x{0:X}, \"RemoteEndPoint\" : \"{1}\", \"LocalEndPoint\" : \"{2}\" }}",
-					this._boundSocket == null ? IntPtr.Zero : this._boundSocket.Handle,
-					this._boundSocket == null ? null : this._boundSocket.RemoteEndPoint,
-					this._boundSocket == null ? null : this._boundSocket.LocalEndPoint
-				);
-				Interlocked.Exchange( ref this._isClientShutdown, 1 );
-				this.OnClientShutdown( new ClientShutdownEventArgs( this, context.RemoteEndPoint ) );
-
-				if ( !context.ReceivedData.Any( segment => 0 < segment.Count ) )
+				if ( Interlocked.Exchange( ref this._isClientShutdown, 1 ) == 0 )
 				{
-					// There are not data to handle.
-					context.Clear();
-					// Shutdown sending
-					if ( context.SessionId > 0 )
-					{
-						this.OnSessionFinished();
-					}
+					// recv() returns 0 when the client socket shutdown gracefully.
+					MsgPackRpcServerProtocolsTrace.TraceEvent(
+						MsgPackRpcServerProtocolsTrace.DetectClientShutdown,
+						"Client shutdown current socket. {{ \"Socket\" : 0x{0:X}, \"RemoteEndPoint\" : \"{1}\", \"LocalEndPoint\" : \"{2}\" }}",
+						this._boundSocket == null ? IntPtr.Zero : this._boundSocket.Handle,
+						this._boundSocket == null ? null : this._boundSocket.RemoteEndPoint,
+						this._boundSocket == null ? null : this._boundSocket.LocalEndPoint
+					);
+					Interlocked.Exchange( ref this._shutdownSource, ( int )ShutdownSource.Client );
+					this.OnClientShutdown( new ClientShutdownEventArgs( this, context.RemoteEndPoint ) );
 
-					this.TrySendShutdownSending();
-					return;
+					if ( !context.ReceivedData.Any( segment => 0 < segment.Count ) )
+					{
+						// There are not data to handle.
+						context.Clear();
+						// Shutdown sending
+						if ( context.SessionId > 0 )
+						{
+							this.OnSessionFinished();
+						}
+
+						this.TrySendShutdownSending();
+						return;
+					}
 				}
 			}
 			else
