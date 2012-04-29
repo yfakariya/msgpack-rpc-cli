@@ -72,6 +72,17 @@ namespace MsgPack.Rpc.Server.Protocols
 			}
 		}
 
+		public event EventHandler TransportReceived;
+
+		private void OnTransportReceived()
+		{
+			var handler = this.TransportReceived;
+			if ( handler != null )
+			{
+				handler( this, EventArgs.Empty );
+			}
+		}
+
 		/// <summary>
 		///		Initializes a new instance of the <see cref="InProcServerTransportManager"/> class.
 		/// </summary>
@@ -125,9 +136,21 @@ namespace MsgPack.Rpc.Server.Protocols
 			base.DisposeCore( disposing );
 		}
 
+		protected override InProcServerTransport GetTransportCore( Socket bindingSocket )
+		{
+			var result = base.GetTransportCore( bindingSocket );
+			result.Received += this.OnTransportReceived;
+			return result;
+		}
+
 		protected sealed override void ReturnTransportCore( InProcServerTransport transport )
 		{
-			// nop
+			transport.Received -= this.OnTransportReceived;
+		}
+
+		private void OnTransportReceived( object sender, EventArgs e )
+		{
+			this.OnTransportReceived();
 		}
 
 		/// <summary>

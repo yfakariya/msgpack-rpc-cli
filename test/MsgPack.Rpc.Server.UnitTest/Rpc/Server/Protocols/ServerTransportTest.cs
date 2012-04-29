@@ -19,8 +19,10 @@
 #endregion -- License Terms --
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using MsgPack.Rpc.Protocols;
 using MsgPack.Rpc.Server.Dispatch;
@@ -70,32 +72,30 @@ namespace MsgPack.Rpc.Server.Protocols
 			);
 		}
 
-		private void TestShutdownCore<T>(
-			Action<T> onReceive,
-			Action<T> onExecute,
-			Action<T> onSend,
-			bool willBeConnectionReset,
-			Func<Tuple<InProcServerTransport, InProcServerTransportController>, T> callbackArgumentSelector
+		private void TestShutdownCore(
+			bool isClientShutdown,
+			bool isReceiving,
+			bool isEmpty
 		)
 		{
 			var arg = Environment.TickCount % 3;
 			var returnValue = Environment.TickCount % 5;
-			bool isExecuted = false;
-			Tuple<InProcServerTransport, InProcServerTransportController> tuple = null;
+			Tuple<InProcServerTransport, InProcServerTransportController> testEnvironment = null;
 			TestCore(
 				( target, controller ) =>
 				{
-					tuple = Tuple.Create( target, controller );
-
+					testEnvironment = Tuple.Create( target, controller );
 					using ( var serverShutdownWaitHandle = new ManualResetEventSlim() )
-					using ( var receivedWaitHandle = new ManualResetEventSlim() )
+					using ( var receivingWaitHandle = new ManualResetEventSlim() )
+					using ( var shutdownPacketWaitHandle = new ManualResetEventSlim() )
+					using ( var responseWaitHandle = new ManualResetEventSlim() )
 					{
 						byte[] response = null;
-						bool isShutdownPacketSent = false;
 
-						if ( onReceive != null )
+						if ( isReceiving )
 						{
-							target.Received += ( sender, e ) => receivedWaitHandle.Set();
+							// detects recursive dequeue.
+							target.Receiving += ( sender, e ) => receivingWaitHandle.Set();
 						}
 
 						target.ShutdownCompleted += ( sender, e ) => serverShutdownWaitHandle.Set();
@@ -103,94 +103,93 @@ namespace MsgPack.Rpc.Server.Protocols
 						controller.Response +=
 							( sender, e ) =>
 							{
-								Console.WriteLine( "Response: {0}bytes", e.Data.Length );
 								if ( e.Data.Length == 0 )
 								{
-									isShutdownPacketSent = true;
+									shutdownPacketWaitHandle.Set();
 								}
 								else
 								{
-									response = e.Data;
-								}
-
-								if ( onSend != null )
-								{
-									onSend( callbackArgumentSelector( tuple ) );
+									Interlocked.Exchange( ref response, e.Data );
+									responseWaitHandle.Set();
 								}
 							};
 
 						int messageId = Math.Abs( Environment.TickCount % 10 );
-						using ( var buffer = new MemoryStream() )
+						if ( !isEmpty )
 						{
-							using ( var packer = Packer.Create( buffer, false ) )
+							using ( var buffer = new MemoryStream() )
 							{
-								packer.PackArrayHeader( 4 );
-								packer.Pack( ( int )MessageType.Request );
-								packer.Pack( messageId );
-								packer.PackString( "Test" );
-							}
-
-							controller.FeedReceiveBuffer( buffer.ToArray() );
-							buffer.SetLength( 0 );
-
-							if ( onReceive != null )
-							{
-								if ( Debugger.IsAttached )
+								using ( var packer = Packer.Create( buffer, false ) )
 								{
-									receivedWaitHandle.Wait();
+									packer.PackArrayHeader( 4 );
+									packer.Pack( ( int )MessageType.Request );
+									packer.Pack( messageId );
+									packer.PackString( "Test" );
+									packer.PackArrayHeader( 0 );
+								}
+
+								var sendingData = buffer.ToArray();
+
+								controller.FeedReceiveBuffer( sendingData.Take( sendingData.Length / 2 ).ToArray() );
+
+								if ( isReceiving )
+								{
+									Assert.That( receivingWaitHandle.Wait( TimeSpan.FromSeconds( 2 ) ) );
+									if ( isClientShutdown )
+									{
+										controller.FeedReceiveBuffer( new byte[ 0 ] );
+									}
+									else
+									{
+										target.BeginShutdown();
+										controller.FeedReceiveBuffer( sendingData.Skip( sendingData.Length / 2 ).ToArray() );
+									}
 								}
 								else
 								{
-									Assert.That( receivedWaitHandle.Wait( TimeSpan.FromSeconds( 1 ) ), Is.True, "Not receiving second packets." );
+									controller.FeedReceiveBuffer( sendingData.Skip( sendingData.Length / 2 ).ToArray() );
 								}
-
-								onReceive( callbackArgumentSelector( tuple ) );
 							}
+						}
+						else if ( isClientShutdown )
+						{
+							controller.FeedReceiveBuffer( new byte[ 0 ] );
+						}
+						else
+						{
+							target.BeginShutdown();
+						}
 
-							using ( var packer = Packer.Create( buffer, false ) )
-							{
-								packer.PackArrayHeader( 1 );
-								packer.Pack( arg );
-							}
+						Assert.That( serverShutdownWaitHandle.Wait( TimeSpan.FromSeconds( 1 ) ) );
+						Assert.That( shutdownPacketWaitHandle.Wait( TimeSpan.FromSeconds( 1 ) ) );
 
-							controller.FeedReceiveBuffer( buffer.ToArray() );
-
-							if ( Debugger.IsAttached )
-							{
-								serverShutdownWaitHandle.Wait();
-							}
-							else
-							{
-								Assert.That( serverShutdownWaitHandle.Wait( TimeSpan.FromSeconds( 1 ) ), Is.True, "Not respond." );
-							}
-
-							if ( willBeConnectionReset )
-							{
-								Assert.That( isShutdownPacketSent );
-								return;
-							}
-
+						if ( !isReceiving && !isEmpty )
+						{
+							Assert.That( responseWaitHandle.Wait( TimeSpan.FromSeconds( 1 ) ) );
 							var result = Unpacking.UnpackObject( response ).Value.AsList();
 
-							Assert.That( isExecuted );
 							Assert.That( result.Count, Is.EqualTo( 4 ) );
 							Assert.That( result[ 0 ] == ( int )MessageType.Response );
 							Assert.That( result[ 1 ] == messageId );
-							Assert.That( result[ 2 ].IsNil );
+							Assert.That( result[ 2 ].IsNil, "{0}:{1}", result[ 2 ], result[ 3 ] );
 							Assert.That( result[ 3 ] == returnValue );
 						}
 					}
 				},
 				( messageId, args ) =>
 				{
-					Assert.That( args[ 0 ] == arg );
-
-					if ( onExecute != null )
+					if ( !isReceiving )
 					{
-						onExecute( callbackArgumentSelector( tuple ) );
+						if ( isClientShutdown )
+						{
+							testEnvironment.Item2.FeedReceiveBuffer( new byte[ 0 ] );
+						}
+						else
+						{
+							testEnvironment.Item1.BeginShutdown();
+						}
 					}
 
-					isExecuted = true;
 					return returnValue;
 				}
 			);
@@ -198,123 +197,54 @@ namespace MsgPack.Rpc.Server.Protocols
 
 		#region -- BeginShutdown --
 
+		private void TestBeginShutdownCore( bool isReceiving, bool isEmpty )
+		{
+			TestShutdownCore( isClientShutdown: false, isReceiving: isReceiving, isEmpty: isEmpty );
+		}
+
 		[Test()]
 		public void TestBeginShutdown_NoPendingRequest_Harmless()
 		{
-			TestCore( target => target.BeginShutdown() );
-		}
-
-		private void TestBeginShutdownCore(
-			Action<InProcServerTransport> onReceive,
-			Action<InProcServerTransport> onExecute,
-			Action<InProcServerTransport> onSend,
-			bool willBeConnectionReset
-		)
-		{
-			TestShutdownCore( onReceive, onExecute, onSend, willBeConnectionReset, tuple => tuple.Item1 );
+			TestBeginShutdownCore( isReceiving: false, isEmpty: true );
 		}
 
 		[Test]
-		public void TestBeginShutdown_DuringReceiving_ReceivingDrainedAndCanExecuteAndCanSend()
+		public void TestBeginShutdown_DuringReceiving_PendingRequestsAreCanceled_ShutdownPacketReplyed_ServerShutdownCompleted()
 		{
-			TestBeginShutdownCore(
-				target => target.BeginShutdown(),
-				null,
-				null,
-				true
-			);
+			TestBeginShutdownCore( isReceiving: true, isEmpty: false );
 		}
 
 		[Test]
-		public void TestBeginShutdown_DuringExecuting_CanExecuteAndCanSend()
+		public void TestBeginShutdown_DuringExecuting_PendingRequestsAreSent_ShutdownPacketReplyed_ServerShutdownCompleted()
 		{
-			TestBeginShutdownCore(
-				null,
-				target => target.BeginShutdown(),
-				null,
-				false
-			);
-		}
-
-		[Test]
-		public void TestBeginShutdown_DuringSending_CanSend()
-		{
-			TestBeginShutdownCore(
-				null,
-				null,
-				target => target.BeginShutdown(),
-				false
-			);
+			TestBeginShutdownCore( isReceiving: false, isEmpty: false );
 		}
 
 		#endregion
 
 		#region -- Client shutdown --
 
+		private void TestClientShutdownCore( bool isReceiving, bool isEmpty )
+		{
+			TestShutdownCore( isClientShutdown: true, isReceiving: isReceiving, isEmpty: isEmpty );
+		}
+
 		[Test]
 		public void TestClientShutdown_NoPendingRequest_Harmless()
 		{
-			TestCore(
-				( target, controller ) =>
-				{
-					using ( var waitHandle = new ManualResetEventSlim() )
-					{
-						target.ClientShutdown += ( sender, e ) => waitHandle.Set();
-						controller.FeedReceiveBuffer( new byte[ 0 ] );
-						Assert.That( waitHandle.Wait( TimeSpan.FromSeconds( 1 ) ) );
-					}
-
-					Assert.That( target.IsClientShutdown );
-				},
-				( id, args ) =>
-				{
-					return args;
-				}
-			);
-		}
-
-
-		private void TestClientShutdownCore(
-			Action<InProcServerTransportController> onReceive,
-			Action<InProcServerTransportController> onExecute,
-			Action<InProcServerTransportController> onSend,
-			bool willBeConnectionReset
-		)
-		{
-			TestShutdownCore( onReceive, onExecute, onSend, willBeConnectionReset, tuple => tuple.Item2 );
+			TestClientShutdownCore( isReceiving: false, isEmpty: true );
 		}
 
 		[Test]
-		public void TestClientShutdown_DuringReceiving_ConnectionReset()
+		public void TestClientShutdown_DuringSending_PendingRequestsAreCanceled_ShutdownPacketReplyed_ServerShutdownCompleted()
 		{
-			TestClientShutdownCore(
-				controller => controller.FeedReceiveBuffer( new byte[ 0 ] ),
-				null,
-				null,
-				true
-			);
+			TestClientShutdownCore( isReceiving: true, isEmpty: false );
 		}
 
 		[Test]
-		public void TestClientShutdown_DuringExecuting_ConnectionReset()
+		public void TestClientShutdown_DuringExecuting_PendingRequestsAreSent_ShutdownPacketReplyed_ServerShutdownCompleted()
 		{
-			TestClientShutdownCore(
-				null,
-				controller => controller.FeedReceiveBuffer( new byte[ 0 ] ),
-				null,
-				true
-			);
-		}
-
-		[Test]
-		public void TestClientShutdown_DuringSending_ConnectionReset()
-		{
-			TestClientShutdownCore(
-				null,
-				null,
-				controller => controller.FeedReceiveBuffer( new byte[ 0 ] ),
-				true
-			);
+			TestClientShutdownCore( isReceiving: false, isEmpty: false );
 		}
 
 		#endregion

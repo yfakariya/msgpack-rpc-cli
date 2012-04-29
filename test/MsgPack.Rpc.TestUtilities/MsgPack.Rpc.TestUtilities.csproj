@@ -63,6 +63,7 @@
     <Compile Include="Rpc\Client\Protocols\ContextExtensions.cs" />
     <Compile Include="Rpc\Client\Protocols\InProcClientTransport.cs" />
     <Compile Include="Rpc\Client\Protocols\InProcClientTransportManager.cs" />
+    <Compile Include="Rpc\Client\Protocols\InProcDataSendingEventArgs.cs" />
     <Compile Include="Rpc\Client\Protocols\InProcMessageSentEventArgs.cs" />
     <Compile Include="Rpc\Client\Protocols\InProcResponseReceivedEventArgs.cs" />
     <Compile Include="Rpc\GenericExceptionTester.cs" />

@@ -53,11 +53,74 @@ namespace MsgPack.Rpc.Server.Protocols
 		private readonly CancellationTokenSource _cancellationTokenSource;
 		private int _isDisposed;
 
-		public event EventHandler Received;
+		private EventHandler _receiving;
+
+		public event EventHandler Receiving
+		{
+			add
+			{
+				EventHandler oldHandler;
+				EventHandler currentHandler = this._receiving;
+				do
+				{
+					oldHandler = currentHandler;
+					var newHandler = Delegate.Combine( oldHandler, value ) as EventHandler;
+					currentHandler = Interlocked.CompareExchange( ref this._receiving, newHandler, oldHandler );
+				} while ( oldHandler != currentHandler );
+			}
+			remove
+			{
+				EventHandler oldHandler;
+				EventHandler currentHandler = this._receiving;
+				do
+				{
+					oldHandler = currentHandler;
+					var newHandler = Delegate.Remove( oldHandler, value ) as EventHandler;
+					currentHandler = Interlocked.CompareExchange( ref this._receiving, newHandler, oldHandler );
+				} while ( oldHandler != currentHandler );
+			}
+		}
+
+		private void OnReceiving()
+		{
+			var handler = Interlocked.CompareExchange( ref this._receiving, null, null );
+			if ( handler != null )
+			{
+				handler( this, EventArgs.Empty );
+			}
+		}
+
+		private EventHandler _received;
+
+		public event EventHandler Received
+		{
+			add
+			{
+				EventHandler oldHandler;
+				EventHandler currentHandler = this._received;
+				do
+				{
+					oldHandler = currentHandler;
+					var newHandler = Delegate.Combine( oldHandler, value ) as EventHandler;
+					currentHandler = Interlocked.CompareExchange( ref this._received, newHandler, oldHandler );
+				} while ( oldHandler != currentHandler );
+			}
+			remove
+			{
+				EventHandler oldHandler;
+				EventHandler currentHandler = this._received;
+				do
+				{
+					oldHandler = currentHandler;
+					var newHandler = Delegate.Remove( oldHandler, value ) as EventHandler;
+					currentHandler = Interlocked.CompareExchange( ref this._received, newHandler, oldHandler );
+				} while ( oldHandler != currentHandler );
+			}
+		}
 
 		private void OnReceived()
 		{
-			var handler = this.Received;
+			var handler = Interlocked.CompareExchange( ref this._received, null, null );
 			if ( handler != null )
 			{
 				handler( this, EventArgs.Empty );
@@ -180,18 +243,17 @@ namespace MsgPack.Rpc.Server.Protocols
 
 		protected override void ReceiveCore( ServerRequestContext context )
 		{
+			this.OnReceiving();
 			InProcPacket.ProcessReceive( this._inboundQueue, this._pendingPackets, context, this._receivingCancellationTokenSource.Token );
-			this.OnReceived();
 			this.OnReceived( context );
+			this.OnReceived();
 		}
 
 		protected override void SendCore( ServerResponseContext context )
 		{
-			using ( Task task = this._manager.SendAsync( context ) )
-			{
-				this.OnSent( context );
-				task.Wait( this._receivingCancellationTokenSource.Token );
-			}
+			var task = this._manager.SendAsync( context );
+			this.OnSent( context );
+			task.Wait( this._receivingCancellationTokenSource.Token );
 		}
 	}
 }

@@ -55,6 +55,27 @@ namespace MsgPack.Rpc.Client.Protocols
 		/// </summary>
 		public event EventHandler<InProcMessageSentEventArgs> MessageSent;
 
+
+		private void OnMessageSent( InProcMessageSentEventArgs e )
+		{
+			var handler = this.MessageSent;
+			if ( handler != null )
+			{
+				handler( this, e );
+			}
+		}
+
+		public event EventHandler<InProcDataSendingEventArgs> DataSending;
+
+		private void OnDataSending( InProcDataSendingEventArgs e )
+		{
+			var handler = this.DataSending;
+			if ( handler != null )
+			{
+				handler( this, e );
+			}
+		}
+
 		/// <summary>
 		///		Occurs when response received.
 		/// </summary>
@@ -135,13 +156,11 @@ namespace MsgPack.Rpc.Client.Protocols
 				throw new ObjectDisposedException( this.ToString() );
 			}
 
-			destination.FeedData( context.BufferList.SelectMany( segment => segment.Array.Skip( segment.Offset ).Take( segment.Count ) ).ToArray() );
-
-			var handler = this.MessageSent;
-			if ( handler != null )
-			{
-				handler( this, new InProcMessageSentEventArgs( context ) );
-			}
+			var data = context.BufferList.SelectMany( segment => segment.Array.Skip( segment.Offset ).Take( segment.Count ) ).ToArray();
+			var dataEventArgs = new InProcDataSendingEventArgs() { Data = data };
+			this.OnDataSending( dataEventArgs );
+			destination.FeedData( dataEventArgs.Data );
+			this.OnMessageSent( new InProcMessageSentEventArgs( context ) );
 
 			using ( var dummySocket = new Socket( AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp ) )
 			{
