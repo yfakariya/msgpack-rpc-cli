@@ -233,6 +233,8 @@ namespace MsgPack.Rpc.Server.Protocols
 							concurrencyLatch.Reset();
 						}
 
+						arrivalLatch.Reset();
+
 						// Clear ids.
 						string dummy;
 						while ( arrivedIds.TryTake( out dummy ) ) { }
