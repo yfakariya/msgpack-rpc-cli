@@ -213,6 +213,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		/// </summary>
 		protected virtual void OnShutdownCompleted()
 		{
+			// FIXME: ShutdownCompletedEventArgs.Reason
 			MsgPackRpcServerProtocolsTrace.TraceEvent(
 				MsgPackRpcServerProtocolsTrace.TransportShutdownCompleted,
 				"Transport shutdown is completed. {{ \"Socket\" : 0x{0:X}, \"RemoteEndPoint\" : \"{1}\", \"LocalEndPoint\" : \"{2}\" }}",
@@ -322,12 +323,7 @@ namespace MsgPack.Rpc.Server.Protocols
 				);
 
 				this.ShutdownReceiving();
-
-				if ( Interlocked.CompareExchange( ref this._processing, 0, 0 ) == 0 )
-				{
-					this.ShutdownSending();
-					this.OnShutdownCompleted();
-				}
+				this.TrySendShutdownSending();
 			}
 		}
 
@@ -341,8 +337,18 @@ namespace MsgPack.Rpc.Server.Protocols
 				if ( this.IsInShutdown || this.IsClientShutdown )
 				{
 					this.ShutdownSending();
-					this.OnShutdownCompleted();
 				}
+			}
+		}
+
+		/// <summary>
+		///		Does shutdown sending if there are active request.
+		/// </summary>
+		private void TrySendShutdownSending()
+		{
+			if ( Interlocked.CompareExchange( ref this._processing, 0, 0 ) == 0 )
+			{
+				this.ShutdownSending();
 			}
 		}
 
@@ -361,6 +367,8 @@ namespace MsgPack.Rpc.Server.Protocols
 				this._boundSocket == null ? null : this._boundSocket.RemoteEndPoint,
 				this._boundSocket == null ? null : this._boundSocket.LocalEndPoint
 			);
+
+			this.OnShutdownCompleted();
 		}
 
 		/// <summary>
@@ -630,6 +638,11 @@ namespace MsgPack.Rpc.Server.Protocols
 			{
 				// Client no longer send any additional data, so reset state.
 				TraceCancelReceiveDueToClientShutdown( context );
+				if ( context.SessionId > 0 )
+				{
+					this.OnSessionFinished();
+				}
+
 				return;
 			}
 
@@ -637,8 +650,11 @@ namespace MsgPack.Rpc.Server.Protocols
 			{
 				// Server no longer process any subsequent retrieval.
 				TraceCancelReceiveDueToServerShutdown( context );
-				// Shutdown sending
-				this.OnSessionFinished();
+				if ( context.SessionId > 0 )
+				{
+					this.OnSessionFinished();
+				}
+
 				return;
 			}
 
@@ -673,8 +689,12 @@ namespace MsgPack.Rpc.Server.Protocols
 					// There are not data to handle.
 					context.Clear();
 					// Shutdown sending
-					this.BeginShutdown();
-					this.OnSessionFinished();
+					if ( context.SessionId > 0 )
+					{
+						this.OnSessionFinished();
+					}
+
+					this.TrySendShutdownSending();
 					return;
 				}
 			}
@@ -702,8 +722,12 @@ namespace MsgPack.Rpc.Server.Protocols
 					// Client no longer send any additional data, so reset state.
 					TraceCancelReceiveDueToClientShutdown( context );
 					// Shutdown sending
-					this.BeginShutdown();
-					this.OnSessionFinished();
+					if ( context.SessionId > 0 )
+					{
+						this.OnSessionFinished();
+					}
+
+					this.TrySendShutdownSending();
 					return;
 				}
 
@@ -712,7 +736,11 @@ namespace MsgPack.Rpc.Server.Protocols
 					// Server no longer process any subsequent retrieval.
 					TraceCancelReceiveDueToServerShutdown( context );
 					// Shutdown sending
-					this.OnSessionFinished();
+					if ( context.SessionId > 0 )
+					{
+						this.OnSessionFinished();
+					}
+
 					return;
 				}
 
