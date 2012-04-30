@@ -111,6 +111,17 @@ namespace MsgPack.Rpc.Client.Protocols
 
 		private int _isServerShutdown;
 
+		/// <summary>
+		///		Gets a value indicating whether this instance detectes server shutdown.
+		/// </summary>
+		/// <value>
+		/// 	<c>true</c> if this instance detects server shutdown; otherwise, <c>false</c>.
+		/// </value>
+		public bool IsServerShutdown
+		{
+			get { return Interlocked.CompareExchange( ref  this._isServerShutdown, 0, 0 ) != 0; }
+		}
+
 		private EventHandler<ShutdownCompletedEventArgs> _shutdownCompleted;
 
 		/// <summary>
