@@ -40,6 +40,11 @@ namespace MsgPack.Rpc.Protocols
 		/// <summary>
 		///		Server initiated the shutdown, it might indicates server maintenance or failure.
 		/// </summary>
-		Server = 2
+		Server = 2,
+
+		/// <summary>
+		///		Disposing current transport causes rudely shutdown.
+		/// </summary>
+		Disposing = 3
 	}
 }
