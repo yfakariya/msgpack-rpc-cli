@@ -201,7 +201,8 @@ namespace MsgPack.Rpc.Client.Protocols
 				throw new InvalidOperationException( "Transport pool must be set via SetTransportPool()." );
 			}
 
-			return this._transportPool.Borrow();
+			var transport = this._transportPool.Borrow();
+			return transport;
 		}
 
 		/// <summary>
@@ -291,7 +292,10 @@ namespace MsgPack.Rpc.Client.Protocols
 			Contract.Requires( Object.ReferenceEquals( this, transport.Manager ) );
 			Contract.Requires( this.IsTransportPoolSet );
 
-			this._transportPool.Return( transport );
+			if ( !transport.IsDisposed && !transport.IsInShutdown && !transport.IsServerShutdown )
+			{
+				this._transportPool.Return( transport );
+			}
 		}
 	}
 }
