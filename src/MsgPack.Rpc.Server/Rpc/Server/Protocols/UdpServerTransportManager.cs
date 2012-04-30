@@ -21,6 +21,9 @@
 using System;
 using System.Globalization;
 using System.Net.Sockets;
+using System.Threading;
+using System.Diagnostics.Contracts;
+using System.Net;
 
 namespace MsgPack.Rpc.Server.Protocols
 {
@@ -29,6 +32,9 @@ namespace MsgPack.Rpc.Server.Protocols
 	/// </summary>
 	public sealed class UdpServerTransportManager : ServerTransportManager<UdpServerTransport>
 	{
+		private readonly Socket _listeningSocket;
+		private readonly ListeningContext _listeningContext;
+
 		/// <summary>
 		///		Initializes a new instance of the <see cref="UdpServerTransportManager"/> class.
 		/// </summary>
@@ -42,7 +48,115 @@ namespace MsgPack.Rpc.Server.Protocols
 #if !API_SIGNATURE_TEST
 			base.SetTransportPool( server.Configuration.UdpTransportPoolProvider( () => new UdpServerTransport( this ), server.Configuration.CreateTransportPoolConfiguration() ) );
 #endif
-			// FIXME: Start UDP polling...
+
+			this._listeningContext = new ListeningContext();
+			var addressFamily = ( server.Configuration.PreferIPv4 || !Socket.OSSupportsIPv6 ) ? AddressFamily.InterNetwork : AddressFamily.InterNetworkV6;
+			var bindingEndPoint = this.Configuration.BindingEndPoint;
+#if !API_SIGNATURE_TEST
+			if ( bindingEndPoint == null )
+			{
+				bindingEndPoint = NetworkEnvironment.GetDefaultEndPoint( 57319, server.Configuration.PreferIPv4 );
+				MsgPackRpcServerProtocolsTrace.TraceEvent(
+					MsgPackRpcServerProtocolsTrace.DefaultEndPoint,
+					"Default end point is selected. {{ \"EndPoint\" : \"{0}\", \"AddressFamily\" : {1}, \"PreferIPv4\" : {2}, \"OSSupportsIPv6\" : {3} }}",
+					bindingEndPoint,
+					addressFamily,
+					server.Configuration.PreferIPv4,
+					Socket.OSSupportsIPv6
+				);
+			}
+#endif
+			this._listeningSocket =
+				new Socket(
+					bindingEndPoint.AddressFamily,
+					SocketType.Dgram,
+					ProtocolType.Udp
+				);
+
+			this._listeningSocket.Bind( bindingEndPoint );
+			this._listeningContext.RemoteEndPoint = bindingEndPoint;
+
+#if !API_SIGNATURE_TEST
+			MsgPackRpcServerProtocolsTrace.TraceEvent(
+				MsgPackRpcServerProtocolsTrace.StartListen,
+				"Start listen. {{ \"Socket\" : 0x{0:X}, \"EndPoint\" : \"{1}\", \"ListenBackLog\" : {2} }}",
+				this._listeningSocket.Handle,
+				bindingEndPoint,
+				server.Configuration.ListenBackLog
+			);
+#endif
+
+			//FIXME: Receive chain.
+			this.PollArrival();
+		}
+
+		private void PollArrival()
+		{
+			// FIXME: Configurable
+			this._listeningContext.SetBuffer( new byte[ 65536 ], 0, 65536 );
+			this._listeningContext.BufferList = null;
+
+			// FIXME: Use multicast to establish virtual connection.
+			if ( !this._listeningSocket.ReceiveFromAsync( this._listeningContext ) )
+			{
+				this.OnArrived( this._listeningContext );
+			}
+		}
+
+		private void OnCompleted( object sender, SocketAsyncEventArgs e )
+		{
+			if ( !this.HandleSocketError( sender as Socket, e ) )
+			{
+				return;
+			}
+
+			switch ( e.LastOperation )
+			{
+				case SocketAsyncOperation.ReceiveFrom:
+				{
+					var context = e as ListeningContext;
+					Contract.Assert( context != null );
+					this.OnArrived( context );
+					break;
+				}
+				default:
+				{
+#if !API_SIGNATURE_TEST
+					var socket = sender as Socket;
+					MsgPackRpcServerProtocolsTrace.TraceEvent(
+						MsgPackRpcServerProtocolsTrace.UnexpectedLastOperation,
+						"Unexpected operation. {{ \"Socket\" : 0x{0:X}, \"RemoteEndPoint\" : \"{1}\", \"LocalEndPoint\" : \"{2}\", \"LastOperation\" : \"{3}\" }}",
+						socket.Handle,
+						socket.RemoteEndPoint,
+						socket.LocalEndPoint,
+						e.LastOperation
+					);
+#endif
+					break;
+				}
+			}
+		}
+
+
+		private void OnArrived( ListeningContext context )
+		{
+#if !API_SIGNATURE_TEST
+			MsgPackRpcServerProtocolsTrace.TraceEvent(
+				MsgPackRpcServerProtocolsTrace.EndAccept,
+				"Accept. {{ \"Socket\" : 0x{0:X}, \"RemoteEndPoint\" : \"{1}\", \"LocalEndPoint\" : \"{2}\" }}",
+				context.AcceptSocket.Handle,
+				context.AcceptSocket.RemoteEndPoint,
+				context.AcceptSocket.LocalEndPoint
+			);
+#endif
+
+			Contract.Assert( context.BytesTransferred == 0, context.BytesTransferred.ToString() );
+
+			var transport = this.GetTransport( context.AcceptSocket );
+			context.AcceptSocket = null;
+			this.Accept( context );
+			// FIXME: Remove context pooling
+			transport.Receive( this.GetRequestContext( transport ) );
 		}
 
 		/// <summary>
