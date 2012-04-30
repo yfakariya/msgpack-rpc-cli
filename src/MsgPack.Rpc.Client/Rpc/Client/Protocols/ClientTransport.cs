@@ -823,8 +823,8 @@ namespace MsgPack.Rpc.Client.Protocols
 
 					if ( !context.ReceivedData.Any( segment => 0 < segment.Count ) )
 					{
-						// There are not data to handle.
-						context.Clear();
+						// There are no data to handle.
+						this.ShutdownReceiving( context );
 						return;
 					}
 				}
@@ -848,10 +848,24 @@ namespace MsgPack.Rpc.Client.Protocols
 			// Go deserialization pipeline.
 			if ( !context.NextProcess( context ) )
 			{
-				// Wait to arrive more data from client.
-				this.ReceiveCore( context );
+				if ( Interlocked.CompareExchange( ref this._isServerShutdown, 0, 0 ) != 0 )
+				{
+					this.ShutdownReceiving( context );
+				}
+				else
+				{
+					// Wait to arrive more data from server.
+					this.ReceiveCore( context );
+				}
+
 				return;
 			}
+		}
+
+		private void ShutdownReceiving( ClientResponseContext context )
+		{
+			context.Clear();
+			this.ShutdownReceiving();
 		}
 
 		/// <summary>
