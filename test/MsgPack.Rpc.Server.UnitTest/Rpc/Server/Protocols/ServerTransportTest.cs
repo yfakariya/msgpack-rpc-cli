@@ -134,7 +134,7 @@ namespace MsgPack.Rpc.Server.Protocols
 
 								if ( isReceiving )
 								{
-									Assert.That( receivingWaitHandle.Wait( TimeSpan.FromSeconds( 2 ) ) );
+									Assert.That( receivingWaitHandle.Wait( TimeSpan.FromSeconds( 1 ) ) );
 									if ( isClientShutdown )
 									{
 										controller.FeedReceiveBuffer( new byte[ 0 ] );
