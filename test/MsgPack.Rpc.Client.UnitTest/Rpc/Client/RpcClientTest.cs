@@ -181,7 +181,7 @@ namespace MsgPack.Rpc.Client
 				int isShutdownCompleted = 0;
 				target.Transport.ShutdownCompleted += ( sender, e ) => Interlocked.Exchange( ref isShutdownCompleted, 1 );
 				target.Shutdown();
-				Assert.That( target.Transport.IsInShutdown );
+				Assert.That( target.Transport.IsClientShutdown );
 				Assert.That( isShutdownCompleted, Is.EqualTo( 1 ) );
 			}
 		}
@@ -196,7 +196,7 @@ namespace MsgPack.Rpc.Client
 				target.Transport.ShutdownCompleted += ( sender, e ) => Interlocked.Exchange( ref isShutdownCompleted, 1 );
 				using ( var task = target.ShutdownAsync() )
 				{
-					Assert.That( target.Transport.IsInShutdown );
+					Assert.That( target.Transport.IsClientShutdown );
 					Assert.That( task.Wait( TimeSpan.FromSeconds( 1 ) ) );
 					Assert.That( isShutdownCompleted, Is.EqualTo( 1 ) );
 				}
