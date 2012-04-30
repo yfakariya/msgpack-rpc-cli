@@ -55,7 +55,6 @@ namespace MsgPack.Rpc.Client.Protocols
 		/// </summary>
 		public event EventHandler<InProcMessageSentEventArgs> MessageSent;
 
-
 		private void OnMessageSent( InProcMessageSentEventArgs e )
 		{
 			var handler = this.MessageSent;
