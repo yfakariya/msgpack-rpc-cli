@@ -123,6 +123,9 @@ namespace MsgPack.Rpc.Server.Protocols
 			get { return Interlocked.CompareExchange( ref this._isInShutdown, 0, 0 ) != 0; }
 		}
 
+		private int _sendingShutdown;
+		private int _receivingShutdown;
+
 		#endregion
 
 		#region -- Events --
@@ -239,7 +242,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			{
 				socket.Close();
 			}
-			
+
 			var handler = Interlocked.CompareExchange( ref this._shutdownCompleted, null, null );
 			if ( handler != null )
 			{
@@ -346,7 +349,7 @@ namespace MsgPack.Rpc.Server.Protocols
 					this._boundSocket == null ? null : this._boundSocket.LocalEndPoint
 				);
 
-				this.ShutdownReceiving();
+				this.PrivateShutdownReceiving();
 				this.TrySendShutdownSending();
 			}
 		}
@@ -360,7 +363,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			{
 				if ( this.IsInShutdown || this.IsClientShutdown )
 				{
-					this.ShutdownSending();
+					this.PrivateShutdownSending();
 				}
 			}
 		}
@@ -372,44 +375,63 @@ namespace MsgPack.Rpc.Server.Protocols
 		{
 			if ( Interlocked.CompareExchange( ref this._processing, 0, 0 ) == 0 )
 			{
+				this.PrivateShutdownSending();
+			}
+		}
+
+		private void PrivateShutdownSending()
+		{
+			if ( Interlocked.Exchange( ref this._sendingShutdown, 1 ) == 0 )
+			{
+				MsgPackRpcServerProtocolsTrace.TraceEvent(
+					MsgPackRpcServerProtocolsTrace.ShutdownSending,
+					"Shutdown sending. {{ \"Socket\" : 0x{0:X}, \"RemoteEndPoint\" : \"{1}\", \"LocalEndPoint\" : \"{2}\" }}",
+					this._boundSocket == null ? IntPtr.Zero : this._boundSocket.Handle,
+					this._boundSocket == null ? null : this._boundSocket.RemoteEndPoint,
+					this._boundSocket == null ? null : this._boundSocket.LocalEndPoint
+				);
+
 				this.ShutdownSending();
 			}
 		}
 
 		/// <summary>
 		///		Shutdown sending on this transport.
+		///		Do not call this method directly, or shutdown sequence may corrupt.
 		/// </summary>
 		/// <remarks>
 		///		Usually, the derived class shutdown its <see cref="Socket"/> with <see cref="SocketShutdown.Send"/>.
 		/// </remarks>
 		protected virtual void ShutdownSending()
 		{
-			MsgPackRpcServerProtocolsTrace.TraceEvent(
-				MsgPackRpcServerProtocolsTrace.ShutdownSending,
-				"Shutdown sending. {{ \"Socket\" : 0x{0:X}, \"RemoteEndPoint\" : \"{1}\", \"LocalEndPoint\" : \"{2}\" }}",
-				this._boundSocket == null ? IntPtr.Zero : this._boundSocket.Handle,
-				this._boundSocket == null ? null : this._boundSocket.RemoteEndPoint,
-				this._boundSocket == null ? null : this._boundSocket.LocalEndPoint
-			);
-
 			this.OnShutdownCompleted( new ShutdownCompletedEventArgs( ( ShutdownSource )this._shutdownSource ) );
 		}
 
+		private void PrivateShutdownReceiving()
+		{
+			if ( Interlocked.Exchange( ref this._receivingShutdown, 1 ) == 0 )
+			{
+				MsgPackRpcServerProtocolsTrace.TraceEvent(
+					MsgPackRpcServerProtocolsTrace.ShutdownReceiving,
+					"Shutdown receiving. {{ \"Socket\" : 0x{0:X}, \"RemoteEndPoint\" : \"{1}\", \"LocalEndPoint\" : \"{2}\" }}",
+					this._boundSocket == null ? IntPtr.Zero : this._boundSocket.Handle,
+					this._boundSocket == null ? null : this._boundSocket.RemoteEndPoint,
+					this._boundSocket == null ? null : this._boundSocket.LocalEndPoint
+				);
+				this.ShutdownReceiving();
+			}
+		}
+
 		/// <summary>
-		///		Shutdown receiving on this transport.
+		///		Shutdown receiving on this transport. 
+		///		Do not call this method directly, or shutdown sequence may corrupt.
 		/// </summary>
 		/// <remarks>
 		///		Usually, the derived class shutdown its <see cref="Socket"/> with <see cref="SocketShutdown.Receive"/>.
 		/// </remarks>
 		protected virtual void ShutdownReceiving()
 		{
-			MsgPackRpcServerProtocolsTrace.TraceEvent(
-				MsgPackRpcServerProtocolsTrace.ShutdownReceiving,
-				"Shutdown receiving. {{ \"Socket\" : 0x{0:X}, \"RemoteEndPoint\" : \"{1}\", \"LocalEndPoint\" : \"{2}\" }}",
-				this._boundSocket == null ? IntPtr.Zero : this._boundSocket.Handle,
-				this._boundSocket == null ? null : this._boundSocket.RemoteEndPoint,
-				this._boundSocket == null ? null : this._boundSocket.LocalEndPoint
-			);
+			// nop
 		}
 
 		#endregion
@@ -707,6 +729,7 @@ namespace MsgPack.Rpc.Server.Protocols
 						this._boundSocket == null ? null : this._boundSocket.RemoteEndPoint,
 						this._boundSocket == null ? null : this._boundSocket.LocalEndPoint
 					);
+
 					Interlocked.Exchange( ref this._shutdownSource, ( int )ShutdownSource.Client );
 					this.OnClientShutdown( new ClientShutdownEventArgs( this, context.RemoteEndPoint ) );
 
