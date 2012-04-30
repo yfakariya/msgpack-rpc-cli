@@ -177,6 +177,12 @@ namespace MsgPack.Rpc.Client.Protocols
 				socket == null ? null : socket.RemoteEndPoint,
 				socket == null ? null : socket.LocalEndPoint
 			);
+
+			if ( socket != null )
+			{
+				socket.Close();
+			}
+
 			var handler = Interlocked.CompareExchange( ref this._shutdownCompleted, null, null );
 			if ( handler != null )
 			{
@@ -234,6 +240,11 @@ namespace MsgPack.Rpc.Client.Protocols
 							this._boundSocket == null ? null : this._boundSocket.LocalEndPoint
 						);
 
+						var socket = Interlocked.CompareExchange( ref this._boundSocket, null, null );
+						if ( socket != null )
+						{
+							socket.Close();
+						}
 					}
 					catch ( ObjectDisposedException )
 					{
