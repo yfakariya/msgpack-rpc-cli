@@ -147,17 +147,23 @@ namespace MsgPack.Rpc.Server.Protocols
 								}
 								else
 								{
+									// Shutdown will be initiated in callback.
 									controller.FeedReceiveBuffer( sendingData.Skip( sendingData.Length / 2 ).ToArray() );
 								}
 							}
 						}
-						else if ( isClientShutdown )
-						{
-							controller.FeedReceiveBuffer( new byte[ 0 ] );
-						}
 						else
 						{
-							target.BeginShutdown();
+							// Initiate shutdown now.
+
+							if ( isClientShutdown )
+							{
+								controller.FeedReceiveBuffer( new byte[ 0 ] );
+							}
+							else
+							{
+								target.BeginShutdown();
+							}
 						}
 
 						Assert.That( serverShutdownWaitHandle.Wait( TimeSpan.FromSeconds( 1 ) ) );
@@ -180,6 +186,7 @@ namespace MsgPack.Rpc.Server.Protocols
 				{
 					if ( !isReceiving )
 					{
+						// Initiate shutdown now.
 						if ( isClientShutdown )
 						{
 							testEnvironment.Item2.FeedReceiveBuffer( new byte[ 0 ] );
