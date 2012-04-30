@@ -55,17 +55,19 @@ namespace MsgPack.Rpc
 				if ( unpackedException.AsDictionary().TryGetValue( _remoteExceptionsUtf8, out mayBeArray ) && mayBeArray.IsArray )
 				{
 					var array = mayBeArray.AsList();
-					try
+					this._remoteExceptions = new RemoteExceptionInformation[ array.Count ];
+					for ( int i = 0; i < this._remoteExceptions.Length; i++ )
 					{
-						this._remoteExceptions = new RemoteExceptionInformation[ array.Count ];
-						for ( int i = 0; i < this._remoteExceptions.Length; i++ )
+						if ( array[ i ].IsList )
 						{
 							this._remoteExceptions[ i ] = new RemoteExceptionInformation( array[ i ].AsList() );
 						}
-					}
-					catch ( InvalidOperationException )
-					{
-						// FIXME: Trace
+						else
+						{
+							// Unexpected type.
+							Debug.WriteLine( "Unexepcted ExceptionInformation at {0}, type: {1}, value: \"{2}\".", i, array[ i ].UnderlyingType, array[ i ] );
+							this._remoteExceptions[ i ] = new RemoteExceptionInformation( new MessagePackObject[] { array[ i ] } );
+						}
 					}
 				}
 			}
