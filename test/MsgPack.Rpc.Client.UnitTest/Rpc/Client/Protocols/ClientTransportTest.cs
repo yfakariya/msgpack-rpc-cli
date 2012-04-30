@@ -29,6 +29,7 @@ using System.Net.Sockets;
 using System.Threading;
 using MsgPack.Rpc.Protocols;
 using NUnit.Framework;
+using System.Threading.Tasks;
 
 namespace MsgPack.Rpc.Client.Protocols
 {
@@ -161,12 +162,12 @@ namespace MsgPack.Rpc.Client.Protocols
 			}
 		}
 
-		private void TestCore( Action<ClientTransport, Server.Protocols.ServerTransportManager> test )
+		private void TestCore( Action<ClientTransport, Server.Protocols.InProcServerTransportManager> test )
 		{
 			TestCore( ( target, manager ) => test( target, manager ), ( _0, _1 ) => MessagePackObject.Nil );
 		}
 
-		private void TestCore( Action<ClientTransport, Server.Protocols.ServerTransportManager> test, Func<int?, MessagePackObject[], MessagePackObject> callback )
+		private void TestCore( Action<ClientTransport, Server.Protocols.InProcServerTransportManager> test, Func<int?, MessagePackObject[], MessagePackObject> callback )
 		{
 			// TODO: Timeout setting
 			using ( var server = new EchoServer( callback ) )
@@ -191,110 +192,178 @@ namespace MsgPack.Rpc.Client.Protocols
 			);
 		}
 
-		private void TestShutdownCore<T>(
-			Action<T> onSend,
-			Action<T> onExecute,
-			Action<T> onReceive,
-			bool willBeConnectionReset,
-			Func<Tuple<ClientTransport, Server.Protocols.ServerTransportManager>, T> callbackArgumentSelector
+		private void TestShutdownCore(
+			bool isClientShutdown,
+			bool isServerReceiving,
+			bool isEmpty
 		)
 		{
 			var arg = Environment.TickCount % 3;
 			var returnValue = Environment.TickCount % 5;
-			bool isExecuted = false;
-			Tuple<ClientTransport, Server.Protocols.ServerTransportManager> tuple = null;
+			Tuple<ClientTransport, Server.Protocols.InProcServerTransportManager> testEnvironment = null;
 			TestCore(
-				( target, manager ) =>
+				( target, serverTransportManager ) =>
 				{
-					tuple = Tuple.Create( target, manager );
-					var context = target.GetClientRequestContext();
-					try
+					testEnvironment = Tuple.Create( target, serverTransportManager );
+
+					using ( var serverShutdownWaitHandle = new ManualResetEventSlim() )
+					using ( var serverReceivedWaitHandle = new ManualResetEventSlim() )
+					using ( var clientShutdownWaitHandle = new ManualResetEventSlim() )
+					using ( var responseReceivedWaitHandle = new ManualResetEventSlim() )
 					{
-						using ( var waitHandle = new ManualResetEventSlim() )
-						using ( var firstResponseWaitHandle = new ManualResetEventSlim() )
-						using ( var onReciveWaitHandle = new ManualResetEventSlim() )
+						var context = target.GetClientRequestContext();
+						try
 						{
-							MessagePackObject? resultReturn = null;
-							RpcErrorMessage resultError = RpcErrorMessage.Success;
-							int? resultMessageId = 0;
-
-							var clientTransport = ( InProcClientTransport )target;
-							var serverTransportManager = ( Server.Protocols.InProcServerTransportManager )manager;
-
-							if ( onReceive != null )
+							if ( isServerReceiving )
 							{
-								clientTransport.ResponseReceived +=
-									( sender, e ) =>
-									{
-										e.ChunkedReceivedData = new ChunkedReceivedDataEnumerator( e.ReceivedData, () => onReceive( callbackArgumentSelector( tuple ) ) );
-									};
+								serverTransportManager.TransportReceived += ( sender, e ) => serverReceivedWaitHandle.Set();
 							}
+
+							serverTransportManager.TransportShutdownCompleted += ( sender, e ) => serverShutdownWaitHandle.Set();
+							target.ShutdownCompleted += ( sender, e ) => clientShutdownWaitHandle.Set();
 
 							int messageId = Math.Abs( Environment.TickCount % 10 );
+							int? resultMessageId = null;
+							MessagePackObject? resultReturn = null;
+							RpcErrorMessage resultError = RpcErrorMessage.Success;
+							Exception sendingError = null;
+							Task sendingMayFail = null;
 
-							context.SetRequest(
-								messageId,
-								"Test",
-								( responseContext, error, completedSynchronously ) =>
-								{
-									if ( resultReturn != null )
+							if ( !isEmpty )
+							{
+								context.SetRequest(
+									messageId,
+									"Test",
+									( responseContext, error, completedSynchronously ) =>
 									{
-										return;
+										if ( error == null )
+										{
+											resultMessageId = responseContext.MessageId;
+											resultReturn = Unpacking.UnpackObject( responseContext.ResultBuffer );
+											resultError = ErrorInterpreter.UnpackError( responseContext );
+											responseReceivedWaitHandle.Set();
+										}
+										else
+										{
+											sendingError = error;
+										}
 									}
+								);
 
-									resultMessageId = responseContext.MessageId;
-									resultReturn = Unpacking.UnpackObject( responseContext.ResultBuffer );
-									resultError = ErrorInterpreter.UnpackError( responseContext );
-									waitHandle.Set();
+								context.ArgumentsPacker.PackArrayHeader( 0 );
+
+								if ( isServerReceiving )
+								{
+									( ( InProcClientTransport )target ).DataSending +=
+										( sender, e ) =>
+										{
+											e.Data = e.Data.Take( e.Data.Length / 2 ).ToArray();
+										};
 								}
-							);
 
-							context.ArgumentsPacker.PackArrayHeader( 1 );
-							context.ArgumentsPacker.Pack( arg );
+								if ( isServerReceiving )
+								{
+									( ( InProcClientTransport )target ).MessageSent +=
+										( sender, e ) => target.BeginShutdown();
+									sendingMayFail =
+										Task.Factory.StartNew(
+											() => target.Send( context )
+										);
+								}
+								else
+								{
+									target.Send( context );
+								}
 
-							if ( onSend != null )
-							{
-								clientTransport.MessageSent += ( sender, e ) => onSend( callbackArgumentSelector( tuple ) );
-							}
-
-							clientTransport.Send( context );
-
-							if ( Debugger.IsAttached )
-							{
-								waitHandle.Wait();
+								// Else, shutdown will be initiated in callback.
 							}
 							else
 							{
-								Assert.That( waitHandle.Wait( TimeSpan.FromSeconds( 2 ) ), Is.True, "Not respond." );
+								// Initiate shutdown now.
+
+								if ( isClientShutdown )
+								{
+									target.BeginShutdown();
+								}
+								else
+								{
+									serverTransportManager.BeginShutdown();
+								}
 							}
 
-							if ( willBeConnectionReset )
+							if ( !isEmpty )
 							{
-								Assert.That( resultReturn, Is.Not.Null );
-								return;
+								if ( isServerReceiving )
+								{
+									Assert.That( serverReceivedWaitHandle.Wait( TimeSpan.FromSeconds( 1 ) ) );
+								}
+								else
+								{
+									Assert.That( responseReceivedWaitHandle.Wait( TimeSpan.FromSeconds( 1 ) ) );
+								}
+							}
+							else
+							{
+								if ( !isClientShutdown )
+								{
+									// Client will never detect server shutdown when there are no sessions.
+								}
+								else
+								{
+									Assert.That( clientShutdownWaitHandle.Wait( TimeSpan.FromSeconds( 1 ) ) );
+								}
 							}
 
-							Assert.That( isExecuted );
-							Assert.That( resultMessageId == messageId );
-							Assert.That( resultError.IsSuccess );
-							Assert.That( resultReturn == returnValue );
+							Assert.That( serverShutdownWaitHandle.Wait( TimeSpan.FromSeconds( 1 ) ) );
+
+							if ( !isEmpty )
+							{
+								if ( isServerReceiving )
+								{
+									if ( sendingError == null )
+									{
+										try
+										{
+											sendingMayFail.Wait();
+										}
+										catch ( AggregateException ex )
+										{
+											Assert.That( ex.InnerExceptions, Is.Not.Null.And.Count.EqualTo( 1 ), ex.ToString() );
+											sendingError = ex.InnerException;
+										}
+									}
+
+									Assert.That( sendingError, Is.Not.Null );
+								}
+								else
+								{
+									Assert.That( resultMessageId == messageId );
+									Assert.That( resultError.IsSuccess );
+									Assert.That( resultReturn == returnValue );
+								}
+							}
 						}
-					}
-					finally
-					{
-						target.ReturnContext( context );
+						finally
+						{
+							target.ReturnContext( context );
+						}
 					}
 				},
 				( messageId, args ) =>
 				{
-					Assert.That( args[ 0 ] == arg );
-
-					if ( onExecute != null )
+					if ( !isServerReceiving )
 					{
-						onExecute( callbackArgumentSelector( tuple ) );
+						// Initiate shutdown.
+						if ( isClientShutdown )
+						{
+							testEnvironment.Item1.BeginShutdown();
+						}
+						else
+						{
+							testEnvironment.Item2.BeginShutdown();
+						}
 					}
 
-					isExecuted = true;
 					return returnValue;
 				}
 			);
@@ -302,115 +371,54 @@ namespace MsgPack.Rpc.Client.Protocols
 
 		#region -- BeginShutdown --
 
+		private void TestBeginShutdownCore( bool isServerReceiving, bool isEmpty )
+		{
+			TestShutdownCore( isClientShutdown: true, isServerReceiving: isServerReceiving, isEmpty: isEmpty );
+		}
+
 		[Test()]
 		public void TestBeginShutdown_NoPendingRequest_Harmless()
 		{
-			TestCore( ( target, _ ) => target.BeginShutdown() );
-		}
-
-		private void TestBeginShutdownCore(
-			Action<ClientTransport> onReceive,
-			Action<ClientTransport> onExecute,
-			Action<ClientTransport> onSend,
-			bool willBeConnectionReset
-		)
-		{
-			TestShutdownCore( onReceive, onExecute, onSend, willBeConnectionReset, tuple => tuple.Item1 );
+			TestBeginShutdownCore( isServerReceiving: false, isEmpty: true );
 		}
 
 		[Test]
-		public void TestBeginShutdown_DuringReceiving_ReceivingDrainedAndCanExecuteAndCanSend()
+		public void TestBeginShutdown_DuringReceiving_PendingRequestsAreCanceled_ShutdownPacketReplyed_ServerShutdownCompleted()
 		{
-			TestBeginShutdownCore(
-				target => target.BeginShutdown(),
-				null,
-				null,
-				true
-			);
+			TestBeginShutdownCore( isServerReceiving: true, isEmpty: false );
 		}
 
 		[Test]
-		public void TestBeginShutdown_DuringExecuting_CanExecuteAndCanSend()
+		public void TestBeginShutdown_DuringExecuting_PendingRequestsAreSent_ShutdownPacketReplyed_ServerShutdownCompleted()
 		{
-			TestBeginShutdownCore(
-				null,
-				target => target.BeginShutdown(),
-				null,
-				false
-			);
-		}
-
-		[Test]
-		public void TestBeginShutdown_DuringSending_CanSend()
-		{
-			TestBeginShutdownCore(
-				null,
-				null,
-				target => target.BeginShutdown(),
-				false
-			);
+			TestBeginShutdownCore( isServerReceiving: false, isEmpty: false );
 		}
 
 		#endregion
 
 		#region -- Server shutdown --
 
+		private void TestServerShutdownCore( bool isServerReceiving, bool isEmpty )
+		{
+			TestShutdownCore( isClientShutdown: false, isServerReceiving: isServerReceiving, isEmpty: isEmpty );
+		}
+
 		[Test]
 		public void TestServerShutdown_NoPendingRequest_Harmless()
 		{
-			TestCore(
-				( target, serverTransportManager ) =>
-				{
-					serverTransportManager.BeginShutdown();
-				},
-				( id, args ) =>
-				{
-					return args;
-				}
-			);
-		}
-
-		private void TestServerShutdownCore(
-			Action<Server.Protocols.ServerTransportManager> onReceive,
-			Action<Server.Protocols.ServerTransportManager> onExecute,
-			Action<Server.Protocols.ServerTransportManager> onSend,
-			bool willBeConnectionReset
-		)
-		{
-			TestShutdownCore( onReceive, onExecute, onSend, willBeConnectionReset, tuple => tuple.Item2 );
+			TestServerShutdownCore( isServerReceiving: false, isEmpty: true );
 		}
 
 		[Test]
-		public void TestServerShutdown_DuringReceiving_ConnectionReset()
+		public void TestServerShutdown_DuringSending_PendingRequestsAreCanceled_ShutdownPacketReplyed_ServerShutdownCompleted()
 		{
-			TestServerShutdownCore(
-				server => server.BeginShutdown(),
-				null,
-				null,
-				true
-			);
+			TestServerShutdownCore( isServerReceiving: true, isEmpty: false );
 		}
 
 		[Test]
-		public void TestServerShutdown_DuringExecuting_ConnectionReset()
+		public void TestServerShutdown_DuringExecuting_PendingRequestsAreSent_ShutdownPacketReplyed_ServerShutdownCompleted()
 		{
-			TestServerShutdownCore(
-				null,
-				server => server.BeginShutdown(),
-				null,
-				true
-			);
-		}
-
-		[Test]
-		public void TestServerShutdown_DuringSending_ConnectionReset()
-		{
-			TestServerShutdownCore(
-				null,
-				null,
-				server => server.BeginShutdown(),
-				true
-			);
+			TestServerShutdownCore( isServerReceiving: false, isEmpty: false );
 		}
 
 		#endregion
