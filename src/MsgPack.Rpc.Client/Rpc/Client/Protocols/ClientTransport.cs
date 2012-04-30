@@ -109,7 +109,7 @@ namespace MsgPack.Rpc.Client.Protocols
 			get { return Interlocked.CompareExchange( ref this._isInShutdown, 0, 0 ) != 0; }
 		}
 
-		private int _isInServerShutdown;
+		private int _isServerShutdown;
 
 		private EventHandler<ShutdownCompletedEventArgs> _shutdownCompleted;
 
@@ -294,7 +294,7 @@ namespace MsgPack.Rpc.Client.Protocols
 		private void OnProcessFinished()
 		{
 			if ( Interlocked.CompareExchange( ref this._isInShutdown, 0, 0 ) == 1
-				|| Interlocked.CompareExchange( ref this._isInServerShutdown, 0, 0 ) == 1 )
+				|| Interlocked.CompareExchange( ref this._isServerShutdown, 0, 0 ) == 1 )
 			{
 				if ( this._pendingNotificationTable.Count == 0 && this._pendingRequestTable.Count == 0 )
 				{
@@ -560,7 +560,7 @@ namespace MsgPack.Rpc.Client.Protocols
 
 			Contract.EndContractBlock();
 
-			if ( Interlocked.CompareExchange( ref this._isInServerShutdown, 0, 0 ) == 1 )
+			if ( Interlocked.CompareExchange( ref this._isServerShutdown, 0, 0 ) == 1 )
 			{
 				throw new RpcErrorMessage( RpcError.TransportError, "Server did shutdown socket.", null ).ToException();
 			}
@@ -770,7 +770,7 @@ namespace MsgPack.Rpc.Client.Protocols
 
 			if ( context.BytesTransferred == 0 )
 			{
-				if ( Interlocked.Exchange( ref this._isInServerShutdown, 1 ) == 0 )
+				if ( Interlocked.Exchange( ref this._isServerShutdown, 1 ) == 0 )
 				{
 					// recv() returns 0 when the server socket shutdown gracefully.
 					MsgPackRpcClientProtocolsTrace.TraceEvent(
