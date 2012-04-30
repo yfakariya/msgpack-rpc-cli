@@ -366,7 +366,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		}
 
 		/// <summary>
-		///		Does shutdown sending if there are active request.
+		///		Does shutdown sending if there are no active requests.
 		/// </summary>
 		private void TrySendShutdownSending()
 		{
