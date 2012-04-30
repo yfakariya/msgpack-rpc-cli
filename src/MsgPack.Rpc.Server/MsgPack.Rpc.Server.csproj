@@ -87,6 +87,7 @@
     <Compile Include="Rpc\Server\Dispatch\ServiceInvokerEmitter.cs" />
     <Compile Include="Rpc\Server\Dispatch\ServiceInvokerGenerator.cs" />
     <Compile Include="Rpc\Server\Dispatch\ServiceTypeLocator.cs" />
+    <Compile Include="Rpc\Server\Protocols\ClientShutdownEventArgs.cs" />
     <Compile Include="Rpc\Server\Protocols\ListeningContext.cs" />
     <Compile Include="Rpc\Server\Protocols\ProtocolTrace.cs">
       <AutoGen>True</AutoGen>
