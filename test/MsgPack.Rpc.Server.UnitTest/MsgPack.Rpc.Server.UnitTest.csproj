@@ -93,7 +93,7 @@
       <DependentUpon>ServiceDescriptionTest.Equals.tt</DependentUpon>
     </Compile>
     <Compile Include="Rpc\Server\Dispatch\ServiceInvokerGeneratorTest.cs" />
-    <Compile Include="Rpc\Server\PreTest.cs" />
+    <Compile Include="Rpc\Server\IntegrationTest.cs" />
     <Compile Include="Rpc\Server\Protocols\ServerRequestContextTest.cs" />
     <Compile Include="Rpc\Server\Protocols\ServerResponseContextTest.cs" />
     <Compile Include="Rpc\Server\Protocols\ServerTransportManagerTest.cs">

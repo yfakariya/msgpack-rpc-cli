@@ -30,7 +30,7 @@ namespace MsgPack.Rpc.Client
 	/// </summary>
 	[TestFixture]
 	[Explicit]
-	public class PreTest
+	public class IntegrationTest
 	{
 		[Test]
 		[Timeout( 3000 )]

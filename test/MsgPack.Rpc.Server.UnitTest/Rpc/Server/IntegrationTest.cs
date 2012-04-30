@@ -45,7 +45,7 @@ namespace MsgPack.Rpc.Server
 	/// </summary>
 	[TestFixture]
 	[Explicit]
-	public class PreTest
+	public class IntegrationTest
 	{
 		// TODO: Error packet test.
 		private const bool _traceEnabled = true;

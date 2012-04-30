@@ -64,7 +64,7 @@
     <Compile Include="Rpc\Client\FileSystemTest.cs" />
     <Compile Include="Rpc\Client\MessageAsyncResultTest.cs" />
     <Compile Include="Rpc\Client\NotificationMessageAsyncResultTest.cs" />
-    <Compile Include="Rpc\Client\PreTest.cs" />
+    <Compile Include="Rpc\Client\IntegrationTest.cs" />
     <Compile Include="Rpc\Client\Protocols\ClientRequestContextTest.cs" />
     <Compile Include="Rpc\Client\Protocols\ClientResponseContextTest.cs" />
     <Compile Include="Rpc\Client\Protocols\ClientSocketErrorTest.cs" />
