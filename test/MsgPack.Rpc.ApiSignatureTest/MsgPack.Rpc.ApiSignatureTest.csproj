@@ -68,12 +68,6 @@
     <Compile Include="..\..\src\msgpack.rpc.server\rpc\server\protocols\TcpServerTransportManager.cs">
       <Link>Rpc\Server\Protocols\TcpServerTransportManager.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\msgpack.rpc.server\rpc\server\protocols\UdpServerTransport.cs">
-      <Link>Rpc\Server\Protocols\UdpServerTransport.cs</Link>
-    </Compile>
-    <Compile Include="..\..\src\msgpack.rpc.server\rpc\server\protocols\UdpServerTransportManager.cs">
-      <Link>Rpc\Server\Protocols\UdpServerTransportManager.cs</Link>
-    </Compile>
     <Compile Include="..\..\src\MsgPack.Rpc\Rpc\OnTheFlyObjectPool`1.cs">
       <Link>Rpc\OnTheFlyObjectPool`1.cs</Link>
     </Compile>
