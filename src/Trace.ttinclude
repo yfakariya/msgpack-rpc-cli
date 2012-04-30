@@ -160,7 +160,14 @@ using System.Diagnostics;
 	buffer.Append( indent ).Append( indent ).AppendLine( "/// </param>" );
 	buffer.Append( indent ).Append( indent ).Append( "public static void TraceEvent ( MessageId id, string format, params object[] args )" ).AppendLine();
 	buffer.Append( indent ).Append( indent ).Append( "{" ).AppendLine();
-	buffer.Append( indent ).Append( indent ).Append( indent ).Append( "_source.TraceEvent( _typeTable[ id ], ( int )id, format, args );" ).AppendLine();
+	buffer.Append( indent ).Append( indent ).Append( indent ).Append( "if ( args == null || args.Length == 0 )" ).AppendLine();
+	buffer.Append( indent ).Append( indent ).Append( indent ).Append( "{" ).AppendLine();
+	buffer.Append( indent ).Append( indent ).Append( indent ).Append( indent ).Append( "_source.TraceEvent( _typeTable[ id ], ( int )id, format );" ).AppendLine();
+	buffer.Append( indent ).Append( indent ).Append( indent ).Append( "}" ).AppendLine();
+	buffer.Append( indent ).Append( indent ).Append( indent ).Append( "else" ).AppendLine();
+	buffer.Append( indent ).Append( indent ).Append( indent ).Append( "{" ).AppendLine();
+	buffer.Append( indent ).Append( indent ).Append( indent ).Append( indent ).Append( "_source.TraceEvent( _typeTable[ id ], ( int )id, format, args );" ).AppendLine();
+	buffer.Append( indent ).Append( indent ).Append( indent ).Append( "}" ).AppendLine();
 	buffer.Append( indent ).Append( indent ).Append( "}" ).AppendLine();
 	buffer.AppendLine();
 	

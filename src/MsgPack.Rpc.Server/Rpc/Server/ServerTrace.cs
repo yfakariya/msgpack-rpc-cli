@@ -78,7 +78,14 @@ namespace MsgPack.Rpc.Server
 		/// </param>
 		public static void TraceEvent ( MessageId id, string format, params object[] args )
 		{
-			_source.TraceEvent( _typeTable[ id ], ( int )id, format, args );
+			if ( args == null || args.Length == 0 )
+			{
+				_source.TraceEvent( _typeTable[ id ], ( int )id, format );
+			}
+			else
+			{
+				_source.TraceEvent( _typeTable[ id ], ( int )id, format, args );
+			}
 		}
 
 		/// <summary>
