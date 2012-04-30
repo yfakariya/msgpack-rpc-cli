@@ -251,9 +251,10 @@ namespace MsgPack.Rpc.Server.Protocols
 
 		protected override void SendCore( ServerResponseContext context )
 		{
-			var task = this._manager.SendAsync( context );
-			this.OnSent( context );
-			task.Wait( this._receivingCancellationTokenSource.Token );
+			this._manager.SendAsync( context )
+				.ContinueWith(
+					previous => this.OnSent( context )
+				).Wait( this._receivingCancellationTokenSource.Token );
 		}
 	}
 }
