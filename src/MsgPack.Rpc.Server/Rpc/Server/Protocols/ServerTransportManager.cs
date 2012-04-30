@@ -168,7 +168,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		/// <summary>
 		///		Raises <see cref="ClientShutdown"/> event.
 		/// </summary>
-		/// <param name="e">The <see cref="MsgPack.Rpc.Protocols.Server.ClientShutdownEventArgs"/> instance containing the event data.</param>
+		/// <param name="e">The <see cref="MsgPack.Rpc.Server.Protocols.ClientShutdownEventArgs"/> instance containing the event data.</param>
 		/// <exception cref="ArgumentNullException">
 		///		<paramref name="e"/> is <c>null</c>.
 		/// </exception>
