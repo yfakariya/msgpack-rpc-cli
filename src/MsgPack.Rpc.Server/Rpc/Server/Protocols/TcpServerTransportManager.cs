@@ -198,6 +198,12 @@ namespace MsgPack.Rpc.Server.Protocols
 			);
 #endif
 
+			if ( context.AcceptSocket.RemoteEndPoint == null )
+			{
+				// Canceled due to shutdown.
+				return;
+			}
+
 			Contract.Assert( context.BytesTransferred == 0, context.BytesTransferred.ToString() );
 
 			var transport = this.GetTransport( context.AcceptSocket );
