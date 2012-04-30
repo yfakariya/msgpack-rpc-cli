@@ -27,9 +27,9 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
+using System.Threading.Tasks;
 using MsgPack.Rpc.Protocols;
 using NUnit.Framework;
-using System.Threading.Tasks;
 
 namespace MsgPack.Rpc.Client.Protocols
 {
