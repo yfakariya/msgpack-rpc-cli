@@ -61,21 +61,6 @@ namespace MsgPack.Rpc.Server.Protocols
 
 		private int _processing;
 
-		private int _shutdownSource = ( int )ShutdownSource.Unknown;
-
-		private int _isClientShutdown;
-
-		/// <summary>
-		///		Gets a value indicating whether the counterpart client is shutdown.
-		/// </summary>
-		/// <value>
-		/// 	<c>true</c> if the counterpart client is shutdown; otherwise, <c>false</c>.
-		/// </value>
-		public bool IsClientShutdown
-		{
-			get { return Interlocked.CompareExchange( ref this._isClientShutdown, 0, 0 ) != 0; }
-		}
-
 		private int _isDisposed;
 
 		/// <summary>
@@ -110,7 +95,18 @@ namespace MsgPack.Rpc.Server.Protocols
 
 		private readonly Dispatcher _dispatcher;
 
-		private int _isInShutdown;
+		private int _shutdownSource = ( int )ShutdownSource.Unknown;
+
+		/// <summary>
+		///		Gets a value indicating whether the counterpart client is shutdown.
+		/// </summary>
+		/// <value>
+		/// 	<c>true</c> if the counterpart client is shutdown; otherwise, <c>false</c>.
+		/// </value>
+		public bool IsClientShutdown
+		{
+			get { return Interlocked.CompareExchange( ref this._shutdownSource, 0, 0 ) == ( int )ShutdownSource.Client; }
+		}
 
 		/// <summary>
 		///		Gets a value indicating whether this instance is in shutdown.
@@ -118,9 +114,14 @@ namespace MsgPack.Rpc.Server.Protocols
 		/// <value>
 		/// 	<c>true</c> if this instance is in shutdown; otherwise, <c>false</c>.
 		/// </value>
-		public bool IsInShutdown
+		public bool IsServerShutdown
 		{
-			get { return Interlocked.CompareExchange( ref this._isInShutdown, 0, 0 ) != 0; }
+			get { return Interlocked.CompareExchange( ref this._shutdownSource, 0, 0 ) == ( int )ShutdownSource.Server; }
+		}
+
+		private bool IsInAnyShutdown
+		{
+			get { return Interlocked.CompareExchange( ref this._shutdownSource, 0, 0 ) != 0; }
 		}
 
 		private int _sendingShutdown;
@@ -229,7 +230,7 @@ namespace MsgPack.Rpc.Server.Protocols
 
 			Contract.EndContractBlock();
 
-			var socket = Interlocked.CompareExchange( ref this._boundSocket, null, null );
+			var socket = Interlocked.Exchange( ref this._boundSocket, null );
 			MsgPackRpcServerProtocolsTrace.TraceEvent(
 				MsgPackRpcServerProtocolsTrace.TransportShutdownCompleted,
 				"Transport shutdown is completed. {{ \"Socket\" : 0x{0:X}, \"RemoteEndPoint\" : \"{1}\", \"LocalEndPoint\" : \"{2}\" }}",
@@ -304,6 +305,7 @@ namespace MsgPack.Rpc.Server.Protocols
 							socket == null ? null : socket.LocalEndPoint
 						);
 
+						if ( Interlocked.CompareExchange( ref this._shutdownSource, ( int )ShutdownSource.Disposing, 0 ) == 0 )
 						{
 							var closingSocket = Interlocked.Exchange( ref this._boundSocket, null );
 							if ( closingSocket != null )
@@ -340,11 +342,9 @@ namespace MsgPack.Rpc.Server.Protocols
 		/// </summary>
 		internal void BeginShutdown()
 		{
-			if ( Interlocked.Exchange( ref this._isInShutdown, 1 ) == 0 )
+			if ( Interlocked.CompareExchange( ref this._shutdownSource, ( int )ShutdownSource.Server, 0 ) == 0 )
 			{
 				var socket = this.BoundSocket;
-				Interlocked.Exchange( ref this._shutdownSource, ( int )ShutdownSource.Server );
-
 				MsgPackRpcServerProtocolsTrace.TraceEvent(
 					MsgPackRpcServerProtocolsTrace.BeginShutdownTransport,
 					"Begin shutdown transport. {{ \"Socket\" : 0x{0:X}, \"RemoteEndPoint\" : \"{1}\", \"LocalEndPoint\" : \"{2}\" }}",
@@ -365,7 +365,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		{
 			if ( Interlocked.Decrement( ref this._processing ) == 0 )
 			{
-				if ( this.IsInShutdown || this.IsClientShutdown )
+				if ( this.IsInAnyShutdown )
 				{
 					this.PrivateShutdownSending();
 				}
@@ -616,7 +616,7 @@ namespace MsgPack.Rpc.Server.Protocols
 				return;
 			}
 
-			if ( this.IsInShutdown )
+			if ( this.IsServerShutdown )
 			{
 				// Subsequent receival cannot be processed now.
 				TraceCancelReceiveDueToServerShutdown( context );
@@ -699,7 +699,7 @@ namespace MsgPack.Rpc.Server.Protocols
 				return;
 			}
 
-			if ( this.IsInShutdown )
+			if ( this.IsServerShutdown )
 			{
 				// Server no longer process any subsequent retrieval.
 				TraceCancelReceiveDueToServerShutdown( context );
@@ -727,8 +727,10 @@ namespace MsgPack.Rpc.Server.Protocols
 
 			if ( context.BytesTransferred == 0 )
 			{
-				if ( Interlocked.Exchange( ref this._isClientShutdown, 1 ) == 0 )
+				if ( Interlocked.CompareExchange( ref this._shutdownSource, ( int )ShutdownSource.Client, 0 ) == 0 )
 				{
+					this.PrivateShutdownReceiving();
+
 					// recv() returns 0 when the client socket shutdown gracefully.
 					var socket = this.BoundSocket;
 					MsgPackRpcServerProtocolsTrace.TraceEvent(
@@ -739,22 +741,24 @@ namespace MsgPack.Rpc.Server.Protocols
 						socket == null ? null : socket.LocalEndPoint
 					);
 
-					Interlocked.Exchange( ref this._shutdownSource, ( int )ShutdownSource.Client );
 					this.OnClientShutdown( new ClientShutdownEventArgs( this, context.RemoteEndPoint ) );
+				}
 
-					if ( !context.ReceivedData.Any( segment => 0 < segment.Count ) )
+				if ( !context.ReceivedData.Any( segment => 0 < segment.Count ) )
+				{
+					// There are not data to handle.
+					context.Clear();
+					// Shutdown sending
+					if ( context.SessionId > 0 )
 					{
-						// There are not data to handle.
-						context.Clear();
-						// Shutdown sending
-						if ( context.SessionId > 0 )
-						{
-							this.OnSessionFinished();
-						}
-
-						this.TrySendShutdownSending();
-						return;
+						this.OnSessionFinished();
 					}
+					else
+					{
+						this.TrySendShutdownSending();
+					}
+
+					return;
 				}
 			}
 			else
@@ -785,12 +789,15 @@ namespace MsgPack.Rpc.Server.Protocols
 					{
 						this.OnSessionFinished();
 					}
+					else
+					{
+						this.TrySendShutdownSending();
+					}
 
-					this.TrySendShutdownSending();
 					return;
 				}
 
-				if ( this.IsInShutdown )
+				if ( this.IsServerShutdown )
 				{
 					// Server no longer process any subsequent retrieval.
 					TraceCancelReceiveDueToServerShutdown( context );

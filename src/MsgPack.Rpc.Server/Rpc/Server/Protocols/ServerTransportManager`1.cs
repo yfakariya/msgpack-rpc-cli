@@ -283,7 +283,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			Contract.Requires( Object.ReferenceEquals( this, transport.Manager ) );
 			Contract.Requires( this.IsTransportPoolSet );
 
-			if ( !transport.IsDisposed && !transport.IsInShutdown && !transport.IsClientShutdown )
+			if ( !transport.IsDisposed && !transport.IsServerShutdown && !transport.IsClientShutdown )
 			{
 				this._transportPool.Return( transport );
 			}

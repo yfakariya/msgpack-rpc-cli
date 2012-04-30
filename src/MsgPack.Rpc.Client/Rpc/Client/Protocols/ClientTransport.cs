@@ -96,20 +96,16 @@ namespace MsgPack.Rpc.Client.Protocols
 
 		private int _shutdownSource;
 
-		private int _isInShutdown;
-
 		/// <summary>
 		///		Gets a value indicating whether this instance is in shutdown.
 		/// </summary>
 		/// <value>
 		/// 	<c>true</c> if this instance is in shutdown; otherwise, <c>false</c>.
 		/// </value>
-		public bool IsInShutdown
+		public bool IsClientShutdown
 		{
-			get { return Interlocked.CompareExchange( ref this._isInShutdown, 0, 0 ) != 0; }
+			get { return Interlocked.CompareExchange( ref this._shutdownSource, 0, 0 ) == ( int )ShutdownSource.Client; }
 		}
-
-		private int _isServerShutdown;
 
 		/// <summary>
 		///		Gets a value indicating whether this instance detectes server shutdown.
@@ -119,7 +115,12 @@ namespace MsgPack.Rpc.Client.Protocols
 		/// </value>
 		public bool IsServerShutdown
 		{
-			get { return Interlocked.CompareExchange( ref  this._isServerShutdown, 0, 0 ) != 0; }
+			get { return Interlocked.CompareExchange( ref this._shutdownSource, 0, 0 ) == ( int )ShutdownSource.Server; }
+		}
+
+		private bool IsInAnyShutdown
+		{
+			get { return Interlocked.CompareExchange( ref this._shutdownSource, 0, 0 ) != 0; }
 		}
 
 		private EventHandler<ShutdownCompletedEventArgs> _shutdownCompleted;
@@ -169,7 +170,7 @@ namespace MsgPack.Rpc.Client.Protocols
 
 			Contract.EndContractBlock();
 
-			var socket = Interlocked.CompareExchange( ref this._boundSocket, null, null );
+			var socket = Interlocked.Exchange( ref this._boundSocket, null );
 			MsgPackRpcClientProtocolsTrace.TraceEvent(
 				MsgPackRpcClientProtocolsTrace.TransportShutdownCompleted,
 				"Transport shutdown is completed. {{ \"Socket\" : 0x{0:X}, \"RemoteEndPoint\" : \"{1}\", \"LocalEndPoint\" : \"{2}\" }}",
@@ -258,6 +259,7 @@ namespace MsgPack.Rpc.Client.Protocols
 							socket == null ? null : socket.LocalEndPoint
 						);
 
+						if ( Interlocked.CompareExchange( ref this._shutdownSource, ( int )ShutdownSource.Disposing, 0 ) == 0 )
 						{
 							var closingSocket = Interlocked.Exchange( ref this._boundSocket, null );
 							if ( closingSocket != null )
@@ -290,10 +292,8 @@ namespace MsgPack.Rpc.Client.Protocols
 		/// </summary>
 		public void BeginShutdown()
 		{
-			if ( Interlocked.Exchange( ref this._isInShutdown, 1 ) == 0 )
+			if ( Interlocked.CompareExchange( ref this._shutdownSource, ( int )ShutdownSource.Client, 0 ) == 0 )
 			{
-				Interlocked.Exchange( ref this._shutdownSource, ( int )ShutdownSource.Client );
-
 				this.ShutdownSending();
 
 				if ( this._pendingNotificationTable.Count == 0 && this._pendingRequestTable.Count == 0 )
@@ -337,8 +337,7 @@ namespace MsgPack.Rpc.Client.Protocols
 
 		private void OnProcessFinished()
 		{
-			if ( Interlocked.CompareExchange( ref this._isInShutdown, 0, 0 ) == 1
-				|| Interlocked.CompareExchange( ref this._isServerShutdown, 0, 0 ) == 1 )
+			if ( this.IsInAnyShutdown )
 			{
 				if ( this._pendingNotificationTable.Count == 0 && this._pendingRequestTable.Count == 0 )
 				{
@@ -598,14 +597,14 @@ namespace MsgPack.Rpc.Client.Protocols
 
 			this.VerifyIsNotDisposed();
 
-			if ( this.IsInShutdown )
+			if ( this.IsClientShutdown )
 			{
 				throw new InvalidOperationException( "This transport is in shutdown." );
 			}
 
 			Contract.EndContractBlock();
 
-			if ( Interlocked.CompareExchange( ref this._isServerShutdown, 0, 0 ) == 1 )
+			if ( this.IsServerShutdown )
 			{
 				throw new RpcErrorMessage( RpcError.TransportError, "Server did shutdown socket.", null ).ToException();
 			}
@@ -819,8 +818,10 @@ namespace MsgPack.Rpc.Client.Protocols
 
 			if ( context.BytesTransferred == 0 )
 			{
-				if ( Interlocked.Exchange( ref this._isServerShutdown, 1 ) == 0 )
+				if ( Interlocked.CompareExchange( ref this._shutdownSource, ( int )ShutdownSource.Server, 0 ) == 0 )
 				{
+					this.ShutdownReceiving( context );
+
 					// recv() returns 0 when the server socket shutdown gracefully.
 					var socket = this.BoundSocket;
 					MsgPackRpcClientProtocolsTrace.TraceEvent(
@@ -830,15 +831,17 @@ namespace MsgPack.Rpc.Client.Protocols
 						socket == null ? null : socket.RemoteEndPoint,
 						socket == null ? null : socket.LocalEndPoint
 					);
+				}
+				else if ( this.IsClientShutdown )
+				{
+					// Server sent shutdown response.
+					this.ShutdownReceiving();
+				}
 
-					Interlocked.Exchange( ref this._shutdownSource, ( int )ShutdownSource.Server );
-
-					if ( !context.ReceivedData.Any( segment => 0 < segment.Count ) )
-					{
-						// There are no data to handle.
-						this.ShutdownReceiving( context );
-						return;
-					}
+				if ( !context.ReceivedData.Any( segment => 0 < segment.Count ) )
+				{
+					// There are no data to handle.
+					return;
 				}
 			}
 			else
@@ -860,7 +863,7 @@ namespace MsgPack.Rpc.Client.Protocols
 			// Go deserialization pipeline.
 			if ( !context.NextProcess( context ) )
 			{
-				if ( Interlocked.CompareExchange( ref this._isServerShutdown, 0, 0 ) != 0 )
+				if ( this.IsServerShutdown )
 				{
 					this.ShutdownReceiving( context );
 				}
