@@ -226,16 +226,20 @@ namespace MsgPack.Rpc.Server.Protocols
 
 			Contract.EndContractBlock();
 
+			var socket = Interlocked.CompareExchange( ref this._boundSocket, null, null );
 			MsgPackRpcServerProtocolsTrace.TraceEvent(
 				MsgPackRpcServerProtocolsTrace.TransportShutdownCompleted,
 				"Transport shutdown is completed. {{ \"Socket\" : 0x{0:X}, \"RemoteEndPoint\" : \"{1}\", \"LocalEndPoint\" : \"{2}\" }}",
-				this._boundSocket == null ? IntPtr.Zero : this._boundSocket.Handle,
-				this._boundSocket == null ? null : this._boundSocket.RemoteEndPoint,
-				this._boundSocket == null ? null : this._boundSocket.LocalEndPoint
+				socket == null ? IntPtr.Zero : socket.Handle,
+				socket == null ? null : socket.RemoteEndPoint,
+				socket == null ? null : socket.LocalEndPoint
 			);
 
-			this.Manager.ReturnTransport( this );
-
+			if ( socket != null )
+			{
+				socket.Close();
+			}
+			
 			var handler = Interlocked.CompareExchange( ref this._shutdownCompleted, null, null );
 			if ( handler != null )
 			{
@@ -295,6 +299,12 @@ namespace MsgPack.Rpc.Server.Protocols
 							this._boundSocket == null ? null : this._boundSocket.RemoteEndPoint,
 							this._boundSocket == null ? null : this._boundSocket.LocalEndPoint
 						);
+
+						var socket = Interlocked.CompareExchange( ref this._boundSocket, null, null );
+						if ( socket != null )
+						{
+							socket.Close();
+						}
 					}
 					catch ( ObjectDisposedException )
 					{
