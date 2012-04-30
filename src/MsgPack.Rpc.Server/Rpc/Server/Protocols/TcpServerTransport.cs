@@ -44,6 +44,11 @@ namespace MsgPack.Rpc.Server.Protocols
 		/// </summary>
 		protected override void ShutdownReceiving()
 		{
+			if ( this.IsDisposed )
+			{
+				return;
+			}
+
 			Contract.Assert( this.BoundSocket != null );
 
 			this.BoundSocket.Shutdown( SocketShutdown.Receive );
@@ -55,6 +60,11 @@ namespace MsgPack.Rpc.Server.Protocols
 		/// </summary>
 		protected override void ShutdownSending()
 		{
+			if ( this.IsDisposed )
+			{
+				return;
+			}
+
 			Contract.Assert( this.BoundSocket != null );
 
 			this.BoundSocket.Shutdown( SocketShutdown.Send );
