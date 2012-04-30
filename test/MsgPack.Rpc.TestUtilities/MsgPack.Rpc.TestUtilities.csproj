@@ -68,6 +68,7 @@
     <Compile Include="Rpc\Client\Protocols\InProcResponseReceivedEventArgs.cs" />
     <Compile Include="Rpc\GenericExceptionTester.cs" />
     <Compile Include="Rpc\ObjectReturnedToPoolEventArgs`1.cs" />
+    <Compile Include="Rpc\Protocols\ProtocolTraceSettings.cs" />
     <Compile Include="Rpc\Server\CallbackServer.cs" />
     <Compile Include="Rpc\Server\CallbackServerErrorEventArgs.cs" />
     <Compile Include="Rpc\Server\Dispatch\CallbackDispatcher.cs" />
