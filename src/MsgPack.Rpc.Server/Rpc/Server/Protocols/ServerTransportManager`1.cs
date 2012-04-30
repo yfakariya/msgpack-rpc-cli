@@ -124,6 +124,11 @@ namespace MsgPack.Rpc.Server.Protocols
 			base.BeginShutdownCore();
 		}
 
+		private void OnTransportClientShutdown( object sender, ClientShutdownEventArgs e )
+		{
+			this.OnClientShutdown( e );
+		}
+
 		private void OnTransportShutdownCompleted( object sender, ShutdownCompletedEventArgs e )
 		{
 			var transport = sender as TTransport;
@@ -158,6 +163,7 @@ namespace MsgPack.Rpc.Server.Protocols
 
 			TTransport transport = this.GetTransportCore( bindingSocket );
 			this._activeTransports.TryAdd( transport, null );
+			transport.ClientShutdown += this.OnTransportClientShutdown;
 
 			return transport;
 		}
@@ -261,6 +267,7 @@ namespace MsgPack.Rpc.Server.Protocols
 
 			Contract.EndContractBlock();
 
+			transport.ClientShutdown -= this.OnTransportClientShutdown;
 			object dummy;
 			this._activeTransports.TryRemove( transport, out dummy );
 			this.ReturnTransportCore( transport );
@@ -276,7 +283,10 @@ namespace MsgPack.Rpc.Server.Protocols
 			Contract.Requires( Object.ReferenceEquals( this, transport.Manager ) );
 			Contract.Requires( this.IsTransportPoolSet );
 
-			this._transportPool.Return( transport );
+			if ( !transport.IsDisposed && !transport.IsInShutdown && !transport.IsClientShutdown )
+			{
+				this._transportPool.Return( transport );
+			}
 		}
 
 		/// <summary>

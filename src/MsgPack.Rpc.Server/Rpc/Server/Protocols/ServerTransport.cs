@@ -132,7 +132,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		/// <summary>
 		/// Occurs when detects client shutdown.
 		/// </summary>
-		public event EventHandler<ClientShutdownEventArgs> ClientShutdown
+		internal event EventHandler<ClientShutdownEventArgs> ClientShutdown
 		{
 			add
 			{
@@ -159,7 +159,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		}
 
 		/// <summary>
-		///		Raises the <see cref="E:ClientShutdown"/> event.
+		///		Raises internal client shutdown detection completion event to achieve graceful shutdown.
 		/// </summary>
 		/// <param name="e">The <see cref="MsgPack.Rpc.Server.Protocols.ClientShutdownEventArgs"/> instance containing the event data.</param>
 		/// <exception cref="ArgumentNullException">

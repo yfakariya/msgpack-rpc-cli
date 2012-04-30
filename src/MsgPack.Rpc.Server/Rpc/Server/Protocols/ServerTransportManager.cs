@@ -134,6 +134,60 @@ namespace MsgPack.Rpc.Server.Protocols
 			get { return Interlocked.CompareExchange( ref this._isInShutdown, 0, 0 ) != 0; }
 		}
 
+		private EventHandler<ClientShutdownEventArgs> _clientShutdown;
+
+		/// <summary>
+		///		Occurs when the shutdown process is initiated on the client of any managed transport.
+		/// </summary>
+		public event EventHandler<ClientShutdownEventArgs> ClientShutdown
+		{
+			add
+			{
+				EventHandler<ClientShutdownEventArgs> oldHandler;
+				EventHandler<ClientShutdownEventArgs> currentHandler = this._clientShutdown;
+				do
+				{
+					oldHandler = currentHandler;
+					var newHandler = Delegate.Combine( oldHandler, value ) as EventHandler<ClientShutdownEventArgs>;
+					currentHandler = Interlocked.CompareExchange( ref this._clientShutdown, newHandler, oldHandler );
+				} while ( oldHandler != currentHandler );
+			}
+			remove
+			{
+				EventHandler<ClientShutdownEventArgs> oldHandler;
+				EventHandler<ClientShutdownEventArgs> currentHandler = this._clientShutdown;
+				do
+				{
+					oldHandler = currentHandler;
+					var newHandler = Delegate.Remove( oldHandler, value ) as EventHandler<ClientShutdownEventArgs>;
+					currentHandler = Interlocked.CompareExchange( ref this._clientShutdown, newHandler, oldHandler );
+				} while ( oldHandler != currentHandler );
+			}
+		}
+
+		/// <summary>
+		///		Raises <see cref="ClientShutdown"/> event.
+		/// </summary>
+		/// <param name="e">The <see cref="MsgPack.Rpc.Protocols.Server.ClientShutdownEventArgs"/> instance containing the event data.</param>
+		/// <exception cref="ArgumentNullException">
+		///		<paramref name="e"/> is <c>null</c>.
+		/// </exception>
+		protected virtual void OnClientShutdown( ClientShutdownEventArgs e )
+		{
+			if ( e == null )
+			{
+				throw new ArgumentNullException( "e" );
+			}
+
+			Contract.EndContractBlock();
+
+			var handler = Interlocked.CompareExchange( ref this._clientShutdown, null, null );
+			if ( handler != null )
+			{
+				handler( this, e );
+			}
+		}
+
 		private EventHandler<ShutdownCompletedEventArgs> _shutdownCompleted;
 
 		/// <summary>
