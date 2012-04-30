@@ -183,6 +183,22 @@ namespace MsgPack.Rpc.Client.Protocols
 				socket.Close();
 			}
 
+			// Notify shutdown to waiting clients.
+			// Note that it is OK from concurrency point of view because additional modifications are guarded via shutdown flag.
+			var errorMessage = new RpcErrorMessage( RpcError.TransportError, String.Format( CultureInfo.CurrentCulture, "Transport is shutdown. Shutdown source is: {0}", e.Source ), null );
+			foreach ( var entry in this._pendingRequestTable )
+			{
+				entry.Value( null, errorMessage.ToException(), false );
+			}
+
+			foreach ( var entry in this._pendingNotificationTable )
+			{
+				entry.Value( errorMessage.ToException(), false );
+			}
+
+			this._pendingRequestTable.Clear();
+			this._pendingNotificationTable.Clear();
+
 			var handler = Interlocked.CompareExchange( ref this._shutdownCompleted, null, null );
 			if ( handler != null )
 			{
