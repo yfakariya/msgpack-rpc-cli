@@ -72,6 +72,17 @@ namespace MsgPack.Rpc.Server.Protocols
 			}
 		}
 
+		public event EventHandler TransportReceiving;
+
+		private void OnTransportReceiving()
+		{
+			var handler = this.TransportReceiving;
+			if ( handler != null )
+			{
+				handler( this, EventArgs.Empty );
+			}
+		}
+
 		public event EventHandler TransportReceived;
 
 		private void OnTransportReceived()
@@ -80,6 +91,17 @@ namespace MsgPack.Rpc.Server.Protocols
 			if ( handler != null )
 			{
 				handler( this, EventArgs.Empty );
+			}
+		}
+
+		public event EventHandler<ShutdownCompletedEventArgs> TransportShutdownCompleted;
+
+		private void OnTransportShutdownCompleted( ShutdownCompletedEventArgs e )
+		{
+			var handler = this.TransportShutdownCompleted;
+			if ( handler != null )
+			{
+				handler( this, e );
 			}
 		}
 
@@ -139,18 +161,31 @@ namespace MsgPack.Rpc.Server.Protocols
 		protected override InProcServerTransport GetTransportCore( Socket bindingSocket )
 		{
 			var result = base.GetTransportCore( bindingSocket );
+			result.Receiving += this.OnTransportReceiving;
 			result.Received += this.OnTransportReceived;
+			result.ShutdownCompleted += this.OnTransportShutdownCompleted;
 			return result;
 		}
 
 		protected sealed override void ReturnTransportCore( InProcServerTransport transport )
 		{
+			transport.Receiving -= this.OnTransportReceiving;
 			transport.Received -= this.OnTransportReceived;
+		}
+
+		private void OnTransportReceiving( object sender, EventArgs e )
+		{
+			this.OnTransportReceiving();
 		}
 
 		private void OnTransportReceived( object sender, EventArgs e )
 		{
 			this.OnTransportReceived();
+		}
+
+		private void OnTransportShutdownCompleted( object sender, ShutdownCompletedEventArgs e )
+		{
+			this.OnTransportShutdownCompleted( e );
 		}
 
 		/// <summary>
