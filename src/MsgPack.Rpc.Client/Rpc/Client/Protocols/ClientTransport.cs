@@ -158,7 +158,14 @@ namespace MsgPack.Rpc.Client.Protocols
 
 			Contract.EndContractBlock();
 
-			// TODO: trace
+			var socket = Interlocked.CompareExchange( ref this._boundSocket, null, null );
+			MsgPackRpcClientProtocolsTrace.TraceEvent(
+				MsgPackRpcClientProtocolsTrace.TransportShutdownCompleted,
+				"Transport shutdown is completed. {{ \"Socket\" : 0x{0:X}, \"RemoteEndPoint\" : \"{1}\", \"LocalEndPoint\" : \"{2}\" }}",
+				socket == null ? IntPtr.Zero : socket.Handle,
+				socket == null ? null : socket.RemoteEndPoint,
+				socket == null ? null : socket.LocalEndPoint
+			);
 			var handler = Interlocked.CompareExchange( ref this._shutdownCompleted, null, null );
 			if ( handler != null )
 			{
@@ -204,7 +211,27 @@ namespace MsgPack.Rpc.Client.Protocols
 		{
 			if ( disposing )
 			{
-				Interlocked.Exchange( ref this._isDisposed, 1 );
+				if ( Interlocked.Exchange( ref this._isDisposed, 1 ) == 0 )
+				{
+					try
+					{
+						MsgPackRpcClientProtocolsTrace.TraceEvent(
+							MsgPackRpcClientProtocolsTrace.DisposeTransport,
+							"Dispose transport. {{ \"Socket\" : 0x{0:X}, \"RemoteEndPoint\" : \"{1}\", \"LocalEndPoint\" : \"{2}\" }}",
+							this._boundSocket == null ? IntPtr.Zero : this._boundSocket.Handle,
+							this._boundSocket == null ? null : this._boundSocket.RemoteEndPoint,
+							this._boundSocket == null ? null : this._boundSocket.LocalEndPoint
+						);
+
+					}
+					catch ( ObjectDisposedException )
+					{
+						MsgPackRpcClientProtocolsTrace.TraceEvent(
+							MsgPackRpcClientProtocolsTrace.DisposeTransport,
+							"Dispose transport. {{ \"Socket\" : \"Disposed\", \"RemoteEndPoint\" : \"Disposed\", \"LocalEndPoint\" : \"Disposed\" }}"
+						);
+					}
+				}
 			}
 		}
 
@@ -239,7 +266,13 @@ namespace MsgPack.Rpc.Client.Protocols
 		/// </summary>
 		protected virtual void ShutdownSending()
 		{
-			// TODO: trace
+			MsgPackRpcClientProtocolsTrace.TraceEvent(
+				MsgPackRpcClientProtocolsTrace.ShutdownSending,
+				"Shutdown sending. {{ \"Socket\" : 0x{0:X}, \"RemoteEndPoint\" : \"{1}\", \"LocalEndPoint\" : \"{2}\" }}",
+				this._boundSocket == null ? IntPtr.Zero : this._boundSocket.Handle,
+				this._boundSocket == null ? null : this._boundSocket.RemoteEndPoint,
+				this._boundSocket == null ? null : this._boundSocket.LocalEndPoint
+			);
 		}
 
 		/// <summary>
@@ -247,7 +280,13 @@ namespace MsgPack.Rpc.Client.Protocols
 		/// </summary>
 		protected virtual void ShutdownReceiving()
 		{
-			// TODO: trace
+			MsgPackRpcClientProtocolsTrace.TraceEvent(
+				MsgPackRpcClientProtocolsTrace.ShutdownReceiving,
+				"Shutdown receiving. {{ \"Socket\" : 0x{0:X}, \"RemoteEndPoint\" : \"{1}\", \"LocalEndPoint\" : \"{2}\" }}",
+				this._boundSocket == null ? IntPtr.Zero : this._boundSocket.Handle,
+				this._boundSocket == null ? null : this._boundSocket.RemoteEndPoint,
+				this._boundSocket == null ? null : this._boundSocket.LocalEndPoint
+			);
 
 			this.OnShutdownCompleted( new ShutdownCompletedEventArgs( ( ShutdownSource )this._shutdownSource ) );
 		}

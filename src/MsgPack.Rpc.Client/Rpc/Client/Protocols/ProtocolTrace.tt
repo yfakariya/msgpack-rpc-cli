@@ -55,5 +55,9 @@
 	new TraceMessage( "NeedResult", TraceEventType.Verbose, 2116 ),
 	new TraceMessage( "DumpInvalidResponseHeader", TraceEventType.Verbose, 2130 ),
 	new TraceMessage( "BeginReceive", TraceEventType.Verbose, 2201 ),
-	new TraceMessage( "ReceiveInboundData", TraceEventType.Verbose,  2202 )
+	new TraceMessage( "ReceiveInboundData", TraceEventType.Verbose,  2202 ),
+	new TraceMessage( "TransportShutdownCompleted", TraceEventType.Verbose, 3012 ),
+	new TraceMessage( "ShutdownSending", TraceEventType.Verbose, 3013 ),
+	new TraceMessage( "ShutdownReceiving", TraceEventType.Verbose, 3014 ),
+	new TraceMessage( "DisposeTransport", TraceEventType.Verbose, 3019 )
 ) #>

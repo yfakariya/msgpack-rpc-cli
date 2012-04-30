@@ -33,7 +33,7 @@ namespace MsgPack.Rpc.Client.Protocols
 		private static readonly TraceSource _source = new TraceSource( "MsgPack.Rpc.Client.Protocols" );
 
 		private static readonly Dictionary<MessageId, TraceEventType> _typeTable = 
-			new Dictionary<MessageId, TraceEventType> ( 19 )
+			new Dictionary<MessageId, TraceEventType> ( 23 )
 			{
 				{ MessageId.DetectServerShutdown, TraceEventType.Information },
 				{ MessageId.OrphanError, TraceEventType.Error },
@@ -54,6 +54,10 @@ namespace MsgPack.Rpc.Client.Protocols
 				{ MessageId.DumpInvalidResponseHeader, TraceEventType.Verbose },
 				{ MessageId.BeginReceive, TraceEventType.Verbose },
 				{ MessageId.ReceiveInboundData, TraceEventType.Verbose },
+				{ MessageId.TransportShutdownCompleted, TraceEventType.Verbose },
+				{ MessageId.ShutdownSending, TraceEventType.Verbose },
+				{ MessageId.ShutdownReceiving, TraceEventType.Verbose },
+				{ MessageId.DisposeTransport, TraceEventType.Verbose },
 			};
 
 		/// <summary>
@@ -188,6 +192,22 @@ namespace MsgPack.Rpc.Client.Protocols
 		/// 	<see cref="MessageId" /> of .ReceiveInboundData (ID:2202) message.
 		/// </summary>
 		public const MessageId ReceiveInboundData = MessageId.ReceiveInboundData;
+		/// <summary>
+		/// 	<see cref="MessageId" /> of .TransportShutdownCompleted (ID:3012) message.
+		/// </summary>
+		public const MessageId TransportShutdownCompleted = MessageId.TransportShutdownCompleted;
+		/// <summary>
+		/// 	<see cref="MessageId" /> of .ShutdownSending (ID:3013) message.
+		/// </summary>
+		public const MessageId ShutdownSending = MessageId.ShutdownSending;
+		/// <summary>
+		/// 	<see cref="MessageId" /> of .ShutdownReceiving (ID:3014) message.
+		/// </summary>
+		public const MessageId ShutdownReceiving = MessageId.ShutdownReceiving;
+		/// <summary>
+		/// 	<see cref="MessageId" /> of .DisposeTransport (ID:3019) message.
+		/// </summary>
+		public const MessageId DisposeTransport = MessageId.DisposeTransport;
 		public enum MessageId
 		{
 			DetectServerShutdown = 11,
@@ -209,6 +229,10 @@ namespace MsgPack.Rpc.Client.Protocols
 			DumpInvalidResponseHeader = 2130,
 			BeginReceive = 2201,
 			ReceiveInboundData = 2202,
+			TransportShutdownCompleted = 3012,
+			ShutdownSending = 3013,
+			ShutdownReceiving = 3014,
+			DisposeTransport = 3019,
 		}
 	}
 }
