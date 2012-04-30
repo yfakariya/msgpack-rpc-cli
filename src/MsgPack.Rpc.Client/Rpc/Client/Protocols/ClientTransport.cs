@@ -680,9 +680,9 @@ namespace MsgPack.Rpc.Client.Protocols
 			context.ClearBuffers();
 			try
 			{
-				try
+				if ( context.MessageType == MessageType.Notification )
 				{
-					if ( context.MessageType == MessageType.Notification )
+					try
 					{
 						Action<Exception, bool> handler = null;
 						try
@@ -698,17 +698,17 @@ namespace MsgPack.Rpc.Client.Protocols
 							}
 						}
 					}
-					else
+					finally
 					{
-						var responseContext = this.Manager.ResponseContextPool.Borrow();
-						responseContext.SetTransport( this );
-						responseContext.SessionId = context.SessionId;
-						this.Receive( responseContext );
+						this.OnProcessFinished();
 					}
 				}
-				finally
+				else
 				{
-					this.OnProcessFinished();
+					var responseContext = this.Manager.ResponseContextPool.Borrow();
+					responseContext.SetTransport( this );
+					responseContext.SessionId = context.SessionId;
+					this.Receive( responseContext );
 				}
 			}
 			finally
