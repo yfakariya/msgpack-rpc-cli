@@ -106,7 +106,7 @@ namespace MsgPack.Rpc.Client.Protocols
 		/// </value>
 		public bool IsInShutdown
 		{
-			get { return this._isInShutdown != 0; }
+			get { return Interlocked.CompareExchange( ref this._isInShutdown, 0, 0 ) != 0; }
 		}
 
 		private int _isInServerShutdown;
