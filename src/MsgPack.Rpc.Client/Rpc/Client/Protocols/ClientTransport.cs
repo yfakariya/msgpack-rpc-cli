@@ -50,8 +50,8 @@ namespace MsgPack.Rpc.Client.Protocols
 		/// </value>
 		public Socket BoundSocket
 		{
-			get { return this._boundSocket; }
-			internal set { this._boundSocket = value; }
+			get { return Interlocked.CompareExchange( ref this._boundSocket, null, null ); }
+			internal set { Interlocked.Exchange( ref this._boundSocket, value ); }
 		}
 
 		Socket IContextBoundableTransport.BoundSocket
@@ -248,18 +248,22 @@ namespace MsgPack.Rpc.Client.Protocols
 				{
 					try
 					{
+						var socket = this.BoundSocket;
+
 						MsgPackRpcClientProtocolsTrace.TraceEvent(
 							MsgPackRpcClientProtocolsTrace.DisposeTransport,
 							"Dispose transport. {{ \"Socket\" : 0x{0:X}, \"RemoteEndPoint\" : \"{1}\", \"LocalEndPoint\" : \"{2}\" }}",
-							this._boundSocket == null ? IntPtr.Zero : this._boundSocket.Handle,
-							this._boundSocket == null ? null : this._boundSocket.RemoteEndPoint,
-							this._boundSocket == null ? null : this._boundSocket.LocalEndPoint
+							socket == null ? IntPtr.Zero : socket.Handle,
+							socket == null ? null : socket.RemoteEndPoint,
+							socket == null ? null : socket.LocalEndPoint
 						);
 
-						var socket = Interlocked.CompareExchange( ref this._boundSocket, null, null );
-						if ( socket != null )
 						{
-							socket.Close();
+							var closingSocket = Interlocked.Exchange( ref this._boundSocket, null );
+							if ( closingSocket != null )
+							{
+								closingSocket.Close();
+							}
 						}
 					}
 					catch ( ObjectDisposedException )
@@ -304,12 +308,13 @@ namespace MsgPack.Rpc.Client.Protocols
 		/// </summary>
 		protected virtual void ShutdownSending()
 		{
+			var socket = this.BoundSocket;
 			MsgPackRpcClientProtocolsTrace.TraceEvent(
 				MsgPackRpcClientProtocolsTrace.ShutdownSending,
 				"Shutdown sending. {{ \"Socket\" : 0x{0:X}, \"RemoteEndPoint\" : \"{1}\", \"LocalEndPoint\" : \"{2}\" }}",
-				this._boundSocket == null ? IntPtr.Zero : this._boundSocket.Handle,
-				this._boundSocket == null ? null : this._boundSocket.RemoteEndPoint,
-				this._boundSocket == null ? null : this._boundSocket.LocalEndPoint
+				socket == null ? IntPtr.Zero : socket.Handle,
+				socket == null ? null : socket.RemoteEndPoint,
+				socket == null ? null : socket.LocalEndPoint
 			);
 		}
 
@@ -318,12 +323,13 @@ namespace MsgPack.Rpc.Client.Protocols
 		/// </summary>
 		protected virtual void ShutdownReceiving()
 		{
+			var socket = this.BoundSocket;
 			MsgPackRpcClientProtocolsTrace.TraceEvent(
 				MsgPackRpcClientProtocolsTrace.ShutdownReceiving,
 				"Shutdown receiving. {{ \"Socket\" : 0x{0:X}, \"RemoteEndPoint\" : \"{1}\", \"LocalEndPoint\" : \"{2}\" }}",
-				this._boundSocket == null ? IntPtr.Zero : this._boundSocket.Handle,
-				this._boundSocket == null ? null : this._boundSocket.RemoteEndPoint,
-				this._boundSocket == null ? null : this._boundSocket.LocalEndPoint
+				socket == null ? IntPtr.Zero : socket.Handle,
+				socket == null ? null : socket.RemoteEndPoint,
+				socket == null ? null : socket.LocalEndPoint
 			);
 
 			this.OnShutdownCompleted( new ShutdownCompletedEventArgs( ( ShutdownSource )this._shutdownSource ) );
@@ -472,14 +478,15 @@ namespace MsgPack.Rpc.Client.Protocols
 
 		private void HandleOrphan( int? messageId, long sessionId, RpcErrorMessage rpcError, MessagePackObject? returnValue )
 		{
+			var socket = this.BoundSocket;
 			MsgPackRpcClientProtocolsTrace.TraceEvent(
 				MsgPackRpcClientProtocolsTrace.OrphanError,
 				"There are no handlers to handle message which has MessageID:{0}, SessionID:{1}. This may indicate runtime problem or due to client recycling. {{ \"Socket\" : 0x{2:X}, \"RemoteEndPoint\" : \"{3}\", \"LocalEndPoint\" : \"{4}\", \"SessionID\" :{1}, \"MessageID\" : {0}, \"Error\" : {5}, \"ReturnValue\" : {6}, \"CallStack\" : \"{7}\" }}",
 				messageId == null ? "(null)" : messageId.Value.ToString(),
 				sessionId,
-				this._boundSocket == null ? IntPtr.Zero : this._boundSocket.Handle,
-				this._boundSocket == null ? null : this._boundSocket.RemoteEndPoint,
-				this._boundSocket == null ? null : this._boundSocket.LocalEndPoint,
+				socket == null ? IntPtr.Zero : socket.Handle,
+				socket == null ? null : socket.RemoteEndPoint,
+				socket == null ? null : socket.LocalEndPoint,
 				rpcError,
 				returnValue,
 				new StackTrace( 0, true )
@@ -622,13 +629,14 @@ namespace MsgPack.Rpc.Client.Protocols
 
 			if ( MsgPackRpcClientProtocolsTrace.ShouldTrace( MsgPackRpcClientProtocolsTrace.SendOutboundData ) )
 			{
+				var socket = this.BoundSocket;
 				MsgPackRpcClientProtocolsTrace.TraceEvent(
 					MsgPackRpcClientProtocolsTrace.SendOutboundData,
 					"Send request/notification. {{ \"SessionID\" : {0}, \"Socket\" : 0x{1:X}, \"RemoteEndPoint\" : \"{2}\", \"LocalEndPoint\" : \"{3}\", \"Type\" : \"{4}\", \"MessageID\" : {5}, \"Method\" : \"{6}\", \"BytesTransferring\" : {7} }}",
 					context.SessionId,
-					this._boundSocket == null ? IntPtr.Zero : this._boundSocket.Handle,
-					this._boundSocket == null ? null : this._boundSocket.RemoteEndPoint,
-					this._boundSocket == null ? null : this._boundSocket.LocalEndPoint,
+					socket == null ? IntPtr.Zero : socket.Handle,
+					socket == null ? null : socket.RemoteEndPoint,
+					socket == null ? null : socket.LocalEndPoint,
 					context.MessageType,
 					context.MessageId,
 					context.MethodName,
@@ -663,13 +671,14 @@ namespace MsgPack.Rpc.Client.Protocols
 		{
 			if ( MsgPackRpcClientProtocolsTrace.ShouldTrace( MsgPackRpcClientProtocolsTrace.SentOutboundData ) )
 			{
+				var socket = this.BoundSocket;
 				MsgPackRpcClientProtocolsTrace.TraceEvent(
 					MsgPackRpcClientProtocolsTrace.SentOutboundData,
 						"Sent request/notification. {{ \"SessionID\" : {0}, \"Socket\" : 0x{1:X}, \"RemoteEndPoint\" : \"{2}\", \"LocalEndPoint\" : \"{3}\", \"Type\" : \"{4}\", \"MessageID\" : {5}, \"Method\" : \"{6}\", \"BytesTransferred\" : {7} }}",
 						context.SessionId,
-						this._boundSocket == null ? IntPtr.Zero : this._boundSocket.Handle,
-						this._boundSocket == null ? null : this._boundSocket.RemoteEndPoint,
-						this._boundSocket == null ? null : this._boundSocket.LocalEndPoint,
+						socket == null ? IntPtr.Zero : socket.Handle,
+						socket == null ? null : socket.RemoteEndPoint,
+						socket == null ? null : socket.LocalEndPoint,
 						context.MessageType,
 						context.MessageId,
 						context.MethodName,
@@ -747,12 +756,13 @@ namespace MsgPack.Rpc.Client.Protocols
 
 				context.SetBuffer( context.CurrentReceivingBuffer, 0, context.CurrentReceivingBuffer.Length );
 
+				var socket = this.BoundSocket;
 				MsgPackRpcClientProtocolsTrace.TraceEvent(
 					MsgPackRpcClientProtocolsTrace.BeginReceive,
 					"Receive inbound data. {{  \"Socket\" : 0x{0:X}, \"RemoteEndPoint\" : \"{1}\", \"LocalEndPoint\" : \"{2}\" }}",
-					this._boundSocket == null ? IntPtr.Zero : this._boundSocket.Handle,
-					this._boundSocket == null ? null : this._boundSocket.RemoteEndPoint,
-					this._boundSocket == null ? null : this._boundSocket.LocalEndPoint
+					socket == null ? IntPtr.Zero : socket.Handle,
+					socket == null ? null : socket.RemoteEndPoint,
+					socket == null ? null : socket.LocalEndPoint
 				);
 				this.ReceiveCore( context );
 			}
@@ -795,13 +805,14 @@ namespace MsgPack.Rpc.Client.Protocols
 
 			if ( MsgPackRpcClientProtocolsTrace.ShouldTrace( MsgPackRpcClientProtocolsTrace.ReceiveInboundData ) )
 			{
+				var socket = this.BoundSocket;
 				MsgPackRpcClientProtocolsTrace.TraceEvent(
 					MsgPackRpcClientProtocolsTrace.ReceiveInboundData,
 					"Receive response. {{ \"SessionID\" : {0}, \"Socket\" : 0x{1:X}, \"RemoteEndPoint\" : \"{2}\", \"LocalEndPoint\" : \"{3}\", \"BytesTransfered\" : {4} }}",
 					context.SessionId,
-					this._boundSocket == null ? IntPtr.Zero : this._boundSocket.Handle,
-					this._boundSocket == null ? null : this._boundSocket.RemoteEndPoint,
-					this._boundSocket == null ? null : this._boundSocket.LocalEndPoint,
+					socket == null ? IntPtr.Zero : socket.Handle,
+					socket == null ? null : socket.RemoteEndPoint,
+					socket == null ? null : socket.LocalEndPoint,
 					context.BytesTransferred
 				);
 			}
@@ -811,12 +822,13 @@ namespace MsgPack.Rpc.Client.Protocols
 				if ( Interlocked.Exchange( ref this._isServerShutdown, 1 ) == 0 )
 				{
 					// recv() returns 0 when the server socket shutdown gracefully.
+					var socket = this.BoundSocket;
 					MsgPackRpcClientProtocolsTrace.TraceEvent(
 						MsgPackRpcClientProtocolsTrace.DetectServerShutdown,
 						"Server shutdown current socket. {{ \"Socket\" : 0x{0:X}, \"RemoteEndPoint\" : \"{1}\", \"LocalEndPoint\" : \"{2}\" }}",
-						this._boundSocket == null ? IntPtr.Zero : this._boundSocket.Handle,
-						this._boundSocket == null ? null : this._boundSocket.RemoteEndPoint,
-						this._boundSocket == null ? null : this._boundSocket.LocalEndPoint
+						socket == null ? IntPtr.Zero : socket.Handle,
+						socket == null ? null : socket.RemoteEndPoint,
+						socket == null ? null : socket.LocalEndPoint
 					);
 
 					Interlocked.Exchange( ref this._shutdownSource, ( int )ShutdownSource.Server );
