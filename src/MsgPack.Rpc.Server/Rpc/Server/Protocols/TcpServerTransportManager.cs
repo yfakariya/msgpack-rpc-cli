@@ -188,6 +188,12 @@ namespace MsgPack.Rpc.Server.Protocols
 
 		private void OnAcceptted( ListeningContext context )
 		{
+			if ( context.AcceptSocket == null || context.AcceptSocket.RemoteEndPoint == null )
+			{
+				// Canceled due to shutdown.
+				return;
+			}
+
 #if !API_SIGNATURE_TEST
 			MsgPackRpcServerProtocolsTrace.TraceEvent(
 				MsgPackRpcServerProtocolsTrace.EndAccept,
@@ -197,12 +203,6 @@ namespace MsgPack.Rpc.Server.Protocols
 				context.AcceptSocket.LocalEndPoint
 			);
 #endif
-
-			if ( context.AcceptSocket.RemoteEndPoint == null )
-			{
-				// Canceled due to shutdown.
-				return;
-			}
 
 			Contract.Assert( context.BytesTransferred == 0, context.BytesTransferred.ToString() );
 
