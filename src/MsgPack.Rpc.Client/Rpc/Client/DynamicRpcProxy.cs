@@ -241,12 +241,12 @@ namespace MsgPack.Rpc.Client
 				}
 			}
 			else if ( binder.Name.EndsWith( "Async", binder.IgnoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal )
-				&& binder.Name.Length > "End".Length
+				&& binder.Name.Length > "Async".Length
 				&& args.Length >= 1 )
 			{
 				var realArgs = new object[ args.Length - 1 ];
 				Array.ConstrainedCopy( args, 0, realArgs, 0, args.Length - 1 );
-				result = this._client.CallAsync( binder.Name.Remove( "Async".Length ), realArgs, args[ args.Length - 1 ] );
+				result = this._client.CallAsync( binder.Name.Remove( binder.Name.Length - "Async".Length ), realArgs, args[ args.Length - 1 ] );
 				return true;
 			}
 
