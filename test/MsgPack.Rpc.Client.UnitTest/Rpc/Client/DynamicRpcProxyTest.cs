@@ -26,9 +26,11 @@ using MsgPack.Rpc.Client.Protocols;
 using MsgPack.Serialization;
 using NUnit.Framework;
 using MsgPack.Rpc.Protocols;
+using System.Threading.Tasks;
 
 namespace MsgPack.Rpc.Client
 {
+	[TestFixture]
 	public class DynamicRpcProxyTest
 	{
 		private const int TimeoutMilliseconds = 3000;
@@ -40,8 +42,7 @@ namespace MsgPack.Rpc.Client
 			int messageId = Environment.TickCount % 1000;
 			string methodName = "SomeMethod";
 			using ( var environment = new InProcTestEnvironment( ( method, id, args ) => method == methodName && args[ 0 ].AsString() == arg ) )
-			using ( var client = environment.CreateClient() )
-			using ( dynamic target = new DynamicRpcProxy( client ) )
+			using ( dynamic target = new DynamicRpcProxy( environment.EndPoint, environment.Configuration ) )
 			{
 				MessagePackObject result = target.SomeMethod( arg );
 				Assert.That( result == true );
@@ -49,11 +50,41 @@ namespace MsgPack.Rpc.Client
 		}
 
 		[Test]
+		public void TestDynamicInvocation_BeginEnd_Success()
+		{
+			string arg = Guid.NewGuid().ToString();
+			int messageId = Environment.TickCount % 1000;
+			string methodName = "SomeMethod";
+			using ( var environment = new InProcTestEnvironment( ( method, id, args ) => method == methodName && args[ 0 ].AsString() == arg ) )
+			using ( dynamic target = new DynamicRpcProxy( environment.EndPoint, environment.Configuration ) )
+			{
+				IAsyncResult ar = target.BeginSomeMethod( arg, null, null );
+				MessagePackObject result = target.EndSomeMethod( ar );
+				Assert.That( result == true );
+			}
+		}
+
+		[Test]
+		public void TestDynamicInvocation_Async_Success()
+		{
+			string arg = Guid.NewGuid().ToString();
+			int messageId = Environment.TickCount % 1000;
+			string methodName = "SomeMethod";
+			using ( var environment = new InProcTestEnvironment( ( method, id, args ) => method == methodName && args[ 0 ].AsString() == arg ) )
+			using ( dynamic target = new DynamicRpcProxy( environment.EndPoint, environment.Configuration ) )
+			{
+				using ( Task<MessagePackObject> task = target.SomeMethodAsync( arg, null ) )
+				{
+					Assert.That( task.Result == true );
+				}
+			}
+		}
+
+		[Test]
 		public void TestDynamicInvocation_ServerError()
 		{
 			using ( var environment = new InProcTestEnvironment( ( method, id, args ) => { throw new InvalidOperationException( "DUMMY" ); } ) )
-			using ( var client = environment.CreateClient() )
-			using ( dynamic target = new DynamicRpcProxy( client ) )
+			using ( dynamic target = new DynamicRpcProxy( environment.EndPoint, environment.Configuration ) )
 			{
 				try
 				{
@@ -70,19 +101,31 @@ namespace MsgPack.Rpc.Client
 		private sealed class InProcTestEnvironment : IDisposable
 		{
 			private readonly EndPoint _endPoint;
-			private readonly MsgPack.Rpc.Server.CallbackServer _server;
-			private readonly MsgPack.Rpc.Server.Protocols.InProcServerTransportManager _serverTransportManager;
-			private readonly InProcClientTransportManager _clientTransportManager;
 
-			public ClientTransportManager ClientTransportManager
+			public EndPoint EndPoint
 			{
-				get { return this._clientTransportManager; }
+				get { return this._endPoint; }
 			}
 
+			private readonly MsgPack.Rpc.Server.CallbackServer _server;
+			private readonly MsgPack.Rpc.Server.Protocols.InProcServerTransportManager _serverTransportManager;
+
+			private readonly RpcClientConfiguration _configuration;
+
+			public RpcClientConfiguration Configuration
+			{
+				get { return this._configuration; }
+			}
+
+			private readonly InProcClientTransportManager _clientTransportManager;
+						
 			public InProcTestEnvironment( Func<string, int?, MessagePackObject[], MessagePackObject> callback )
 			{
 				this._endPoint = new IPEndPoint( IPAddress.Loopback, MsgPack.Rpc.Server.CallbackServer.PortNumber );
 				this._server = MsgPack.Rpc.Server.CallbackServer.Create( callback, true );
+				this._configuration = RpcClientConfiguration.Default.Clone();
+				this._configuration.TransportManagerProvider = conf => this._clientTransportManager;
+				this._configuration.Freeze();
 				this._serverTransportManager = new MsgPack.Rpc.Server.Protocols.InProcServerTransportManager( this._server.Server as Server.RpcServer, mgr => new SingletonObjectPool<Server.Protocols.InProcServerTransport>( new Server.Protocols.InProcServerTransport( mgr ) ) );
 				this._clientTransportManager = new InProcClientTransportManager( new RpcClientConfiguration(), this._serverTransportManager );
 			}
@@ -92,20 +135,6 @@ namespace MsgPack.Rpc.Client
 				this._clientTransportManager.Dispose();
 				this._serverTransportManager.Dispose();
 				this._server.Dispose();
-			}
-
-			public RpcClient CreateClient()
-			{
-				return new RpcClient( this.Connect(), new SerializationContext() );
-			}
-
-			public ClientTransport Connect()
-			{
-				using ( var task = this._clientTransportManager.ConnectAsync( this._endPoint ) )
-				{
-					task.Wait( Debugger.IsAttached ? Timeout.Infinite : TimeoutMilliseconds );
-					return task.Result;
-				}
 			}
 		}
 	}

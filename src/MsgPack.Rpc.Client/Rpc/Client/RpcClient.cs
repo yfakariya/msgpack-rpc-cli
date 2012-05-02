@@ -47,7 +47,14 @@ namespace MsgPack.Rpc.Client
 			get { return this._serializationContext; }
 		}
 
-		private readonly ClientTransport _transport;
+		private readonly ClientTransportManager _transportManager;
+
+		internal ClientTransportManager TransportManager
+		{
+			get { return this._transportManager; }
+		} 
+
+		private ClientTransport _transport;
 
 		internal ClientTransport Transport
 		{
@@ -57,111 +64,99 @@ namespace MsgPack.Rpc.Client
 		private TaskCompletionSource<object> _transportShutdownCompletionSource;
 
 		/// <summary>
+		///		Gets a value indicating whether this instance is connected to the server.
+		/// </summary>
+		/// <value>
+		/// 	<c>true</c> if this instance is connected to the server; otherwise, <c>false</c>.
+		/// </value>
+		public bool IsConnected
+		{
+			get { return Interlocked.CompareExchange( ref this._transport, null, null ) != null; }
+		}
+
+		private Task<ClientTransport> _connectTask;
+
+		internal void EnsureConnected()
+		{
+			var task = Interlocked.CompareExchange( ref this._connectTask, null, null );
+			if ( task != null )
+			{
+				Interlocked.Exchange( ref this._transport, task.Result );
+				Interlocked.Exchange( ref this._connectTask, null );
+				task.Dispose();
+			}
+		}
+
+		private bool _isDisposed;
+
+		/// <summary>
 		///		Initializes a new instance of the <see cref="RpcClient"/> class.
 		/// </summary>
-		/// <param name="transport">
-		///		The transport to be used for communicating to the server.
-		///	</param>
+		/// <param name="targetEndPoint">
+		///		<see cref="EndPoint"/> for the target.
+		/// </param>
+		/// <exception cref="ArgumentNullException">
+		///		<paramref name="targetEndPoint"/> is <c>null</c>.
+		/// </exception>
+		public RpcClient( EndPoint targetEndPoint ) : this( targetEndPoint, null, null ) { }
+
+		/// <summary>
+		///		Initializes a new instance of the <see cref="RpcClient"/> class.
+		/// </summary>
+		/// <param name="targetEndPoint">
+		///		<see cref="EndPoint"/> for the target.
+		/// </param>
+		/// <param name="configuration">
+		///		A <see cref="RpcClientConfiguration"/> which contains protocol information etc.
+		/// </param>
+		/// <exception cref="ArgumentNullException">
+		///		<paramref name="targetEndPoint"/> is <c>null</c>.
+		/// </exception>
+		public RpcClient( EndPoint targetEndPoint, RpcClientConfiguration configuration ) : this( targetEndPoint, configuration, null ) { }
+
+		/// <summary>
+		///		Initializes a new instance of the <see cref="RpcClient"/> class.
+		/// </summary>
+		/// <param name="targetEndPoint">
+		///		<see cref="EndPoint"/> for the target.
+		/// </param>
 		/// <param name="serializationContext">
 		///		A <see cref="SerializationContext"/> to hold serializers.
 		///	</param>
-		///	<exception cref="ArgumentNullException">
-		///		<paramref name="transport"/> is <c>null</c>.
-		///	</exception>
-		public RpcClient( ClientTransport transport, SerializationContext serializationContext )
+		/// <exception cref="ArgumentNullException">
+		///		<paramref name="targetEndPoint"/> is <c>null</c>.
+		/// </exception>
+		public RpcClient( EndPoint targetEndPoint,  SerializationContext serializationContext ) : this( targetEndPoint, null, serializationContext ) { }
+
+		/// <summary>
+		///		Initializes a new instance of the <see cref="RpcClient"/> class.
+		/// </summary>
+		/// <param name="targetEndPoint">
+		///		<see cref="EndPoint"/> for the target.
+		/// </param>
+		/// <param name="configuration">
+		///		A <see cref="RpcClientConfiguration"/> which contains protocol information etc.
+		/// </param>
+		/// <param name="serializationContext">
+		///		A <see cref="SerializationContext"/> to hold serializers.
+		///	</param>
+		/// <exception cref="ArgumentNullException">
+		///		<paramref name="targetEndPoint"/> is <c>null</c>.
+		/// </exception>
+		public RpcClient( EndPoint targetEndPoint, RpcClientConfiguration configuration, SerializationContext serializationContext )
 		{
-			if ( transport == null )
+			if ( targetEndPoint == null )
 			{
-				throw new ArgumentNullException( "transport" );
+				throw new ArgumentNullException( "targetEndPoint" );
 			}
 
 			Contract.EndContractBlock();
 
-			this._transport = transport;
+			var safeConfiguration = configuration ?? RpcClientConfiguration.Default;
+
+			this._transportManager = safeConfiguration.TransportManagerProvider( safeConfiguration );
 			this._serializationContext = serializationContext ?? new SerializationContext();
-		}
-
-		/// <summary>
-		///		Creates new <see cref="RpcClient"/> to communicate with specified <see cref="EndPoint"/>
-		///		using specified configuration and default serialization context.
-		/// </summary>
-		/// <param name="targetEndPoint">
-		///		<see cref="EndPoint"/> for the target.
-		/// </param>
-		/// <param name="transportManager">
-		///		A <see cref="ClientTransportManager"/> which manages <see cref="ClientTransport"/> to be used to connect to the server.
-		/// </param>
-		/// <returns>
-		///		A new <see cref="RpcClient"/> to communicate with specified <see cref="EndPoint"/>.
-		/// </returns>
-		/// <exception cref="ArgumentNullException">
-		///		<paramref name="targetEndPoint"/> is <c>null</c>.
-		///		Or <paramref name="transportManager"/> is <c>null</c>.
-		/// </exception>
-		public static RpcClient Create( EndPoint targetEndPoint, ClientTransportManager transportManager )
-		{
-			if ( targetEndPoint == null )
-			{
-				throw new ArgumentNullException( "targetEndPoint" );
-			}
-
-			if ( transportManager == null )
-			{
-				throw new ArgumentNullException( "transportManager" );
-			}
-
-			Contract.Ensures( Contract.Result<RpcClient>() != null );
-
-			return CreateCore( targetEndPoint, transportManager, new SerializationContext() );
-		}
-
-		/// <summary>
-		///		Creates new <see cref="RpcClient"/> to communicate with specified <see cref="EndPoint"/>
-		///		and specified configuration.
-		/// </summary>
-		/// <param name="targetEndPoint">
-		///		<see cref="EndPoint"/> for the target.
-		/// </param>
-		/// <param name="transportManager">
-		///		A <see cref="ClientTransportManager"/> which manages <see cref="ClientTransport"/> to be used to connect to the server.
-		/// </param>
-		/// <param name="serializationContext">
-		///		A <see cref="SerializationContext"/> to hold serializers.
-		/// </param>
-		/// <returns>
-		///		A new <see cref="RpcClient"/> to communicate with specified <see cref="EndPoint"/>.
-		/// </returns>
-		/// <exception cref="ArgumentNullException">
-		///		<paramref name="targetEndPoint"/> is <c>null</c>.
-		///		Or <paramref name="transportManager"/> is <c>null</c>.
-		///		Or <paramref name="serializationContext"/> is <c>null</c>.
-		/// </exception>
-		public static RpcClient Create( EndPoint targetEndPoint, ClientTransportManager transportManager, SerializationContext serializationContext )
-		{
-			if ( targetEndPoint == null )
-			{
-				throw new ArgumentNullException( "targetEndPoint" );
-			}
-
-			if ( transportManager == null )
-			{
-				throw new ArgumentNullException( "transportManager" );
-			}
-
-			if ( serializationContext == null )
-			{
-				throw new ArgumentNullException( "serializationContext" );
-			}
-
-			Contract.Ensures( Contract.Result<RpcClient>() != null );
-
-			return CreateCore( targetEndPoint, transportManager, serializationContext );
-		}
-
-		private static RpcClient CreateCore( EndPoint targetEndPoint, ClientTransportManager transportManager, SerializationContext serializationContext )
-		{
-			var transport = transportManager.ConnectAsync( targetEndPoint ).Result;
-			return new RpcClient( transport, serializationContext );
+			Interlocked.Exchange( ref this._connectTask, this._transportManager.ConnectAsync( targetEndPoint ) );
 		}
 
 		/// <summary>
@@ -169,7 +164,22 @@ namespace MsgPack.Rpc.Client
 		/// </summary>
 		public void Dispose()
 		{
-			this._transport.Dispose();
+			this._isDisposed = true;
+			var transport = Interlocked.CompareExchange( ref this._transport, null, null );
+			if ( transport != null )
+			{
+				transport.Dispose();
+			}
+
+			this._transportManager.Dispose();
+		}
+
+		private void VerifyIsNotDisposed()
+		{
+			if ( this._isDisposed )
+			{
+				throw new ObjectDisposedException( this.ToString() );
+			}
 		}
 
 		/// <summary>
@@ -195,6 +205,8 @@ namespace MsgPack.Rpc.Client
 		/// </returns>
 		public Task ShutdownAsync()
 		{
+			this.VerifyIsNotDisposed();
+
 			if ( this._transportShutdownCompletionSource != null )
 			{
 				return null;
@@ -316,6 +328,9 @@ namespace MsgPack.Rpc.Client
 		/// </exception>
 		public IAsyncResult BeginCall( string methodName, object[] arguments, AsyncCallback asyncCallback, object asyncState )
 		{
+			this.VerifyIsNotDisposed();
+			this.EnsureConnected();
+
 			var messageId = NextId();
 			var asyncResult = new RequestMessageAsyncResult( this, messageId, asyncCallback, asyncState );
 
@@ -389,6 +404,8 @@ namespace MsgPack.Rpc.Client
 		/// </remarks>
 		public MessagePackObject EndCall( IAsyncResult asyncResult )
 		{
+			this.VerifyIsNotDisposed();
+
 			var requestAsyncResult = AsyncResult.Verify<RequestMessageAsyncResult>( asyncResult, this );
 			requestAsyncResult.WaitForCompletion();
 			requestAsyncResult.Finish();
@@ -485,6 +502,9 @@ namespace MsgPack.Rpc.Client
 		/// </exception>
 		public IAsyncResult BeginNotify( string methodName, object[] arguments, AsyncCallback asyncCallback, object asyncState )
 		{
+			this.VerifyIsNotDisposed();
+			this.EnsureConnected();
+
 			var asyncResult = new NotificationMessageAsyncResult( this, asyncCallback, asyncState );
 
 			bool isSucceeded = false;
@@ -552,6 +572,8 @@ namespace MsgPack.Rpc.Client
 		/// </remarks>
 		public void EndNotify( IAsyncResult asyncResult )
 		{
+			this.VerifyIsNotDisposed();
+
 			var notificationAsyncResult = AsyncResult.Verify<MessageAsyncResult>( asyncResult, this );
 			notificationAsyncResult.WaitForCompletion();
 			notificationAsyncResult.Finish();

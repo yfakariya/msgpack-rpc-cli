@@ -43,12 +43,12 @@ namespace MsgPack.Rpc.Client
 		{
 			using ( var environment = new InProcTestEnvironment() )
 			{
-				ClientTransport transport = environment.Connect();
+				var configuration = RpcClientConfiguration.Default.Clone();
+				configuration.TransportManagerProvider = conf => environment.ClientTransportManager;
 				SerializationContext serializationContext = new SerializationContext();
 
-				using ( RpcClient target = new RpcClient( transport, serializationContext ) )
+				using ( RpcClient target = new RpcClient( environment.EndPoint, configuration, serializationContext ) )
 				{
-					Assert.That( target.Transport, Is.SameAs( transport ) );
 					Assert.That( target.SerializationContext, Is.SameAs( serializationContext ) );
 				}
 			}
@@ -59,94 +59,18 @@ namespace MsgPack.Rpc.Client
 		public void TestConstructorRpcClient_TransportIsNull()
 		{
 			SerializationContext serializationContext = new SerializationContext();
-			new RpcClient( null, serializationContext );
+			new RpcClient( null );
 		}
 
 		[Test]
-		public void TestConstructorRpcClient_SerializationContextIsNull_DefaultContextIsUsed()
+		public void TestConstructorRpcClient_ConfigurationAndSerializationContextIsNull_DefaultsAreUsed()
 		{
 			using ( var environment = new InProcTestEnvironment() )
 			{
-				ClientTransport transport = environment.Connect();
-
-				using ( RpcClient target = new RpcClient( transport, null ) )
+				using ( RpcClient target = new RpcClient( environment.EndPoint, null, null ) )
 				{
-					Assert.That( target.Transport, Is.SameAs( transport ) );
 					Assert.That( target.SerializationContext, Is.Not.Null );
 				}
-			}
-		}
-
-
-		[Test()]
-		public void TestCreate_EndPoint_ClientTransportManager_SetAsRemoteEndPointOfBoundSocketOfTransport_SetAsManagerOfTransport()
-		{
-			using ( var environment = new TcpTestEnvironment() )
-			{
-				using ( RpcClient target = RpcClient.Create( _loopbackEndPoint, environment.ClientTransportManager ) )
-				{
-					Assert.That( target.Transport.BoundSocket.RemoteEndPoint, Is.EqualTo( _loopbackEndPoint ) );
-					Assert.That( target.Transport.Manager, Is.SameAs( environment.ClientTransportManager ) );
-				}
-			}
-		}
-
-		[Test()]
-		[ExpectedException( typeof( ArgumentNullException ) )]
-		public void TestCreate_EndPoint_ClientTransportManager_EndPointIsNull()
-		{
-			using ( var environment = new InProcTestEnvironment() )
-			{
-				RpcClient.Create( default( EndPoint ), environment.ClientTransportManager );
-			}
-		}
-
-		[Test()]
-		[ExpectedException( typeof( ArgumentNullException ) )]
-		public void TestCreate_EndPoint_ClientTransportManager_ClientTransportManagerIsNull()
-		{
-			RpcClient.Create( _loopbackEndPoint, default( ClientTransportManager ) );
-		}
-
-		[Test()]
-		public void TestCreate_EndPoint_ClientTransportManager_SerializationContext_SetAsRemoteEndPointOfBoundSocketOfTransport_SetAsManagerOfTransport_SetAsProperty()
-		{
-			using ( var environment = new TcpTestEnvironment() )
-			{
-				SerializationContext serializationContext = new SerializationContext();
-				using ( RpcClient target = RpcClient.Create( _loopbackEndPoint, environment.ClientTransportManager, serializationContext ) )
-				{
-					Assert.That( target.Transport.BoundSocket.RemoteEndPoint, Is.EqualTo( _loopbackEndPoint ) );
-					Assert.That( target.Transport.Manager, Is.SameAs( environment.ClientTransportManager ) );
-					Assert.That( target.SerializationContext, Is.SameAs( serializationContext ) );
-				}
-			}
-		}
-
-		[Test()]
-		[ExpectedException( typeof( ArgumentNullException ) )]
-		public void TestCreate_EndPoint_ClientTransportManager_SerializationContext_EndPointIsNull()
-		{
-			using ( var environment = new InProcTestEnvironment() )
-			{
-				RpcClient.Create( null, environment.ClientTransportManager, new SerializationContext() );
-			}
-		}
-
-		[Test()]
-		[ExpectedException( typeof( ArgumentNullException ) )]
-		public void TestCreate_EndPoint_ClientTransportManager_SerializationContext_ClientTransportManagerIsNull()
-		{
-			RpcClient.Create( _loopbackEndPoint, null, new SerializationContext() );
-		}
-
-		[Test()]
-		[ExpectedException( typeof( ArgumentNullException ) )]
-		public void TestCreate_EndPoint_ClientTransportManager_SerializationContext_DefaultIsUsed()
-		{
-			using ( var environment = new InProcTestEnvironment() )
-			{
-				RpcClient.Create( _loopbackEndPoint, environment.ClientTransportManager, null );
 			}
 		}
 
@@ -155,9 +79,11 @@ namespace MsgPack.Rpc.Client
 		{
 			using ( var environment = new InProcTestEnvironment() )
 			{
-				var target = RpcClient.Create( _loopbackEndPoint, environment.ClientTransportManager );
+				var target = new RpcClient( _loopbackEndPoint, environment.Configuration, null );
+				target.EnsureConnected();
 				target.Dispose();
 				Assert.That( target.Transport.IsDisposed );
+				Assert.That( target.TransportManager.IsDisposed );
 			}
 		}
 
@@ -166,7 +92,7 @@ namespace MsgPack.Rpc.Client
 		{
 			using ( var environment = new InProcTestEnvironment() )
 			{
-				var target = RpcClient.Create( _loopbackEndPoint, environment.ClientTransportManager );
+				var target = new RpcClient( _loopbackEndPoint, environment.Configuration, null );
 				target.Dispose();
 				target.Dispose();
 			}
@@ -176,9 +102,10 @@ namespace MsgPack.Rpc.Client
 		public void TestShutdown_TransportShutdownIsInitiated()
 		{
 			using ( var environment = new InProcTestEnvironment() )
-			using ( var target = RpcClient.Create( _loopbackEndPoint, environment.ClientTransportManager ) )
+			using ( var target = new RpcClient( _loopbackEndPoint, environment.Configuration, null ) )
 			{
 				int isShutdownCompleted = 0;
+				target.EnsureConnected();
 				target.Transport.ShutdownCompleted += ( sender, e ) => Interlocked.Exchange( ref isShutdownCompleted, 1 );
 				target.Shutdown();
 				Assert.That( target.Transport.IsClientShutdown );
@@ -190,9 +117,10 @@ namespace MsgPack.Rpc.Client
 		public void TestShutdownAsync_TransportShutdownIsInitiated()
 		{
 			using ( var environment = new InProcTestEnvironment() )
-			using ( var target = RpcClient.Create( _loopbackEndPoint, environment.ClientTransportManager ) )
+			using ( var target = new RpcClient( _loopbackEndPoint, environment.Configuration, null ) )
 			{
 				int isShutdownCompleted = 0;
+				target.EnsureConnected();
 				target.Transport.ShutdownCompleted += ( sender, e ) => Interlocked.Exchange( ref isShutdownCompleted, 1 );
 				using ( var task = target.ShutdownAsync() )
 				{
@@ -324,7 +252,7 @@ namespace MsgPack.Rpc.Client
 		{
 			var clientArgs = new object[] { 1, "3" };
 			int result = 0;
-			using ( var waitHandle = new ManualResetEventSlim())
+			using ( var waitHandle = new ManualResetEventSlim() )
 			using ( var environment = new InProcTestEnvironment(
 				( id, args ) =>
 				{
@@ -482,8 +410,22 @@ namespace MsgPack.Rpc.Client
 		private sealed class InProcTestEnvironment : IDisposable
 		{
 			private readonly EndPoint _endPoint;
+
+			public EndPoint EndPoint
+			{
+				get { return this._endPoint; }
+			}
+
 			private readonly MsgPack.Rpc.Server.CallbackServer _server;
 			private readonly MsgPack.Rpc.Server.Protocols.InProcServerTransportManager _serverTransportManager;
+
+			private readonly RpcClientConfiguration _configuration;
+
+			public RpcClientConfiguration Configuration
+			{
+				get { return this._configuration; }
+			}
+
 			private readonly InProcClientTransportManager _clientTransportManager;
 
 			public ClientTransportManager ClientTransportManager
@@ -502,6 +444,9 @@ namespace MsgPack.Rpc.Client
 			{
 				this._endPoint = new IPEndPoint( IPAddress.Loopback, MsgPack.Rpc.Server.CallbackServer.PortNumber );
 				this._server = MsgPack.Rpc.Server.CallbackServer.Create( callback, true );
+				this._configuration = RpcClientConfiguration.Default.Clone();
+				this._configuration.TransportManagerProvider = conf => this._clientTransportManager;
+				this._configuration.Freeze();
 				this._serverTransportManager = new MsgPack.Rpc.Server.Protocols.InProcServerTransportManager( this._server.Server as Server.RpcServer, mgr => new SingletonObjectPool<Server.Protocols.InProcServerTransport>( new Server.Protocols.InProcServerTransport( mgr ) ) );
 				this._clientTransportManager = new InProcClientTransportManager( new RpcClientConfiguration(), this._serverTransportManager );
 			}
@@ -515,16 +460,7 @@ namespace MsgPack.Rpc.Client
 
 			public RpcClient CreateClient()
 			{
-				return new RpcClient( this.Connect(), new SerializationContext() );
-			}
-
-			public ClientTransport Connect()
-			{
-				using ( var task = this._clientTransportManager.ConnectAsync( this._endPoint ) )
-				{
-					task.Wait( Debugger.IsAttached ? Timeout.Infinite : TimeoutMilliseconds );
-					return task.Result;
-				}
+				return new RpcClient( this._endPoint, this._configuration, null );
 			}
 		}
 

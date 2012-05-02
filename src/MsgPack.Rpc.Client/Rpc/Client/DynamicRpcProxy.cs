@@ -99,7 +99,10 @@ namespace MsgPack.Rpc.Client
 		/// <summary>
 		///		Initializes a new instance of the <see cref="DynamicRpcProxy"/> class.
 		/// </summary>
-		/// <param name="client">The client.</param>
+		/// <param name="client">An underlying <see cref="RpcClient"/>.</param>
+		/// <exception cref="ArgumentNullException">
+		///		<paramref name="client"/> is <c>null</c>.
+		/// </exception>
 		public DynamicRpcProxy( RpcClient client )
 		{
 			if ( client == null )
@@ -111,6 +114,66 @@ namespace MsgPack.Rpc.Client
 
 			this._client = client;
 		}
+
+		/// <summary>
+		///		Initializes a new instance of the <see cref="DynamicRpcProxy"/> class.
+		/// </summary>
+		/// <param name="targetEndPoint">
+		///		<see cref="EndPoint"/> for the target.
+		/// </param>
+		/// <exception cref="ArgumentNullException">
+		///		<paramref name="targetEndPoint"/> is <c>null</c>.
+		/// </exception>
+		public DynamicRpcProxy( EndPoint targetEndPoint )
+			: this( new RpcClient( targetEndPoint ) ) { }
+
+		/// <summary>
+		///		Initializes a new instance of the <see cref="DynamicRpcProxy"/> class.
+		/// </summary>
+		/// <param name="targetEndPoint">
+		///		<see cref="EndPoint"/> for the target.
+		/// </param>
+		/// <param name="configuration">
+		///		A <see cref="RpcClientConfiguration"/> which contains protocol information etc.
+		/// </param>
+		/// <exception cref="ArgumentNullException">
+		///		<paramref name="targetEndPoint"/> is <c>null</c>.
+		/// </exception>
+		public DynamicRpcProxy( EndPoint targetEndPoint, RpcClientConfiguration configuration )
+			: this( new RpcClient( targetEndPoint, configuration ) ) { }
+
+		/// <summary>
+		///		Initializes a new instance of the <see cref="DynamicRpcProxy"/> class.
+		/// </summary>
+		/// <param name="targetEndPoint">
+		///		<see cref="EndPoint"/> for the target.
+		/// </param>
+		/// <param name="serializationContext">
+		///		A <see cref="SerializationContext"/> to hold serializers.
+		///	</param>
+		/// <exception cref="ArgumentNullException">
+		///		<paramref name="targetEndPoint"/> is <c>null</c>.
+		/// </exception>
+		public DynamicRpcProxy( EndPoint targetEndPoint, SerializationContext serializationContext )
+			: this( new RpcClient( targetEndPoint, serializationContext ) ) { }
+
+		/// <summary>
+		///		Initializes a new instance of the <see cref="DynamicRpcProxy"/> class.
+		/// </summary>
+		/// <param name="targetEndPoint">
+		///		<see cref="EndPoint"/> for the target.
+		/// </param>
+		/// <param name="configuration">
+		///		A <see cref="RpcClientConfiguration"/> which contains protocol information etc.
+		/// </param>
+		/// <param name="serializationContext">
+		///		A <see cref="SerializationContext"/> to hold serializers.
+		///	</param>
+		/// <exception cref="ArgumentNullException">
+		///		<paramref name="targetEndPoint"/> is <c>null</c>.
+		/// </exception>
+		public DynamicRpcProxy( EndPoint targetEndPoint, RpcClientConfiguration configuration, SerializationContext serializationContext )
+			: this( new RpcClient( targetEndPoint, configuration, serializationContext ) ) { }
 
 		/// <summary>
 		///		Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
@@ -189,77 +252,6 @@ namespace MsgPack.Rpc.Client
 
 			result = this._client.Call( binder.Name, args );
 			return true;
-		}
-
-		/// <summary>
-		///		Creates new <see cref="DynamicRpcProxy"/> to communicate with specified <see cref="EndPoint"/>
-		///		using specified configuration and default serialization context.
-		/// </summary>
-		/// <param name="targetEndPoint">
-		///		<see cref="EndPoint"/> for the target.
-		/// </param>
-		/// <param name="transportManager">
-		///		A <see cref="ClientTransportManager"/> which manages <see cref="ClientTransport"/> to be used to connect to the server.
-		/// </param>
-		/// <returns>
-		///		A new <see cref="DynamicRpcProxy"/> to communicate with specified <see cref="EndPoint"/>.
-		/// </returns>
-		/// <exception cref="ArgumentNullException">
-		///		<paramref name="targetEndPoint"/> is <c>null</c>.
-		///		Or <paramref name="transportManager"/> is <c>null</c>.
-		/// </exception>
-		public static DynamicRpcProxy Create( EndPoint targetEndPoint, ClientTransportManager transportManager )
-		{
-			if ( targetEndPoint == null )
-			{
-				throw new ArgumentNullException( "targetEndPoint" );
-			}
-
-			if ( transportManager == null )
-			{
-				throw new ArgumentNullException( "transportManager" );
-			}
-
-			Contract.Ensures( Contract.Result<DynamicRpcProxy>() != null );
-
-			return new DynamicRpcProxy( RpcClient.Create( targetEndPoint, transportManager ) );
-		}
-
-		/// <summary>
-		///		Creates new <see cref="DynamicRpcProxy"/> to communicate with specified <see cref="EndPoint"/>
-		///		and specified configuration.
-		/// </summary>
-		/// <param name="targetEndPoint">
-		///		<see cref="EndPoint"/> for the target.
-		/// </param>
-		/// <param name="transportManager">
-		///		A <see cref="ClientTransportManager"/> which manages <see cref="ClientTransport"/> to be used to connect to the server.
-		/// </param>
-		/// <param name="serializationContext">
-		///		A <see cref="SerializationContext"/> to holds serializers.
-		/// </param>
-		/// <returns>
-		///		A new <see cref="DynamicRpcProxy"/> to communicate with specified <see cref="EndPoint"/>.
-		/// </returns>
-		/// <exception cref="ArgumentNullException">
-		///		<paramref name="targetEndPoint"/> is <c>null</c>.
-		///		Or <paramref name="transportManager"/> is <c>null</c>.
-		/// </exception>
-		public static DynamicRpcProxy Create( EndPoint targetEndPoint, ClientTransportManager transportManager, SerializationContext serializationContext )
-		{
-			if ( targetEndPoint == null )
-			{
-				throw new ArgumentNullException( "targetEndPoint" );
-			}
-
-			if ( transportManager == null )
-			{
-				throw new ArgumentNullException( "transportManager" );
-			}
-
-			Contract.Ensures( Contract.Result<DynamicRpcProxy>() != null );
-
-			return new DynamicRpcProxy( RpcClient.Create( targetEndPoint, transportManager, serializationContext ) );
 		}
 	}
 }

@@ -52,8 +52,7 @@ namespace MsgPack.Rpc.Client
 			{
 				server.Error += ( sender, e ) => Console.Error.WriteLine( "{0} Error:{1}", e.IsClientError ? "Client" : "Server", e.Exception );
 
-				using ( var clientTransportManager = RpcClientConfiguration.Default.TransportManagerProvider( RpcClientConfiguration.Default ) )
-				using ( var client = RpcClient.Create( new IPEndPoint( IPAddress.Loopback, CallbackServer.PortNumber ), clientTransportManager ) )
+				using ( var client = new RpcClient( new IPEndPoint( IPAddress.Loopback, CallbackServer.PortNumber ) ) )
 				{
 					var result = client.Call( "Echo", timeStamp, mesage );
 					var asArray = result.AsList();
