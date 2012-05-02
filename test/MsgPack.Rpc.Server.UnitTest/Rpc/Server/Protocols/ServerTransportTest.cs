@@ -176,7 +176,7 @@ namespace MsgPack.Rpc.Server.Protocols
 
 							Assert.That( result.Count, Is.EqualTo( 4 ) );
 							Assert.That( result[ 0 ] == ( int )MessageType.Response );
-							Assert.That( result[ 1 ] == messageId );
+							Assert.That( result[ 1 ] == messageId, "{0} != {1}", result[ 1 ], messageId );
 							Assert.That( result[ 2 ].IsNil, "{0}:{1}", result[ 2 ], result[ 3 ] );
 							Assert.That( result[ 3 ] == returnValue );
 						}
