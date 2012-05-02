@@ -65,11 +65,13 @@ namespace MsgPack.Rpc
 		///		Clones all of the fields of this instance.
 		/// </summary>
 		/// <returns>
-		///		The shallow copy of this instance.
+		///		The shallow copy of this instance. Returned instance always is not frozen.
 		/// </returns>
 		protected virtual FreezableObject CloneCore()
 		{
-			return this.MemberwiseClone() as FreezableObject;
+			var clone = this.MemberwiseClone() as FreezableObject;
+			Interlocked.Exchange( ref clone._isFrozen, 0 );
+			return clone;
 		}
 
 		/// <summary>

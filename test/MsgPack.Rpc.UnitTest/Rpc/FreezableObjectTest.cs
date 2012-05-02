@@ -127,13 +127,13 @@ namespace MsgPack.Rpc
 		}
 
 		[Test]
-		public void TestClone_IsFrozen_ReturnsIsFrozen()
+		public void TestClone_IsFrozen_ReturnsIsNotFrozen()
 		{
 			ICloneable target = new Target();
 			( target as IFreezable ).Freeze();
 			var result = target.Clone() as Target;
 
-			Assert.That( result.IsFrozen, Is.True );
+			Assert.That( result.IsFrozen, Is.False );
 		}
 		private sealed class Target : FreezableObject
 		{
