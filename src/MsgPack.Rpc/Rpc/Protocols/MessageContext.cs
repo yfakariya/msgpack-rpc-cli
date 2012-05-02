@@ -19,19 +19,33 @@
 #endregion -- License Terms --
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Globalization;
+using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 
 namespace MsgPack.Rpc.Protocols
 {
-	// FIXME: MessageContext should be decoupled from SocketAsyncEventArgs. Use UserToken instead.
 	/// <summary>
 	///		Represents context information of asynchronous MesagePack-RPC operation.
 	/// </summary>
-	public abstract class MessageContext : SocketAsyncEventArgs
+	public abstract class MessageContext : IDisposable
 	{
+		private readonly SocketAsyncEventArgs _socketContext;
+
+		/// <summary>
+		///		Gets the socket context for asynchronous socket.
+		/// </summary>
+		/// <value>
+		///		The <see cref="SocketAsyncEventArgs"/> for asynchronous socket.
+		/// </value>
+		public SocketAsyncEventArgs SocketContext
+		{
+			get { return this._socketContext; }
+		}
+
 		private static long _lastSessionId;
 
 		private long _sessionId;
@@ -121,14 +135,14 @@ namespace MsgPack.Rpc.Protocols
 			Contract.Requires( this.BoundTransport == null );
 			Contract.Ensures( this.BoundTransport != null );
 
-			this.AcceptSocket = transport.BoundSocket;
+			this.SocketContext.AcceptSocket = transport.BoundSocket;
 			var oldBoundTransport = Interlocked.CompareExchange( ref this._boundTransport, transport, null );
 			if ( oldBoundTransport != null )
 			{
 				throw new InvalidOperationException( String.Format( CultureInfo.CurrentCulture, "This context is already bounded to '{0}'(Socket: 0x{1:X}).", transport.GetType(), transport.BoundSocket == null ? IntPtr.Zero : transport.BoundSocket.Handle ) );
 			}
 
-			this.Completed += transport.OnSocketOperationCompleted;
+			this.SocketContext.Completed += transport.OnSocketOperationCompleted;
 		}
 
 		private int? _bytesTransferred;
@@ -137,30 +151,106 @@ namespace MsgPack.Rpc.Protocols
 		///		Gets the bytes count of transferred data.
 		/// </summary>
 		/// <returns>The bytes count of transferred data..</returns>
-		public new int BytesTransferred
+		public int BytesTransferred
 		{
-			get { return this._bytesTransferred ?? base.BytesTransferred; }
+			get { return this._bytesTransferred ?? this.SocketContext.BytesTransferred; }
 		}
 
 		/// <summary>
-		///		Sets the bytes count of transferred data.
+		///		Gets or sets the remote end point.
 		/// </summary>
-		/// <param name="bytesTransferred">
-		///		The bytes count of transferred data.
-		///		To use actual socket's value, specify <c>null</c>.
-		/// </param>
-		/// <remarks>
-		///		This method is intented to use testing purposes or emulate socket operation on non-socket transport.
-		/// </remarks>
-		internal void SetBytesTransferred( int? bytesTransferred )
+		/// <value>
+		///		The remote end point.
+		/// </value>
+		public EndPoint RemoteEndPoint
 		{
-			this._bytesTransferred = bytesTransferred;
+			get { return this._socketContext.RemoteEndPoint; }
+			set { this._socketContext.RemoteEndPoint = value; }
 		}
+
+		/// <summary>
+		///		Gets the last asynchronous operation.
+		/// </summary>
+		/// <value>
+		///		The <see cref="SocketAsyncOperation"/> which represents the last asynchronous operation.
+		/// </value>
+		public SocketAsyncOperation LastOperation
+		{
+			get { return this._socketContext.LastOperation; }
+		}
+
+		/// <summary>
+		///		Gets or sets the asynchronous socket operation result.
+		/// </summary>
+		/// <value>
+		///		The <see cref="SocketError"/> which represents the asynchronous socket operation result.
+		/// </value>
+		public SocketError SocketError
+		{
+			get { return this._socketContext.SocketError; }
+			set { this._socketContext.SocketError = value; }
+		}
+
+		// Begin In-Proc support fakes
+
+		/// <summary>
+		///		Sets <see cref="BytesTransferred"/> property value with specified value for testing purposes.
+		/// </summary>
+		/// <param name="value">The value.</param>
+		internal void SetBytesTransferred( int value )
+		{
+			this._bytesTransferred = value;
+		}
+
+		internal byte[] Buffer
+		{
+			get { return this._socketContext.Buffer; }
+		}
+
+		internal IList<ArraySegment<byte>> BufferList
+		{
+			get { return this._socketContext.BufferList; }
+		}
+
+		internal int Offset
+		{
+			get { return this._socketContext.Offset; }
+		}
+
+		// End In-Proc support fakes
+
 
 		/// <summary>
 		///		Initializes a new instance of the <see cref="MessageContext"/> class.
 		/// </summary>
-		protected MessageContext() { }
+		protected MessageContext()
+		{
+			this._socketContext = new SocketAsyncEventArgs();
+			this._socketContext.UserToken = this;
+		}
+
+		/// <summary>
+		///		Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
+		/// </summary>
+		public void Dispose()
+		{
+			this.Dispose( true );
+			GC.SuppressFinalize( this );
+		}
+
+		/// <summary>
+		///		Releases unmanaged and - optionally - managed resources
+		/// </summary>
+		/// <param name="disposing">
+		///		<c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.
+		///	</param>
+		protected virtual void Dispose( bool disposing )
+		{
+			if ( disposing )
+			{
+				this._socketContext.Dispose();
+			}
+		}
 
 		/// <summary>
 		///		Renews the session id and start time.
@@ -198,7 +288,7 @@ namespace MsgPack.Rpc.Protocols
 			var boundTransport = Interlocked.Exchange( ref this._boundTransport, null );
 			if ( boundTransport != null )
 			{
-				this.Completed -= boundTransport.OnSocketOperationCompleted;
+				this.SocketContext.Completed -= boundTransport.OnSocketOperationCompleted;
 			}
 		}
 	}

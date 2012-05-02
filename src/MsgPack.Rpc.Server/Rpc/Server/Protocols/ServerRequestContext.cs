@@ -19,10 +19,8 @@
 #endregion -- License Terms --
 
 using System;
-using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.IO;
-using System.Linq;
 using MsgPack.Rpc.Protocols;
 
 namespace MsgPack.Rpc.Server.Protocols
@@ -30,7 +28,7 @@ namespace MsgPack.Rpc.Server.Protocols
 	/// <summary>
 	///		Represents context information for the request or notification message.
 	/// </summary>
-	public sealed class ServerRequestContext : MessageContext
+	public sealed class ServerRequestContext : InboundMessageContext
 	{
 		/// <summary>
 		///		The initial process of the deserialization pipeline.
@@ -41,56 +39,6 @@ namespace MsgPack.Rpc.Server.Protocols
 		///		Next (that is, resuming) process on the deserialization pipeline.
 		/// </summary>
 		internal Func<ServerRequestContext, bool> NextProcess;
-
-
-
-		private byte[] _currentReceivingBuffer;
-
-		/// <summary>
-		///		Gets the buffer to receive data.
-		/// </summary>
-		/// <value>
-		///		The buffer to receive data.
-		///		This value will not be <c>null</c>.
-		///		Available section is started with _receivingBufferOffset.
-		/// </value>
-		internal byte[] CurrentReceivingBuffer
-		{
-			get { return this._currentReceivingBuffer; }
-		}
-
-		private int _currentReceivingBufferOffset;
-
-		private readonly List<ArraySegment<byte>> _receivedData;
-
-		/// <summary>
-		///		Gets the received data.
-		/// </summary>
-		/// <value>
-		///		The received data.
-		///		This value wlll not be <c>null</c>.
-		/// </value>
-		internal IList<ArraySegment<byte>> ReceivedData
-		{
-			get { return this._receivedData; }
-		}
-
-		/// <summary>
-		///		Buffer that stores unpacking binaries received.
-		/// </summary>
-		internal ByteArraySegmentStream UnpackingBuffer;
-
-
-		/// <summary>
-		///		<see cref="Unpacker"/> to unpack entire request/notification message.
-		/// </summary>
-		internal Unpacker RootUnpacker;
-
-		/// <summary>
-		///		Subtree <see cref="Unpacker"/> to unpack request/notification message as array.
-		/// </summary>
-		internal Unpacker HeaderUnpacker;
-
 
 		/// <summary>
 		///		Buffer to store binaries for arguments array for subsequent deserialization.
@@ -146,10 +94,6 @@ namespace MsgPack.Rpc.Server.Protocols
 		{
 			// TODO: Configurable
 			this.ArgumentsBuffer = new MemoryStream( 65536 );
-			// TODO: Configurable
-			this._currentReceivingBuffer = new byte[ 65536 ];
-			// TODO: ArrayDeque is preferred.
-			this._receivedData = new List<ArraySegment<byte>>( 1 );
 		}
 
 		/// <summary>
@@ -171,36 +115,12 @@ namespace MsgPack.Rpc.Server.Protocols
 		}
 
 		/// <summary>
-		///		Shifts receiving buffer offset to receive subsequent bytes.
-		/// </summary>
-		public void ShiftCurrentReceivingBuffer()
-		{
-			int shift = this.BytesTransferred;
-			this._receivedData.Add( new ArraySegment<byte>( this._currentReceivingBuffer, this.Offset, shift ) );
-			this._currentReceivingBufferOffset += shift;
-			if ( this._currentReceivingBufferOffset == this._currentReceivingBuffer.Length )
-			{
-				// Replace with new buffer.
-				this._currentReceivingBuffer = new byte[ this._currentReceivingBuffer.Length ];
-				this._currentReceivingBufferOffset = 0;
-			}
-
-			// Set new offset and length.
-			this.SetBuffer( this._currentReceivingBuffer, this._currentReceivingBufferOffset, this._currentReceivingBuffer.Length - this._currentReceivingBufferOffset );
-		}
-
-		/// <summary>
 		///		Clears this instance internal buffers for reuse.
 		/// </summary>
 		internal sealed override void Clear()
 		{
 			this.ClearBuffers();
 			this.ClearDispatchContext();
-			if ( this.UnpackingBuffer != null )
-			{
-				this.UnpackingBuffer.Dispose();
-				this.UnpackingBuffer = null;
-			}
 			this.NextProcess = InvalidFlow;
 			base.Clear();
 		}
@@ -208,7 +128,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		/// <summary>
 		///		Clears the buffers to deserialize message, which is not required to dispatch and invoke server method.
 		/// </summary>
-		internal void ClearBuffers()
+		internal override void ClearBuffers()
 		{
 			if ( this.ArgumentsBufferUnpacker != null )
 			{
@@ -224,46 +144,7 @@ namespace MsgPack.Rpc.Server.Protocols
 
 			this.ArgumentsCount = 0;
 			this.UnpackedArgumentsCount = 0;
-			if ( this.HeaderUnpacker != null )
-			{
-				this.HeaderUnpacker.Dispose();
-				this.HeaderUnpacker = null;
-			}
-
-			if ( this.RootUnpacker != null )
-			{
-				this.RootUnpacker.Dispose();
-				this.RootUnpacker = null;
-			}
-
-			if ( this.UnpackingBuffer != null )
-			{
-				this.TruncateUsedReceivedData();
-			}
-		}
-
-		/// <summary>
-		///		Truncates the used segments from the received data.
-		/// </summary>
-		private void TruncateUsedReceivedData()
-		{
-			long removals = this.UnpackingBuffer.Position;
-			var segments = this.UnpackingBuffer.GetBuffer();
-			while ( segments.Any() && 0 < removals )
-			{
-				if ( segments[ 0 ].Count <= removals )
-				{
-					removals -= segments[ 0 ].Count;
-					segments.RemoveAt( 0 );
-				}
-				else
-				{
-					int newCount = segments[ 0 ].Count - unchecked( ( int )removals );
-					int newOffset = segments[ 0 ].Offset + unchecked( ( int )removals );
-					segments[ 0 ] = new ArraySegment<byte>( segments[ 0 ].Array, newOffset, newCount );
-					removals = 0;
-				}
-			}
+			base.ClearBuffers();
 		}
 
 		/// <summary>

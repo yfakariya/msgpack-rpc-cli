@@ -43,7 +43,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		protected sealed override void SendCore( ServerResponseContext context )
 		{
 			// Manager stores the socket which is dedicated socket to this transport in the AcceptSocket property.
-			if ( !this.BoundSocket.SendToAsync( context ) )
+			if ( !this.BoundSocket.SendToAsync( context.SocketContext ) )
 			{
 				context.SetCompletedSynchronously();
 				this.OnSent( context );
@@ -57,7 +57,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		protected sealed override void ReceiveCore( ServerRequestContext context )
 		{
 			// Manager stores the socket which is dedicated socket to this transport in the AcceptSocket property.
-			if ( !this.BoundSocket.ReceiveFromAsync( context ) )
+			if ( !this.BoundSocket.ReceiveFromAsync( context.SocketContext ) )
 			{
 				context.SetCompletedSynchronously();
 				this.OnReceived( context );

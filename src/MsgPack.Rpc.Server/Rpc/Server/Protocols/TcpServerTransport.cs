@@ -79,7 +79,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		{
 			Contract.Assert( this.BoundSocket != null );
 
-			if ( !this.BoundSocket.ReceiveAsync( context ) )
+			if ( !this.BoundSocket.ReceiveAsync( context.SocketContext ) )
 			{
 				context.SetCompletedSynchronously();
 				this.OnReceived( context );
@@ -94,7 +94,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		{
 			Contract.Assert( this.BoundSocket != null );
 
-			if ( !this.BoundSocket.SendAsync( context ) )
+			if ( !this.BoundSocket.SendAsync( context.SocketContext ) )
 			{
 				context.SetCompletedSynchronously();
 				this.OnSent( context );

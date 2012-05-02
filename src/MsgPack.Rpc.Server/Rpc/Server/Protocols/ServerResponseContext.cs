@@ -29,7 +29,7 @@ namespace MsgPack.Rpc.Server.Protocols
 	/// <summary>
 	///		Represents context information for the reponse message.
 	/// </summary>
-	public sealed class ServerResponseContext : MessageContext
+	public sealed class ServerResponseContext : OutboundMessageContext
 	{
 		/// <summary>
 		///		Constant part of the response header.
@@ -74,12 +74,6 @@ namespace MsgPack.Rpc.Server.Protocols
 				
 				return this._errorDataPacker; }
 		}
-
-		/// <summary>
-		///		The reusable buffer to pack ID.
-		///		This value will not be <c>null</c>.
-		/// </summary>
-		private readonly MemoryStream _idBuffer;
 
 		/// <summary>
 		///		The reusable buffer to pack error ID.
@@ -137,7 +131,6 @@ namespace MsgPack.Rpc.Server.Protocols
 		/// </summary>
 		public ServerResponseContext()
 		{
-			this._idBuffer = new MemoryStream( 5 );
 			// TODO: Configurable
 			this._errorDataBuffer = new MemoryStream( 128 );
 			// TODO: Configurable
@@ -196,16 +189,11 @@ namespace MsgPack.Rpc.Server.Protocols
 		{
 			Contract.Assert( this.SendingBuffer[ 0 ].Array != null );
 			// FIXME: Should be copied from request context.
-			using ( var packer = Packer.Create( this._idBuffer, false ) )
-			{
-				packer.Pack( this.MessageId );
-			}
-
-			this.SendingBuffer[ 1 ] = new ArraySegment<byte>( this._idBuffer.GetBuffer(), 0, unchecked( ( int )this._idBuffer.Length ) );
+			this.SendingBuffer[ 1 ] = this.GetPackedMessageId();
 			this.SendingBuffer[ 2 ] = new ArraySegment<byte>( this._errorDataBuffer.GetBuffer(), 0, unchecked( ( int )this._errorDataBuffer.Length ) );
 			this.SendingBuffer[ 3 ] = new ArraySegment<byte>( this._returnDataBuffer.GetBuffer(), 0, unchecked( ( int )this._returnDataBuffer.Length ) );
-			this.SetBuffer( null, 0, 0 );
-			this.BufferList = this.SendingBuffer;
+			this.SocketContext.SetBuffer( null, 0, 0 );
+			this.SocketContext.BufferList = this.SendingBuffer;
 		}
 
 		/// <summary>
@@ -213,10 +201,10 @@ namespace MsgPack.Rpc.Server.Protocols
 		/// </summary>
 		internal sealed override void Clear()
 		{
-			this._idBuffer.SetLength( 0 );
+			this.ClearBuffers();
 			this._errorDataBuffer.SetLength( 0 );
 			this._returnDataBuffer.SetLength( 0 );
-			this.BufferList = null;
+			this.SocketContext.BufferList = null;
 			this.SendingBuffer[ 1 ] = default( ArraySegment<byte> );
 			this.SendingBuffer[ 2 ] = default( ArraySegment<byte> );
 			this.SendingBuffer[ 3 ] = default( ArraySegment<byte> );

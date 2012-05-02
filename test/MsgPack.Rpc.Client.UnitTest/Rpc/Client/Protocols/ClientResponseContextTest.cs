@@ -122,7 +122,7 @@ namespace MsgPack.Rpc.Client.Protocols
 		private static void MakeBufferDirty( ClientResponseContext target )
 		{
 			target.SetTransport( new DummyClientTransport() );
-			target.SetBuffer( new byte[] { 1, 2, 3, 4 }, 0, 4 );
+			target.SetReceivingBuffer( new byte[] { 1, 2, 3, 4 } );
 			target.SetBytesTransferred( 1 );
 			target.ShiftCurrentReceivingBuffer();
 			target.DumpStream = new MemoryStream();

@@ -211,9 +211,9 @@ namespace MsgPack.Rpc.Server.Protocols
 		internal Task SendAsync( ServerResponseContext context )
 		{
 			Contract.Assert( context != null );
-			Contract.Assert( context.BufferList != null );
+			Contract.Assert( context.SocketContext.BufferList != null );
 
-			var data = context.BufferList.SelectMany( b => b.Array.Skip( b.Offset ).Take( b.Count ) ).ToArray();
+			var data = context.SocketContext.BufferList.SelectMany( b => b.Array.Skip( b.Offset ).Take( b.Count ) ).ToArray();
 			context.SetBytesTransferred( data.Length );
 
 			return

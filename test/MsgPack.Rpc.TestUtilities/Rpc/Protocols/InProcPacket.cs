@@ -43,7 +43,7 @@ namespace MsgPack.Rpc.Protocols
 				pendingPackets.Enqueue( packet );
 			}
 
-			int copying = Math.Min( context.Count, packet.Data.Count );
+			int copying = Math.Min( context.SocketContext.Count, packet.Data.Count );
 			Buffer.BlockCopy( packet.Data.Array, packet.Data.Offset, context.Buffer, context.Offset, copying );
 			context.SetBytesTransferred( copying );
 

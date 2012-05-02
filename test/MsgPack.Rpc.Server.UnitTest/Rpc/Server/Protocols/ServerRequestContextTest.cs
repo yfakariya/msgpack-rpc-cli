@@ -83,11 +83,13 @@ namespace MsgPack.Rpc.Server.Protocols
 		{
 			TestCore( ( target, _ ) =>
 				{
-					// TODO: Check CurrentReceivingBuffer and ReceiveBuffer is not reset.
 					InitializeBuffers( target );
-					target.BufferList = new ArraySegment<byte>[] { new ArraySegment<byte>( new byte[ 1 ] ), new ArraySegment<byte>( new byte[ 2 ] ) };
+					target.SetReceivedData( new ArraySegment<byte>[] { new ArraySegment<byte>( new byte[] { 1 } ), new ArraySegment<byte>( new byte[] { 1, 2 } ) } );
+					target.SetReceivingBuffer( new byte[] { 1 } );
 					target.Clear();
 
+					Assert.That( target.CurrentReceivingBuffer, Is.Not.Null.And.Not.Empty );
+					Assert.That( target.ReceivedData, Is.Not.Null.And.Not.Empty );
 					Assert.That( target.ArgumentsBuffer.Length, Is.EqualTo( 0 ) );
 					Assert.That( target.ArgumentsBufferPacker, Is.Null );
 					Assert.That( target.ArgumentsBufferUnpacker, Is.Null );
@@ -110,10 +112,13 @@ namespace MsgPack.Rpc.Server.Protocols
 		{
 			TestCore( ( target, _ ) =>
 				{
-					// TODO: Check CurrentReceivingBuffer and ReceiveBuffer is not reset.
 					InitializeBuffers( target );
-					target.BufferList = new ArraySegment<byte>[] { new ArraySegment<byte>( new byte[ 1 ] ), new ArraySegment<byte>( new byte[ 2 ] ) };
+					target.SetReceivedData( new ArraySegment<byte>[] { new ArraySegment<byte>( new byte[] { 1 } ), new ArraySegment<byte>( new byte[] { 1, 2 } ) } );
+					target.SetReceivingBuffer( new byte[] { 1 } );
 					target.ClearBuffers();
+
+					Assert.That( target.CurrentReceivingBuffer, Is.Not.Null.And.Not.Empty );
+					Assert.That( target.ReceivedData, Is.Not.Null.And.Not.Empty );
 
 					Assert.That( target.ArgumentsBuffer.Length, Is.Not.EqualTo( 0 ) );
 					Assert.That( target.ArgumentsBufferPacker, Is.Null );
@@ -136,11 +141,13 @@ namespace MsgPack.Rpc.Server.Protocols
 		{
 			TestCore( ( target, _ ) =>
 				{
-					// TODO: Check CurrentReceivingBuffer and ReceiveBuffer is not reset.
 					InitializeBuffers( target );
-					target.BufferList = new ArraySegment<byte>[] { new ArraySegment<byte>( new byte[ 1 ] ), new ArraySegment<byte>( new byte[ 2 ] ) };
+					target.SetReceivedData( new ArraySegment<byte>[] { new ArraySegment<byte>( new byte[] { 1 } ), new ArraySegment<byte>( new byte[] { 1, 2 } ) } );
+					target.SetReceivingBuffer( new byte[] { 1 } );
 					target.ClearDispatchContext();
 
+					Assert.That( target.CurrentReceivingBuffer, Is.Not.Null.And.Not.Empty );
+					Assert.That( target.ReceivedData, Is.Not.Null.And.Not.Empty );
 					Assert.That( target.ArgumentsBuffer.Length, Is.EqualTo( 0 ) );
 					Assert.That( target.ArgumentsBufferPacker, Is.Not.Null );
 					Assert.That( target.ArgumentsBufferUnpacker, Is.Not.Null );

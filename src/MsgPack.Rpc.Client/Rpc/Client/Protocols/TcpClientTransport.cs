@@ -64,7 +64,7 @@ namespace MsgPack.Rpc.Client.Protocols
 		/// <param name="context">Context information.</param>
 		protected sealed override void SendCore( ClientRequestContext context )
 		{
-			if ( !this.BoundSocket.SendAsync( context ) )
+			if ( !this.BoundSocket.SendAsync( context.SocketContext ) )
 			{
 				context.SetCompletedSynchronously();
 				this.OnSent( context );
@@ -77,7 +77,7 @@ namespace MsgPack.Rpc.Client.Protocols
 		/// <param name="context">Context information.</param>
 		protected sealed override void ReceiveCore( ClientResponseContext context )
 		{
-			if ( !this.BoundSocket.ReceiveAsync( context ) )
+			if ( !this.BoundSocket.ReceiveAsync( context.SocketContext ) )
 			{
 				context.SetCompletedSynchronously();
 				this.OnReceived( context );

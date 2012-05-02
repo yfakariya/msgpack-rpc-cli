@@ -28,7 +28,7 @@ namespace MsgPack.Rpc.Client.Protocols
 	/// <summary>
 	///		Represents context information for the client side request including notification.
 	/// </summary>
-	public sealed class ClientRequestContext : MessageContext
+	public sealed class ClientRequestContext : OutboundMessageContext
 	{
 		/// <summary>
 		///		Constant part of the request header.
@@ -104,12 +104,6 @@ namespace MsgPack.Rpc.Client.Protocols
 		{
 			get { return this._methodName; }
 		}
-
-		/// <summary>
-		///		The reusable buffer to pack message ID.
-		///		This value will not be <c>null</c>.
-		/// </summary>
-		private readonly MemoryStream _idBuffer;
 
 		/// <summary>
 		///		The reusable buffer to pack method name.
@@ -206,7 +200,6 @@ namespace MsgPack.Rpc.Client.Protocols
 		/// </summary>
 		public ClientRequestContext()
 		{
-			this._idBuffer = new MemoryStream( 5 );
 			// TODO: Configurable
 			this._methodNameBuffer = new MemoryStream( 256 );
 			// TODO: Configurable
@@ -330,12 +323,7 @@ namespace MsgPack.Rpc.Client.Protocols
 				Contract.Assert( this._requestCompletionCallback != null );
 
 				this.SendingBuffer[ 0 ] = _requestHeader;
-				using ( var packer = Packer.Create( this._idBuffer, false ) )
-				{
-					packer.Pack( this.MessageId );
-				}
-
-				this.SendingBuffer[ 1 ] = new ArraySegment<byte>( this._idBuffer.GetBuffer(), 0, unchecked( ( int )this._idBuffer.Length ) );
+				this.SendingBuffer[ 1 ] = this.GetPackedMessageId();
 				this.SendingBuffer[ 2 ] = new ArraySegment<byte>( this._methodNameBuffer.GetBuffer(), 0, unchecked( ( int )this._methodNameBuffer.Length ) );
 				this.SendingBuffer[ 3 ] = new ArraySegment<byte>( this._argumentsBuffer.GetBuffer(), 0, unchecked( ( int )this._argumentsBuffer.Length ) );
 			}
@@ -349,22 +337,22 @@ namespace MsgPack.Rpc.Client.Protocols
 				this.SendingBuffer[ 3 ] = _emptyBuffer;
 			}
 
-			this.SetBuffer( null, 0, 0 );
-			this.BufferList = this.SendingBuffer;
+			this.SocketContext.SetBuffer( null, 0, 0 );
+			this.SocketContext.BufferList = this.SendingBuffer;
 		}
 
-		internal void ClearBuffers()
+		internal override void ClearBuffers()
 		{
-			this._idBuffer.SetLength( 0 );
 			this._methodNameBuffer.SetLength( 0 );
 			this._argumentsBuffer.SetLength( 0 );
-			this.BufferList = null;
+			this.SocketContext.BufferList = null;
 			this._argumentsPacker.Dispose();
 			this._argumentsPacker = Packer.Create( this._argumentsBuffer, false );
 			this.SendingBuffer[ 0 ] = new ArraySegment<byte>();
 			this.SendingBuffer[ 1 ] = new ArraySegment<byte>();
 			this.SendingBuffer[ 2 ] = new ArraySegment<byte>();
 			this.SendingBuffer[ 3 ] = new ArraySegment<byte>();
+			base.ClearBuffers();
 		}
 
 		/// <summary>

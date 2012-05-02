@@ -523,7 +523,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		private void OnSocketOperationCompleted( object sender, SocketAsyncEventArgs e )
 		{
 			var socket = sender as Socket;
-			var context = e as MessageContext;
+			var context = e.GetContext();
 
 			Contract.Assert( socket != null );
 			Contract.Assert( context != null );
@@ -634,7 +634,7 @@ namespace MsgPack.Rpc.Server.Protocols
 				context.ReceivedData.Clear();
 				Array.Clear( context.CurrentReceivingBuffer, 0, context.CurrentReceivingBuffer.Length );
 
-				context.SetBuffer( context.CurrentReceivingBuffer, 0, context.CurrentReceivingBuffer.Length );
+				context.PrepareReceivingBuffer();
 
 				var socket = this.BoundSocket;
 				MsgPackRpcServerProtocolsTrace.TraceEvent(
