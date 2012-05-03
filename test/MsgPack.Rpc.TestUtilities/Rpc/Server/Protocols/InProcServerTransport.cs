@@ -163,7 +163,12 @@ namespace MsgPack.Rpc.Server.Protocols
 				if ( Interlocked.Exchange( ref this._isDisposed, 1 ) == 0 )
 				{
 					this._cancellationTokenSource.Cancel( true );
-					this._receivingTask.Wait( TimeSpan.FromSeconds( 1 ) );
+					var receivingTask = Interlocked.CompareExchange( ref this._receivingTask, null, null );
+					if ( receivingTask != null )
+					{
+						receivingTask.Wait( TimeSpan.FromSeconds( 1 ) );
+					}
+
 					this._receivingCancellationTokenSource.Dispose();
 					this._inboundQueue.Dispose();
 					this._manager.Response -= this.OnManagerResponse;
