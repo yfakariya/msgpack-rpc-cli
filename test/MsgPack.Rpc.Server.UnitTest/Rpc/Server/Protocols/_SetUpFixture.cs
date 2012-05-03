@@ -22,7 +22,7 @@ using System;
 using System.Diagnostics.Contracts;
 using NUnit.Framework;
 
-namespace MsgPack.Rpc.Server.Transport
+namespace MsgPack.Rpc.Server.Protocols
 {
 	[CLSCompliant( false )]
 	[SetUpFixture]
