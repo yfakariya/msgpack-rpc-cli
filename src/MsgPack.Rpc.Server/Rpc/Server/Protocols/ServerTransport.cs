@@ -19,12 +19,16 @@
 #endregion -- License Terms --
 
 using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Net.Sockets;
 using System.Threading;
 using MsgPack.Rpc.Protocols;
+using MsgPack.Rpc.Protocols.Filters;
 using MsgPack.Rpc.Server.Dispatch;
+using MsgPack.Serialization;
 
 namespace MsgPack.Rpc.Server.Protocols
 {
@@ -60,6 +64,9 @@ namespace MsgPack.Rpc.Server.Protocols
 		}
 
 		private int _processing;
+
+
+		#region ---- States ----
 
 		private int _isDisposed;
 
@@ -126,6 +133,40 @@ namespace MsgPack.Rpc.Server.Protocols
 
 		private int _sendingShutdown;
 		private int _receivingShutdown;
+
+		#endregion
+
+		#region ---- Filters ----
+
+		private readonly IList<MessageFilter<ServerRequestContext>> _beforeDeserializationFilters;
+
+		internal IList<MessageFilter<ServerRequestContext>> BeforeDeserializationFilters
+		{
+			get { return this._beforeDeserializationFilters; }
+		}
+
+		private readonly IList<MessageFilter<ServerRequestContext>> _afterDeserializationFilters;
+
+		internal IList<MessageFilter<ServerRequestContext>> AfterDeserializationFilters
+		{
+			get { return this._afterDeserializationFilters; }
+		}
+
+		private readonly IList<MessageFilter<ServerResponseContext>> _beforeSerializationFilters;
+
+		internal IList<MessageFilter<ServerResponseContext>> BeforeSerializationFilters
+		{
+			get { return this._beforeSerializationFilters; }
+		}
+
+		private readonly IList<MessageFilter<ServerResponseContext>> _afterSerializationFilters;
+
+		internal IList<MessageFilter<ServerResponseContext>> AfterSerializationFilters
+		{
+			get { return this._afterSerializationFilters; }
+		}
+
+		#endregion
 
 		#endregion
 
@@ -273,6 +314,41 @@ namespace MsgPack.Rpc.Server.Protocols
 
 			this._manager = manager;
 			this._dispatcher = manager.Server.Configuration.DispatcherProvider( manager.Server );
+
+			this._beforeDeserializationFilters =
+				new ReadOnlyCollection<MessageFilter<ServerRequestContext>>(
+					manager.Server.Configuration.FilterProviders
+					.OfType<MessageFilterProvider<ServerRequestContext>>()
+					.Select( provider => provider.GetFilter( MessageFilteringLocation.BeforeDeserialization ) )
+					.Where( filter => filter != null )
+					.ToArray()
+				);
+			this._afterDeserializationFilters =
+				new ReadOnlyCollection<MessageFilter<ServerRequestContext>>(
+					manager.Server.Configuration.FilterProviders
+					.OfType<MessageFilterProvider<ServerRequestContext>>()
+					.Select( provider => provider.GetFilter( MessageFilteringLocation.AfterDeserialization ) )
+					.Where( filter => filter != null )
+					.ToArray()
+				);
+			this._beforeSerializationFilters =
+				new ReadOnlyCollection<MessageFilter<ServerResponseContext>>(
+					manager.Server.Configuration.FilterProviders
+					.OfType<MessageFilterProvider<ServerResponseContext>>()
+					.Select( provider => provider.GetFilter( MessageFilteringLocation.BeforeSerialization ) )
+					.Where( filter => filter != null )
+					.Reverse()
+					.ToArray()
+				);
+			this._afterSerializationFilters =
+				new ReadOnlyCollection<MessageFilter<ServerResponseContext>>(
+					manager.Server.Configuration.FilterProviders
+					.OfType<MessageFilterProvider<ServerResponseContext>>()
+					.Select( provider => provider.GetFilter( MessageFilteringLocation.AfterSerialization ) )
+					.Where( filter => filter != null )
+					.Reverse()
+					.ToArray()
+				);
 		}
 
 		/// <summary>
@@ -480,6 +556,25 @@ namespace MsgPack.Rpc.Server.Protocols
 			Contract.Assert( invalidRequestHeaderProvider != null );
 
 			int? messageId = context.MessageType == MessageType.Request ? context.MessageId : default( int? );
+			this.HandleDeserializationError( context, messageId, error, message, debugInformation, invalidRequestHeaderProvider );
+		}
+
+		/// <summary>
+		///		Handle specified deserialization error.
+		/// </summary>
+		/// <param name="context">The <see cref="ServerRequestContext"/> which holds context information.</param>
+		/// <param name="messageId">Detected Message ID.</param>
+		/// <param name="error">The <see cref="RpcError"/> which represents the error.</param>
+		/// <param name="message">The descriptive message which will be transfered to the client.</param>
+		/// <param name="debugInformation">The debugging message.</param>
+		/// <param name="invalidRequestHeaderProvider">A delegate which returns raw binary to be dumped.</param>
+		private void HandleDeserializationError( ServerRequestContext context, int? messageId, RpcError error, string message, string debugInformation, Func<byte[]> invalidRequestHeaderProvider )
+		{
+			Contract.Assert( context != null );
+			Contract.Assert( error != null );
+			Contract.Assert( !String.IsNullOrEmpty( message ) );
+			Contract.Assert( invalidRequestHeaderProvider != null );
+
 			var rpcError = new RpcErrorMessage( error, message, debugInformation );
 
 			MsgPackRpcServerProtocolsTrace.TraceRpcError(
@@ -509,6 +604,19 @@ namespace MsgPack.Rpc.Server.Protocols
 		{
 			// Delegates to the manager to raise error event.
 			return this.Manager.HandleSocketError( socket, context );
+		}
+
+		#endregion
+
+		#region -- Filter Application --
+
+		private static void ApplyFilters<T>( IEnumerable<MessageFilter<T>> filters, T context )
+			where T : MessageContext
+		{
+			foreach ( var filter in filters )
+			{
+				filter.ProcessMessage( context );
+			}
 		}
 
 		#endregion
@@ -778,6 +886,18 @@ namespace MsgPack.Rpc.Server.Protocols
 			}
 
 			// Go deserialization pipeline.
+
+			// Exceptions here means message error.
+			try
+			{
+				ApplyFilters( this._beforeDeserializationFilters, context );
+			}
+			catch ( RpcException ex )
+			{
+				this.HandleDeserializationError( context, TryDetectMessageId( context ), ex.RpcError, "Filter rejects request.", ex.Message, () => context.ReceivedData.SelectMany( s => s.AsEnumerable() ).ToArray() );
+				return;
+			}
+
 			if ( !context.NextProcess( context ) )
 			{
 				if ( this.IsClientShutdown )
@@ -817,6 +937,38 @@ namespace MsgPack.Rpc.Server.Protocols
 			{
 				// try next receive
 				this.PrivateReceive( context );
+			}
+		}
+
+		private static int? TryDetectMessageId( ServerRequestContext context )
+		{
+			if ( context.MessageId != null )
+			{
+				return context.MessageId;
+			}
+
+			using ( var stream = new ByteArraySegmentStream( context.ReceivedData ) )
+			using ( var unpacker = Unpacker.Create( stream ) )
+			{
+				if ( !unpacker.Read() || !unpacker.IsArrayHeader || unpacker.Data.Value != 4 )
+				{
+					// Not a request message
+					return null;
+				}
+
+				if ( !unpacker.Read() || !unpacker.Data.Value.IsTypeOf<Int32>().GetValueOrDefault() || unpacker.Data.Value != ( int )MessageType.Request )
+				{
+					// Not a request message or invalid message type
+					return null;
+				}
+
+				if ( !unpacker.Read() || !unpacker.Data.Value.IsTypeOf<Int32>().GetValueOrDefault() )
+				{
+					// Invalid message ID.
+					return null;
+				}
+
+				return unpacker.Data.Value.AsInt32();
 			}
 		}
 
@@ -972,6 +1124,10 @@ namespace MsgPack.Rpc.Server.Protocols
 					context.SendingBuffer.Sum( segment => ( long )segment.Count )
 				);
 			}
+
+			// Because exceptions here means server error, it should be handled like other server error.
+			// Therefore, no catch clauses here.
+			ApplyFilters( this._afterSerializationFilters, context );
 
 			this.SendCore( context );
 		}

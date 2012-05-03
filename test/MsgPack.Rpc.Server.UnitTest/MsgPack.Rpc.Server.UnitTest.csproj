@@ -80,6 +80,9 @@
     <Compile Include="Rpc\Server\Dispatch\SvcFileInterop\StartTagFoundStateTest.cs" />
     <Compile Include="Rpc\Server\Dispatch\SvcFileInterop\SvcDirectiveParserStateTest.cs" />
     <Compile Include="Rpc\Server\Dispatch\SvcFileInterop\SvcFileParserTest.cs" />
+    <Compile Include="Rpc\Server\Protocols\Filters\ServerQuotaMessageFilterTest.cs" />
+    <Compile Include="Rpc\Server\Protocols\Filters\ServerStreamLoggingMessageFilterTest.cs" />
+    <Compile Include="Rpc\Server\Protocols\Filters\_SetUpFixture.cs" />
     <Compile Include="Rpc\Server\Protocols\ListeningContextTest.cs" />
     <Compile Include="Rpc\Server\Protocols\NullServerTransport.cs" />
     <Compile Include="Rpc\Server\Protocols\NullServerTransportManager.cs" />

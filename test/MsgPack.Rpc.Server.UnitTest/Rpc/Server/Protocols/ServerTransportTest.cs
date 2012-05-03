@@ -27,6 +27,10 @@ using System.Threading;
 using MsgPack.Rpc.Protocols;
 using MsgPack.Rpc.Server.Dispatch;
 using NUnit.Framework;
+using MsgPack.Rpc.Protocols.Filters;
+using MsgPack.Rpc.Server.Protocols.Filters;
+using System.Globalization;
+using MsgPack.Rpc.Diagnostics;
 
 namespace MsgPack.Rpc.Server.Protocols
 {
@@ -2023,6 +2027,315 @@ namespace MsgPack.Rpc.Server.Protocols
 		public void TestExecute_Timeout_TimeoutError()
 		{
 			Assert.Inconclusive( "Not implemented yet" );
+		}
+
+		#endregion
+
+		#region -- Filter --
+
+		[Test]
+		public void TestFilters_Initialization_AppliedDeserializationsAreInOrder_AppliedSerializationsAreReverseOrder()
+		{
+			TestFiltersCore(
+				null,
+				target =>
+				{
+					CheckFilters( target.BeforeDeserializationFilters, MessageFilteringLocation.BeforeDeserialization, 0, 1 );
+					CheckFilters( target.AfterDeserializationFilters, MessageFilteringLocation.AfterDeserialization, 0, 1 );
+					CheckFilters( target.BeforeSerializationFilters, MessageFilteringLocation.BeforeSerialization, 3, 2 );
+					CheckFilters( target.AfterSerializationFilters, MessageFilteringLocation.AfterSerialization, 3, 2 );
+				},
+				null,
+				new ServerRequestTestMessageFilterProvider( 0 ),
+				new ServerRequestTestMessageFilterProvider( 1 ),
+				new ServerResponseTestMessageFilterProvider( 2 ),
+				new ServerResponseTestMessageFilterProvider( 3 )
+			);
+		}
+
+		private static void CheckFilters<T>( IList<MessageFilter<T>> target, MessageFilteringLocation location, params int[] indexes )
+			where T : MessageContext
+		{
+			Assert.That( target.Count, Is.EqualTo( indexes.Length ) );
+			for ( int i = 0; i < indexes.Length; i++ )
+			{
+				var testFilter = target[ i ] as ITestMessageFilter;
+				Assert.That( testFilter, Is.Not.Null, "@{0}:{1}", i, target[ i ].GetType().ToString() );
+				Assert.That( testFilter.Index, Is.EqualTo( indexes[ i ] ), "@{0}", i );
+				Assert.That( testFilter.Location, Is.EqualTo( location ), "@{0}", i );
+			}
+		}
+
+		[Test]
+		public void TestFilters_RequestResponse_Invoked()
+		{
+			int beforeDeserializationApplied = 0;
+			int afterDeserializationApplied = 0;
+			int beforeSerializationApplied = 0;
+			int afterSerializationApplied = 0;
+
+			var requestFilterProvider = new ServerRequestTestMessageFilterProvider( 0 );
+			requestFilterProvider.FilterApplied +=
+				( sender, e ) =>
+				{
+					switch ( e.AppliedLocation )
+					{
+						case MessageFilteringLocation.AfterDeserialization:
+						{
+							Interlocked.Exchange( ref afterDeserializationApplied, 1 );
+							break;
+						}
+						case MessageFilteringLocation.BeforeDeserialization:
+						{
+							Interlocked.Exchange( ref beforeDeserializationApplied, 1 );
+							break;
+						}
+					}
+
+					return;
+				};
+
+			var responseFilterProvider = new ServerResponseTestMessageFilterProvider( 1 );
+			responseFilterProvider.FilterApplied +=
+				( sender, e ) =>
+				{
+					switch ( e.AppliedLocation )
+					{
+						case MessageFilteringLocation.AfterSerialization:
+						{
+							Interlocked.Exchange( ref afterSerializationApplied, 1 );
+							break;
+						}
+						case MessageFilteringLocation.BeforeSerialization:
+						{
+							Interlocked.Exchange( ref beforeSerializationApplied, 1 );
+							break;
+						}
+					}
+
+					return;
+				};
+
+			TestFiltersCore(
+				null,
+				null,
+				( requestData, responseData ) =>
+				{
+					Assert.That( Interlocked.CompareExchange( ref beforeDeserializationApplied, 0, 0 ), Is.EqualTo( 1 ) );
+					Assert.That( Interlocked.CompareExchange( ref afterDeserializationApplied, 0, 0 ), Is.EqualTo( 1 ) );
+					Assert.That( Interlocked.CompareExchange( ref beforeSerializationApplied, 0, 0 ), Is.EqualTo( 1 ) );
+					Assert.That( Interlocked.CompareExchange( ref afterSerializationApplied, 0, 0 ), Is.EqualTo( 1 ) );
+				},
+				requestFilterProvider,
+				responseFilterProvider
+			);
+		}
+
+		/// <summary>
+		///		Do filter invocation test.
+		/// </summary>
+		/// <param name="argumentTweak">The logic to tweak arguments. If null, <c>args</c> will be empty. The arguments to the delegate are <see cref="Packer"/> for request stream and existent stream length.</param>
+		/// <param name="transportAssertion">The assertion logic for the transport.</param>
+		/// <param name="resultAssertion">The assertion logic for the data. The arguments are request data bytes and response bytes.</param>
+		/// <param name="providers">The filter providers to be invoked.</param>
+		internal static void TestFiltersCore(
+			Action<Packer, long> argumentTweak,
+			Action<ServerTransport> transportAssertion,
+			Action<byte[], byte[]> resultAssertion,
+			params MessageFilterProvider[] providers
+		)
+		{
+			var configuration = new RpcServerConfiguration();
+
+			foreach ( var provider in providers )
+			{
+				configuration.FilterProviders.Add( provider );
+			}
+
+			configuration.DispatcherProvider =
+				s => new CallbackDispatcher( s, ( id, args ) => args );
+
+			using ( var server = new RpcServer( configuration ) )
+			using ( var manager = new InProcServerTransportManager( server, m => new SingletonObjectPool<InProcServerTransport>( new InProcServerTransport( m ) ) ) )
+			using ( var target = manager.NewSession() )
+			using ( var controller = InProcServerTransportController.Create( manager ) )
+			using ( var responseWaitHandle = new ManualResetEventSlim() )
+			{
+				if ( transportAssertion != null )
+				{
+					transportAssertion( target );
+				}
+
+				byte[] requestData = null;
+				byte[] responseData = null;
+				controller.Response +=
+					( sender, e ) =>
+					{
+						Interlocked.Exchange( ref responseData, e.Data );
+						responseWaitHandle.Set();
+					};
+
+				using ( var buffer = new MemoryStream() )
+				using ( var requestPacker = Packer.Create( buffer ) )
+				{
+					requestPacker.PackArrayHeader( 4 );
+					requestPacker.Pack( ( int )MessageType.Request );
+					requestPacker.Pack( 1 );
+					requestPacker.Pack( "Echo" );
+					if ( argumentTweak == null )
+					{
+						requestPacker.PackArrayHeader( 0 );
+					}
+					else
+					{
+						argumentTweak( requestPacker, buffer.Length );
+					}
+
+					requestData = buffer.ToArray();
+					controller.FeedReceiveBuffer( requestData );
+				}
+
+				Assert.That( responseWaitHandle.Wait( TimeSpan.FromSeconds( 1 ) ) );
+
+				if ( resultAssertion != null )
+				{
+					resultAssertion( requestData, responseData );
+				}
+			}
+		}
+
+		private interface ITestMessageFilter
+		{
+			int Index { get; }
+			MessageFilteringLocation Location { get; }
+		}
+
+		private abstract class TestMessageFilter<T> : MessageFilter<T>, ITestMessageFilter
+			where T : MessageContext
+		{
+			private readonly int _index;
+
+			public int Index
+			{
+				get { return this._index; }
+			}
+
+			private readonly MessageFilteringLocation _location;
+
+			public MessageFilteringLocation Location
+			{
+				get { return this._location; }
+			}
+
+			public event EventHandler<FilterAppliedEventArgs> FilterApplied;
+
+			protected void OnFilterApplied( FilterAppliedEventArgs e )
+			{
+				var handler = this.FilterApplied;
+				if ( handler != null )
+				{
+					handler( this, e );
+				}
+			}
+			protected TestMessageFilter( int index, MessageFilteringLocation location )
+			{
+				this._index = index;
+				this._location = location;
+			}
+
+			protected override void ProcessMessageCore( T context )
+			{
+				this.OnFilterApplied( new FilterAppliedEventArgs( context, this._location ) );
+			}
+		}
+
+		private sealed class ServerRequestTestMessageFilter : TestMessageFilter<ServerRequestContext>
+		{
+			public ServerRequestTestMessageFilter( int index, MessageFilteringLocation location ) : base( index, location ) { }
+		}
+
+		private sealed class ServerResponseTestMessageFilter : TestMessageFilter<ServerResponseContext>
+		{
+			public ServerResponseTestMessageFilter( int index, MessageFilteringLocation location ) : base( index, location ) { }
+		}
+
+		private sealed class FilterAppliedEventArgs : EventArgs
+		{
+			private readonly MessageContext _context;
+
+			public MessageContext Context
+			{
+				get { return this._context; }
+			}
+
+			private readonly MessageFilteringLocation _appliedLocation;
+
+			public MessageFilteringLocation AppliedLocation
+			{
+				get { return this._appliedLocation; }
+			}
+
+			public FilterAppliedEventArgs( MessageContext context, MessageFilteringLocation appliedLocation )
+			{
+				this._context = context;
+				this._appliedLocation = appliedLocation;
+			}
+		}
+
+		private interface ITestMessageFilterProvider
+		{
+			event EventHandler<FilterAppliedEventArgs> FilterApplied;
+		}
+
+		private abstract class TestMessageFilterProvider<T> : MessageFilterProvider<T>, ITestMessageFilterProvider
+			where T : MessageContext
+		{
+			public event EventHandler<FilterAppliedEventArgs> FilterApplied;
+
+			protected void OnFilterApplied( FilterAppliedEventArgs e )
+			{
+				var handler = this.FilterApplied;
+				if ( handler != null )
+				{
+					handler( this, e );
+				}
+			}
+
+			protected TestMessageFilterProvider() { }
+		}
+
+		private sealed class ServerRequestTestMessageFilterProvider : TestMessageFilterProvider<ServerRequestContext>
+		{
+			private readonly int _index;
+
+			public ServerRequestTestMessageFilterProvider( int index )
+			{
+				this._index = index;
+			}
+
+			public override MessageFilter<ServerRequestContext> GetFilter( MessageFilteringLocation location )
+			{
+				var result = new ServerRequestTestMessageFilter( this._index, location );
+				result.FilterApplied += ( sender, e ) => this.OnFilterApplied( e );
+				return result;
+			}
+		}
+
+		private sealed class ServerResponseTestMessageFilterProvider : TestMessageFilterProvider<ServerResponseContext>
+		{
+			private readonly int _index;
+
+			public ServerResponseTestMessageFilterProvider( int index )
+			{
+				this._index = index;
+			}
+
+			public override MessageFilter<ServerResponseContext> GetFilter( MessageFilteringLocation location )
+			{
+				var result = new ServerResponseTestMessageFilter( this._index, location );
+				result.FilterApplied += ( sender, e ) => this.OnFilterApplied( e );
+				return result;
+			}
 		}
 
 		#endregion
