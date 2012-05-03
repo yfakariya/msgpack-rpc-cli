@@ -66,6 +66,8 @@
     <Compile Include="Rpc\Client\Protocols\InProcDataSendingEventArgs.cs" />
     <Compile Include="Rpc\Client\Protocols\InProcMessageSentEventArgs.cs" />
     <Compile Include="Rpc\Client\Protocols\InProcResponseReceivedEventArgs.cs" />
+    <Compile Include="Rpc\Diagnostics\InProcMessagePackStreamLogger.cs" />
+    <Compile Include="Rpc\Diagnostics\InProcMessagePackStreamLoggerEntry.cs" />
     <Compile Include="Rpc\GenericExceptionTester.cs" />
     <Compile Include="Rpc\ObjectReturnedToPoolEventArgs`1.cs" />
     <Compile Include="Rpc\Protocols\ProtocolTraceSettings.cs" />
