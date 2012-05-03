@@ -38,7 +38,7 @@ namespace MsgPack.Rpc.Protocols
 		///		The received data.
 		///		This value wlll not be <c>null</c>.
 		/// </value>
-		internal IList<ArraySegment<byte>> ReceivedData
+		public IList<ArraySegment<byte>> ReceivedData
 		{
 			get { return this._receivedData; }
 		}
