@@ -584,12 +584,13 @@ namespace MsgPack.Rpc.Server.Protocols
 				rpcError
 			);
 
-			this.BeginShutdown();
 			// Try send error response.
 			this.SendError( messageId, rpcError );
 			// Delegates to the manager to raise error event.
 			this.Manager.RaiseClientError( context, rpcError );
 			context.Clear();
+
+			this.BeginShutdown();
 		}
 
 		/// <summary>
