@@ -36,47 +36,62 @@ namespace MsgPack.Rpc.Server.Dispatch
 		[Test()]
 		public void TestInvokeAsync_Success_TaskSetSerializedReturnValue()
 		{
-			ServerRequestContext requestContext = DispatchTestHelper.CreateRequestContext();
-			ServerResponseContext responseContext = new ServerResponseContext();
-			using ( var result = new Target( null, RpcErrorMessage.Success ).InvokeAsync( requestContext, responseContext ) )
+			using ( var server = new RpcServer() )
+			using ( var transportManager = new NullServerTransportManager( server ) )
+			using ( var transport = new NullServerTransport( transportManager ) )
 			{
-				result.Wait();
-			}
+				ServerRequestContext requestContext = DispatchTestHelper.CreateRequestContext();
+				ServerResponseContext responseContext = DispatchTestHelper.CreateResponseContext( transport );
+				using ( var result = new Target( null, RpcErrorMessage.Success ).InvokeAsync( requestContext, responseContext ) )
+				{
+					result.Wait();
+				}
 
-			Assert.That( responseContext.GetReturnValueData(), Is.EqualTo( new byte[] { 123 } ) );
-			Assert.That( responseContext.GetErrorData(), Is.EqualTo( new byte[] { 0xC0 } ) );
+				Assert.That( responseContext.GetReturnValueData(), Is.EqualTo( new byte[] { 123 } ) );
+				Assert.That( responseContext.GetErrorData(), Is.EqualTo( new byte[] { 0xC0 } ) );
+			}
 		}
 
 		[Test()]
 		public void TestInvokeAsync_FatalError_TaskSetSerializedError()
 		{
-			ServerRequestContext requestContext = DispatchTestHelper.CreateRequestContext();
-			ServerResponseContext responseContext = new ServerResponseContext();
-			using ( var result = new Target( new Exception( "FAIL" ), RpcErrorMessage.Success ).InvokeAsync( requestContext, responseContext ) )
+			using ( var server = new RpcServer() )
+			using ( var transportManager = new NullServerTransportManager( server ) )
+			using ( var transport = new NullServerTransport( transportManager ) )
 			{
-				result.Wait();
-			}
+				ServerRequestContext requestContext = DispatchTestHelper.CreateRequestContext();
+				ServerResponseContext responseContext = DispatchTestHelper.CreateResponseContext( transport );
+				using ( var result = new Target( new Exception( "FAIL" ), RpcErrorMessage.Success ).InvokeAsync( requestContext, responseContext ) )
+				{
+					result.Wait();
+				}
 
-			var error = Unpacking.UnpackObject( responseContext.GetErrorData() );
-			var errorDetail = Unpacking.UnpackObject( responseContext.GetReturnValueData() );
-			Assert.That( error.Value.Equals( RpcError.CallError.Identifier ) );
-			Assert.That( errorDetail.Value.IsNil, Is.False );
+				var error = Unpacking.UnpackObject( responseContext.GetErrorData() );
+				var errorDetail = Unpacking.UnpackObject( responseContext.GetReturnValueData() );
+				Assert.That( error.Value.Equals( RpcError.CallError.Identifier ) );
+				Assert.That( errorDetail.Value.IsNil, Is.False );
+			}
 		}
 
 		[Test()]
 		public void TestInvokeAsync_MethodError_TaskSetSerializedError()
 		{
-			ServerRequestContext requestContext = DispatchTestHelper.CreateRequestContext();
-			ServerResponseContext responseContext = new ServerResponseContext();
-			using ( var result = new Target( null, new RpcErrorMessage( RpcError.ArgumentError, MessagePackObject.Nil ) ).InvokeAsync( requestContext, responseContext ) )
+			using ( var server = new RpcServer() )
+			using ( var transportManager = new NullServerTransportManager( server ) )
+			using ( var transport = new NullServerTransport( transportManager ) )
 			{
-				result.Wait();
-			}
+				ServerRequestContext requestContext = DispatchTestHelper.CreateRequestContext();
+				ServerResponseContext responseContext = DispatchTestHelper.CreateResponseContext( transport );
+				using ( var result = new Target( null, new RpcErrorMessage( RpcError.ArgumentError, MessagePackObject.Nil ) ).InvokeAsync( requestContext, responseContext ) )
+				{
+					result.Wait();
+				}
 
-			var error = Unpacking.UnpackObject( responseContext.GetErrorData() );
-			var errorDetail = Unpacking.UnpackObject( responseContext.GetReturnValueData() );
-			Assert.That( error.Value.Equals( RpcError.ArgumentError.Identifier ) );
-			Assert.That( errorDetail.Value.IsNil, Is.True );
+				var error = Unpacking.UnpackObject( responseContext.GetErrorData() );
+				var errorDetail = Unpacking.UnpackObject( responseContext.GetReturnValueData() );
+				Assert.That( error.Value.Equals( RpcError.ArgumentError.Identifier ) );
+				Assert.That( errorDetail.Value.IsNil, Is.True );
+			}
 		}
 
 		private sealed class Target : AsyncServiceInvoker<int>

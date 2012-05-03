@@ -879,9 +879,48 @@ namespace MsgPack.Rpc.Server.Protocols
 
 			var context = this.Manager.ResponseContextPool.Borrow();
 			context.MessageId = messageId.Value;
+			context.SetTransport( this );
 
 			context.Serialize<object>( null, rpcError, null );
 			this.PrivateSend( context );
+		}
+
+		internal void Serialize<T>( ServerResponseContext context, T returnValue, RpcErrorMessage error, MessagePackSerializer<T> returnValueSerializer )
+		{
+			// FIXME: Overwrite for error/timeout
+			if ( MsgPackRpcServerProtocolsTrace.ShouldTrace( MsgPackRpcServerProtocolsTrace.SerializeResponse ) )
+			{
+				MsgPackRpcServerProtocolsTrace.TraceEvent(
+					MsgPackRpcServerProtocolsTrace.SerializeResponse,
+					"Serialize response. {{ \"Error\" : {0}, \"ReturnValue\" : \"{1}\" }}",
+					error,
+					returnValue
+				);
+			}
+
+			// Because exceptions here means server error, it should be handled like other server error.
+			// Therefore, no catch clauses here.
+			ApplyFilters( this._beforeSerializationFilters, context );
+
+			if ( error.IsSuccess )
+			{
+				context.ErrorDataPacker.PackNull();
+
+				if ( returnValueSerializer == null )
+				{
+					// void
+					context.ReturnDataPacker.PackNull();
+				}
+				else
+				{
+					returnValueSerializer.PackTo( context.ReturnDataPacker, returnValue );
+				}
+			}
+			else
+			{
+				context.ErrorDataPacker.Pack( error.Error.Identifier );
+				context.ReturnDataPacker.Pack( error.Detail );
+			}
 		}
 
 		/// <summary>

@@ -73,6 +73,9 @@ namespace MsgPack.Rpc.Server.Dispatch
 		)
 		{
 			using ( var target = new ServiceInvokerGenerator( true ) )
+			using ( var server = new RpcServer() )
+			using ( var transportManager = new NullServerTransportManager( server ) )
+			using ( var transport = new NullServerTransport( transportManager ) )
 			{
 				var service = new Service<TArg1, TArg2, TResult>();
 				service.Invoked += invoked;
@@ -91,6 +94,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 					requestContext.ArgumentsUnpacker = Unpacker.Create( requestContext.ArgumentsBuffer, false );
 
 					var responseContext = new ServerResponseContext();
+					responseContext.SetTransport( transport );
 					try
 					{
 						var result = target.GetServiceInvoker( configuration, this._serializationContext, serviceDescription, targetOperation );

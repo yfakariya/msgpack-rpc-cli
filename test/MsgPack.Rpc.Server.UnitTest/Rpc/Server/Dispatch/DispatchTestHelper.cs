@@ -23,6 +23,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using MsgPack.Rpc.Server.Protocols;
+using MsgPack.Rpc.Protocols;
 
 namespace MsgPack.Rpc.Server.Dispatch
 {
@@ -79,10 +80,12 @@ namespace MsgPack.Rpc.Server.Dispatch
 		/// <summary>
 		///		Creates <see cref="ServerResponseContext"/> which contains specified required states.
 		/// </summary>
+		/// <param name="transport">The transport to be bound to the context.</param>
 		/// <returns><see cref="ServerResponseContext"/> for the unit testing argument.</returns>
-		public static ServerResponseContext CreateResponseContext( )
+		public static ServerResponseContext CreateResponseContext( IContextBoundableTransport transport )
 		{
 			var result = new ServerResponseContext();
+			result.SetTransport( transport );
 			return result;
 		}
 	}

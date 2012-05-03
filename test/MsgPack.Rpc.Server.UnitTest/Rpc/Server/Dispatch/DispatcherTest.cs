@@ -52,7 +52,9 @@ namespace MsgPack.Rpc.Server.Dispatch
 		{
 			var returnValue = Guid.NewGuid().ToString();
 			using ( var server = new RpcServer() )
-			using ( var responseContext = DispatchTestHelper.CreateResponseContext() )
+			using ( var transportManager = new NullServerTransportManager( server ) )
+			using ( var transport = new NullServerTransport( transportManager ) )
+			using ( var responseContext = DispatchTestHelper.CreateResponseContext( transport ) )
 			{
 				var target = new Target( server );
 				target.InvokeSetReturnValue( responseContext, returnValue );
@@ -68,7 +70,9 @@ namespace MsgPack.Rpc.Server.Dispatch
 		{
 			var returnValue = default( string );
 			using ( var server = new RpcServer() )
-			using ( var responseContext = DispatchTestHelper.CreateResponseContext() )
+			using ( var transportManager = new NullServerTransportManager( server ) )
+			using ( var transport = new NullServerTransport( transportManager ) )
+			using ( var responseContext = DispatchTestHelper.CreateResponseContext( transport ) )
 			{
 				var target = new Target( server );
 				target.InvokeSetReturnValue( responseContext, returnValue );
@@ -84,7 +88,9 @@ namespace MsgPack.Rpc.Server.Dispatch
 		{
 			var returnValue = Environment.TickCount;
 			using ( var server = new RpcServer() )
-			using ( var responseContext = DispatchTestHelper.CreateResponseContext() )
+			using ( var transportManager = new NullServerTransportManager( server ) )
+			using ( var transport = new NullServerTransport( transportManager ) )
+			using ( var responseContext = DispatchTestHelper.CreateResponseContext( transport ) )
 			{
 				var target = new Target( server );
 				target.InvokeSetReturnValue( responseContext, returnValue );
@@ -110,7 +116,9 @@ namespace MsgPack.Rpc.Server.Dispatch
 		public void TestSetException_ExceptionIsNotNull_Serialized()
 		{
 			using ( var server = new RpcServer() )
-			using ( var responseContext = DispatchTestHelper.CreateResponseContext() )
+			using ( var transportManager = new NullServerTransportManager( server ) )
+			using ( var transport = new NullServerTransport( transportManager ) )
+			using ( var responseContext = DispatchTestHelper.CreateResponseContext( transport ) )
 			{
 				var target = new Target( server );
 				target.InvokeSetException( responseContext, "Method", new RpcMissingMethodException( "Method" ) );
@@ -125,7 +133,9 @@ namespace MsgPack.Rpc.Server.Dispatch
 		public void TestSetException_ExceptionIsNull()
 		{
 			using ( var server = new RpcServer() )
-			using ( var responseContext = DispatchTestHelper.CreateResponseContext() )
+			using ( var transportManager = new NullServerTransportManager( server ) )
+			using ( var transport = new NullServerTransport( transportManager ) )
+			using ( var responseContext = DispatchTestHelper.CreateResponseContext( transport ) )
 			{
 				var target = new Target( server );
 				target.InvokeSetException( responseContext, "Method", null );

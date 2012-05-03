@@ -71,8 +71,9 @@ namespace MsgPack.Rpc.Server.Protocols
 			get
 			{
 				Contract.Ensures( Contract.Result<Packer>() != null );
-				
-				return this._errorDataPacker; }
+
+				return this._errorDataPacker;
+			}
 		}
 
 		/// <summary>
@@ -150,36 +151,10 @@ namespace MsgPack.Rpc.Server.Protocols
 		/// <param name="returnValueSerializer">The serializer for the return value.</param>
 		internal void Serialize<T>( T returnValue, RpcErrorMessage error, MessagePackSerializer<T> returnValueSerializer )
 		{
-			// FIXME: Overwrite for error/timeout
-			if ( MsgPackRpcServerProtocolsTrace.ShouldTrace( MsgPackRpcServerProtocolsTrace.SerializeResponse ) )
-			{
-				MsgPackRpcServerProtocolsTrace.TraceEvent(
-					MsgPackRpcServerProtocolsTrace.SerializeResponse,
-					"Serialize response. {{ \"Error\" : {0}, \"ReturnValue\" : \"{1}\" }}",
-					error,
-					returnValue
-				);
-			}
+			var transport = ( this.BoundTransport as ServerTransport );
+			Contract.Assert( transport != null, this.BoundTransport == null ? "(null)" : this.BoundTransport.ToString() );
 
-			if ( error.IsSuccess )
-			{
-				this.ErrorDataPacker.PackNull();
-
-				if ( returnValueSerializer == null )
-				{
-					// void
-					this.ReturnDataPacker.PackNull();
-				}
-				else
-				{
-					returnValueSerializer.PackTo( this.ReturnDataPacker, returnValue );
-				}
-			}
-			else
-			{
-				this.ErrorDataPacker.Pack( error.Error.Identifier );
-				this.ReturnDataPacker.Pack( error.Detail );
-			}
+			transport.Serialize( this, returnValue, error, returnValueSerializer );
 		}
 
 		/// <summary>

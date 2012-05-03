@@ -36,6 +36,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			using ( var transport = new NullServerTransport( manager ) )
 			using ( var target = new ServerResponseContext() )
 			{
+				target.SetTransport( transport );
 				test( target, transport );
 			}
 		}
