@@ -60,6 +60,8 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Rpc\ArraySegmentExtensions.cs" />
     <Compile Include="Rpc\ByteArraySegmentStream.cs" />
+    <Compile Include="Rpc\Diagnostics\FileMessagePackStreamLogger.cs" />
+    <Compile Include="Rpc\Diagnostics\IMessagePackStreamLogger.cs" />
     <Compile Include="Rpc\ExceptionDispatchInfo.cs" />
     <Compile Include="Rpc\ExceptionExtensions.cs" />
     <Compile Include="Rpc\ExceptionModifiers.cs" />
@@ -80,9 +82,18 @@
     </Compile>
     <Compile Include="Rpc\ObjectPoolEmptyException.cs" />
     <Compile Include="Rpc\OnTheFlyObjectPool`1.cs" />
+    <Compile Include="Rpc\Protocols\Filters\MessageFilterProvider.cs" />
+    <Compile Include="Rpc\Protocols\Filters\QuotaMessageFilterProvider`1.cs" />
+    <Compile Include="Rpc\Protocols\Filters\QuotaMessageFilter`1.cs" />
+    <Compile Include="Rpc\Protocols\Filters\StreamLoggingMessageFilterProvider`1.cs" />
+    <Compile Include="Rpc\Protocols\Filters\StreamLoggingMessageFilter`1.cs" />
     <Compile Include="Rpc\Protocols\IContextBoundableTransport.cs" />
+    <Compile Include="Rpc\Diagnostics\MessagePackStreamLogger.cs" />
     <Compile Include="Rpc\Protocols\MessageContext.cs" />
     <Compile Include="Rpc\Protocols\InboundMessageContext.cs" />
+    <Compile Include="Rpc\Protocols\Filters\MessageFilter`1.cs" />
+    <Compile Include="Rpc\Protocols\Filters\MessageFilteringLocation.cs" />
+    <Compile Include="Rpc\Protocols\Filters\MessageFilterProvider`1.cs" />
     <Compile Include="Rpc\Protocols\OutboundMessageContext.cs" />
     <Compile Include="Rpc\Protocols\ShutdownCompletedEventArgs.cs" />
     <Compile Include="Rpc\Protocols\ShutdownSource.cs" />

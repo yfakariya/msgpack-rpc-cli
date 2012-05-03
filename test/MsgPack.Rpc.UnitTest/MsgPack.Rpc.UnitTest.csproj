@@ -60,6 +60,8 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Rpc\ArraySegmentExtensionTests.cs" />
     <Compile Include="Rpc\ByteArraySegmentStreamTest.cs" />
+    <Compile Include="Rpc\Diagnostics\FileMessagePackStreamLoggerTest.cs" />
+    <Compile Include="Rpc\Diagnostics\FileMessagePackStreamLoggerTester.cs" />
     <Compile Include="Rpc\DisposableExtensions.cs" />
     <Compile Include="Rpc\ExceptionDispatchInfoTest.cs" />
     <Compile Include="Rpc\ExceptionExtensionsTest.cs" />
