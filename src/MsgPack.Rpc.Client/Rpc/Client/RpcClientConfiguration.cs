@@ -19,9 +19,10 @@
 #endregion -- License Terms --
 
 using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics.Contracts;
-using System.Net;
-using MsgPack.Rpc.Client.Protocols;
+using MsgPack.Rpc.Protocols.Filters;
 
 namespace MsgPack.Rpc.Client
 {
@@ -47,6 +48,19 @@ namespace MsgPack.Rpc.Client
 
 				return RpcClientConfiguration._default;
 			}
+		}
+
+		private IList<MessageFilterProvider> _filterProviders = new List<MessageFilterProvider>();
+
+		/// <summary>
+		///		Gets the filter providers collection.
+		/// </summary>
+		/// <value>
+		///		The filter providers collection. Default is empty.
+		/// </value>
+		public IList<MessageFilterProvider> FilterProviders
+		{
+			get { return this._filterProviders; }
 		}
 
 		/// <summary>
@@ -140,6 +154,32 @@ namespace MsgPack.Rpc.Client
 			Contract.Ensures( this.IsFrozen == Contract.OldValue( this.IsFrozen ) );
 
 			return this.AsFrozenCore() as RpcClientConfiguration;
+		}
+
+		/// <summary>
+		///		Clones all of the fields of this instance.
+		/// </summary>
+		/// <returns>
+		///		The shallow copy of this instance. Returned instance always is not frozen.
+		/// </returns>
+		protected override FreezableObject CloneCore()
+		{
+			var result = base.CloneCore() as RpcClientConfiguration;
+			result._filterProviders = new List<MessageFilterProvider>( result._filterProviders );
+			return result;
+		}
+
+		/// <summary>
+		///		Freezes this instance.
+		/// </summary>
+		/// <returns>
+		///		This instance.
+		/// </returns>
+		protected override FreezableObject FreezeCore()
+		{
+			var result = base.FreezeCore() as RpcClientConfiguration;
+			result._filterProviders = new ReadOnlyCollection<MessageFilterProvider>( result._filterProviders );
+			return result;
 		}
 	}
 }

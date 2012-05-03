@@ -70,6 +70,10 @@
     <Compile Include="Rpc\Client\Protocols\ClientTransportManager`1.cs" />
     <Compile Include="Rpc\Client\Protocols\ClientResponseContext.cs" />
     <Compile Include="Rpc\Client\Protocols\ClientRequestContext.cs" />
+    <Compile Include="Rpc\Client\Protocols\Filters\ClientQuotaMessageFilter.cs" />
+    <Compile Include="Rpc\Client\Protocols\Filters\ClientQuotaMessageFilterProvider.cs" />
+    <Compile Include="Rpc\Client\Protocols\Filters\ClientStreamLoggingMessageFilter.cs" />
+    <Compile Include="Rpc\Client\Protocols\Filters\ClientStreamLoggingMessageFilterProvider.cs" />
     <Compile Include="Rpc\Client\Protocols\ProtocolTrace.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>

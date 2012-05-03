@@ -21,6 +21,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.Globalization;
@@ -30,6 +31,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using MsgPack.Rpc.Protocols;
+using MsgPack.Rpc.Protocols.Filters;
 
 namespace MsgPack.Rpc.Client.Protocols
 {
@@ -121,6 +123,34 @@ namespace MsgPack.Rpc.Client.Protocols
 		private bool IsInAnyShutdown
 		{
 			get { return Interlocked.CompareExchange( ref this._shutdownSource, 0, 0 ) != 0; }
+		}
+
+		private readonly IList<MessageFilter<ClientRequestContext>> _beforeSerializationFilters;
+
+		internal IList<MessageFilter<ClientRequestContext>> BeforeSerializationFilters
+		{
+			get { return this._beforeSerializationFilters; }
+		}
+
+		private readonly IList<MessageFilter<ClientRequestContext>> _afterSerializationFilters;
+
+		internal IList<MessageFilter<ClientRequestContext>> AfterSerializationFilters
+		{
+			get { return this._afterSerializationFilters; }
+		}
+
+		private readonly IList<MessageFilter<ClientResponseContext>> _beforeDeserializationFilters;
+
+		internal IList<MessageFilter<ClientResponseContext>> BeforeDeserializationFilters
+		{
+			get { return this._beforeDeserializationFilters; }
+		}
+
+		private readonly IList<MessageFilter<ClientResponseContext>> _afterDeserializationFilters;
+
+		internal IList<MessageFilter<ClientResponseContext>> AfterDeserializationFilters
+		{
+			get { return this._afterDeserializationFilters; }
 		}
 
 		private EventHandler<ShutdownCompletedEventArgs> _shutdownCompleted;
@@ -226,6 +256,41 @@ namespace MsgPack.Rpc.Client.Protocols
 			this._manager = manager;
 			this._pendingRequestTable = new ConcurrentDictionary<int, Action<ClientResponseContext, Exception, bool>>();
 			this._pendingNotificationTable = new ConcurrentDictionary<long, Action<Exception, bool>>();
+
+			this._beforeSerializationFilters =
+				new ReadOnlyCollection<MessageFilter<ClientRequestContext>>(
+					manager.Configuration.FilterProviders
+					.OfType<MessageFilterProvider<ClientRequestContext>>()
+					.Select( provider => provider.GetFilter( MessageFilteringLocation.BeforeSerialization ) )
+					.Where( filter => filter != null )
+					.ToArray()
+				);
+			this._afterSerializationFilters =
+				new ReadOnlyCollection<MessageFilter<ClientRequestContext>>(
+					manager.Configuration.FilterProviders
+					.OfType<MessageFilterProvider<ClientRequestContext>>()
+					.Select( provider => provider.GetFilter( MessageFilteringLocation.AfterSerialization ) )
+					.Where( filter => filter != null )
+					.ToArray()
+				);
+			this._beforeDeserializationFilters =
+				new ReadOnlyCollection<MessageFilter<ClientResponseContext>>(
+					manager.Configuration.FilterProviders
+					.OfType<MessageFilterProvider<ClientResponseContext>>()
+					.Select( provider => provider.GetFilter( MessageFilteringLocation.BeforeDeserialization ) )
+					.Where( filter => filter != null )
+					.Reverse()
+					.ToArray()
+				);
+			this._afterDeserializationFilters =
+				new ReadOnlyCollection<MessageFilter<ClientResponseContext>>(
+					manager.Configuration.FilterProviders
+					.OfType<MessageFilterProvider<ClientResponseContext>>()
+					.Select( provider => provider.GetFilter( MessageFilteringLocation.AfterDeserialization ) )
+					.Where( filter => filter != null )
+					.Reverse()
+					.ToArray()
+				);
 		}
 
 		/// <summary>
@@ -409,14 +474,18 @@ namespace MsgPack.Rpc.Client.Protocols
 
 		private void HandleDeserializationError( ClientResponseContext context, string message, Func<byte[]> invalidRequestHeaderProvider )
 		{
+			this.HandleDeserializationError( context, context.MessageId, new RpcErrorMessage( RpcError.RemoteRuntimeError, "Invalid stream.", message ), message, invalidRequestHeaderProvider );
+		}
+
+		private void HandleDeserializationError( ClientResponseContext context, int? messageId, RpcErrorMessage rpcError, string message, Func<byte[]> invalidRequestHeaderProvider )
+		{
 			if ( invalidRequestHeaderProvider != null && MsgPackRpcClientProtocolsTrace.ShouldTrace( MsgPackRpcClientProtocolsTrace.DumpInvalidResponseHeader ) )
 			{
 				var array = invalidRequestHeaderProvider();
 				MsgPackRpcClientProtocolsTrace.TraceData( MsgPackRpcClientProtocolsTrace.DumpInvalidResponseHeader, BitConverter.ToString( array ), array );
 			}
 
-			var rpcError = new RpcErrorMessage( RpcError.RemoteRuntimeError, "Invalid stream.", message );
-			this.RaiseError( context.MessageId, context.SessionId, rpcError, context.CompletedSynchronously );
+			this.RaiseError( messageId, context.SessionId, rpcError, context.CompletedSynchronously );
 			// TODO: configurable
 			context.NextProcess = this.DumpCorrupttedData;
 		}
@@ -546,6 +615,15 @@ namespace MsgPack.Rpc.Client.Protocols
 #endif
 		}
 
+		private static void ApplyFilters<T>( IList<MessageFilter<T>> filters, T context )
+			where T : MessageContext
+		{
+			foreach ( var filter in filters )
+			{
+				filter.ProcessMessage( context );
+			}
+		}
+
 		/// <summary>
 		///		Gets the <see cref="ClientRequestContext"/> to store context information for request or notification.
 		/// </summary>
@@ -609,6 +687,10 @@ namespace MsgPack.Rpc.Client.Protocols
 				throw new RpcErrorMessage( RpcError.TransportError, "Server did shutdown socket.", null ).ToException();
 			}
 
+			// Because exceptions here means client error, it should be handled like other client error.
+			// Therefore, no catch clauses here.
+			ApplyFilters( this._beforeSerializationFilters, context );
+
 			context.Prepare();
 
 			if ( context.MessageType == MessageType.Request )
@@ -642,6 +724,10 @@ namespace MsgPack.Rpc.Client.Protocols
 					context.SendingBuffer.Sum( segment => ( long )segment.Count )
 				);
 			}
+
+			// Because exceptions here means client error, it should be handled like other client error.
+			// Therefore, no catch clauses here.
+			ApplyFilters( this._afterSerializationFilters, context );
 
 			this.SendCore( context );
 		}
@@ -861,6 +947,18 @@ namespace MsgPack.Rpc.Client.Protocols
 			}
 
 			// Go deserialization pipeline.
+
+			// Exceptions here means message error.
+			try
+			{
+				ApplyFilters( this._beforeDeserializationFilters, context );
+			}
+			catch ( RpcException ex )
+			{
+				this.HandleDeserializationError( context, TryDetectMessageId( context ), new RpcErrorMessage( ex.RpcError, ex.Message, ex.DebugInformation ), "Filter rejects message.", () => context.ReceivedData.SelectMany( s => s.AsEnumerable() ).ToArray() );
+				return;
+			}
+
 			if ( !context.NextProcess( context ) )
 			{
 				if ( this.IsServerShutdown )
@@ -876,6 +974,39 @@ namespace MsgPack.Rpc.Client.Protocols
 				return;
 			}
 		}
+
+		private static int? TryDetectMessageId( ClientResponseContext context )
+		{
+			if ( context.MessageId != null )
+			{
+				return context.MessageId;
+			}
+
+			using ( var stream = new ByteArraySegmentStream( context.ReceivedData ) )
+			using ( var unpacker = Unpacker.Create( stream ) )
+			{
+				if ( !unpacker.Read() || !unpacker.IsArrayHeader || unpacker.Data.Value != 4 )
+				{
+					// Not a response message
+					return null;
+				}
+
+				if ( !unpacker.Read() || !unpacker.Data.Value.IsTypeOf<Int32>().GetValueOrDefault() || unpacker.Data.Value != ( int )MessageType.Response )
+				{
+					// Not a response message or invalid message type
+					return null;
+				}
+
+				if ( !unpacker.Read() || !unpacker.Data.Value.IsTypeOf<Int32>().GetValueOrDefault() )
+				{
+					// Invalid message ID.
+					return null;
+				}
+
+				return unpacker.Data.Value.AsInt32();
+			}
+		}
+
 
 		private void ShutdownReceiving( ClientResponseContext context )
 		{

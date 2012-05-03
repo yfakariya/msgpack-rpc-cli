@@ -30,6 +30,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using MsgPack.Rpc.Protocols;
 using NUnit.Framework;
+using MsgPack.Rpc.Protocols.Filters;
+using MsgPack.Rpc.Server;
+using MsgPack.Rpc.Server.Protocols;
 
 namespace MsgPack.Rpc.Client.Protocols
 {
@@ -1241,6 +1244,320 @@ namespace MsgPack.Rpc.Client.Protocols
 		#endregion
 
 		#endregion
+
+
+		#region -- Filter --
+
+		[Test]
+		public void TestFilters_Initialization_AppliedDeserializationsAreInOrder_AppliedSerializationsAreReverseOrder()
+		{
+			TestFiltersCore(
+				null,
+				target =>
+				{
+					CheckFilters( target.BeforeSerializationFilters, MessageFilteringLocation.BeforeSerialization, 0, 1 );
+					CheckFilters( target.AfterSerializationFilters, MessageFilteringLocation.AfterSerialization, 0, 1 );
+					CheckFilters( target.BeforeDeserializationFilters, MessageFilteringLocation.BeforeDeserialization, 3, 2 );
+					CheckFilters( target.AfterDeserializationFilters, MessageFilteringLocation.AfterDeserialization, 3, 2 );
+				},
+				null,
+				new ClientRequestTestMessageFilterProvider( 0 ),
+				new ClientRequestTestMessageFilterProvider( 1 ),
+				new ClientResponseTestMessageFilterProvider( 2 ),
+				new ClientResponseTestMessageFilterProvider( 3 )
+			);
+		}
+
+		private static void CheckFilters<T>( IList<MessageFilter<T>> target, MessageFilteringLocation location, params int[] indexes )
+			where T : MessageContext
+		{
+			Assert.That( target.Count, Is.EqualTo( indexes.Length ) );
+			for ( int i = 0; i < indexes.Length; i++ )
+			{
+				var testFilter = target[ i ] as ITestMessageFilter;
+				Assert.That( testFilter, Is.Not.Null, "@{0}:{1}", i, target[ i ].GetType().ToString() );
+				Assert.That( testFilter.Index, Is.EqualTo( indexes[ i ] ), "@{0}", i );
+				Assert.That( testFilter.Location, Is.EqualTo( location ), "@{0}", i );
+			}
+		}
+
+		[Test]
+		public void TestFilters_RequestResponse_Invoked()
+		{
+			int beforeDeserializationApplied = 0;
+			int afterDeserializationApplied = 0;
+			int beforeSerializationApplied = 0;
+			int afterSerializationApplied = 0;
+
+			var requestFilterProvider = new ClientRequestTestMessageFilterProvider( 0 );
+			requestFilterProvider.FilterApplied +=
+				( sender, e ) =>
+				{
+					switch ( e.AppliedLocation )
+					{
+						case MessageFilteringLocation.AfterSerialization:
+						{
+							Interlocked.Exchange( ref afterSerializationApplied, 1 );
+							break;
+						}
+						case MessageFilteringLocation.BeforeSerialization:
+						{
+							Interlocked.Exchange( ref beforeSerializationApplied, 1 );
+							break;
+						}
+					}
+
+					return;
+				};
+
+			var responseFilterProvider = new ClientResponseTestMessageFilterProvider( 1 );
+			responseFilterProvider.FilterApplied +=
+				( sender, e ) =>
+				{
+					switch ( e.AppliedLocation )
+					{
+						case MessageFilteringLocation.AfterDeserialization:
+						{
+							Interlocked.Exchange( ref afterDeserializationApplied, 1 );
+							break;
+						}
+						case MessageFilteringLocation.BeforeDeserialization:
+						{
+							Interlocked.Exchange( ref beforeDeserializationApplied, 1 );
+							break;
+						}
+					}
+
+					return;
+				};
+
+			TestFiltersCore(
+				null,
+				null,
+				( requestData, rawResponseData, fatalError, responseError ) =>
+				{
+					Assert.That( Interlocked.CompareExchange( ref beforeDeserializationApplied, 0, 0 ), Is.EqualTo( 1 ) );
+					Assert.That( Interlocked.CompareExchange( ref afterDeserializationApplied, 0, 0 ), Is.EqualTo( 1 ) );
+					Assert.That( Interlocked.CompareExchange( ref beforeSerializationApplied, 0, 0 ), Is.EqualTo( 1 ) );
+					Assert.That( Interlocked.CompareExchange( ref afterSerializationApplied, 0, 0 ), Is.EqualTo( 1 ) );
+				},
+				requestFilterProvider,
+				responseFilterProvider
+			);
+		}
+
+		/// <summary>
+		///		Do filter invocation test.
+		/// </summary>
+		/// <param name="argumentTweak">The logic to tweak arguments. If null, <c>args</c> will be empty. The arguments to the delegate are <see cref="Packer"/> for request stream and existent stream length.</param>
+		/// <param name="transportAssertion">The assertion logic for the transport.</param>
+		/// <param name="resultAssertion">The assertion logic for the data. The arguments are request data bytes, raw response data bytes, fatal error, and error response.</param>
+		/// <param name="providers">The filter providers to be invoked.</param>
+		internal static void TestFiltersCore(
+			Func<string, int?, MessagePackObject[], MessagePackObject> serverCallback,
+			Action<ClientTransport> transportAssertion,
+			Action<byte[], byte[], Exception, RpcErrorMessage> resultAssertion,
+			params MessageFilterProvider[] providers
+		)
+		{
+			var configuration = new RpcClientConfiguration();
+
+			foreach ( var provider in providers )
+			{
+				configuration.FilterProviders.Add( provider );
+			}
+
+			Func<string, int?, MessagePackObject[], MessagePackObject> echo = ( method, messageId, args ) => args;
+
+			using ( var server = CallbackServer.Create( serverCallback ?? echo, true ) )
+			using ( var serverTransportManager = new InProcServerTransportManager( server.Server as RpcServer, m => new SingletonObjectPool<InProcServerTransport>( new InProcServerTransport( m ) ) ) )
+			using ( var manager = new InProcClientTransportManager( configuration, serverTransportManager ) )
+			using ( var task = manager.ConnectAsync( _endPoint ) )
+			using ( var target = task.Result )
+			using ( var responseWaitHandle = new ManualResetEventSlim() )
+			{
+				if ( transportAssertion != null )
+				{
+					transportAssertion( target );
+				}
+
+				var requestContext = target.GetClientRequestContext();
+				byte[] requestData = null;
+				byte[] responseData = null;
+				object responseError = null;
+				var singletonServerTransport = serverTransportManager.NewSession();
+				singletonServerTransport.Response += ( sender, e ) => Interlocked.Exchange( ref responseData, e.Data );
+				requestContext.SetRequest(
+					123,
+					"Test",
+					( responseContext, error, completedSynchronously ) =>
+					{
+						object boxedError = error ?? ( object )ErrorInterpreter.UnpackError( responseContext );
+						Interlocked.Exchange( ref responseError, boxedError );
+						responseWaitHandle.Set();
+					}
+				);
+
+				requestContext.ArgumentsPacker.PackArrayHeader( 0 );
+
+				target.Send( requestContext );
+
+				Assert.That( responseWaitHandle.Wait( TimeSpan.FromSeconds( 1 ) ) );
+
+				if ( resultAssertion != null )
+				{
+					Exception exception = null;
+					var errorResponse = RpcErrorMessage.Success;
+					if ( responseError is RpcErrorMessage )
+					{
+						errorResponse = ( RpcErrorMessage )responseError;
+					}
+					else
+					{
+						exception = responseError as Exception;
+					}
+
+					resultAssertion( requestData, responseData, exception, errorResponse );
+				}
+			}
+		}
+
+		private interface ITestMessageFilter
+		{
+			int Index { get; }
+			MessageFilteringLocation Location { get; }
+		}
+
+		private abstract class TestMessageFilter<T> : MessageFilter<T>, ITestMessageFilter
+			where T : MessageContext
+		{
+			private readonly int _index;
+
+			public int Index
+			{
+				get { return this._index; }
+			}
+
+			private readonly MessageFilteringLocation _location;
+
+			public MessageFilteringLocation Location
+			{
+				get { return this._location; }
+			}
+
+			public event EventHandler<FilterAppliedEventArgs> FilterApplied;
+
+			protected void OnFilterApplied( FilterAppliedEventArgs e )
+			{
+				var handler = this.FilterApplied;
+				if ( handler != null )
+				{
+					handler( this, e );
+				}
+			}
+			protected TestMessageFilter( int index, MessageFilteringLocation location )
+			{
+				this._index = index;
+				this._location = location;
+			}
+
+			protected override void ProcessMessageCore( T context )
+			{
+				this.OnFilterApplied( new FilterAppliedEventArgs( context, this._location ) );
+			}
+		}
+
+		private sealed class ClientRequestTestMessageFilter : TestMessageFilter<ClientRequestContext>
+		{
+			public ClientRequestTestMessageFilter( int index, MessageFilteringLocation location ) : base( index, location ) { }
+		}
+
+		private sealed class ClientResponseTestMessageFilter : TestMessageFilter<ClientResponseContext>
+		{
+			public ClientResponseTestMessageFilter( int index, MessageFilteringLocation location ) : base( index, location ) { }
+		}
+
+		private sealed class FilterAppliedEventArgs : EventArgs
+		{
+			private readonly MessageContext _context;
+
+			public MessageContext Context
+			{
+				get { return this._context; }
+			}
+
+			private readonly MessageFilteringLocation _appliedLocation;
+
+			public MessageFilteringLocation AppliedLocation
+			{
+				get { return this._appliedLocation; }
+			}
+
+			public FilterAppliedEventArgs( MessageContext context, MessageFilteringLocation appliedLocation )
+			{
+				this._context = context;
+				this._appliedLocation = appliedLocation;
+			}
+		}
+
+		private interface ITestMessageFilterProvider
+		{
+			event EventHandler<FilterAppliedEventArgs> FilterApplied;
+		}
+
+		private abstract class TestMessageFilterProvider<T> : MessageFilterProvider<T>, ITestMessageFilterProvider
+			where T : MessageContext
+		{
+			public event EventHandler<FilterAppliedEventArgs> FilterApplied;
+
+			protected void OnFilterApplied( FilterAppliedEventArgs e )
+			{
+				var handler = this.FilterApplied;
+				if ( handler != null )
+				{
+					handler( this, e );
+				}
+			}
+
+			protected TestMessageFilterProvider() { }
+		}
+
+		private sealed class ClientRequestTestMessageFilterProvider : TestMessageFilterProvider<ClientRequestContext>
+		{
+			private readonly int _index;
+
+			public ClientRequestTestMessageFilterProvider( int index )
+			{
+				this._index = index;
+			}
+
+			public override MessageFilter<ClientRequestContext> GetFilter( MessageFilteringLocation location )
+			{
+				var result = new ClientRequestTestMessageFilter( this._index, location );
+				result.FilterApplied += ( sender, e ) => this.OnFilterApplied( e );
+				return result;
+			}
+		}
+
+		private sealed class ClientResponseTestMessageFilterProvider : TestMessageFilterProvider<ClientResponseContext>
+		{
+			private readonly int _index;
+
+			public ClientResponseTestMessageFilterProvider( int index )
+			{
+				this._index = index;
+			}
+
+			public override MessageFilter<ClientResponseContext> GetFilter( MessageFilteringLocation location )
+			{
+				var result = new ClientResponseTestMessageFilter( this._index, location );
+				result.FilterApplied += ( sender, e ) => this.OnFilterApplied( e );
+				return result;
+			}
+		}
+
+		#endregion
+
 
 		private sealed class ChunkedReceivedDataEnumerator : IEnumerable<byte[]>
 		{

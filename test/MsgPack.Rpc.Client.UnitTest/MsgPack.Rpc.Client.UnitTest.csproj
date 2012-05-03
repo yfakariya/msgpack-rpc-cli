@@ -70,6 +70,9 @@
     <Compile Include="Rpc\Client\Protocols\ClientSocketErrorTest.cs" />
     <Compile Include="Rpc\Client\Protocols\ClientTransportManagerTest.cs" />
     <Compile Include="Rpc\Client\Protocols\ClientTransportTest.cs" />
+    <Compile Include="Rpc\Client\Protocols\Filters\ClientQuotaMessageFilterTest.cs" />
+    <Compile Include="Rpc\Client\Protocols\Filters\ClientStreamLoggingMessageFilterTest.cs" />
+    <Compile Include="Rpc\Client\Protocols\Filters\_SetUpFixture.cs" />
     <Compile Include="Rpc\Client\Protocols\NullClientTransport.cs" />
     <Compile Include="Rpc\Client\Protocols\NullClientTransportManager.cs" />
     <Compile Include="Rpc\Client\Protocols\TcpClientTransportManagerTest.cs" />
