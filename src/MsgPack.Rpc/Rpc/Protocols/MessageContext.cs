@@ -33,6 +33,8 @@ namespace MsgPack.Rpc.Protocols
 	/// </summary>
 	public abstract class MessageContext : IDisposable
 	{
+		#region -- Async Socket Context --
+
 		private readonly SocketAsyncEventArgs _socketContext;
 
 		/// <summary>
@@ -45,6 +47,10 @@ namespace MsgPack.Rpc.Protocols
 		{
 			get { return this._socketContext; }
 		}
+
+		#endregion
+
+		#region -- Session Management --
 
 		private static long _lastSessionId;
 
@@ -92,6 +98,10 @@ namespace MsgPack.Rpc.Protocols
 			internal set;
 		}
 
+		#endregion
+
+		#region -- CompletedSynchronously --
+
 		private bool _completedSynchronously;
 
 		/// <summary>
@@ -114,6 +124,10 @@ namespace MsgPack.Rpc.Protocols
 
 			this._completedSynchronously = true;
 		}
+
+		#endregion
+
+		#region -- Transport --
 
 		private IContextBoundableTransport _boundTransport;
 
@@ -144,6 +158,11 @@ namespace MsgPack.Rpc.Protocols
 
 			this.SocketContext.Completed += transport.OnSocketOperationCompleted;
 		}
+
+
+		#endregion
+
+		#region -- Communication --
 
 		private int? _bytesTransferred;
 
@@ -191,7 +210,9 @@ namespace MsgPack.Rpc.Protocols
 			set { this._socketContext.SocketError = value; }
 		}
 
-		// Begin In-Proc support fakes
+		#endregion
+
+		#region -- In-Proc support fakes --
 
 		/// <summary>
 		///		Sets <see cref="BytesTransferred"/> property value with specified value for testing purposes.
@@ -217,7 +238,7 @@ namespace MsgPack.Rpc.Protocols
 			get { return this._socketContext.Offset; }
 		}
 
-		// End In-Proc support fakes
+		#endregion
 
 
 		/// <summary>
