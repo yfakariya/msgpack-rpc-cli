@@ -320,6 +320,90 @@ namespace MsgPack.Rpc.Server
 		
 		static partial void CoerceListenBackLogValue( ref int value );
 
+		private TimeSpan? _sendTimeout = TimeSpan.FromSeconds( 20 );
+		
+		/// <summary>
+		/// 	Gets or sets the timeout value to send all response packets.
+		/// </summary>
+		/// <value>
+		/// 	The timeout value to send all response packets.. The default is 20 seconds. <c>null</c> means inifinite timeout.
+		/// </value>
+		public TimeSpan? SendTimeout
+		{
+			get
+			{
+				Contract.Ensures( Contract.Result<TimeSpan?>() == null || Contract.Result<TimeSpan?>().Value > default( TimeSpan ) );
+
+				return this._sendTimeout;
+			}
+			set
+			{
+				if ( !( value == null || value.Value > default( TimeSpan ) ) )
+				{
+					throw new ArgumentOutOfRangeException( "value", "Argument must be positive number." );
+				}
+
+				Contract.Ensures( Contract.Result<TimeSpan?>() == null || Contract.Result<TimeSpan?>().Value > default( TimeSpan ) );
+
+				this.VerifyIsNotFrozen();
+				var coerced = value;
+				CoerceSendTimeoutValue( ref coerced );
+				this._sendTimeout = coerced;
+			}
+		}
+		
+		/// <summary>
+		/// 	Resets the SendTimeout property value.
+		/// </summary>
+		public void ResetSendTimeout()
+		{
+			this._sendTimeout = TimeSpan.FromSeconds( 20 );
+		}
+		
+		static partial void CoerceSendTimeoutValue( ref TimeSpan? value );
+
+		private TimeSpan? _receiveTimeout = TimeSpan.FromSeconds( 20 );
+		
+		/// <summary>
+		/// 	Gets or sets the timeout value to receive all request/notification packets.
+		/// </summary>
+		/// <value>
+		/// 	The timeout value to receive all request/notification packets. The default is 20 seconds. <c>null</c> means inifinite timeout.
+		/// </value>
+		public TimeSpan? ReceiveTimeout
+		{
+			get
+			{
+				Contract.Ensures( Contract.Result<TimeSpan?>() == null || Contract.Result<TimeSpan?>().Value > default( TimeSpan ) );
+
+				return this._receiveTimeout;
+			}
+			set
+			{
+				if ( !( value == null || value.Value > default( TimeSpan ) ) )
+				{
+					throw new ArgumentOutOfRangeException( "value", "Argument must be positive number." );
+				}
+
+				Contract.Ensures( Contract.Result<TimeSpan?>() == null || Contract.Result<TimeSpan?>().Value > default( TimeSpan ) );
+
+				this.VerifyIsNotFrozen();
+				var coerced = value;
+				CoerceReceiveTimeoutValue( ref coerced );
+				this._receiveTimeout = coerced;
+			}
+		}
+		
+		/// <summary>
+		/// 	Resets the ReceiveTimeout property value.
+		/// </summary>
+		public void ResetReceiveTimeout()
+		{
+			this._receiveTimeout = TimeSpan.FromSeconds( 20 );
+		}
+		
+		static partial void CoerceReceiveTimeoutValue( ref TimeSpan? value );
+
 		private TimeSpan? _executionTimeout = TimeSpan.FromSeconds( 110 );
 		
 		/// <summary>
@@ -807,6 +891,12 @@ namespace MsgPack.Rpc.Server
 			buffer.Append( "\"ListenBackLog\" : " );
 			ToString( this.ListenBackLog, buffer );
 			buffer.Append( ", " );
+			buffer.Append( "\"SendTimeout\" : " );
+			ToString( this.SendTimeout, buffer );
+			buffer.Append( ", " );
+			buffer.Append( "\"ReceiveTimeout\" : " );
+			ToString( this.ReceiveTimeout, buffer );
+			buffer.Append( ", " );
 			buffer.Append( "\"ExecutionTimeout\" : " );
 			ToString( this.ExecutionTimeout, buffer );
 			buffer.Append( ", " );
@@ -830,6 +920,9 @@ namespace MsgPack.Rpc.Server
 			buffer.Append( ", " );
 			buffer.Append( "\"ResponseContextPoolProvider\" : " );
 			ToString( this.ResponseContextPoolProvider, buffer );
+			buffer.Append( ", " );
+			buffer.Append( "\"ApplicationContextPoolProvider\" : " );
+			ToString( this.ApplicationContextPoolProvider, buffer );
 			buffer.Append( ", " );
 			buffer.Append( "\"ListeningContextPoolProvider\" : " );
 			ToString( this.ListeningContextPoolProvider, buffer );

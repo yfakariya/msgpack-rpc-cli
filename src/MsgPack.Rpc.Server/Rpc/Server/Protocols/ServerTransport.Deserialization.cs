@@ -47,6 +47,11 @@ namespace MsgPack.Rpc.Server.Protocols
 				context.RootUnpacker = Unpacker.Create( context.UnpackingBuffer, false );
 				Interlocked.Increment( ref this._processing );
 				context.RenewSessionId();
+				if ( this._manager.Server.Configuration.ReceiveTimeout != null )
+				{
+					context.Timeout += this.OnReceiveTimeout;
+					context.StartWatchTimeout( this._manager.Server.Configuration.ReceiveTimeout.Value );
+				}
 
 				if ( MsgPackRpcServerProtocolsTrace.ShouldTrace( MsgPackRpcServerProtocolsTrace.NewSession ) )
 				{
@@ -337,6 +342,9 @@ namespace MsgPack.Rpc.Server.Protocols
 		private bool Dispatch( ServerRequestContext context )
 		{
 			Contract.Assert( context != null );
+
+			context.StopWatchTimeout();
+			context.Timeout -= this.OnReceiveTimeout;
 
 			// Exceptions here means message error.
 			try

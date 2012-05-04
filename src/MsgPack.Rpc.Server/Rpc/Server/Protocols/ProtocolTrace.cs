@@ -33,7 +33,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		private static readonly TraceSource _source = new TraceSource( "MsgPack.Rpc.Server.Protocols" );
 
 		private static readonly Dictionary<MessageId, TraceEventType> _typeTable = 
-			new Dictionary<MessageId, TraceEventType> ( 33 )
+			new Dictionary<MessageId, TraceEventType> ( 35 )
 			{
 				{ MessageId.DetectClientShutdown, TraceEventType.Information },
 				{ MessageId.SocketError, TraceEventType.Warning },
@@ -53,6 +53,7 @@ namespace MsgPack.Rpc.Server.Protocols
 				{ MessageId.NeedArgumentsArrayHeader, TraceEventType.Verbose },
 				{ MessageId.NeedArgumentsElement, TraceEventType.Verbose },
 				{ MessageId.DumpInvalidRequestHeader, TraceEventType.Verbose },
+				{ MessageId.ReceiveTimeout, TraceEventType.Warning },
 				{ MessageId.StartListen, TraceEventType.Information },
 				{ MessageId.BeginAccept, TraceEventType.Verbose },
 				{ MessageId.EndAccept, TraceEventType.Verbose },
@@ -60,6 +61,7 @@ namespace MsgPack.Rpc.Server.Protocols
 				{ MessageId.SerializeResponse, TraceEventType.Verbose },
 				{ MessageId.SendOutboundData, TraceEventType.Verbose },
 				{ MessageId.SentOutboundData, TraceEventType.Verbose },
+				{ MessageId.SendTimeout, TraceEventType.Warning },
 				{ MessageId.BeginShutdownManager, TraceEventType.Verbose },
 				{ MessageId.ManagerShutdownCompleted, TraceEventType.Verbose },
 				{ MessageId.DisposeManager, TraceEventType.Verbose },
@@ -206,6 +208,10 @@ namespace MsgPack.Rpc.Server.Protocols
 		/// </summary>
 		public const MessageId DumpInvalidRequestHeader = MessageId.DumpInvalidRequestHeader;
 		/// <summary>
+		/// 	<see cref="MessageId" /> of .ReceiveTimeout (ID:1201) message.
+		/// </summary>
+		public const MessageId ReceiveTimeout = MessageId.ReceiveTimeout;
+		/// <summary>
 		/// 	<see cref="MessageId" /> of .StartListen (ID:1301) message.
 		/// </summary>
 		public const MessageId StartListen = MessageId.StartListen;
@@ -233,6 +239,10 @@ namespace MsgPack.Rpc.Server.Protocols
 		/// 	<see cref="MessageId" /> of .SentOutboundData (ID:2202) message.
 		/// </summary>
 		public const MessageId SentOutboundData = MessageId.SentOutboundData;
+		/// <summary>
+		/// 	<see cref="MessageId" /> of .SendTimeout (ID:2203) message.
+		/// </summary>
+		public const MessageId SendTimeout = MessageId.SendTimeout;
 		/// <summary>
 		/// 	<see cref="MessageId" /> of .BeginShutdownManager (ID:3001) message.
 		/// </summary>
@@ -285,6 +295,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			NeedArgumentsArrayHeader = 1115,
 			NeedArgumentsElement = 1116,
 			DumpInvalidRequestHeader = 1190,
+			ReceiveTimeout = 1201,
 			StartListen = 1301,
 			BeginAccept = 1302,
 			EndAccept = 1303,
@@ -292,6 +303,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			SerializeResponse = 2101,
 			SendOutboundData = 2201,
 			SentOutboundData = 2202,
+			SendTimeout = 2203,
 			BeginShutdownManager = 3001,
 			ManagerShutdownCompleted = 3002,
 			DisposeManager = 3009,

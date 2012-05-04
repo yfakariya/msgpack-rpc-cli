@@ -35,12 +35,19 @@ namespace MsgPack.Rpc.Server.Protocols
 	[Timeout( 3000 )]
 	public class ServerTransportTest
 	{
+		private static readonly TimeSpan _receiveTimeout = TimeSpan.FromMilliseconds( 20 );
+
 		private void TestCore( Action<InProcServerTransport> test )
 		{
 			TestCore( ( target, _ ) => test( target ), ( _0, _1 ) => MessagePackObject.Nil );
 		}
 
 		private void TestCore( Action<InProcServerTransport, InProcServerTransportController> test, Func<int?, MessagePackObject[], MessagePackObject> callback )
+		{
+			this.TestCore( test, callback, null );
+		}
+
+		private void TestCore( Action<InProcServerTransport, InProcServerTransportController> test, Func<int?, MessagePackObject[], MessagePackObject> callback, Action<RpcServerConfiguration> configurationTweak )
 		{
 			// TODO: Timeout setting
 			InProcServerTransportManager serverTransportManager = null;
@@ -50,6 +57,11 @@ namespace MsgPack.Rpc.Server.Protocols
 				s => serverTransportManager = new InProcServerTransportManager( s, m => new SingletonObjectPool<InProcServerTransport>( new InProcServerTransport( m ) ) );
 			config.DispatcherProvider =
 				s => new CallbackDispatcher( s, callback );
+
+			if ( configurationTweak != null )
+			{
+				configurationTweak( config );
+			}
 
 			using ( var server = CallbackServer.Create( config ) )
 			using ( var target = serverTransportManager.NewSession() )
@@ -267,6 +279,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			Action<MessagePackObject, MessagePackObject> responseAssertion,
 			bool willExecute,
 			bool willBeConnectionReset,
+			TimeSpan? receiveTimeout,
 			MessageType messageType,
 			int? messageId,
 			string methodName,
@@ -287,8 +300,12 @@ namespace MsgPack.Rpc.Server.Protocols
 							controller.Response +=
 								( sender, e ) =>
 								{
-									response = e.Data;
-									responseWaitHandle.Set();
+									if ( ( willBeConnectionReset && e.Data.Length == 0 )
+										|| e.Data.Length > 0 )
+									{
+										Interlocked.Exchange( ref response, e.Data );
+										responseWaitHandle.Set();
+									}
 								};
 
 							using ( var buffer = new MemoryStream() )
@@ -347,6 +364,10 @@ namespace MsgPack.Rpc.Server.Protocols
 										Assert.That( responseWaitHandle.Wait( TimeSpan.FromSeconds( 1 ) ), Is.True, "Not respond." );
 									}
 								}
+								else if ( receiveTimeout != null )
+								{
+									Assert.That( responseWaitHandle.Wait( TimeSpan.FromSeconds( 1 ) ), Is.True, "Not respond." );
+								}
 
 								if ( willBeConnectionReset )
 								{
@@ -399,7 +420,8 @@ namespace MsgPack.Rpc.Server.Protocols
 							isExecuted = true;
 							executionWaitHandle.Set();
 						}
-					}
+					},
+					config => config.ReceiveTimeout = receiveTimeout
 				);
 			}
 		}
@@ -429,6 +451,7 @@ namespace MsgPack.Rpc.Server.Protocols
 				null,
 				true,
 				false,
+				null,
 				MessageType.Request,
 				1,
 				"Test",
@@ -464,6 +487,7 @@ namespace MsgPack.Rpc.Server.Protocols
 				},
 				true,
 				false,
+				null,
 				MessageType.Request,
 				1,
 				"Test",
@@ -491,6 +515,7 @@ namespace MsgPack.Rpc.Server.Protocols
 				null,
 				true,
 				false,
+				null,
 				MessageType.Notification,
 				null,
 				"Test",
@@ -521,6 +546,7 @@ namespace MsgPack.Rpc.Server.Protocols
 				null,
 				true,
 				false,
+				null,
 				MessageType.Notification,
 				null,
 				"Test",
@@ -561,6 +587,7 @@ namespace MsgPack.Rpc.Server.Protocols
 				},
 				false,
 				willBeConnectionReset,
+				null,
 				MessageType.Request, // dummy
 				messageId,
 				null,
@@ -759,6 +786,7 @@ namespace MsgPack.Rpc.Server.Protocols
 				null,
 				true,
 				false,
+				null,
 				MessageType.Request,
 				1,
 				String.Empty
@@ -774,6 +802,7 @@ namespace MsgPack.Rpc.Server.Protocols
 				null,
 				true,
 				false,
+				null,
 				MessageType.Notification,
 				null,
 				String.Empty
@@ -789,6 +818,7 @@ namespace MsgPack.Rpc.Server.Protocols
 				null,
 				true,
 				false,
+				null,
 				MessageType.Request,
 				1,
 				null
@@ -804,6 +834,7 @@ namespace MsgPack.Rpc.Server.Protocols
 				null,
 				true,
 				false,
+				null,
 				MessageType.Notification,
 				null,
 				null
@@ -823,6 +854,7 @@ namespace MsgPack.Rpc.Server.Protocols
 				null,
 				true,
 				false,
+				null,
 				MessageType.Request,
 				1,
 				"Test"
@@ -838,6 +870,7 @@ namespace MsgPack.Rpc.Server.Protocols
 				null,
 				true,
 				false,
+				null,
 				MessageType.Notification,
 				null,
 				"Test"
@@ -854,50 +887,55 @@ namespace MsgPack.Rpc.Server.Protocols
 			bool willExecute,
 			RpcError expectedError,
 			bool willResetConnection,
+			TimeSpan? receiveTimeout,
 			byte messageId,
 			params Action<Packer, MemoryStream, byte, byte?, MessagePackObject[]>[] partitionedSendings
 		)
 		{
-			TestReceive_InterruptCore( willExecute, expectedError, willResetConnection, MessageType.Request, messageId, new MessagePackObject[ 0 ], partitionedSendings );
+			TestReceive_InterruptCore( willExecute, expectedError, willResetConnection, receiveTimeout, MessageType.Request, messageId, new MessagePackObject[ 0 ], partitionedSendings );
 		}
 
 		private void TestReceive_InterruptCore(
 			bool willExecute,
 			RpcError expectedError,
 			bool willResetConnection,
+			TimeSpan? receiveTimeout,
 			params Action<Packer, MemoryStream, byte, byte?, MessagePackObject[]>[] partitionedSendings
 		)
 		{
-			TestReceive_InterruptCore( willExecute, expectedError, willResetConnection, MessageType.Notification, null, new MessagePackObject[ 0 ], partitionedSendings );
+			TestReceive_InterruptCore( willExecute, expectedError, willResetConnection, receiveTimeout, MessageType.Notification, null, new MessagePackObject[ 0 ], partitionedSendings );
 		}
 
 		private void TestReceive_InterruptCore(
 			bool willExecute,
 			RpcError expectedError,
 			bool willResetConnection,
+			TimeSpan? receiveTimeout,
 			byte messageId,
 			MessagePackObject[] arguments,
 			params Action<Packer, MemoryStream, byte, byte?, MessagePackObject[]>[] partitionedSendings
 		)
 		{
-			TestReceive_InterruptCore( willExecute, expectedError, willResetConnection, MessageType.Request, messageId, arguments, partitionedSendings );
+			TestReceive_InterruptCore( willExecute, expectedError, willResetConnection, receiveTimeout, MessageType.Request, messageId, arguments, partitionedSendings );
 		}
 
 		private void TestReceive_InterruptCore(
 			bool willExecute,
 			RpcError expectedError,
 			bool willResetConnection,
+			TimeSpan? receiveTimeout,
 			MessagePackObject[] arguments,
 			params Action<Packer, MemoryStream, byte, byte?, MessagePackObject[]>[] partitionedSendings
 		)
 		{
-			TestReceive_InterruptCore( willExecute, expectedError, willResetConnection, MessageType.Notification, null, arguments, partitionedSendings );
+			TestReceive_InterruptCore( willExecute, expectedError, willResetConnection, receiveTimeout, MessageType.Notification, null, arguments, partitionedSendings );
 		}
 
 		private void TestReceive_InterruptCore(
 			bool willExecute,
 			RpcError expectedError,
 			bool willResetConnection,
+			TimeSpan? receiveTimeout,
 			MessageType messageType,
 			byte? messageId,
 			MessagePackObject[] arguments,
@@ -926,6 +964,7 @@ namespace MsgPack.Rpc.Server.Protocols
 				},
 				willExecute,
 				willResetConnection,
+				receiveTimeout,
 				messageType,
 				messageId,
 				null, // dummy
@@ -942,6 +981,7 @@ namespace MsgPack.Rpc.Server.Protocols
 				true,
 				null,
 				false,
+				null,
 				1,
 				( packer, buffer, messageType, messageId, arguments ) =>
 				{
@@ -967,6 +1007,7 @@ namespace MsgPack.Rpc.Server.Protocols
 				true,
 				null,
 				false,
+				null,
 				( packer, buffer, messageType, messageId, arguments ) =>
 				{
 					buffer.WriteByte( 0xDC ); // array16
@@ -984,51 +1025,32 @@ namespace MsgPack.Rpc.Server.Protocols
 		}
 
 		[Test]
-		public void TestReceive_Request_InterupptOnArrayAndNotResume_Timeout()
+		public void TestReceive_Request_InterupptOnArrayAndNotResume_TimeoutAsConnectionReset()
 		{
-			Assert.Inconclusive( "Send/Receive/Execution timeout is not implemented yet." );
 			TestReceive_InterruptCore(
-				false,
-				RpcError.TimeoutError,
-				true,
+				false, // willExecute
+				RpcError.MessageRefusedError,
+				true, // willConnectionReset
+				_receiveTimeout,
 				1,
 				( packer, buffer, messageType, messageId, arguments ) =>
 				{
 					buffer.WriteByte( 0xDC ); // array16
-				},
-				( packer, buffer, messageType, messageId, arguments ) =>
-				{
-					buffer.WriteByte( 0x0 );
-					buffer.WriteByte( 0x4 );
-					buffer.WriteByte( messageType );
-					buffer.WriteByte( messageId.Value );
-					buffer.WriteByte( 0xA1 );// fixed-raw 1
-					buffer.WriteByte( ( byte )'A' );
-					buffer.WriteByte( 0x90 ); // empty array
 				}
 			);
 		}
 
 		[Test]
-		public void TestReceive_Notification_InterupptOnArrayAndNotResume_Timeout()
+		public void TestReceive_Notification_InterupptOnArrayAndNotResume_TimeoutAsConnectionReset()
 		{
-			Assert.Inconclusive( "Send/Receive/Execution timeout is not implemented yet." );
 			TestReceive_InterruptCore(
-				false,
-				RpcError.TimeoutError,
-				true,
+				false, // willExecute
+				RpcError.MessageRefusedError,
+				true, // willConnectionReset
+				_receiveTimeout,
 				( packer, buffer, messageType, messageId, arguments ) =>
 				{
 					buffer.WriteByte( 0xDC ); // array16
-				},
-				( packer, buffer, messageType, messageId, arguments ) =>
-				{
-					buffer.WriteByte( 0x0 );
-					buffer.WriteByte( 0x3 );
-					buffer.WriteByte( messageType );
-					buffer.WriteByte( 0xA1 );// fixed-raw 1
-					buffer.WriteByte( ( byte )'A' );
-					buffer.WriteByte( 0x90 ); // empty array
 				}
 			);
 		}
@@ -1040,6 +1062,7 @@ namespace MsgPack.Rpc.Server.Protocols
 				true,
 				null,
 				false,
+				null,
 				1,
 				( packer, buffer, messageType, messageId, arguments ) =>
 				{
@@ -1063,6 +1086,7 @@ namespace MsgPack.Rpc.Server.Protocols
 				true,
 				null,
 				false,
+				null,
 				( packer, buffer, messageType, messageId, arguments ) =>
 				{
 					buffer.WriteByte( 0x93 ); // fixed-array3
@@ -1078,47 +1102,32 @@ namespace MsgPack.Rpc.Server.Protocols
 		}
 
 		[Test]
-		public void TestReceive_Request_InterupptAfterArrayAndNotResume_Timeout()
+		public void TestReceive_Request_InterupptAfterArrayAndNotResume_TimeoutAsConnectionReset()
 		{
-			Assert.Inconclusive( "Send/Receive/Execution timeout is not implemented yet." );
 			TestReceive_InterruptCore(
-				false,
-				RpcError.TimeoutError,
-				true,
+				false, // willExecute
+				RpcError.MessageRefusedError,
+				true, // willConnectionReset
+				_receiveTimeout,
 				1,
 				( packer, buffer, messageType, messageId, arguments ) =>
 				{
 					buffer.WriteByte( 0x94 ); // fixed-array4
-				},
-				( packer, buffer, messageType, messageId, arguments ) =>
-				{
-					buffer.WriteByte( messageType );
-					buffer.WriteByte( messageId.Value );
-					buffer.WriteByte( 0xA1 );// fixed-raw 1
-					buffer.WriteByte( ( byte )'A' );
-					buffer.WriteByte( 0x90 ); // empty array
 				}
 			);
 		}
 
 		[Test]
-		public void TestReceive_Notification_InterupptAfterArrayAndNotResume_Timeout()
+		public void TestReceive_Notification_InterupptAfterArrayAndNotResume_TimeoutAsConnectionReset()
 		{
-			Assert.Inconclusive( "Send/Receive/Execution timeout is not implemented yet." );
 			TestReceive_InterruptCore(
-				false,
-				RpcError.TimeoutError,
-				true,
+				false, // willExecute
+				RpcError.MessageRefusedError,
+				true, // willConnectionReset
+				_receiveTimeout,
 				( packer, buffer, messageType, messageId, arguments ) =>
 				{
 					buffer.WriteByte( 0x93 ); // fixed-array3
-				},
-				( packer, buffer, messageType, messageId, arguments ) =>
-				{
-					buffer.WriteByte( messageType );
-					buffer.WriteByte( 0xA1 );// fixed-raw 1
-					buffer.WriteByte( ( byte )'A' );
-					buffer.WriteByte( 0x90 ); // empty array
 				}
 			);
 		}
@@ -1134,6 +1143,7 @@ namespace MsgPack.Rpc.Server.Protocols
 				true,
 				null,
 				false,
+				null,
 				1,
 				( packer, buffer, messageType, messageId, arguments ) =>
 				{
@@ -1158,6 +1168,7 @@ namespace MsgPack.Rpc.Server.Protocols
 				true,
 				null,
 				false,
+				null,
 				( packer, buffer, messageType, messageId, arguments ) =>
 				{
 					buffer.WriteByte( 0x93 ); // fixed array-3
@@ -1174,49 +1185,34 @@ namespace MsgPack.Rpc.Server.Protocols
 		}
 
 		[Test]
-		public void TestReceive_Request_InterupptOnMessageTypeAndNotResume_Timeout()
+		public void TestReceive_Request_InterupptOnMessageTypeAndNotResume_TimeoutAsConnectionReset()
 		{
-			Assert.Inconclusive( "Send/Receive/Execution timeout is not implemented yet." );
 			TestReceive_InterruptCore(
-				false,
-				RpcError.TimeoutError,
-				true,
+				false, // willExecute
+				RpcError.MessageRefusedError,
+				true, // willConnectionReset
+				_receiveTimeout,
 				1,
 				( packer, buffer, messageType, messageId, arguments ) =>
 				{
 					buffer.WriteByte( 0x94 ); // fixed array-4
 					buffer.WriteByte( 0xD0 ); // i8
-				},
-				( packer, buffer, messageType, messageId, arguments ) =>
-				{
-					buffer.WriteByte( messageType );
-					buffer.WriteByte( messageId.Value );
-					buffer.WriteByte( 0xA1 );// fixed-raw 1
-					buffer.WriteByte( ( byte )'A' );
-					buffer.WriteByte( 0x90 ); // empty array
 				}
 			);
 		}
 
 		[Test]
-		public void TestReceive_Notification_InterupptOnMessageTypeAndNotResume_Timeout()
+		public void TestReceive_Notification_InterupptOnMessageTypeAndNotResume_TimeoutAsConnectionReset()
 		{
-			Assert.Inconclusive( "Send/Receive/Execution timeout is not implemented yet." );
 			TestReceive_InterruptCore(
-				false,
-				RpcError.TimeoutError,
-				true,
+				false, // willExecute
+				RpcError.MessageRefusedError,
+				true, // willConnectionReset
+				_receiveTimeout,
 				( packer, buffer, messageType, messageId, arguments ) =>
 				{
 					buffer.WriteByte( 0x93 ); // fixed array-3
 					buffer.WriteByte( 0xD0 ); // i8
-				},
-				( packer, buffer, messageType, messageId, arguments ) =>
-				{
-					buffer.WriteByte( messageType );
-					buffer.WriteByte( 0xA1 );// fixed-raw 1
-					buffer.WriteByte( ( byte )'A' );
-					buffer.WriteByte( 0x90 ); // empty array
 				}
 			);
 		}
@@ -1228,6 +1224,7 @@ namespace MsgPack.Rpc.Server.Protocols
 				true,
 				null,
 				false,
+				null,
 				1,
 				( packer, buffer, messageType, messageId, arguments ) =>
 				{
@@ -1251,6 +1248,7 @@ namespace MsgPack.Rpc.Server.Protocols
 				true,
 				null,
 				false,
+				null,
 				( packer, buffer, messageType, messageId, arguments ) =>
 				{
 					buffer.WriteByte( 0x93 ); // fixed array-3
@@ -1266,47 +1264,34 @@ namespace MsgPack.Rpc.Server.Protocols
 		}
 
 		[Test]
-		public void TestReceive_Request_InterupptAfterMessageTypeAndNotResume_Timeout()
+		public void TestReceive_Request_InterupptAfterMessageTypeAndNotResume_TimeoutAsConnectionReset()
 		{
-			Assert.Inconclusive( "Send/Receive/Execution timeout is not implemented yet." );
 			TestReceive_InterruptCore(
-				false,
-				RpcError.TimeoutError,
-				true,
+				false, // willExecute
+				RpcError.MessageRefusedError,
+				true, // willConnectionReset
+				_receiveTimeout,
 				1,
 				( packer, buffer, messageType, messageId, arguments ) =>
 				{
 					buffer.WriteByte( 0x94 ); // fixed array-4
 					buffer.WriteByte( messageType );
-				},
-				( packer, buffer, messageType, messageId, arguments ) =>
-				{
-					buffer.WriteByte( messageId.Value );
-					buffer.WriteByte( 0xA1 );// fixed-raw 1
-					buffer.WriteByte( ( byte )'A' );
-					buffer.WriteByte( 0x90 ); // empty array
 				}
 			);
 		}
 
 		[Test]
-		public void TestReceive_Notification_InterupptAfterMessageTypeAndNotResume_Timeout()
+		public void TestReceive_Notification_InterupptAfterMessageTypeAndNotResume_TimeoutAsConnectionReset()
 		{
-			Assert.Inconclusive( "Send/Receive/Execution timeout is not implemented yet." );
 			TestReceive_InterruptCore(
-				false,
-				RpcError.TimeoutError,
-				true,
+				false, // willExecute
+				RpcError.MessageRefusedError,
+				true, // willConnectionReset
+				_receiveTimeout,
 				( packer, buffer, messageType, messageId, arguments ) =>
 				{
 					buffer.WriteByte( 0x94 ); // fixed array-3
 					buffer.WriteByte( messageType );
-				},
-				( packer, buffer, messageType, messageId, arguments ) =>
-				{
-					buffer.WriteByte( 0xA1 );// fixed-raw 1
-					buffer.WriteByte( ( byte )'A' );
-					buffer.WriteByte( 0x90 ); // empty array
 				}
 			);
 		}
@@ -1322,6 +1307,7 @@ namespace MsgPack.Rpc.Server.Protocols
 				true,
 				null,
 				false,
+				null,
 				1,
 				( packer, buffer, messageType, messageId, arguments ) =>
 				{
@@ -1340,26 +1326,19 @@ namespace MsgPack.Rpc.Server.Protocols
 		}
 
 		[Test]
-		public void TestReceive_Request_InterupptOnMessageIdAndNotResume_Timeout()
+		public void TestReceive_Request_InterupptOnMessageIdAndNotResume_TimeoutAsConnectionReset()
 		{
-			Assert.Inconclusive( "Send/Receive/Execution timeout is not implemented yet." );
 			TestReceive_InterruptCore(
-				false,
-				RpcError.TimeoutError,
-				true,
+				false, // willExecute
+				RpcError.MessageRefusedError,
+				true, // willConnectionReset
+				_receiveTimeout,
 				1,
 				( packer, buffer, messageType, messageId, arguments ) =>
 				{
 					buffer.WriteByte( 0x94 ); // fixed array-4
 					buffer.WriteByte( messageType );
 					buffer.WriteByte( 0xD0 ); // int8
-				},
-				( packer, buffer, messageType, messageId, arguments ) =>
-				{
-					buffer.WriteByte( messageId.Value );
-					buffer.WriteByte( 0xA1 );// fixed-raw 1
-					buffer.WriteByte( ( byte )'A' );
-					buffer.WriteByte( 0x90 ); // empty array
 				}
 			);
 		}
@@ -1371,6 +1350,7 @@ namespace MsgPack.Rpc.Server.Protocols
 				true,
 				null,
 				false,
+				null,
 				1,
 				( packer, buffer, messageType, messageId, arguments ) =>
 				{
@@ -1388,25 +1368,19 @@ namespace MsgPack.Rpc.Server.Protocols
 		}
 
 		[Test]
-		public void TestReceive_Request_InterupptAfterMessageIdAndNotResume_Timeout()
+		public void TestReceive_Request_InterupptAfterMessageIdAndNotResume_TimeoutAsMessageRefusedError()
 		{
-			Assert.Inconclusive( "Send/Receive/Execution timeout is not implemented yet." );
 			TestReceive_InterruptCore(
-				false,
-				RpcError.TimeoutError,
-				true,
+				false, // willExecute
+				RpcError.MessageRefusedError,
+				false, // willConnectionReset
+				_receiveTimeout,
 				1,
 				( packer, buffer, messageType, messageId, arguments ) =>
 				{
 					buffer.WriteByte( 0x94 ); // fixed array-4
 					buffer.WriteByte( messageType );
 					buffer.WriteByte( messageId.Value );
-				},
-				( packer, buffer, messageType, messageId, arguments ) =>
-				{
-					buffer.WriteByte( 0xA1 );// fixed-raw 1
-					buffer.WriteByte( ( byte )'A' );
-					buffer.WriteByte( 0x90 ); // empty array
 				}
 			);
 		}
@@ -1422,6 +1396,7 @@ namespace MsgPack.Rpc.Server.Protocols
 				true,
 				null,
 				false,
+				null,
 				1,
 				( packer, buffer, messageType, messageId, arguments ) =>
 				{
@@ -1445,6 +1420,7 @@ namespace MsgPack.Rpc.Server.Protocols
 				true,
 				null,
 				false,
+				null,
 				( packer, buffer, messageType, messageId, arguments ) =>
 				{
 					buffer.WriteByte( 0x93 ); // fixed array-3
@@ -1460,13 +1436,13 @@ namespace MsgPack.Rpc.Server.Protocols
 		}
 
 		[Test]
-		public void TestReceive_Request_InterupptOnMethodNameAndNotResume_Timeout()
+		public void TestReceive_Request_InterupptOnMethodNameAndNotResume_TimeoutAsMessageRefusedError()
 		{
-			Assert.Inconclusive( "Send/Receive/Execution timeout is not implemented yet." );
 			TestReceive_InterruptCore(
-				false,
-				RpcError.TimeoutError,
-				false,
+				false, // willExecute
+				RpcError.MessageRefusedError,
+				false, // willConnectionReset
+				_receiveTimeout,
 				1,
 				( packer, buffer, messageType, messageId, arguments ) =>
 				{
@@ -1474,34 +1450,23 @@ namespace MsgPack.Rpc.Server.Protocols
 					buffer.WriteByte( messageType );
 					buffer.WriteByte( messageId.Value );
 					buffer.WriteByte( 0xA1 );// fixed-raw 1
-				},
-				( packer, buffer, messageType, messageId, arguments ) =>
-				{
-					buffer.WriteByte( ( byte )'A' );
-					buffer.WriteByte( 0x90 ); // empty array
 				}
 			);
 		}
 
 		[Test]
-		public void TestReceive_Notification_InterupptOnMethodNameAndNotResume_Timeout()
+		public void TestReceive_Notification_InterupptOnMethodNameAndNotResume_TimeoutAsConnectionReset()
 		{
-			Assert.Inconclusive( "Send/Receive/Execution timeout is not implemented yet." );
 			TestReceive_InterruptCore(
-				false,
-				RpcError.TimeoutError,
-				false,
+				false, // willExecute
+				RpcError.MessageRefusedError,
+				true, // willConnectionReset
+				_receiveTimeout,
 				( packer, buffer, messageType, messageId, arguments ) =>
 				{
 					buffer.WriteByte( 0x93 ); // fixed array-3
 					buffer.WriteByte( messageType );
-					buffer.WriteByte( messageId.Value );
 					buffer.WriteByte( 0xA1 );// fixed-raw 1
-				},
-				( packer, buffer, messageType, messageId, arguments ) =>
-				{
-					buffer.WriteByte( ( byte )'A' );
-					buffer.WriteByte( 0x90 ); // empty array
 				}
 			);
 		}
@@ -1513,6 +1478,7 @@ namespace MsgPack.Rpc.Server.Protocols
 				true,
 				null,
 				false,
+				null,
 				1,
 				( packer, buffer, messageType, messageId, arguments ) =>
 				{
@@ -1536,6 +1502,7 @@ namespace MsgPack.Rpc.Server.Protocols
 				true,
 				null,
 				false,
+				null,
 				( packer, buffer, messageType, messageId, arguments ) =>
 				{
 					buffer.WriteByte( 0x93 ); // fixed array-3
@@ -1551,13 +1518,13 @@ namespace MsgPack.Rpc.Server.Protocols
 		}
 
 		[Test]
-		public void TestReceive_Request_InterupptAfterMethodNameAndNotResume_Timeout()
+		public void TestReceive_Request_InterupptAfterMethodNameAndNotResume_TimeoutAsMessageRefusedError()
 		{
-			Assert.Inconclusive( "Send/Receive/Execution timeout is not implemented yet." );
 			TestReceive_InterruptCore(
-				false,
-				RpcError.TimeoutError,
-				false,
+				false, // willExecute
+				RpcError.MessageRefusedError,
+				false, // willConnectionReset
+				_receiveTimeout,
 				1,
 				( packer, buffer, messageType, messageId, arguments ) =>
 				{
@@ -1565,34 +1532,23 @@ namespace MsgPack.Rpc.Server.Protocols
 					buffer.WriteByte( messageType );
 					buffer.WriteByte( messageId.Value );
 					buffer.WriteByte( 0xA1 );// fixed-raw 1
-				},
-				( packer, buffer, messageType, messageId, arguments ) =>
-				{
-					buffer.WriteByte( ( byte )'A' );
-					buffer.WriteByte( 0x90 ); // empty array
 				}
 			);
 		}
 
 		[Test]
-		public void TestReceive_Notification_InterupptAfterMethodNameAndNotResume_Timeout()
+		public void TestReceive_Notification_InterupptAfterMethodNameAndNotResume_TimeoutAsConnectionReset()
 		{
-			Assert.Inconclusive( "Send/Receive/Execution timeout is not implemented yet." );
 			TestReceive_InterruptCore(
-				false,
-				RpcError.TimeoutError,
-				false,
+				false, // willExecute
+				RpcError.MessageRefusedError,
+				true, // willConnectionReset
+				_receiveTimeout,
 				( packer, buffer, messageType, messageId, arguments ) =>
 				{
 					buffer.WriteByte( 0x93 ); // fixed array-3
 					buffer.WriteByte( messageType );
-					buffer.WriteByte( messageId.Value );
 					buffer.WriteByte( 0xA1 );// fixed-raw 1
-				},
-				( packer, buffer, messageType, messageId, arguments ) =>
-				{
-					buffer.WriteByte( ( byte )'A' );
-					buffer.WriteByte( 0x90 ); // empty array
 				}
 			);
 		}
@@ -1608,6 +1564,7 @@ namespace MsgPack.Rpc.Server.Protocols
 				true,
 				null,
 				false,
+				null,
 				1,
 				new MessagePackObject[] { 1 },
 				( packer, buffer, messageType, messageId, arguments ) =>
@@ -1635,6 +1592,7 @@ namespace MsgPack.Rpc.Server.Protocols
 				true,
 				null,
 				false,
+				null,
 				new MessagePackObject[] { 1 },
 				( packer, buffer, messageType, messageId, arguments ) =>
 				{
@@ -1654,13 +1612,13 @@ namespace MsgPack.Rpc.Server.Protocols
 		}
 
 		[Test]
-		public void TestReceive_Request_InterupptOnArgumentsHeaderAndNotResume_Timeout()
+		public void TestReceive_Request_InterupptOnArgumentsHeaderAndNotResume_TimeoutAsMessageRefusedError()
 		{
-			Assert.Inconclusive( "Send/Receive/Execution timeout is not implemented yet." );
 			TestReceive_InterruptCore(
-				false,
-				RpcError.TimeoutError,
-				false,
+				false, // willExecute
+				RpcError.MessageRefusedError,
+				false, // willConnectionReset
+				_receiveTimeout,
 				1,
 				new MessagePackObject[] { 1 },
 				( packer, buffer, messageType, messageId, arguments ) =>
@@ -1672,23 +1630,18 @@ namespace MsgPack.Rpc.Server.Protocols
 					buffer.WriteByte( ( byte )'A' );
 					buffer.WriteByte( 0xDC ); // array 16
 					buffer.WriteByte( 0x0 );
-				},
-				( packer, buffer, messageType, messageId, arguments ) =>
-				{
-					buffer.WriteByte( 0x1 ); // array size
-					buffer.WriteByte( 0x1 ); // entry(positive fix num-1)
 				}
 			);
 		}
 
 		[Test]
-		public void TestReceive_Notification_InterupptOnArgumentsHeaderAndNotResume_Timeout()
+		public void TestReceive_Notification_InterupptOnArgumentsHeaderAndNotResume_TimeoutAsConnectionReset()
 		{
-			Assert.Inconclusive( "Send/Receive/Execution timeout is not implemented yet." );
 			TestReceive_InterruptCore(
-				false,
-				RpcError.TimeoutError,
-				false,
+				false, // willExecute
+				RpcError.MessageRefusedError,
+				true, // willConnectionReset
+				_receiveTimeout,
 				new MessagePackObject[] { 1 },
 				( packer, buffer, messageType, messageId, arguments ) =>
 				{
@@ -1698,11 +1651,6 @@ namespace MsgPack.Rpc.Server.Protocols
 					buffer.WriteByte( ( byte )'A' );
 					buffer.WriteByte( 0xDC ); // array 16
 					buffer.WriteByte( 0x0 );
-				},
-				( packer, buffer, messageType, messageId, arguments ) =>
-				{
-					buffer.WriteByte( 0x1 ); // array size
-					buffer.WriteByte( 0x1 ); // entry(positive fix num-1)
 				}
 			);
 		}
@@ -1714,6 +1662,7 @@ namespace MsgPack.Rpc.Server.Protocols
 				true,
 				null,
 				false,
+				null,
 				1,
 				new MessagePackObject[] { 1 },
 				( packer, buffer, messageType, messageId, arguments ) =>
@@ -1739,6 +1688,7 @@ namespace MsgPack.Rpc.Server.Protocols
 				true,
 				null,
 				false,
+				null,
 				new MessagePackObject[] { 1 },
 				( packer, buffer, messageType, messageId, arguments ) =>
 				{
@@ -1756,13 +1706,13 @@ namespace MsgPack.Rpc.Server.Protocols
 		}
 
 		[Test]
-		public void TestReceive_Request_InterupptAfterArgumentsHeaderAndNotResume_Timeout()
+		public void TestReceive_Request_InterupptAfterArgumentsHeaderAndNotResume_TimeoutAsMessageRefusedError()
 		{
-			Assert.Inconclusive( "Send/Receive/Execution timeout is not implemented yet." );
 			TestReceive_InterruptCore(
-				false,
-				RpcError.TimeoutError,
-				false,
+				false, // willExecute
+				RpcError.MessageRefusedError,
+				false, // willConnectionReset
+				_receiveTimeout,
 				1,
 				new MessagePackObject[] { 1 },
 				( packer, buffer, messageType, messageId, arguments ) =>
@@ -1773,22 +1723,18 @@ namespace MsgPack.Rpc.Server.Protocols
 					buffer.WriteByte( 0xA1 );// fixed-raw 1
 					buffer.WriteByte( ( byte )'A' );
 					buffer.WriteByte( 0x91 ); // fixed array-1
-				},
-				( packer, buffer, messageType, messageId, arguments ) =>
-				{
-					buffer.WriteByte( 0x1 ); // entry(positive fix num-1)
 				}
 			);
 		}
 
 		[Test]
-		public void TestReceive_Notification_InterupptAfterArgumentsHeaderAndNotResume_Timeout()
+		public void TestReceive_Notification_InterupptAfterArgumentsHeaderAndNotResume_TimeoutAsConnectionReset()
 		{
-			Assert.Inconclusive( "Send/Receive/Execution timeout is not implemented yet." );
 			TestReceive_InterruptCore(
-				false,
-				RpcError.TimeoutError,
-				false,
+				false, // willExecute
+				RpcError.MessageRefusedError,
+				true, // willConnectionReset
+				_receiveTimeout,
 				new MessagePackObject[] { 1 },
 				( packer, buffer, messageType, messageId, arguments ) =>
 				{
@@ -1797,10 +1743,6 @@ namespace MsgPack.Rpc.Server.Protocols
 					buffer.WriteByte( 0xA1 );// fixed-raw 1
 					buffer.WriteByte( ( byte )'A' );
 					buffer.WriteByte( 0x91 ); // fixed array-1
-				},
-				( packer, buffer, messageType, messageId, arguments ) =>
-				{
-					buffer.WriteByte( 0x1 ); // entry(positive fix num-1)
 				}
 			);
 		}
@@ -1816,6 +1758,7 @@ namespace MsgPack.Rpc.Server.Protocols
 				true,
 				null,
 				false,
+				null,
 				1,
 				new MessagePackObject[] { 1 },
 				( packer, buffer, messageType, messageId, arguments ) =>
@@ -1842,6 +1785,7 @@ namespace MsgPack.Rpc.Server.Protocols
 				true,
 				null,
 				false,
+				null,
 				new MessagePackObject[] { 1 },
 				( packer, buffer, messageType, messageId, arguments ) =>
 				{
@@ -1860,13 +1804,13 @@ namespace MsgPack.Rpc.Server.Protocols
 		}
 
 		[Test]
-		public void TestReceive_Request_InterupptOnArgumentsBodyAndNotResume_Timeout()
+		public void TestReceive_Request_InterupptOnArgumentsBodyAndNotResume_TimeoutAsMessageRefusedError()
 		{
-			Assert.Inconclusive( "Send/Receive/Execution timeout is not implemented yet." );
 			TestReceive_InterruptCore(
-				false,
-				RpcError.TimeoutError,
-				false,
+				false, // willExecute
+				RpcError.MessageRefusedError,
+				false, // willConnectionReset
+				_receiveTimeout,
 				1,
 				new MessagePackObject[] { 1 },
 				( packer, buffer, messageType, messageId, arguments ) =>
@@ -1878,22 +1822,18 @@ namespace MsgPack.Rpc.Server.Protocols
 					buffer.WriteByte( ( byte )'A' );
 					buffer.WriteByte( 0x91 ); // fixed array-1
 					buffer.WriteByte( 0xD0 ); // int8
-				},
-				( packer, buffer, messageType, messageId, arguments ) =>
-				{
-					buffer.WriteByte( 0x1 );
 				}
 			);
 		}
 
 		[Test]
-		public void TestReceive_Notification_InterupptOnArgumentsBodyAndNotResume_Timeout()
+		public void TestReceive_Notification_InterupptOnArgumentsBodyAndNotResume_TimeoutAsConnectionReset()
 		{
-			Assert.Inconclusive( "Send/Receive/Execution timeout is not implemented yet." );
 			TestReceive_InterruptCore(
-				false,
-				RpcError.TimeoutError,
-				false,
+				false, // willExecute
+				RpcError.MessageRefusedError,
+				true, // willConnectionReset
+				_receiveTimeout,
 				new MessagePackObject[] { 1 },
 				( packer, buffer, messageType, messageId, arguments ) =>
 				{
@@ -1903,10 +1843,6 @@ namespace MsgPack.Rpc.Server.Protocols
 					buffer.WriteByte( ( byte )'A' );
 					buffer.WriteByte( 0x91 ); // fixed array-1
 					buffer.WriteByte( 0xD0 ); // int8
-				},
-				( packer, buffer, messageType, messageId, arguments ) =>
-				{
-					buffer.WriteByte( 0x1 );
 				}
 			);
 		}
@@ -2013,7 +1949,13 @@ namespace MsgPack.Rpc.Server.Protocols
 		[Test]
 		public void TestSend_Timeout_ConnectionReset()
 		{
-			Assert.Inconclusive( "Not implemented yet" );
+			TestTimeoutCore(
+				responseData =>
+				{
+					Assert.That( responseData, Is.Not.Null.And.Empty );
+				},
+				isSendingTimeout: true
+			);
 		}
 
 		#endregion

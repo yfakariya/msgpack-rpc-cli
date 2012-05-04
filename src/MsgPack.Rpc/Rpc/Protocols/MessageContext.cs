@@ -159,6 +159,32 @@ namespace MsgPack.Rpc.Protocols
 			this.SocketContext.Completed += transport.OnSocketOperationCompleted;
 		}
 
+		private readonly TimeoutWatcher _timeoutWatcher;
+
+		/// <summary>
+		///		Gets a value indicating whether the watched operation is timed out.
+		/// </summary>
+		/// <value>
+		/// 	<c>true</c> if the watched operation is timed out; otherwise, <c>false</c>.
+		/// </value>
+		internal bool IsTimeout
+		{
+			get { return this._timeoutWatcher.IsTimeout; }
+		}
+
+		/// <summary>
+		///		Occurs when the watched operation is timed out.
+		/// </summary>
+		internal event EventHandler Timeout;
+
+		private void OnTimeout()
+		{
+			var handler = this.Timeout;
+			if ( handler != null )
+			{
+				handler( this, EventArgs.Empty );
+			}
+		}
 
 		#endregion
 
@@ -248,6 +274,8 @@ namespace MsgPack.Rpc.Protocols
 		{
 			this._socketContext = new SocketAsyncEventArgs();
 			this._socketContext.UserToken = this;
+			this._timeoutWatcher = new TimeoutWatcher();
+			this._timeoutWatcher.Timeout += ( sender, e ) => this.OnTimeout();
 		}
 
 		/// <summary>
@@ -271,6 +299,23 @@ namespace MsgPack.Rpc.Protocols
 			{
 				this._socketContext.Dispose();
 			}
+		}
+
+		/// <summary>
+		///		Starts timeout watch.
+		/// </summary>
+		/// <param name="timeout">The timeout.</param>
+		internal void StartWatchTimeout( TimeSpan timeout )
+		{
+			this._timeoutWatcher.Start( timeout );
+		}
+
+		/// <summary>
+		///		Stops timeout watch.
+		/// </summary>
+		internal void StopWatchTimeout()
+		{
+			this._timeoutWatcher.Stop();
 		}
 
 		/// <summary>
@@ -300,6 +345,7 @@ namespace MsgPack.Rpc.Protocols
 			this._sessionId = 0;
 			this._sessionStartedAt = default( DateTimeOffset );
 			this._bytesTransferred = null;
+			this._timeoutWatcher.Reset();
 		}
 
 		internal void UnboundTransport()

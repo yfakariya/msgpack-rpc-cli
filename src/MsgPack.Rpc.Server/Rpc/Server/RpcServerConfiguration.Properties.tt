@@ -106,6 +106,28 @@ new List<Property>()
 	},
 	new Property()
 	{
+		Name = "SendTimeout",
+		Type = "TimeSpan?",
+		Default = "TimeSpan.FromSeconds( 20 )",
+		Summary = "Gets or sets the timeout value to send all response packets.",
+		Value = "The timeout value to send all response packets.. " +
+			"The default is 20 seconds. <c>null</c> means inifinite timeout.",
+		Precondition = Constraints.NullOrPositive,
+		Postcondition = Constraints.NullOrPositive
+	},
+	new Property()
+	{
+		Name = "ReceiveTimeout",
+		Type = "TimeSpan?",
+		Default = "TimeSpan.FromSeconds( 20 )",
+		Summary = "Gets or sets the timeout value to receive all request/notification packets.",
+		Value = "The timeout value to receive all request/notification packets. " +
+			"The default is 20 seconds. <c>null</c> means inifinite timeout.",
+		Precondition = Constraints.NullOrPositive,
+		Postcondition = Constraints.NullOrPositive
+	},
+	new Property()
+	{
 		Name = "ExecutionTimeout",
 		Type = "TimeSpan?",
 		Default = "TimeSpan.FromSeconds( 110 )",

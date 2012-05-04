@@ -190,6 +190,13 @@ namespace MsgPack.Rpc.Server.Protocols
 			base.ShutdownSending();
 		}
 
+		protected override void ResetConnection()
+		{
+			this._manager.SendResponseData( new byte[ 0 ] );
+
+			base.ResetConnection();
+		}
+
 		/// <summary>
 		///		Feed specified data in current session.
 		/// </summary>

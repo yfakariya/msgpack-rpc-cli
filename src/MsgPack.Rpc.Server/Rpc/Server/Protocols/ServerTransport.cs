@@ -516,6 +516,19 @@ namespace MsgPack.Rpc.Server.Protocols
 			// nop
 		}
 
+		/// <summary>
+		///		Resets the connection.
+		/// </summary>
+		protected virtual void ResetConnection()
+		{
+			var socket = this.BoundSocket;
+			if ( socket != null )
+			{
+				// Reset immediately.
+				socket.Close( 0 );
+			}
+		}
+
 		#endregion
 
 		#region -- Error Handling --
@@ -680,6 +693,67 @@ namespace MsgPack.Rpc.Server.Protocols
 		void IContextBoundableTransport.OnSocketOperationCompleted( object sender, SocketAsyncEventArgs e )
 		{
 			this.OnSocketOperationCompleted( sender, e );
+		}
+
+		private void OnSendTimeout( object sender, EventArgs e )
+		{
+			this.OnSendTimeout( sender as ServerResponseContext );
+		}
+
+		private void OnSendTimeout( OutboundMessageContext context )
+		{
+			Contract.Assert( context != null );
+
+			var socket = this.BoundSocket;
+			MsgPackRpcServerProtocolsTrace.TraceEvent(
+				MsgPackRpcServerProtocolsTrace.SendTimeout,
+					"Send timeout. {{  \"Socket\" : 0x{0:X}, \"RemoteEndPoint\" : \"{1}\", \"LocalEndPoint\" : \"{2}\", \"MessageId\" : {3}, \"BytesTransferred\" : {4}, \"Timeout\" : \"{5}\" }}",
+					socket == null ? IntPtr.Zero : socket.Handle,
+					socket == null ? null : socket.RemoteEndPoint,
+					socket == null ? null : socket.LocalEndPoint,
+					context.MessageId,
+					context.BytesTransferred,
+					this._manager.Server.Configuration.SendTimeout
+			);
+
+			this.ResetConnection();
+		}
+
+		private void OnReceiveTimeout( object sender, EventArgs e )
+		{
+			this.OnReceiveTimeout( sender as ServerRequestContext );
+		}
+
+		private void OnReceiveTimeout( InboundMessageContext context )
+		{
+			Contract.Assert( context != null );
+
+			var socket = this.BoundSocket;
+			MsgPackRpcServerProtocolsTrace.TraceEvent(
+				MsgPackRpcServerProtocolsTrace.ReceiveTimeout,
+					"Receive timeout. {{  \"Socket\" : 0x{0:X}, \"RemoteEndPoint\" : \"{1}\", \"LocalEndPoint\" : \"{2}\", \"MessageId\" : {3}, \"BytesTransferred\" : {4}, \"Timeout\" : \"{5}\" }}",
+					socket == null ? IntPtr.Zero : socket.Handle,
+					socket == null ? null : socket.RemoteEndPoint,
+					socket == null ? null : socket.LocalEndPoint,
+					context.MessageId,
+					context.BytesTransferred,
+					this._manager.Server.Configuration.ReceiveTimeout
+			);
+
+			if ( context.MessageId == null )
+			{
+				this.ResetConnection();
+			}
+			else
+			{
+				var rpcError = new RpcErrorMessage( RpcError.MessageRefusedError, "Receive timeout.", this._manager.Server.Configuration.ReceiveTimeout.ToString() );
+				// Try send error response.
+				this.SendError( context.MessageId.Value, rpcError );
+				// Delegates to the manager to raise error event.
+				this.Manager.RaiseClientError( context as ServerRequestContext, rpcError );
+				context.Clear();
+				this.BeginShutdown();
+			}
 		}
 
 		#endregion
@@ -1130,6 +1204,12 @@ namespace MsgPack.Rpc.Server.Protocols
 			// Therefore, no catch clauses here.
 			ApplyFilters( this._afterSerializationFilters, context );
 
+			if ( this._manager.Server.Configuration.SendTimeout != null )
+			{
+				context.Timeout += this.OnSendTimeout;
+				context.StartWatchTimeout( this._manager.Server.Configuration.SendTimeout.Value );
+			}
+
 			this.SendCore( context );
 		}
 
@@ -1164,6 +1244,9 @@ namespace MsgPack.Rpc.Server.Protocols
 			}
 
 			Contract.EndContractBlock();
+
+			context.StopWatchTimeout();
+			context.Timeout -= this.OnSendTimeout;
 
 			if ( MsgPackRpcServerProtocolsTrace.ShouldTrace( MsgPackRpcServerProtocolsTrace.SentOutboundData ) )
 			{
