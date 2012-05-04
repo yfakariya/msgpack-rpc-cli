@@ -105,6 +105,9 @@ namespace MsgPack.Rpc
 		{
 		}
 
+		/// <summary>
+		///		Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
+		/// </summary>
 		public void Dispose()
 		{
 			if ( Interlocked.Exchange( ref this._state, StateDisposed ) != StateDisposed )
