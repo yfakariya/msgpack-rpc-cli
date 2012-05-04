@@ -316,6 +316,7 @@ namespace MsgPack.Rpc.Protocols
 		internal void StopWatchTimeout()
 		{
 			this._timeoutWatcher.Stop();
+			this._timeoutWatcher.Reset();
 		}
 
 		/// <summary>
