@@ -467,6 +467,22 @@ namespace MsgPack.Rpc.Server.Protocols
 			result.SetTransport( transport );
 			return result;
 		}
+
+		internal void ReturnRequestContext( ServerRequestContext context )
+		{
+			Contract.Requires( context != null );
+			context.Clear();
+			context.UnboundTransport();
+			this.RequestContextPool.Return( context );
+		}
+
+		internal void ReturnResponseContext( ServerResponseContext context )
+		{
+			Contract.Requires( context != null );
+			context.Clear();
+			context.UnboundTransport();
+			this.ResponseContextPool.Return( context );
+		}
 	}
 
 	[ContractClassFor( typeof( ServerTransportManager ) )]

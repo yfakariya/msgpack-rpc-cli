@@ -843,10 +843,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			{
 				// Client no longer send any additional data, so reset state.
 				TraceCancelReceiveDueToClientShutdown( context );
-				if ( context.SessionId > 0 )
-				{
-					this.OnSessionFinished();
-				}
+				this.FinishReceiving( context );
 
 				return;
 			}
@@ -855,10 +852,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			{
 				// Server no longer process any subsequent retrieval.
 				TraceCancelReceiveDueToServerShutdown( context );
-				if ( context.SessionId > 0 )
-				{
-					this.OnSessionFinished();
-				}
+				this.FinishReceiving( context );
 
 				return;
 			}
@@ -898,18 +892,7 @@ namespace MsgPack.Rpc.Server.Protocols
 
 				if ( !context.ReceivedData.Any( segment => 0 < segment.Count ) )
 				{
-					// There are not data to handle.
-					context.Clear();
-					// Shutdown sending
-					if ( context.SessionId > 0 )
-					{
-						this.OnSessionFinished();
-					}
-					else
-					{
-						this.TrySendShutdownSending();
-					}
-
+					this.FinishReceivingWithShutdown( context );
 					return;
 				}
 			}
@@ -939,6 +922,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			catch ( RpcException ex )
 			{
 				this.HandleDeserializationError( context, TryDetectMessageId( context ), ex.RpcError, "Filter rejects request.", ex.Message, () => context.ReceivedData.SelectMany( s => s.AsEnumerable() ).ToArray() );
+				this.FinishReceiving( context );
 				return;
 			}
 
@@ -948,16 +932,7 @@ namespace MsgPack.Rpc.Server.Protocols
 				{
 					// Client no longer send any additional data, so reset state.
 					TraceCancelReceiveDueToClientShutdown( context );
-					// Shutdown sending
-					if ( context.SessionId > 0 )
-					{
-						this.OnSessionFinished();
-					}
-					else
-					{
-						this.TrySendShutdownSending();
-					}
-
+					this.FinishReceivingWithShutdown( context );
 					return;
 				}
 
@@ -965,12 +940,7 @@ namespace MsgPack.Rpc.Server.Protocols
 				{
 					// Server no longer process any subsequent retrieval.
 					TraceCancelReceiveDueToServerShutdown( context );
-					// Shutdown sending
-					if ( context.SessionId > 0 )
-					{
-						this.OnSessionFinished();
-					}
-
+					this.FinishReceiving( context );
 					return;
 				}
 
@@ -982,6 +952,32 @@ namespace MsgPack.Rpc.Server.Protocols
 				// try next receive
 				this.PrivateReceive( context );
 			}
+		}
+
+		private void FinishReceivingWithShutdown( ServerRequestContext context )
+		{
+			// Shutdown sending
+			if ( context.SessionId > 0 )
+			{
+				this.OnSessionFinished();
+			}
+			else
+			{
+				this.TrySendShutdownSending();
+			}
+
+			this.Manager.ReturnRequestContext( context );
+		}
+
+		private void FinishReceiving( ServerRequestContext context )
+		{
+			// Shutdown sending
+			if ( context.SessionId > 0 )
+			{
+				this.OnSessionFinished();
+			}
+
+			this.Manager.ReturnRequestContext( context );
 		}
 
 		private static int? TryDetectMessageId( ServerRequestContext context )
@@ -1226,7 +1222,7 @@ namespace MsgPack.Rpc.Server.Protocols
 					);
 			}
 
-			context.Clear();
+			this.Manager.ReturnResponseContext( context );
 			this.OnSessionFinished();
 		}
 
