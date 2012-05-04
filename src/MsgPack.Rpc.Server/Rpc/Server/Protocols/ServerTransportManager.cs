@@ -62,7 +62,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		///		The <see cref="ObjectPool{T}"/> to pool <see cref="ServerRequestContext"/>s.
 		///		This value will not be <c>null</c>.
 		/// </value>
-		public ObjectPool<ServerRequestContext> RequestContextPool
+		protected ObjectPool<ServerRequestContext> RequestContextPool
 		{
 			get
 			{
@@ -81,7 +81,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		///		The <see cref="ObjectPool{T}"/> to pool <see cref="ServerResponseContext"/>s.
 		///		This value will not be <c>null</c>.
 		/// </value>
-		public ObjectPool<ServerResponseContext> ResponseContextPool
+		protected ObjectPool<ServerResponseContext> ResponseContextPool
 		{
 			get
 			{
