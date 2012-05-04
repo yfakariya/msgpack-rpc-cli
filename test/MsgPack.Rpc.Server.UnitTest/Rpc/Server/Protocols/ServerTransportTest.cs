@@ -2107,8 +2107,6 @@ namespace MsgPack.Rpc.Server.Protocols
 				target =>
 				{
 					CheckFilters( target.BeforeDeserializationFilters, MessageFilteringLocation.BeforeDeserialization, 0, 1 );
-					CheckFilters( target.AfterDeserializationFilters, MessageFilteringLocation.AfterDeserialization, 0, 1 );
-					CheckFilters( target.BeforeSerializationFilters, MessageFilteringLocation.BeforeSerialization, 3, 2 );
 					CheckFilters( target.AfterSerializationFilters, MessageFilteringLocation.AfterSerialization, 3, 2 );
 				},
 				null,
@@ -2136,8 +2134,6 @@ namespace MsgPack.Rpc.Server.Protocols
 		public void TestFilters_RequestResponse_Invoked()
 		{
 			int beforeDeserializationApplied = 0;
-			int afterDeserializationApplied = 0;
-			int beforeSerializationApplied = 0;
 			int afterSerializationApplied = 0;
 
 			var requestFilterProvider = new ServerRequestTestMessageFilterProvider( 0 );
@@ -2146,11 +2142,6 @@ namespace MsgPack.Rpc.Server.Protocols
 				{
 					switch ( e.AppliedLocation )
 					{
-						case MessageFilteringLocation.AfterDeserialization:
-						{
-							Interlocked.Exchange( ref afterDeserializationApplied, 1 );
-							break;
-						}
 						case MessageFilteringLocation.BeforeDeserialization:
 						{
 							Interlocked.Exchange( ref beforeDeserializationApplied, 1 );
@@ -2172,11 +2163,6 @@ namespace MsgPack.Rpc.Server.Protocols
 							Interlocked.Exchange( ref afterSerializationApplied, 1 );
 							break;
 						}
-						case MessageFilteringLocation.BeforeSerialization:
-						{
-							Interlocked.Exchange( ref beforeSerializationApplied, 1 );
-							break;
-						}
 					}
 
 					return;
@@ -2188,8 +2174,6 @@ namespace MsgPack.Rpc.Server.Protocols
 				( requestData, responseData ) =>
 				{
 					Assert.That( Interlocked.CompareExchange( ref beforeDeserializationApplied, 0, 0 ), Is.EqualTo( 1 ) );
-					Assert.That( Interlocked.CompareExchange( ref afterDeserializationApplied, 0, 0 ), Is.EqualTo( 1 ) );
-					Assert.That( Interlocked.CompareExchange( ref beforeSerializationApplied, 0, 0 ), Is.EqualTo( 1 ) );
 					Assert.That( Interlocked.CompareExchange( ref afterSerializationApplied, 0, 0 ), Is.EqualTo( 1 ) );
 				},
 				requestFilterProvider,

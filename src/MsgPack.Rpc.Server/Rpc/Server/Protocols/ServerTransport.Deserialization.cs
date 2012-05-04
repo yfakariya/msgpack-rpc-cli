@@ -346,17 +346,6 @@ namespace MsgPack.Rpc.Server.Protocols
 			context.StopWatchTimeout();
 			context.Timeout -= this.OnReceiveTimeout;
 
-			// Exceptions here means message error.
-			try
-			{
-				ApplyFilters( this._afterDeserializationFilters, context );
-			}
-			catch ( RpcException ex )
-			{
-				this.HandleDeserializationError( context, ex.RpcError, "Filter rejects request.", ex.Message, () => context.ReceivedData.SelectMany( s => s.AsEnumerable() ).ToArray() );
-				return false;
-			}
-
 			context.ClearBuffers();
 
 			var isNotification = context.MessageType == MessageType.Notification;

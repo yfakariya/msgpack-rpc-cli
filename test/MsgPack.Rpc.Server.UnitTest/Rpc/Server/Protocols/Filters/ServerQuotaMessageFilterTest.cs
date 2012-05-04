@@ -38,8 +38,6 @@ namespace MsgPack.Rpc.Server.Protocols.Filters
 					var filter = transport.BeforeDeserializationFilters[ 0 ] as ServerQuotaMessageFilter;
 					Assert.That( filter, Is.Not.Null );
 					Assert.That( filter.Quota, Is.EqualTo( quota ) );
-					Assert.That( transport.AfterDeserializationFilters, Is.Empty );
-					Assert.That( transport.BeforeSerializationFilters, Is.Empty );
 					Assert.That( transport.AfterSerializationFilters, Is.Empty );
 				},
 				null,

@@ -145,20 +145,6 @@ namespace MsgPack.Rpc.Server.Protocols
 			get { return this._beforeDeserializationFilters; }
 		}
 
-		private readonly IList<MessageFilter<ServerRequestContext>> _afterDeserializationFilters;
-
-		internal IList<MessageFilter<ServerRequestContext>> AfterDeserializationFilters
-		{
-			get { return this._afterDeserializationFilters; }
-		}
-
-		private readonly IList<MessageFilter<ServerResponseContext>> _beforeSerializationFilters;
-
-		internal IList<MessageFilter<ServerResponseContext>> BeforeSerializationFilters
-		{
-			get { return this._beforeSerializationFilters; }
-		}
-
 		private readonly IList<MessageFilter<ServerResponseContext>> _afterSerializationFilters;
 
 		internal IList<MessageFilter<ServerResponseContext>> AfterSerializationFilters
@@ -321,23 +307,6 @@ namespace MsgPack.Rpc.Server.Protocols
 					.OfType<MessageFilterProvider<ServerRequestContext>>()
 					.Select( provider => provider.GetFilter( MessageFilteringLocation.BeforeDeserialization ) )
 					.Where( filter => filter != null )
-					.ToArray()
-				);
-			this._afterDeserializationFilters =
-				new ReadOnlyCollection<MessageFilter<ServerRequestContext>>(
-					manager.Server.Configuration.FilterProviders
-					.OfType<MessageFilterProvider<ServerRequestContext>>()
-					.Select( provider => provider.GetFilter( MessageFilteringLocation.AfterDeserialization ) )
-					.Where( filter => filter != null )
-					.ToArray()
-				);
-			this._beforeSerializationFilters =
-				new ReadOnlyCollection<MessageFilter<ServerResponseContext>>(
-					manager.Server.Configuration.FilterProviders
-					.OfType<MessageFilterProvider<ServerResponseContext>>()
-					.Select( provider => provider.GetFilter( MessageFilteringLocation.BeforeSerialization ) )
-					.Where( filter => filter != null )
-					.Reverse()
 					.ToArray()
 				);
 			this._afterSerializationFilters =
@@ -1124,10 +1093,6 @@ namespace MsgPack.Rpc.Server.Protocols
 					returnValue
 				);
 			}
-
-			// Because exceptions here means server error, it should be handled like other server error.
-			// Therefore, no catch clauses here.
-			ApplyFilters( this._beforeSerializationFilters, context );
 
 			if ( error.IsSuccess )
 			{

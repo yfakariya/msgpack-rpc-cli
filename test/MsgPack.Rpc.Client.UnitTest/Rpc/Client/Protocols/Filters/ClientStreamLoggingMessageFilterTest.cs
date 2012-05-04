@@ -40,8 +40,6 @@ namespace MsgPack.Rpc.Client.Protocols.Filters
 						Assert.That( transport.BeforeDeserializationFilters.Count, Is.EqualTo( 1 ) );
 						var filter = transport.BeforeDeserializationFilters[ 0 ] as ClientStreamLoggingMessageFilter;
 						Assert.That( filter, Is.Not.Null );
-						Assert.That( transport.AfterDeserializationFilters, Is.Empty );
-						Assert.That( transport.BeforeSerializationFilters, Is.Empty );
 						Assert.That( transport.AfterSerializationFilters, Is.Empty );
 					},
 					null,

@@ -225,17 +225,6 @@ namespace MsgPack.Rpc.Client.Protocols
 		{
 			Contract.Assert( context.MessageId != null );
 
-			// Exceptions here means message error.
-			try
-			{
-				ApplyFilters( this._afterDeserializationFilters, context );
-			}
-			catch ( RpcException ex )
-			{
-				this.HandleDeserializationError( context, TryDetectMessageId( context ), new RpcErrorMessage( ex.RpcError, ex.Message, ex.DebugInformation ), "Filter rejects message.", () => context.ReceivedData.SelectMany( s => s.AsEnumerable() ).ToArray() );
-				return false;
-			}
-
 			try
 			{
 				Action<ClientResponseContext, Exception, bool> handler = null;

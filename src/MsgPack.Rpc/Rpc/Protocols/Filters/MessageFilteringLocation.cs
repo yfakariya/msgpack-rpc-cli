@@ -28,11 +28,6 @@ namespace MsgPack.Rpc.Protocols.Filters
 	public enum MessageFilteringLocation
 	{
 		/// <summary>
-		///		Before outbound message serialization.
-		/// </summary>
-		BeforeSerialization,
-
-		/// <summary>
 		///		After outbound message serialization.
 		/// </summary>
 		AfterSerialization,
@@ -41,10 +36,5 @@ namespace MsgPack.Rpc.Protocols.Filters
 		///		Before inbound message deserialization.
 		/// </summary>
 		BeforeDeserialization,
-
-		/// <summary>
-		///		After inbound message deserialization.
-		/// </summary>
-		AfterDeserialization
 	}
 }

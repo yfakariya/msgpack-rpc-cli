@@ -125,13 +125,6 @@ namespace MsgPack.Rpc.Client.Protocols
 			get { return Interlocked.CompareExchange( ref this._shutdownSource, 0, 0 ) != 0; }
 		}
 
-		private readonly IList<MessageFilter<ClientRequestContext>> _beforeSerializationFilters;
-
-		internal IList<MessageFilter<ClientRequestContext>> BeforeSerializationFilters
-		{
-			get { return this._beforeSerializationFilters; }
-		}
-
 		private readonly IList<MessageFilter<ClientRequestContext>> _afterSerializationFilters;
 
 		internal IList<MessageFilter<ClientRequestContext>> AfterSerializationFilters
@@ -144,13 +137,6 @@ namespace MsgPack.Rpc.Client.Protocols
 		internal IList<MessageFilter<ClientResponseContext>> BeforeDeserializationFilters
 		{
 			get { return this._beforeDeserializationFilters; }
-		}
-
-		private readonly IList<MessageFilter<ClientResponseContext>> _afterDeserializationFilters;
-
-		internal IList<MessageFilter<ClientResponseContext>> AfterDeserializationFilters
-		{
-			get { return this._afterDeserializationFilters; }
 		}
 
 		private EventHandler<ShutdownCompletedEventArgs> _shutdownCompleted;
@@ -257,14 +243,6 @@ namespace MsgPack.Rpc.Client.Protocols
 			this._pendingRequestTable = new ConcurrentDictionary<int, Action<ClientResponseContext, Exception, bool>>();
 			this._pendingNotificationTable = new ConcurrentDictionary<long, Action<Exception, bool>>();
 
-			this._beforeSerializationFilters =
-				new ReadOnlyCollection<MessageFilter<ClientRequestContext>>(
-					manager.Configuration.FilterProviders
-					.OfType<MessageFilterProvider<ClientRequestContext>>()
-					.Select( provider => provider.GetFilter( MessageFilteringLocation.BeforeSerialization ) )
-					.Where( filter => filter != null )
-					.ToArray()
-				);
 			this._afterSerializationFilters =
 				new ReadOnlyCollection<MessageFilter<ClientRequestContext>>(
 					manager.Configuration.FilterProviders
@@ -278,15 +256,6 @@ namespace MsgPack.Rpc.Client.Protocols
 					manager.Configuration.FilterProviders
 					.OfType<MessageFilterProvider<ClientResponseContext>>()
 					.Select( provider => provider.GetFilter( MessageFilteringLocation.BeforeDeserialization ) )
-					.Where( filter => filter != null )
-					.Reverse()
-					.ToArray()
-				);
-			this._afterDeserializationFilters =
-				new ReadOnlyCollection<MessageFilter<ClientResponseContext>>(
-					manager.Configuration.FilterProviders
-					.OfType<MessageFilterProvider<ClientResponseContext>>()
-					.Select( provider => provider.GetFilter( MessageFilteringLocation.AfterDeserialization ) )
 					.Where( filter => filter != null )
 					.Reverse()
 					.ToArray()
@@ -686,10 +655,6 @@ namespace MsgPack.Rpc.Client.Protocols
 			{
 				throw new RpcErrorMessage( RpcError.TransportError, "Server did shutdown socket.", null ).ToException();
 			}
-
-			// Because exceptions here means client error, it should be handled like other client error.
-			// Therefore, no catch clauses here.
-			ApplyFilters( this._beforeSerializationFilters, context );
 
 			context.Prepare();
 
