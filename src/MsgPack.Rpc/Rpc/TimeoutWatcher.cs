@@ -29,9 +29,10 @@ namespace MsgPack.Rpc
 	/// </summary>
 	internal class TimeoutWatcher : IDisposable
 	{
-		private const int StateActive = 0;
-		private const int StateTimeout = 1;
-		private const int StateDisposed = 2;
+		private const int StateIdle = 0;
+		private const int StateWatching = 1;
+		private const int StateTimeout = 2;
+		private const int StateDisposed = 3;
 
 		private readonly object _resourceLock = new object();
 		private ManualResetEvent _waitHandle;
@@ -149,17 +150,15 @@ namespace MsgPack.Rpc
 				{
 					if ( this._registeredWaitHandle != null )
 					{
-						bool unregistered = this._registeredWaitHandle.Unregister( this._waitHandle );
-						Contract.Assert( unregistered, "Unregistration failed." );
+						this._registeredWaitHandle.Unregister( this._waitHandle );
 						this._registeredWaitHandle = null;
 					}
 
 					this._waitHandle.Reset();
 				}
-			}
 
-			// Use CAS to avoid resetting disposal flag.
-			Interlocked.CompareExchange( ref this._state, StateActive, StateTimeout );
+				Interlocked.Exchange( ref this._state, StateIdle );
+			}
 		}
 
 		/// <summary>
@@ -186,26 +185,16 @@ namespace MsgPack.Rpc
 				}
 
 				this._registeredWaitHandle = ThreadPool.RegisterWaitForSingleObject( this._waitHandle, OnPulse, null, timeout, true );
+				Interlocked.Exchange( ref this._state, StateWatching );
 			}
 		}
 
 		private void OnPulse( object state, bool isTimeout )
 		{
-			if ( isTimeout )
+			// isTimeout is not very reliable...
+			if ( Interlocked.CompareExchange( ref this._state, StateTimeout, StateWatching ) == StateWatching )
 			{
-				if ( Interlocked.CompareExchange( ref this._state, StateTimeout, StateActive ) == StateActive )
-				{
-					this.OnTimeout();
-				}
-			}
-
-			lock ( this._resourceLock )
-			{
-				if ( this._registeredWaitHandle != null )
-				{
-					this._registeredWaitHandle.Unregister( this._waitHandle );
-					this._registeredWaitHandle = null;
-				}
+				this.OnTimeout();
 			}
 		}
 
@@ -217,6 +206,9 @@ namespace MsgPack.Rpc
 			lock ( this._resourceLock )
 			{
 				this.VerifyIsNotDisposed();
+
+				// Do not override Disposed/Timeout
+				Interlocked.CompareExchange( ref this._state, StateIdle, StateWatching );
 
 				if ( this._waitHandle != null )
 				{
