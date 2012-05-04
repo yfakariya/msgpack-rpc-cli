@@ -44,7 +44,6 @@ namespace MsgPack.Rpc.Diagnostics
 				logger.Write( now, _localhost, new byte[] { 1, 2, 3 } );
 
 				var file = AssertFilePath( logger.DirectoryPath, now, _localhost.Address.ToString() );
-				Console.WriteLine( file );
 				Assert.That( File.ReadAllBytes( file ), Is.EqualTo( new byte[] { 1, 2, 3 } ) );
 			}
 		}
