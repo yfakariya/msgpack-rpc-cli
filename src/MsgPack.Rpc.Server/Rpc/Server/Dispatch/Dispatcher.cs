@@ -114,10 +114,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 			ServerResponseContext responseContext = null;
 			if ( requestContext.MessageType == MessageType.Request )
 			{
-				responseContext = serverTransport.Manager.ResponseContextPool.Borrow();
-				responseContext.MessageId = requestContext.MessageId;
-				responseContext.SessionId = requestContext.SessionId;
-				responseContext.SetTransport( serverTransport );
+				responseContext = serverTransport.Manager.GetResponseContext( requestContext );
 			}
 
 			var operation = this.Dispatch( requestContext.MethodName );

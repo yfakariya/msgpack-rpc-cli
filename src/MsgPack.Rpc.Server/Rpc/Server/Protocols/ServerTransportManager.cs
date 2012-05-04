@@ -445,6 +445,28 @@ namespace MsgPack.Rpc.Server.Protocols
 		/// </summary>
 		/// <param name="transport">The <see cref="ServerTransport"/> which was created by this manager.</param>
 		internal abstract void ReturnTransport( ServerTransport transport );
+
+		internal ServerResponseContext GetResponseContext( ServerRequestContext requestContext )
+		{
+			Contract.Requires( requestContext != null );
+			Contract.Requires( requestContext.MessageId != null );
+			Contract.Requires( requestContext.BoundTransport != null );
+			Contract.Ensures( Contract.Result<ServerResponseContext>() != null );
+
+			return this.GetResponseContext( requestContext.BoundTransport, requestContext.SessionId, requestContext.MessageId.Value );
+		}
+
+		internal ServerResponseContext GetResponseContext( IContextBoundableTransport transport, long sessionId, int messageId )
+		{
+			Contract.Requires( transport != null );
+			Contract.Ensures( Contract.Result<ServerResponseContext>() != null );
+
+			var result = this.ResponseContextPool.Borrow();
+			result.MessageId = messageId;
+			result.SessionId = sessionId;
+			result.SetTransport( transport );
+			return result;
+		}
 	}
 
 	[ContractClassFor( typeof( ServerTransportManager ) )]

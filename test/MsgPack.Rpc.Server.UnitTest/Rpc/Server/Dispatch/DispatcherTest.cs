@@ -40,6 +40,8 @@ namespace MsgPack.Rpc.Server.Dispatch
 				bool invoked = false;
 				target.Dispatching += ( sender, e ) => { invoked = true; };
 				requestContext.MethodName = "Method";
+				requestContext.MessageId = 1;
+				requestContext.SetTransport( transport );
 
 				target.Dispatch( transport, requestContext );
 

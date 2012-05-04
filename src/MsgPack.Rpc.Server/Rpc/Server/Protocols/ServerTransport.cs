@@ -567,7 +567,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			);
 
 			// Try send error response.
-			this.SendError( messageId, rpcError );
+			this.SendError( context.SessionId, messageId, rpcError );
 			// Delegates to the manager to raise error event.
 			this.Manager.RaiseClientError( context, rpcError );
 			context.Clear();
@@ -717,7 +717,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			{
 				var rpcError = new RpcErrorMessage( RpcError.MessageRefusedError, "Receive timeout.", this._manager.Server.Configuration.ReceiveTimeout.ToString() );
 				// Try send error response.
-				this.SendError( context.MessageId.Value, rpcError );
+				this.SendError( context.SessionId, context.MessageId.Value, rpcError );
 				// Delegates to the manager to raise error event.
 				this.Manager.RaiseClientError( context as ServerRequestContext, rpcError );
 				context.Clear();
@@ -1054,6 +1054,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		/// <summary>
 		///		Sends specified RPC error as response.
 		/// </summary>
+		/// <param name="sessionId">The session ID of cause session.</param>
 		/// <param name="messageId">The message ID of the inbound message.</param>
 		/// <param name="rpcError">
 		///		Error.
@@ -1064,7 +1065,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		///	<exception cref="ObjectDisposedException">
 		///		This instance is disposed.
 		///	</exception>
-		private void SendError( int? messageId, RpcErrorMessage rpcError )
+		private void SendError( long sessionId, int? messageId, RpcErrorMessage rpcError )
 		{
 			if ( messageId == null )
 			{
@@ -1073,9 +1074,7 @@ namespace MsgPack.Rpc.Server.Protocols
 				return;
 			}
 
-			var context = this.Manager.ResponseContextPool.Borrow();
-			context.MessageId = messageId.Value;
-			context.SetTransport( this );
+			var context = this.Manager.GetResponseContext( this, sessionId, messageId.Value );
 
 			context.Serialize<object>( null, rpcError, null );
 			this.PrivateSend( context );
