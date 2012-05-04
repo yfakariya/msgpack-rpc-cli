@@ -485,7 +485,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		/// </remarks>
 		protected virtual void ShutdownSending()
 		{
-			this.OnShutdownCompleted( new ShutdownCompletedEventArgs( ( ShutdownSource )this._shutdownSource ) );
+			this.OnShutdownCompleted( new ShutdownCompletedEventArgs( ( ShutdownSource )Interlocked.CompareExchange( ref this._shutdownSource, 0, 0 ) ) );
 		}
 
 		private void PrivateShutdownReceiving()
