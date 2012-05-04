@@ -72,6 +72,7 @@
     <Compile Include="Rpc\PooledObject.cs" />
     <Compile Include="Rpc\Protocols\MessageContextTest.cs" />
     <Compile Include="Rpc\Protocols\SocketErrorCodeExtensionTest.cs" />
+    <Compile Include="Rpc\RpcApplicationContextTest.cs" />
     <Compile Include="Rpc\TimeoutWatcherTest.cs" />
     <Compile Include="Rpc\Protocols\_SetUpFixture.cs" />
     <Compile Include="Rpc\RpcArgumentExceptionTest.cs" />
