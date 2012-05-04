@@ -97,7 +97,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 					responseContext.SetTransport( transport );
 					try
 					{
-						var result = target.GetServiceInvoker( configuration, this._serializationContext, serviceDescription, targetOperation );
+						var result = target.GetServiceInvoker( RpcServerRuntime.Create( configuration, this._serializationContext ), serviceDescription, targetOperation );
 
 						result.InvokeAsync( requestContext, responseContext ).Wait( TimeSpan.FromSeconds( 1 ) );
 

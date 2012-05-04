@@ -100,7 +100,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 			private readonly RpcErrorMessage _methodError;
 
 			public Target( Exception fatalError, RpcErrorMessage methodError )
-				: base( RpcServerConfiguration.Default, new SerializationContext(), new ServiceDescription( "Dummy", () => new object() ), typeof( object ).GetMethod( "ToString" ) )
+				: base( RpcServerRuntime.Create( RpcServerConfiguration.Default, new SerializationContext() ), new ServiceDescription( "Dummy", () => new object() ), typeof( object ).GetMethod( "ToString" ) )
 			{
 				this._fatalError = fatalError;
 				this._methodError = methodError;

@@ -365,27 +365,27 @@ namespace MsgPack.Rpc.Server
 		private TimeSpan? _hardExecutionTimeout = TimeSpan.FromSeconds( 20 );
 		
 		/// <summary>
-		/// 	Gets or sets the timeout value to abort server thread after graceful timeout is occurred.
+		/// 	Gets or sets the timeout value to abort execution thread after execution timeout is occurred.
 		/// </summary>
 		/// <value>
-		/// 	The timeout value to abort server thread after graceful timeout is occurred. The default is 20 seconds. <c>null</c> means inifinite timeout.
+		/// 	The timeout value to abort execution thread after execution timeout is occurred. The default is 20 seconds. <c>null</c> means inifinite timeout.
 		/// </value>
 		public TimeSpan? HardExecutionTimeout
 		{
 			get
 			{
-				Contract.Ensures( Contract.Result<TimeSpan?>() == null || Contract.Result<TimeSpan?>().Value >= default( TimeSpan ) );
+				Contract.Ensures( Contract.Result<TimeSpan?>() == null || Contract.Result<TimeSpan?>().Value > default( TimeSpan ) );
 
 				return this._hardExecutionTimeout;
 			}
 			set
 			{
-				if ( !( value == null || value.Value >= default( TimeSpan ) ) )
+				if ( !( value == null || value.Value > default( TimeSpan ) ) )
 				{
-					throw new ArgumentOutOfRangeException( "value", "Argument cannot be negative number." );
+					throw new ArgumentOutOfRangeException( "value", "Argument must be positive number." );
 				}
 
-				Contract.Ensures( Contract.Result<TimeSpan?>() == null || Contract.Result<TimeSpan?>().Value >= default( TimeSpan ) );
+				Contract.Ensures( Contract.Result<TimeSpan?>() == null || Contract.Result<TimeSpan?>().Value > default( TimeSpan ) );
 
 				this.VerifyIsNotFrozen();
 				var coerced = value;
@@ -649,6 +649,48 @@ namespace MsgPack.Rpc.Server
 		}
 		
 		static partial void CoerceResponseContextPoolProviderValue( ref Func<Func<ServerResponseContext>, ObjectPoolConfiguration, ObjectPool<ServerResponseContext>> value );
+
+		private Func<Func<RpcApplicationContext>, ObjectPoolConfiguration, ObjectPool<RpcApplicationContext>> _applicationContextPoolProvider = ( factory, configuration ) => new StandardObjectPool<RpcApplicationContext>( factory, configuration );
+		
+		/// <summary>
+		/// 	Gets or sets the factory function which creates new <see cref="ObjectPool{T}" /> of <see cref="RpcApplicationContext" />.
+		/// </summary>
+		/// <value>
+		/// 	The factory function which creates new <see cref="ObjectPool{T}" /> of <see cref="RpcApplicationContext" />. The default is the delegate which creates <see cref="StandardObjectPool{T}" /> instance with <c>null</c> configuration.
+		/// </value>
+		public Func<Func<RpcApplicationContext>, ObjectPoolConfiguration, ObjectPool<RpcApplicationContext>> ApplicationContextPoolProvider
+		{
+			get
+			{
+				Contract.Ensures( Contract.Result<Func<Func<RpcApplicationContext>, ObjectPoolConfiguration, ObjectPool<RpcApplicationContext>>>() != null );
+
+				return this._applicationContextPoolProvider;
+			}
+			set
+			{
+				if ( !( value != null ) )
+				{
+					throw new ArgumentNullException( "value" );
+				}
+
+				Contract.Ensures( Contract.Result<Func<Func<RpcApplicationContext>, ObjectPoolConfiguration, ObjectPool<RpcApplicationContext>>>() != null );
+
+				this.VerifyIsNotFrozen();
+				var coerced = value;
+				CoerceApplicationContextPoolProviderValue( ref coerced );
+				this._applicationContextPoolProvider = coerced;
+			}
+		}
+		
+		/// <summary>
+		/// 	Resets the ApplicationContextPoolProvider property value.
+		/// </summary>
+		public void ResetApplicationContextPoolProvider()
+		{
+			this._applicationContextPoolProvider = ( factory, configuration ) => new StandardObjectPool<RpcApplicationContext>( factory, configuration );
+		}
+		
+		static partial void CoerceApplicationContextPoolProviderValue( ref Func<Func<RpcApplicationContext>, ObjectPoolConfiguration, ObjectPool<RpcApplicationContext>> value );
 
 		private Func<Func<ListeningContext>, ObjectPoolConfiguration, ObjectPool<ListeningContext>> _listeningContextPoolProvider = ( factory, configuration ) => new StandardObjectPool<ListeningContext>( factory, configuration );
 		

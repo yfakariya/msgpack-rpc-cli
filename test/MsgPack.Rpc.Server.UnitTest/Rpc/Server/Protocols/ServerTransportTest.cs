@@ -25,12 +25,9 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using MsgPack.Rpc.Protocols;
+using MsgPack.Rpc.Protocols.Filters;
 using MsgPack.Rpc.Server.Dispatch;
 using NUnit.Framework;
-using MsgPack.Rpc.Protocols.Filters;
-using MsgPack.Rpc.Server.Protocols.Filters;
-using System.Globalization;
-using MsgPack.Rpc.Diagnostics;
 
 namespace MsgPack.Rpc.Server.Protocols
 {
@@ -2026,10 +2023,137 @@ namespace MsgPack.Rpc.Server.Protocols
 		[Test]
 		public void TestExecute_Timeout_TimeoutError()
 		{
-			Assert.Inconclusive( "Not implemented yet" );
+			TestTimeoutCore(
+				responseData =>
+				{
+					var response = Unpacking.UnpackArray( responseData ).Value;
+					Assert.That( response[ 2 ] == RpcError.ServerError.Identifier, new MessagePackObject( response, true ).ToString() );
+				},
+				isExecutionTimeout: true,
+				isHardTimeout: false
+			);
+		}
+
+		[Test]
+		public void TestExecute_Timeout_HardTimeoutError()
+		{
+			TestTimeoutCore(
+				responseData =>
+				{
+					var response = Unpacking.UnpackArray( responseData ).Value;
+					Assert.That( response[ 2 ] == RpcError.ServerError.Identifier, new MessagePackObject( response, true ).ToString() );
+				},
+				isExecutionTimeout: true,
+				isHardTimeout: true
+			);
 		}
 
 		#endregion
+
+		// receive timeout is tested via TestReceive_Interrupt_*
+		private void TestTimeoutCore(
+			Action<byte[]> responseAssertion,
+			bool isExecutionTimeout = false,
+			bool isSendingTimeout = false,
+			bool isHardTimeout = false
+		)
+		{
+			// Tweak for your machine
+			TimeSpan timeout = TimeSpan.FromMilliseconds( 50 );
+			TimeSpan hanging = TimeSpan.FromMilliseconds( timeout.TotalMilliseconds * 1.5 );
+
+			TestCore(
+				( transport, controller ) =>
+				{
+					using ( var responseWaitHandle = new ManualResetEventSlim() )
+					{
+						byte[] responseData = null;
+
+						if ( isSendingTimeout )
+						{
+							transport.Response +=
+								( sender, e ) =>
+								{
+									if ( e.Data.Length > 0 )
+									{
+										// Causes send timeout by handing sending.
+										// In-Proc shutdown packate will overstride this message.
+										Thread.Sleep( hanging );
+									}
+								};
+						}
+
+						controller.Response +=
+							( sender, e ) =>
+							{
+								if ( isSendingTimeout )
+								{
+									// Interesting in shutdown package only.
+									if ( e.Data.Length == 0 )
+									{
+										Interlocked.Exchange( ref responseData, e.Data );
+										responseWaitHandle.Set();
+									}
+								}
+								else
+								{
+									Interlocked.Exchange( ref responseData, e.Data );
+									responseWaitHandle.Set();
+								}
+							};
+
+						using ( var buffer = new MemoryStream() )
+						{
+							using ( var packer = Packer.Create( buffer, false ) )
+							{
+								packer.PackArrayHeader( 4 );
+								packer.Pack( ( int )MessageType.Request );
+								packer.Pack( 1 );
+								packer.PackString( "Test" );
+								packer.PackArrayHeader( 0 );
+							}
+
+							controller.FeedReceiveBuffer( buffer.ToArray() );
+						}
+
+						Assert.That( responseWaitHandle.Wait( TimeSpan.FromSeconds( 1 ) ), Is.True, "Not respond." );
+
+						responseAssertion( responseData );
+					}
+				},
+				( id, args ) =>
+				{
+					if ( isExecutionTimeout )
+					{
+						// Causes execution timeout by handing execution.
+						Thread.Sleep( hanging );
+
+						if ( isHardTimeout )
+						{
+							// Causes hard execution timeout by handing execution again.
+							Thread.Sleep( hanging );
+						}
+
+						Assert.That( RpcApplicationContext.IsCanceled );
+					}
+
+					return args;
+				},
+				configuration =>
+				{
+					if ( isExecutionTimeout )
+					{
+						configuration.ExecutionTimeout = timeout;
+						configuration.HardExecutionTimeout = timeout;
+					}
+
+					if ( isSendingTimeout )
+					{
+						configuration.SendTimeout = timeout;
+					}
+				}
+			);
+		}
 
 		#region -- Filter --
 

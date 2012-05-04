@@ -33,8 +33,10 @@ namespace MsgPack.Rpc.Server.Dispatch
 		private static readonly TraceSource _source = new TraceSource( "MsgPack.Rpc.Server.Dispatch" );
 
 		private static readonly Dictionary<MessageId, TraceEventType> _typeTable = 
-			new Dictionary<MessageId, TraceEventType> ( 4 )
+			new Dictionary<MessageId, TraceEventType> ( 6 )
 			{
+				{ MessageId.ExecutionCanceled, TraceEventType.Information },
+				{ MessageId.ExecutionTimeout, TraceEventType.Warning },
 				{ MessageId.OperationStart, TraceEventType.Verbose },
 				{ MessageId.OperationSucceeded, TraceEventType.Verbose },
 				{ MessageId.OperationFailed, TraceEventType.Warning },
@@ -105,6 +107,14 @@ namespace MsgPack.Rpc.Server.Dispatch
 		}
 
 		/// <summary>
+		/// 	<see cref="MessageId" /> of .ExecutionCanceled (ID:1001) message.
+		/// </summary>
+		public const MessageId ExecutionCanceled = MessageId.ExecutionCanceled;
+		/// <summary>
+		/// 	<see cref="MessageId" /> of .ExecutionTimeout (ID:1002) message.
+		/// </summary>
+		public const MessageId ExecutionTimeout = MessageId.ExecutionTimeout;
+		/// <summary>
 		/// 	<see cref="MessageId" /> of .OperationStart (ID:1101) message.
 		/// </summary>
 		public const MessageId OperationStart = MessageId.OperationStart;
@@ -122,6 +132,8 @@ namespace MsgPack.Rpc.Server.Dispatch
 		public const MessageId OperationThrewException = MessageId.OperationThrewException;
 		public enum MessageId
 		{
+			ExecutionCanceled = 1001,
+			ExecutionTimeout = 1002,
 			OperationStart = 1101,
 			OperationSucceeded = 1102,
 			OperationFailed = 1103,

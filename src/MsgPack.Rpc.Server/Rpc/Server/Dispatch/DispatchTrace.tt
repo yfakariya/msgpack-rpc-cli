@@ -31,6 +31,8 @@
  */
 #>
 <#= Generate( "MsgPack.Rpc.Server.Dispatch",
+	new TraceMessage( "ExecutionCanceled", TraceEventType.Information, 1001 ),
+	new TraceMessage( "ExecutionTimeout", TraceEventType.Warning, 1002 ),
 	new TraceMessage( "OperationStart", TraceEventType.Verbose, 1101 ),
 	new TraceMessage( "OperationSucceeded", TraceEventType.Verbose, 1102 ),
 	new TraceMessage( "OperationFailed", TraceEventType.Warning, 1103 ),

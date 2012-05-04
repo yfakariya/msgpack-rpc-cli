@@ -115,6 +115,11 @@ namespace MsgPack.Rpc
 			}
 		}
 
+		internal bool IsSoftTimeout
+		{
+			get { return this._softTimeoutWatcher.IsTimeout; }
+		}
+
 		// Set from SetCurrent
 		private WeakReference _boundThread;
 		private AggregateException _exceptionInCancellationCallback;

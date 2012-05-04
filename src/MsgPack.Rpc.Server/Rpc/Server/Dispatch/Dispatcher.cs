@@ -20,9 +20,9 @@
 
 using System;
 using System.Diagnostics.Contracts;
+using System.Threading;
 using System.Threading.Tasks;
 using MsgPack.Rpc.Protocols;
-using MsgPack.Rpc.Server.Dispatch;
 using MsgPack.Rpc.Server.Protocols;
 using MsgPack.Serialization;
 
@@ -35,6 +35,23 @@ namespace MsgPack.Rpc.Server.Dispatch
 	public abstract class Dispatcher
 	{
 		private readonly RpcServer _server;
+		private readonly RpcServerRuntime _runtime;
+
+		/// <summary>
+		///		Gets <see cref="RpcServerRuntime"/> which provides runtime services.
+		/// </summary>
+		/// <value>
+		///		The <see cref="RpcServerRuntime"/> which provides runtime services.
+		/// </value>
+		public RpcServerRuntime Runtime
+		{
+			get
+			{
+				Contract.Ensures( Contract.Result<RpcServerRuntime>() != null );
+
+				return this._runtime;
+			}
+		}
 
 		/// <summary>
 		///		Gets a value indicating whether the server is in debug mode.
@@ -42,9 +59,9 @@ namespace MsgPack.Rpc.Server.Dispatch
 		/// <value>
 		/// 	<c>true</c> if the server is in debug mode; otherwise, <c>false</c>.
 		/// </value>
-		protected bool IsDebugMode
+		public bool IsDebugMode
 		{
-			get { return this._server.Configuration.IsDebugMode; }
+			get { return this._runtime.IsDebugMode; }
 		}
 
 		/// <summary>
@@ -54,13 +71,13 @@ namespace MsgPack.Rpc.Server.Dispatch
 		///		The serialization context to store serializer for request arguments and response values.
 		///		This value will not be <c>null</c>.
 		/// </value>
-		protected SerializationContext SerializationContext
+		public SerializationContext SerializationContext
 		{
 			get
 			{
 				Contract.Ensures( Contract.Result<SerializationContext>() != null );
 
-				return this._server.SerializationContext;
+				return this._runtime.SerializationContext;
 			}
 		}
 
@@ -81,6 +98,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 			Contract.EndContractBlock();
 
 			this._server = server;
+			this._runtime = new RpcServerRuntime( server.Configuration, server.SerializationContext );
 		}
 
 		/// <summary>
@@ -305,6 +323,51 @@ namespace MsgPack.Rpc.Server.Dispatch
 			Contract.EndContractBlock();
 
 			context.Serialize<MessagePackObject>( MessagePackObject.Nil, InvocationHelper.HandleInvocationException( exception, operationId, this.IsDebugMode ), this.SerializationContext.GetSerializer<MessagePackObject>() );
+		}
+
+		/// <summary>
+		///		Notifies to RPC runtime to begin service operation.
+		/// </summary>
+		/// <remarks>
+		///		Currently, this method performs following:
+		///		<list type="bullet">
+		///			<item>Sets <see cref="RpcApplicationContext"/>.</item>
+		///			<item>Starts execution timeout wathing.</item>
+		///		</list>
+		/// </remarks>
+		protected void BeginOperation()
+		{
+			this._runtime.BeginOperation();
+		}
+
+		/// <summary>
+		///		Notifies to RPC runtime to end service operation.
+		/// </summary>
+		/// <remarks>
+		///		Currently, this method performs following:
+		///		<list type="bullet">
+		///			<item>Clear <see cref="RpcApplicationContext"/>.</item>
+		///			<item>Stop execution timeout wathing.</item>
+		///		</list>
+		/// </remarks>
+		protected void EndOperation()
+		{
+			this._runtime.EndOperation();
+		}
+
+		/// <summary>
+		///		Handles a <see cref="ThreadAbortException"/> if it is thrown because hard execution timeout.
+		/// </summary>
+		/// <param name="mayBeHardTimeoutException">A <see cref="ThreadAbortException"/> if it may be thrown because hard execution timeout.</param>
+		/// <exception cref="ArgumentNullException">
+		///		<paramref name="mayBeHardTimeoutException"/> is <c>null</c>.
+		/// </exception>
+		/// <exception cref="ThreadStateException">
+		///		<paramref name="mayBeHardTimeoutException"/> is not thrown on the current thread.
+		/// </exception>
+		protected void HandleThreadAbortException( ThreadAbortException mayBeHardTimeoutException )
+		{
+			this._runtime.HandleThreadAbortException( mayBeHardTimeoutException );
 		}
 	}
 

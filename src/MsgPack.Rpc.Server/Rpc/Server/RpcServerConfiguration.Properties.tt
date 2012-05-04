@@ -120,11 +120,11 @@ new List<Property>()
 		Name = "HardExecutionTimeout",
 		Type = "TimeSpan?",
 		Default = "TimeSpan.FromSeconds( 20 )",
-		Summary = "Gets or sets the timeout value to abort server thread after graceful timeout is occurred.",
-		Value = "The timeout value to abort server thread after graceful timeout is occurred. " +
+		Summary = "Gets or sets the timeout value to abort execution thread after execution timeout is occurred.",
+		Value = "The timeout value to abort execution thread after execution timeout is occurred. " +
 			"The default is 20 seconds. <c>null</c> means inifinite timeout.",
-		Precondition = Constraints.NullOrNotNegative,
-		Postcondition = Constraints.NullOrNotNegative
+		Precondition = Constraints.NullOrPositive,
+		Postcondition = Constraints.NullOrPositive
 	},
 	new Property()
 	{
@@ -201,6 +201,12 @@ __properties.Add(
 	__objectPoolProviderPropertyFactory(
 		"ResponseContextPoolProvider",
 		"ServerResponseContext"
+	)
+);
+__properties.Add( 
+	__objectPoolProviderPropertyFactory(
+		"ApplicationContextPoolProvider",
+		"RpcApplicationContext"
 	)
 );
 __properties.Add( 

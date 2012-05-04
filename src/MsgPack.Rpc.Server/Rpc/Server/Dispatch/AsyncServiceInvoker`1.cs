@@ -22,6 +22,8 @@ using System;
 using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.Reflection;
+using System.Security;
+using System.Threading;
 using System.Threading.Tasks;
 using MsgPack.Rpc.Protocols;
 using MsgPack.Rpc.Server.Protocols;
@@ -29,6 +31,7 @@ using MsgPack.Serialization;
 
 namespace MsgPack.Rpc.Server.Dispatch
 {
+
 	/// <summary>
 	///		Defines common features of emitting asynchronous service invokers.
 	/// </summary>
@@ -37,119 +40,25 @@ namespace MsgPack.Rpc.Server.Dispatch
 	///		<see cref="Missing"/> when the traget method returns void.
 	/// </typeparam>
 	[ContractClass( typeof( AsyncServiceInvokerContract<> ) )]
-	public abstract class AsyncServiceInvoker<T> : IAsyncServiceInvoker
+	public abstract class AsyncServiceInvoker<T> : AsyncServiceInvoker
 	{
-		private readonly RpcServerConfiguration _configuration;
-
-		/// <summary>
-		///		Gets a value indicating whether the server is in debug mode.
-		/// </summary>
-		/// <value>
-		/// 	<c>true</c> if the server is in debug mode; otherwise, <c>false</c>.
-		/// </value>
-		protected bool IsDebugMode
-		{
-			get { return this._configuration.IsDebugMode; }
-		}
-
 		private readonly MessagePackSerializer<T> _returnValueSerializer;
-		private readonly string _operationId;
-
-		/// <summary>
-		///		Gets the ID of the operation.
-		/// </summary>
-		/// <value>
-		///		The ID of the operation.
-		/// </value>
-		public string OperationId
-		{
-			get
-			{
-				Contract.Ensures( !String.IsNullOrEmpty( Contract.Result<string>() ) );
-
-				return this._operationId;
-			}
-		}
-
-		private readonly ServiceDescription _serviceDescription;
-
-		/// <summary>
-		///		Gets the <see cref="ServiceDescription"/> of target service.
-		/// </summary>
-		/// <value>
-		///		The <see cref="ServiceDescription"/> of target service.
-		///		This value will not be <c>null</c>.
-		/// </value>
-		public ServiceDescription ServiceDescription
-		{
-			get
-			{
-				Contract.Ensures( Contract.Result<ServiceDescription>() != null );
-
-				return this._serviceDescription;
-			}
-		}
-
-		private readonly MethodInfo _targetOperation;
-
-		/// <summary>
-		///		Gets the <see cref="MethodInfo"/> of target method.
-		/// </summary>
-		/// <value>
-		///		The <see cref="MethodInfo"/> of target method.
-		///		This value will not be <c>null</c>.
-		/// </value>
-		public MethodInfo TargetOperation
-		{
-			get
-			{
-				Contract.Ensures( Contract.Result<MethodInfo>() != null );
-				return this._targetOperation;
-			}
-		}
 
 		/// <summary>
 		///		Initializes a new instance of the <see cref="AsyncServiceInvoker&lt;T&gt;"/> class.
 		/// </summary>
-		/// <param name="configuration">The configuration of this server stack.</param>
-		/// <param name="context">The <see cref="SerializationContext"/> which holds serializers to invoke target operation.</param>
+		/// <param name="runtime">The <see cref="RpcServerRuntime"/> which provides runtime services.</param>
 		/// <param name="serviceDescription">The service description which defines target operation.</param>
 		/// <param name="targetOperation">The target operation to be invoked.</param>
 		/// <exception cref="ArgumentNullException">
-		///		<paramref name="configuration"/> is <c>null</c>.
-		///		Or, <paramref name="context"/> is <c>null</c>.
+		///		<paramref name="runtime"/> is <c>null</c>.
 		///		Or, <paramref name="serviceDescription"/> is <c>null</c>.
 		///		Or, <paramref name="targetOperation"/> is <c>null</c>.
 		/// </exception>
-		protected AsyncServiceInvoker( RpcServerConfiguration configuration, SerializationContext context, ServiceDescription serviceDescription, MethodInfo targetOperation )
+		protected AsyncServiceInvoker( RpcServerRuntime runtime, ServiceDescription serviceDescription, MethodInfo targetOperation )
+			: base( runtime, serviceDescription, targetOperation )
 		{
-			if ( configuration == null )
-			{
-				throw new ArgumentNullException( "configuration" );
-			}
-
-			if ( context == null )
-			{
-				throw new ArgumentNullException( "context" );
-			}
-
-			if ( serviceDescription == null )
-			{
-				throw new ArgumentNullException( "serviceDescription" );
-			}
-
-			if ( targetOperation == null )
-			{
-				throw new ArgumentNullException( "targetOperation" );
-			}
-
-			Contract.EndContractBlock();
-
-			this._configuration = configuration;
-			this._serviceDescription = serviceDescription;
-			this._targetOperation = targetOperation;
-			this._operationId = serviceDescription.ToString() + "::" + targetOperation.Name;
-			this._returnValueSerializer = typeof( T ) == typeof( Missing ) ? null : context.GetSerializer<T>();
+			this._returnValueSerializer = typeof( T ) == typeof( Missing ) ? null : runtime.SerializationContext.GetSerializer<T>();
 		}
 
 		/// <summary>
@@ -167,7 +76,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 		/// <returns>
 		///		The <see cref="Task"/> to control entire process including sending response.
 		/// </returns>
-		public Task InvokeAsync( ServerRequestContext requestContext, ServerResponseContext responseContext )
+		public sealed override Task InvokeAsync( ServerRequestContext requestContext, ServerResponseContext responseContext )
 		{
 			if ( requestContext == null )
 			{
@@ -191,7 +100,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 					"Operation starting.",
 					responseContext == null ? MessageType.Notification : MessageType.Request,
 					messageId,
-					this._operationId
+					this.OperationId
 				);
 			}
 
@@ -272,7 +181,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 					previous.Dispose();
 				}
 
-				InvocationHelper.TraceInvocationResult( sessionId, responseContext == null ? MessageType.Notification : MessageType.Request, messageId, @this._operationId, error, result );
+				InvocationHelper.TraceInvocationResult( sessionId, responseContext == null ? MessageType.Notification : MessageType.Request, messageId, @this.OperationId, error, result );
 			}
 			finally
 			{
@@ -291,13 +200,17 @@ namespace MsgPack.Rpc.Server.Dispatch
 		/// <param name="arguments"><see cref="Unpacker"/> to unpack arguments.</param>
 		/// <param name="task">The <see cref="Task"/> to control asynchronous target invocation will be stored.</param>
 		/// <param name="error">The RPC error will be stored.</param>
+		/// <remarks>
+		///		<paramref name="arguments"/> will be disposed asynchronously after this method returns.
+		///		So, you must deserialize all arguments synchronously, or copy its content as <see cref="MessagePackObject"/> tree.
+		/// </remarks>
 		protected abstract void InvokeCore( Unpacker arguments, out Task task, out RpcErrorMessage error );
 	}
 
 	[ContractClassFor( typeof( AsyncServiceInvoker<> ) )]
 	internal abstract class AsyncServiceInvokerContract<T> : AsyncServiceInvoker<T>
 	{
-		protected AsyncServiceInvokerContract() : base( null, null, null, null ) { }
+		protected AsyncServiceInvokerContract() : base( null, null, null ) { }
 
 		protected override void InvokeCore( Unpacker arguments, out Task task, out RpcErrorMessage error )
 		{

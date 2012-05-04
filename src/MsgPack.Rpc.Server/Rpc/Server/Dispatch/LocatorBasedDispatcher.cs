@@ -52,7 +52,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 
 			foreach ( var service in this._locator.FindServices() )
 			{
-				foreach ( var operation in OperationDescription.FromServiceDescription( server.Configuration, server.SerializationContext, service ) )
+				foreach ( var operation in OperationDescription.FromServiceDescription( this.Runtime, service ) )
 				{
 					this._descriptionTable.Add( operation.Id, operation );
 				}

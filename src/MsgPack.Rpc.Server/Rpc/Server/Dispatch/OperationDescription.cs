@@ -106,18 +106,21 @@ namespace MsgPack.Rpc.Server.Dispatch
 		/// <summary>
 		///		Creates the collection of the <see cref="OperationDescription"/> from the service description.
 		/// </summary>
-		/// <param name="configuration">The configuration to initialize the invoker etc.</param>
-		/// <param name="serializationContext">The serialization context to initialize the invoker etc.</param>
+		/// <param name="runtime">The <see cref="RpcServerRuntime"/> which provides runtime services.</param>
 		/// <param name="service">The target service description.</param>
 		/// <returns>
 		///		Collection of the <see cref="OperationDescription"/> from the service description.
 		///		This value will not be <c>null</c> but might be empty.
 		/// </returns>
-		public static IEnumerable<OperationDescription> FromServiceDescription( RpcServerConfiguration configuration, SerializationContext serializationContext, ServiceDescription service )
+		/// <exception cref="ArgumentNullException">
+		///		<paramref name="runtime"/> is <c>null</c>.
+		///		Or, <paramref name="service"/> is <c>null</c>.
+		/// </exception>
+		public static IEnumerable<OperationDescription> FromServiceDescription( RpcServerRuntime runtime, ServiceDescription service )
 		{
-			if ( serializationContext == null )
+			if ( runtime == null )
 			{
-				throw new ArgumentNullException( "serializationContext" );
+				throw new ArgumentNullException( "runtime" );
 			}
 
 			if ( service == null )
@@ -145,17 +148,17 @@ namespace MsgPack.Rpc.Server.Dispatch
 							);
 						}
 
-						return FromServiceMethodCore( configuration ?? RpcServerConfiguration.Default, serializationContext, service, operation );
+						return FromServiceMethodCore( runtime, service, operation );
 					}
 				).ToArray();
 		}
 
-		private static OperationDescription FromServiceMethodCore( RpcServerConfiguration configuration, SerializationContext serializationContext, ServiceDescription service, MethodInfo operation )
+		private static OperationDescription FromServiceMethodCore( RpcServerRuntime runtime, ServiceDescription service, MethodInfo operation )
 		{
-			Contract.Requires( configuration != null );
+			Contract.Requires( runtime != null );
 			Contract.Ensures( Contract.Result<OperationDescription>() != null );
 
-			var serviceInvoker = ServiceInvokerGenerator.Default.GetServiceInvoker( configuration, serializationContext, service, operation );
+			var serviceInvoker = ServiceInvokerGenerator.Default.GetServiceInvoker( runtime, service, operation );
 			return new OperationDescription( service, operation, serviceInvoker.OperationId, serviceInvoker.InvokeAsync );
 		}
 	}

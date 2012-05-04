@@ -30,7 +30,7 @@ using System.Runtime.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using MsgPack.Serialization;
-using NLiblet.Reflection;
+using MsgPack.Serialization.Reflection;
 
 namespace MsgPack.Rpc.Server.Dispatch
 {
@@ -60,6 +60,12 @@ namespace MsgPack.Rpc.Server.Dispatch
 			FromExpression.ToConstructor( ( string message ) => new SerializationException( message ) );
 		private static readonly MethodInfo _idisposableDisposeMethod =
 			FromExpression.ToMethod( ( IDisposable disposable ) => disposable.Dispose() );
+		private static readonly MethodInfo _dispatcherBeginOperationMethod =
+			FromExpression.ToMethod( ( AsyncServiceInvoker @base ) => @base.BeginOperation() );
+		private static readonly MethodInfo _dispatcherHandleThreadAbortExceptionMethod =
+			FromExpression.ToMethod( ( AsyncServiceInvoker @base, ThreadAbortException exception ) => @base.HandleThreadAbortException( exception ) );
+		private static readonly MethodInfo _dispatcherEndOperationMethod =
+			FromExpression.ToMethod( ( AsyncServiceInvoker @base ) => @base.EndOperation() );
 
 
 		private static ServiceInvokerGenerator _default = new ServiceInvokerGenerator( false );
@@ -174,11 +180,8 @@ namespace MsgPack.Rpc.Server.Dispatch
 		///		If the concrete type is already created, returns the cached instance.
 		///		Else creates new concrete type and its instance, then returns it.
 		/// </summary>
-		/// <param name="configuration">
-		///		The <see cref="RpcServerConfiguration"/>.
-		/// </param>
-		/// <param name="context">
-		///		<see cref="SerializationContext"/> which manages serializer for arguments and return value.
+		/// <param name="runtime">
+		///		The <see cref="RpcServerRuntime"/>.
 		/// </param>
 		/// <param name="serviceDescription">
 		///		<see cref="ServiceDescription"/> which holds the service spec.
@@ -189,12 +192,11 @@ namespace MsgPack.Rpc.Server.Dispatch
 		/// <returns>
 		///		<see cref="AsyncServiceInvoker{T}"/> where T is return type of the target method.
 		/// </returns>
-		public IAsyncServiceInvoker GetServiceInvoker( RpcServerConfiguration configuration, SerializationContext context, ServiceDescription serviceDescription, MethodInfo targetOperation )
+		public IAsyncServiceInvoker GetServiceInvoker( RpcServerRuntime runtime, ServiceDescription serviceDescription, MethodInfo targetOperation )
 		{
-			Contract.Assert( configuration != null );
-			Contract.Assert( context != null );
-			Contract.Assert( serviceDescription != null );
-			Contract.Assert( targetOperation != null );
+			Contract.Requires( runtime != null );
+			Contract.Requires( serviceDescription != null );
+			Contract.Requires( targetOperation != null );
 
 			bool isReadLockHeld = false;
 			try
@@ -212,7 +214,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 					return result;
 				}
 
-				IAsyncServiceInvoker newInvoker = CreateInvoker( configuration, context, serviceDescription, targetOperation );
+				IAsyncServiceInvoker newInvoker = CreateInvoker( runtime, serviceDescription, targetOperation );
 
 				bool isWriteLockHeld = false;
 				try
@@ -249,7 +251,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 			}
 		}
 
-		private IAsyncServiceInvoker CreateInvoker( RpcServerConfiguration configuration, SerializationContext context, ServiceDescription serviceDescription, MethodInfo targetOperation )
+		private IAsyncServiceInvoker CreateInvoker( RpcServerRuntime runtime, ServiceDescription serviceDescription, MethodInfo targetOperation )
 		{
 			var parameters = targetOperation.GetParameters();
 			CheckParameters( parameters );
@@ -258,7 +260,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 			var emitter = new ServiceInvokerEmitter( this._moduleBuilder, Interlocked.Increment( ref this._typeSequence ), targetOperation.DeclaringType, targetOperation.ReturnType, this._isDebuggable );
 			EmitInvokeCore( emitter, targetOperation, parameters, typeof( Task ), isWrapperNeeded );
 
-			return emitter.CreateInstance( configuration, context, serviceDescription, targetOperation );
+			return emitter.CreateInstance( runtime, serviceDescription, targetOperation );
 		}
 
 		private static void EmitInvokeCore( ServiceInvokerEmitter emitter, MethodInfo targetOperation, ParameterInfo[] parameters, Type returnType, bool isWrapperNeeded )
@@ -401,6 +403,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 				il.EmitGetProperty( _rpcErrorMessageSuccessProperty );
 				// Set to arg.3
 				il.EmitStobj( typeof( RpcErrorMessage ) );
+
 				il.MarkLabel( endOfMethod );
 				il.EmitRet();
 			}
@@ -438,7 +441,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 			il.EmitGetProperty( _taskFactoryProperty );
 
 			// new DELEGATE( PrivateInvoke ) ->new DELGATE( null, funcof( PrivateInvoke ) )
-			il.EmitLdnull();
+			il.EmitLdarg_0();
 			il.EmitLdftn( emitter.PrivateInvokeMethod );
 			il.EmitNewobj(
 				targetOperation.ReturnType == typeof( void )
@@ -479,20 +482,39 @@ namespace MsgPack.Rpc.Server.Dispatch
 		private static void EmitPrivateInvoke( TracingILGenerator il, MethodInfo targetOperation, IList<Type> tupleTypes, Type[] itemTypes )
 		{
 			/*
-			 * private static void/T PrivateInvoke( object state )
+			 * private void/T PrivateInvoke( object state )
 			 * {
-			 *		var tuple = state as Tuple<...>;
-			 *		return 
-			 *			tuple.Item1.Target(
-			 *				tuple.Item2,
-			 *					:
-			 *				tuple.Rest.Rest....ItemN
-			 *			);
+			 *		T result;
+			 *		Dispatcher.BeginOperation();
+			 *		try
+			 *		{
+			 *			var tuple = state as Tuple<...>;
+			 *			result = 
+			 *				tuple.Item1.Target(
+			 *					tuple.Item2,
+			 *						:
+			 *					tuple.Rest.Rest....ItemN
+			 *				);
+			 *		}
+			 *		catch( TheradAbortException )
+			 *		{
+			 *			Dispatcher.HandleThreadAbortException( ex );
+			 *		}
+			 *		finally
+			 *		{
+			 *			Dispatcher.EndOperation();
+			 *		}
+			 *		
+			 *		return result;
 			 * }
 			 */
 			var tuple = il.DeclareLocal( tupleTypes.First(), "tuple" );
-
+			var result = targetOperation.ReturnType == typeof( void ) ? null : il.DeclareLocal( targetOperation.ReturnType, "result" );
 			il.EmitAnyLdarg( 0 );
+			il.EmitCall( _dispatcherBeginOperationMethod );
+			il.BeginExceptionBlock();
+
+			il.EmitAnyLdarg( 1 );
 			il.EmitIsinst( tupleTypes.First() );
 			il.EmitAnyStloc( tuple );
 
@@ -518,6 +540,28 @@ namespace MsgPack.Rpc.Server.Dispatch
 			}
 
 			il.EmitAnyCall( targetOperation );
+			if ( targetOperation.ReturnType != typeof( void ) )
+			{
+				il.EmitAnyStloc( result );
+			}
+
+			il.BeginCatchBlock( typeof( ThreadAbortException ) );
+			var ex = il.DeclareLocal(typeof(ThreadAbortException), "ex");
+			il.EmitAnyStloc( ex );
+			il.EmitAnyLdarg( 0 );
+			il.EmitAnyLdloc( ex );
+			il.EmitCall( _dispatcherHandleThreadAbortExceptionMethod );
+
+			il.BeginFinallyBlock();
+			il.EmitAnyLdarg( 0 );
+			il.EmitCall( _dispatcherEndOperationMethod );
+			il.EndExceptionBlock();
+
+			if ( targetOperation.ReturnType != typeof( void ) )
+			{
+				il.EmitAnyLdloc( result );
+			}
+
 			il.EmitRet();
 		}
 

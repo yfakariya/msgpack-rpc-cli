@@ -97,6 +97,20 @@ namespace MsgPack.Rpc.Server
 		}
 
 		/// <summary>
+		///		Creates the <see cref="ObjectPoolConfiguration"/> for the RPC application context pool corresponds to values of this instance.
+		/// </summary>
+		/// <returns>
+		///		The <see cref="ObjectPoolConfiguration"/> for the transport pool corresponds to values of this instance.
+		///		This value will not be <c>null</c>.
+		/// </returns>
+		public ObjectPoolConfiguration CreateApplicationContextPoolConfiguration()
+		{
+			Contract.Ensures( Contract.Result<ObjectPoolConfiguration>() != null );
+
+			return new ObjectPoolConfiguration() { ExhausionPolicy = ExhausionPolicy.BlockUntilAvailable, MaximumPooled = this.MaximumConcurrentRequest, MinimumReserved = this.MinimumConcurrentRequest };
+		}
+
+		/// <summary>
 		///		Creates the <see cref="ObjectPoolConfiguration"/> for the <see cref="MsgPack.Rpc.Server.Protocols.ServerRequestContext"/> pool corresponds to values of this instance.
 		/// </summary>
 		/// <returns>

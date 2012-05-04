@@ -23,6 +23,7 @@ using System.Threading.Tasks;
 using MsgPack.Rpc.Protocols;
 using MsgPack.Rpc.Server.Protocols;
 using MsgPack.Serialization;
+using System.Threading;
 
 namespace MsgPack.Rpc.Server.Dispatch
 {
@@ -62,8 +63,9 @@ namespace MsgPack.Rpc.Server.Dispatch
 			return
 				( requestContext, responseContext ) =>
 				{
-					requestContext.ArgumentsUnpacker.Read();
-					MessagePackObject[] args = MessagePackSerializer.Create<MessagePackObject[]>( _serializationContext ).UnpackFrom( requestContext.ArgumentsUnpacker );
+					var argumentsUnpacker = requestContext.ArgumentsUnpacker;
+					argumentsUnpacker.Read();
+					MessagePackObject[] args = MessagePackSerializer.Create<MessagePackObject[]>( _serializationContext ).UnpackFrom( argumentsUnpacker );
 					var messageId = requestContext.MessageId;
 
 					return
@@ -71,9 +73,23 @@ namespace MsgPack.Rpc.Server.Dispatch
 							() =>
 							{
 								MessagePackObject returnValue;
+
 								try
 								{
-									returnValue = this._dispatch( methodName, messageId, args );
+									this.BeginOperation();
+									try
+									{
+										returnValue = this._dispatch( methodName, messageId, args );
+									}
+									catch ( ThreadAbortException ex )
+									{
+										this.HandleThreadAbortException( ex );
+										returnValue = MessagePackObject.Nil;
+									}
+									finally
+									{
+										this.EndOperation();
+									}
 								}
 								catch ( Exception exception )
 								{

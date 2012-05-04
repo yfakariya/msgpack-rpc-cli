@@ -31,11 +31,10 @@ namespace MsgPack.Rpc.Server.Dispatch
 		[Test()]
 		public void TestFromServiceDescription_WithMethods_CreateForPublicAnnotatedMembers()
 		{
-			RpcServerConfiguration configuration = RpcServerConfiguration.Default;
-			SerializationContext serializationContext = new SerializationContext();
+			var runtime = RpcServerRuntime.Create( RpcServerConfiguration.Default, new SerializationContext() );
 			ServiceDescription service = ServiceDescription.FromServiceType( typeof( Service ) );
 
-			var result = OperationDescription.FromServiceDescription( configuration, serializationContext, service ).OrderBy( item => item.Id ).ToArray();
+			var result = OperationDescription.FromServiceDescription( runtime, service ).OrderBy( item => item.Id ).ToArray();
 
 			Assert.That( result, Is.Not.Null.And.Length.EqualTo( 2 ) );
 			Assert.That( result[ 0 ].Id, Is.StringEnding( Service.ExpectedOperationId1 ) );
@@ -49,11 +48,10 @@ namespace MsgPack.Rpc.Server.Dispatch
 		[Test()]
 		public void TestFromServiceDescription_WithOutMethods_Empty()
 		{
-			RpcServerConfiguration configuration = RpcServerConfiguration.Default;
-			SerializationContext serializationContext = new SerializationContext();
+			var runtime = RpcServerRuntime.Create( RpcServerConfiguration.Default, new SerializationContext() );
 			ServiceDescription service = ServiceDescription.FromServiceType( typeof( NoMember ) );
 
-			var result = OperationDescription.FromServiceDescription( configuration, serializationContext, service ).ToArray();
+			var result = OperationDescription.FromServiceDescription( runtime, service ).ToArray();
 
 			Assert.That( result, Is.Not.Null.And.Empty );
 		}
@@ -62,43 +60,29 @@ namespace MsgPack.Rpc.Server.Dispatch
 		[ExpectedException( typeof( NotSupportedException ) )]
 		public void TestFromServiceDescription_Overloaded()
 		{
-			RpcServerConfiguration configuration = RpcServerConfiguration.Default;
-			SerializationContext serializationContext = new SerializationContext();
+			var runtime = RpcServerRuntime.Create( RpcServerConfiguration.Default, new SerializationContext() );
 			ServiceDescription service = ServiceDescription.FromServiceType( typeof( Overloaded ) );
 
-			OperationDescription.FromServiceDescription( configuration, serializationContext, service ).ToArray();
-		}
-
-		[Test()]
-		public void TestFromServiceDescription_NullConfiguration_SucessAtLeast()
-		{
-			RpcServerConfiguration configuration = null;
-			SerializationContext serializationContext = new SerializationContext();
-			ServiceDescription service = ServiceDescription.FromServiceType( typeof( Service ) );
-
-			OperationDescription.FromServiceDescription( configuration, serializationContext, service ).ToArray();
+			OperationDescription.FromServiceDescription( runtime, service ).ToArray();
 		}
 
 		[Test()]
 		[ExpectedException( typeof( ArgumentNullException ) )]
-		public void TestFromServiceDescription_ContextIsNull()
+		public void TestFromServiceDescription_RuntimeIsNull()
 		{
-			RpcServerConfiguration configuration = RpcServerConfiguration.Default;
-			SerializationContext serializationContext = null;
 			ServiceDescription service = ServiceDescription.FromServiceType( typeof( Overloaded ) );
 
-			OperationDescription.FromServiceDescription( configuration, serializationContext, service ).ToArray();
+			OperationDescription.FromServiceDescription( null, service ).ToArray();
 		}
 
 		[Test()]
 		[ExpectedException( typeof( ArgumentNullException ) )]
 		public void TestFromServiceDescription_ServiceIsNull()
 		{
-			RpcServerConfiguration configuration = RpcServerConfiguration.Default;
-			SerializationContext serializationContext = new SerializationContext();
+			var runtime = RpcServerRuntime.Create( RpcServerConfiguration.Default, new SerializationContext() );
 			ServiceDescription service = null;
 
-			OperationDescription.FromServiceDescription( configuration, serializationContext, service ).ToArray();
+			OperationDescription.FromServiceDescription( runtime, service ).ToArray();
 		}
 
 		[MessagePackRpcServiceContract]
