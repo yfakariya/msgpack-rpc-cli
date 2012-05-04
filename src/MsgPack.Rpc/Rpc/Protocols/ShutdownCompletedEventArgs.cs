@@ -55,6 +55,7 @@ namespace MsgPack.Rpc.Protocols
 				case ShutdownSource.Client:
 				case ShutdownSource.Server:
 				case ShutdownSource.Unknown:
+				case ShutdownSource.Disposing:
 				{
 					break;
 				}
