@@ -69,11 +69,29 @@ namespace MsgPack.Rpc.Server.Protocols
 		}
 
 		[Test()]
-		public void TestShiftCurrentReceivingBuffer()
+		public void TestShiftCurrentReceivingBuffer_Intermediate_OffsetIsShift()
 		{
 			TestCore( ( target, _ ) =>
 				{
-					Assert.Inconclusive();
+					var oldBuffer = target.CurrentReceivingBuffer;
+					target.SetBytesTransferred( 1 );
+					target.ShiftCurrentReceivingBuffer();
+					Assert.That( target.Offset, Is.EqualTo( 1 ) );
+					Assert.That( target.CurrentReceivingBuffer, Is.SameAs( oldBuffer ) );
+				}
+			);
+		}
+
+		[Test()]
+		public void TestShiftCurrentReceivingBuffer_Tail_OffsetIsZeroAndNewBuffer()
+		{
+			TestCore( ( target, _ ) =>
+				{
+					var oldBuffer = target.CurrentReceivingBuffer;
+					target.SetBytesTransferred( oldBuffer.Length );
+					target.ShiftCurrentReceivingBuffer();
+					Assert.That( target.Offset, Is.EqualTo( 0 ) );
+					Assert.That( target.CurrentReceivingBuffer, Is.Not.SameAs( oldBuffer ) );
 				}
 			);
 		}
