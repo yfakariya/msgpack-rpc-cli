@@ -40,38 +40,6 @@ namespace MsgPack.Rpc.Client.Protocols
 	[Timeout( 3000 )]
 	public class ClientTransportTest
 	{
-		private sealed class EchoServer : IDisposable
-		{
-			private readonly Server.RpcServer _server;
-			private readonly Server.Protocols.InProcServerTransportManager _transportManager;
-
-			public Server.Protocols.InProcServerTransportManager TransportManager
-			{
-				get { return this._transportManager; }
-			}
-
-			public EchoServer()
-				: this( ( id, args ) => args ) { }
-
-			public EchoServer( Func<int?, MessagePackObject[], MessagePackObject> callback )
-			{
-				var config = new Server.RpcServerConfiguration();
-				config.DispatcherProvider = s => new Server.Dispatch.CallbackDispatcher( s, callback );
-				this._server = new Server.RpcServer( config );
-				this._transportManager =
-					new Server.Protocols.InProcServerTransportManager(
-						this._server,
-						m => new SingletonObjectPool<Server.Protocols.InProcServerTransport>( new Server.Protocols.InProcServerTransport( m ) )
-					);
-			}
-
-			public void Dispose()
-			{
-				this._transportManager.Dispose();
-				this._server.Dispose();
-			}
-		}
-
 		private static readonly EndPoint _endPoint =
 			new IPEndPoint( IPAddress.Loopback, 0 );
 
@@ -1568,5 +1536,37 @@ namespace MsgPack.Rpc.Client.Protocols
 				return this.GetEnumerator();
 			}
 		}
+		private sealed class EchoServer : IDisposable
+		{
+			private readonly Server.RpcServer _server;
+			private readonly Server.Protocols.InProcServerTransportManager _transportManager;
+
+			public Server.Protocols.InProcServerTransportManager TransportManager
+			{
+				get { return this._transportManager; }
+			}
+
+			public EchoServer()
+				: this( ( id, args ) => args ) { }
+
+			public EchoServer( Func<int?, MessagePackObject[], MessagePackObject> callback )
+			{
+				var config = new Server.RpcServerConfiguration();
+				config.DispatcherProvider = s => new Server.Dispatch.CallbackDispatcher( s, callback );
+				this._server = new Server.RpcServer( config );
+				this._transportManager =
+					new Server.Protocols.InProcServerTransportManager(
+						this._server,
+						m => new SingletonObjectPool<Server.Protocols.InProcServerTransport>( new Server.Protocols.InProcServerTransport( m ) )
+					);
+			}
+
+			public void Dispose()
+			{
+				this._transportManager.Dispose();
+				this._server.Dispose();
+			}
+		}
+
 	}
 }
