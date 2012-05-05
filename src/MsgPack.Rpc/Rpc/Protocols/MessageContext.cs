@@ -335,6 +335,14 @@ namespace MsgPack.Rpc.Protocols
 		}
 
 		/// <summary>
+		///		Clears the session id.
+		/// </summary>
+		internal void ClearSessionId()
+		{
+			Interlocked.Exchange( ref this._sessionId, 0 );
+		}
+
+		/// <summary>
 		///		Clears this instance internal buffers for reuse.
 		/// </summary>
 		internal virtual void Clear()

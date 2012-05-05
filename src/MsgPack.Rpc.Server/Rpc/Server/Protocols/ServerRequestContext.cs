@@ -161,6 +161,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			}
 
 			this.ArgumentsBuffer.SetLength( 0 );
+			this.ClearSessionId();
 		}
 	}
 }
