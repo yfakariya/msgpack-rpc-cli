@@ -49,7 +49,6 @@ namespace MsgPack.Rpc.Server.Protocols
 
 		private void TestCore( Action<InProcServerTransport, InProcServerTransportController> test, Func<int?, MessagePackObject[], MessagePackObject> callback, Action<RpcServerConfiguration> configurationTweak )
 		{
-			// TODO: Timeout setting
 			InProcServerTransportManager serverTransportManager = null;
 			var config = new RpcServerConfiguration();
 			config.IsDebugMode = true;

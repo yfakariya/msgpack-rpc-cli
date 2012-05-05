@@ -1047,7 +1047,6 @@ namespace MsgPack.Rpc.Server.Protocols
 
 		#region -- Send --
 
-		// TODO: Move to other layer e.g. Server.
 		/// <summary>
 		///		Sends specified RPC error as response.
 		/// </summary>

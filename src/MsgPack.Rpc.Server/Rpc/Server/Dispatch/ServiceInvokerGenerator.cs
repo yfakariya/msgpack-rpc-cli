@@ -316,7 +316,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 					il.EmitNewarr( typeof( object ), 1 );
 					il.EmitAnyStloc( args );
 					il.EmitGetProperty( _cultureInfoCurrentCultureProperty );
-					// TODO: Localization
+
 					il.EmitLdstr( "Stream unexpectedly ends at arguments array {0}." );
 					il.EmitAnyLdloc( args );
 					il.EmitAnyLdc_I4( 0 );

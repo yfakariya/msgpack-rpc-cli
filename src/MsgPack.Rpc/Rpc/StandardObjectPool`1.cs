@@ -107,7 +107,6 @@ namespace MsgPack.Rpc
 			if ( String.IsNullOrWhiteSpace( safeConfiguration.Name ) )
 			{
 				this._source = new TraceSource( this.GetType().FullName );
-				// TODO: use more simple name with NLiblet
 				this._name = this.GetType().FullName + "@" + this.GetHashCode().ToString( "X", CultureInfo.InvariantCulture );
 			}
 			else
