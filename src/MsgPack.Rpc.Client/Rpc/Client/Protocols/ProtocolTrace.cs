@@ -33,18 +33,20 @@ namespace MsgPack.Rpc.Client.Protocols
 		private static readonly TraceSource _source = new TraceSource( "MsgPack.Rpc.Client.Protocols" );
 
 		private static readonly Dictionary<MessageId, TraceEventType> _typeTable = 
-			new Dictionary<MessageId, TraceEventType> ( 23 )
+			new Dictionary<MessageId, TraceEventType> ( 25 )
 			{
 				{ MessageId.DetectServerShutdown, TraceEventType.Information },
 				{ MessageId.OrphanError, TraceEventType.Error },
 				{ MessageId.SocketError, TraceEventType.Warning },
 				{ MessageId.IgnoreableError, TraceEventType.Verbose },
 				{ MessageId.UnexpectedLastOperation, TraceEventType.Critical },
+				{ MessageId.WaitTimeout, TraceEventType.Warning },
 				{ MessageId.SerializeRequest, TraceEventType.Verbose },
 				{ MessageId.SendOutboundData, TraceEventType.Verbose },
 				{ MessageId.SentOutboundData, TraceEventType.Verbose },
 				{ MessageId.BeginConnect, TraceEventType.Verbose },
 				{ MessageId.EndConnect, TraceEventType.Verbose },
+				{ MessageId.ConnectTimeout, TraceEventType.Warning },
 				{ MessageId.DeserializeResponse, TraceEventType.Verbose },
 				{ MessageId.NeedRequestHeader, TraceEventType.Verbose },
 				{ MessageId.NeedMessageType, TraceEventType.Verbose },
@@ -144,6 +146,10 @@ namespace MsgPack.Rpc.Client.Protocols
 		/// </summary>
 		public const MessageId UnexpectedLastOperation = MessageId.UnexpectedLastOperation;
 		/// <summary>
+		/// 	<see cref="MessageId" /> of .WaitTimeout (ID:104) message.
+		/// </summary>
+		public const MessageId WaitTimeout = MessageId.WaitTimeout;
+		/// <summary>
 		/// 	<see cref="MessageId" /> of .SerializeRequest (ID:1101) message.
 		/// </summary>
 		public const MessageId SerializeRequest = MessageId.SerializeRequest;
@@ -163,6 +169,10 @@ namespace MsgPack.Rpc.Client.Protocols
 		/// 	<see cref="MessageId" /> of .EndConnect (ID:1302) message.
 		/// </summary>
 		public const MessageId EndConnect = MessageId.EndConnect;
+		/// <summary>
+		/// 	<see cref="MessageId" /> of .ConnectTimeout (ID:1303) message.
+		/// </summary>
+		public const MessageId ConnectTimeout = MessageId.ConnectTimeout;
 		/// <summary>
 		/// 	<see cref="MessageId" /> of .DeserializeResponse (ID:2001) message.
 		/// </summary>
@@ -222,11 +232,13 @@ namespace MsgPack.Rpc.Client.Protocols
 			SocketError = 101,
 			IgnoreableError = 102,
 			UnexpectedLastOperation = 103,
+			WaitTimeout = 104,
 			SerializeRequest = 1101,
 			SendOutboundData = 1201,
 			SentOutboundData = 1202,
 			BeginConnect = 1301,
 			EndConnect = 1302,
+			ConnectTimeout = 1303,
 			DeserializeResponse = 2001,
 			NeedRequestHeader = 2112,
 			NeedMessageType = 2113,
