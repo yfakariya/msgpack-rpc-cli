@@ -31,11 +31,6 @@ namespace MsgPack.Rpc.Client.Protocols
 	public sealed class ClientResponseContext : InboundMessageContext
 	{
 		/// <summary>
-		///		The initial process of the deserialization pipeline.
-		/// </summary>
-		private Func<ClientResponseContext, bool> _initialProcess;
-
-		/// <summary>
 		///		Next (that is, resuming) process on the deserialization pipeline.
 		/// </summary>
 		internal Func<ClientResponseContext, bool> NextProcess;
@@ -77,7 +72,6 @@ namespace MsgPack.Rpc.Client.Protocols
 		{
 			Contract.Requires( transport != null );
 
-			this._initialProcess = transport.UnpackResponseHeader;
 			this.NextProcess = transport.UnpackResponseHeader;
 			base.SetTransport( transport );
 		}
