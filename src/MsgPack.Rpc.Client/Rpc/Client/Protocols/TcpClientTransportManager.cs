@@ -71,6 +71,7 @@ namespace MsgPack.Rpc.Client.Protocols
 				Socket.OSSupportsIPv6
 			);
 #endif
+			context.UserToken = this.BeginConnectTimeoutWatch( () => Socket.CancelConnectAsync( context ) );
 			if ( !Socket.ConnectAsync( SocketType.Stream, ProtocolType.Tcp, context ) )
 			{
 				this.OnCompleted( null, context );
@@ -83,6 +84,11 @@ namespace MsgPack.Rpc.Client.Protocols
 		{
 			var socket = sender as Socket;
 			var taskCompletionSource = e.UserToken as TaskCompletionSource<ClientTransport>;
+			var watcher = e.UserToken as ConnectTimeoutWatcher;
+			if ( watcher != null )
+			{
+				this.EndConnectTimeoutWatch( watcher );
+			}
 
 			var error = this.HandleSocketError( e.ConnectSocket ?? socket, e );
 			if ( error != null )

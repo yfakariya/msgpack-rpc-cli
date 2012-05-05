@@ -67,5 +67,41 @@ namespace MsgPack.Rpc.Client.Protocols
 				target.ConnectAsync( null );
 			}
 		}
+
+		[Test]
+		public void TestConnectAsync_Timeout()
+		{
+			var testNetworkIPEndPont = new IPEndPoint( IPAddress.Parse( "198.51.100.1" ), 12345 ); // c.f. http://tools.ietf.org/html/rfc5737)
+			var configuration = new RpcClientConfiguration();
+			configuration.ConnectTimeout = TimeSpan.FromMilliseconds( 20 );
+			using ( var target = new TcpClientTransportManager( configuration ) )
+			{
+				var actual = Assert.Throws<AggregateException>( () => target.ConnectAsync( testNetworkIPEndPont ).Wait( TimeSpan.FromMilliseconds( configuration.ConnectTimeout.Value.TotalMilliseconds * 3 ) ) );
+				Assert.That( actual.InnerExceptions.Count, Is.EqualTo( 1 ) );
+				Assert.That( actual.InnerException, Is.InstanceOf<RpcException>() );
+				Assert.That( ( actual.InnerException as RpcException ).RpcError, Is.EqualTo( RpcError.ConnectionTimeoutError ), actual.ToString() );
+			}
+		}
+
+		[Test]
+		[Explicit]
+		public void TestConnectAsync_ImplicitTimeout_TranslationOk()
+		{
+			if ( Environment.OSVersion.Platform != PlatformID.Win32NT )
+			{
+				Assert.Inconclusive( "This test dependes on WinSock2" );
+			}
+
+			var testNetworkIPEndPont = new IPEndPoint( IPAddress.Parse( "198.51.100.1" ), 12345 ); // c.f. http://tools.ietf.org/html/rfc5737)
+			var configuration = new RpcClientConfiguration();
+			using ( var target = new TcpClientTransportManager( configuration ) )
+			{
+				// WinSock TCP/IP has 20sec timeout...
+				var actual = Assert.Throws<AggregateException>( () => target.ConnectAsync( testNetworkIPEndPont ).Result.Dispose() );
+				Assert.That( actual.InnerExceptions.Count, Is.EqualTo( 1 ) );
+				Assert.That( actual.InnerException, Is.InstanceOf<RpcException>() );
+				Assert.That( ( actual.InnerException as RpcException ).RpcError, Is.EqualTo( RpcError.ConnectionTimeoutError ), actual.ToString() );
+			}
+		}
 	}
 }

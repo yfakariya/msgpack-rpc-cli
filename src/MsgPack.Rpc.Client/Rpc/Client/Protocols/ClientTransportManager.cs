@@ -398,5 +398,108 @@ namespace MsgPack.Rpc.Client.Protocols
 			context.UnboundTransport();
 			this.ResponseContextPool.Return( context );
 		}
+
+		/// <summary>
+		///		Starts the connect timeout watching.
+		/// </summary>
+		/// <param name="onTimeout">A callback to be invoked when the timeout occurrs.</param>
+		/// <returns>A <see cref="ConnectTimeoutWatcher"/> for connect timeout watching.</returns>
+		/// <exception cref="ArgumentNullException">
+		///		<paramref name="onTimeout"/> is <c>null</c>.
+		/// </exception>
+		protected ConnectTimeoutWatcher BeginConnectTimeoutWatch( Action onTimeout )
+		{
+			if ( onTimeout == null )
+			{
+				throw new ArgumentNullException( "onTimeout" );
+			}
+
+			Contract.Ensures( Contract.Result<ConnectTimeoutWatcher>() != null );
+
+			if ( this._configuration.ConnectTimeout == null )
+			{
+				return NullConnectTimeoutWatcher.Instance;
+			}
+			else
+			{
+				return new DefaultConnectTimeoutWatcher( this._configuration.ConnectTimeout.Value, onTimeout );
+			}
+		}
+
+		/// <summary>
+		///		Ends the connect timeout watching.
+		/// </summary>
+		/// <param name="watcher">The <see cref="ConnectTimeoutWatcher"/>.</param>
+		/// <exception cref="ArgumentNullException">
+		///		<paramref name="watcher"/> is <c>null</c>.
+		/// </exception>
+		protected void EndConnectTimeoutWatch( ConnectTimeoutWatcher watcher )
+		{
+			if ( watcher == null )
+			{
+				throw new ArgumentNullException( "watcher" );
+			}
+
+			Contract.EndContractBlock();
+
+			watcher.Dispose();
+		}
+
+		/// <summary>
+		///		Helps connection timeout watching.
+		/// </summary>
+		protected abstract class ConnectTimeoutWatcher : IDisposable
+		{
+			internal ConnectTimeoutWatcher() { }
+
+			/// <summary>
+			///		Stops watching and release internal resources.
+			/// </summary>
+			public void Dispose()
+			{
+				this.Dispose( true );
+				GC.SuppressFinalize( this );
+			}
+
+			/// <summary>
+			/// Releases unmanaged and - optionally - managed resources
+			/// </summary>
+			/// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
+			protected virtual void Dispose( bool disposing )
+			{
+				// nop
+			}
+		}
+
+		private sealed class NullConnectTimeoutWatcher : ConnectTimeoutWatcher
+		{
+			public static readonly NullConnectTimeoutWatcher Instance = new NullConnectTimeoutWatcher();
+
+			private NullConnectTimeoutWatcher() { }
+		}
+
+		private sealed class DefaultConnectTimeoutWatcher : ConnectTimeoutWatcher
+		{
+			private readonly TimeoutWatcher _watcher;
+
+			public DefaultConnectTimeoutWatcher( TimeSpan timeout, Action onTimeout )
+			{
+				var watcher = new TimeoutWatcher();
+				watcher.Timeout += ( sender, e ) => onTimeout();
+				Interlocked.Exchange( ref this._watcher, watcher );
+				watcher.Start( timeout );
+			}
+
+			protected override void Dispose( bool disposing )
+			{
+				if ( disposing )
+				{
+					this._watcher.Stop();
+					this._watcher.Dispose();
+				}
+
+				base.Dispose( disposing );
+			}
+		}
 	}
 }
