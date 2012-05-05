@@ -23,6 +23,7 @@ using System.Globalization;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
+using MsgPack.Rpc.Protocols;
 
 namespace MsgPack.Rpc.Client.Protocols
 {
@@ -31,8 +32,6 @@ namespace MsgPack.Rpc.Client.Protocols
 	/// </summary>
 	public sealed class TcpClientTransportManager : ClientTransportManager<TcpClientTransport>
 	{
-		private readonly MessagePackObject _connectTimeoutDetail;
-
 		/// <summary>
 		///		Initializes a new instance of the <see cref="TcpClientTransportManager"/> class.
 		/// </summary>
@@ -45,17 +44,6 @@ namespace MsgPack.Rpc.Client.Protocols
 #if !API_SIGNATURE_TEST
 			base.SetTransportPool( configuration.TcpTransportPoolProvider( () => new TcpClientTransport( this ), configuration.CreateTransportPoolConfiguration() ) );
 #endif
-			this._connectTimeoutDetail =
-				new MessagePackObject(
-					new MessagePackObjectDictionary( 2 ) 
-					{
-#if !API_SIGNATURE_TEST
-						{ RpcException.MessageKeyUtf8, "Connect timeout." },
-						{ RpcException.DebugInformationKeyUtf8, "Timeout: " + configuration.ConnectTimeout },
-#endif
-					},
-					true
-				);
 		}
 
 		/// <summary>
@@ -163,7 +151,13 @@ namespace MsgPack.Rpc.Client.Protocols
 				if ( context.ConnectSocket == null )
 				{
 					// canceled.
-					taskCompletionSource.SetException( RpcError.ConnectionTimeoutError.ToException( _connectTimeoutDetail ) );
+					taskCompletionSource.SetException( 
+						new RpcTransportException(
+							RpcError.ConnectionTimeoutError, 
+							"Connect timeout.", 
+							String.Format( CultureInfo.CurrentCulture, "Timeout: {0}", this.Configuration.ConnectTimeout ) 
+						) 
+					);
 					return;
 				}
 
