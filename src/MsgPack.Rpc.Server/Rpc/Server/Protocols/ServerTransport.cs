@@ -619,6 +619,11 @@ namespace MsgPack.Rpc.Server.Protocols
 			Contract.Assert( socket != null );
 			Contract.Assert( context != null );
 
+			if ( context.IsTimeout && context.SocketError == SocketError.OperationAborted )
+			{
+				return;
+			}
+
 			if ( !this.HandleSocketError( socket, e ) )
 			{
 				return;

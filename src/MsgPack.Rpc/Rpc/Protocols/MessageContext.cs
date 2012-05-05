@@ -160,6 +160,7 @@ namespace MsgPack.Rpc.Protocols
 		}
 
 		private readonly TimeoutWatcher _timeoutWatcher;
+		private int _isTimeout;
 
 		/// <summary>
 		///		Gets a value indicating whether the watched operation is timed out.
@@ -169,7 +170,7 @@ namespace MsgPack.Rpc.Protocols
 		/// </value>
 		internal bool IsTimeout
 		{
-			get { return this._timeoutWatcher.IsTimeout; }
+			get { return Interlocked.CompareExchange( ref this._isTimeout, 0, 0 ) != 0; }
 		}
 
 		/// <summary>
@@ -179,6 +180,8 @@ namespace MsgPack.Rpc.Protocols
 
 		private void OnTimeout()
 		{
+			Interlocked.Exchange( ref this._isTimeout, 1 );
+
 			var handler = this.Timeout;
 			if ( handler != null )
 			{
@@ -347,6 +350,7 @@ namespace MsgPack.Rpc.Protocols
 			this._sessionStartedAt = default( DateTimeOffset );
 			this._bytesTransferred = null;
 			this._timeoutWatcher.Reset();
+			Interlocked.Exchange( ref this._isTimeout, 0 );
 		}
 
 		internal void UnboundTransport()
