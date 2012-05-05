@@ -257,6 +257,7 @@ namespace MsgPack.Rpc.Server.Protocols
 
 			Contract.EndContractBlock();
 
+			Contract.Assert( this._shutdownSource != 0 );
 			var socket = Interlocked.Exchange( ref this._boundSocket, null );
 			MsgPackRpcServerProtocolsTrace.TraceEvent(
 				MsgPackRpcServerProtocolsTrace.TransportShutdownCompleted,
