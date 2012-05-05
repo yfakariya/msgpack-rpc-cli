@@ -31,6 +31,8 @@ namespace MsgPack.Rpc.Client.Protocols
 	/// </summary>
 	public sealed class TcpClientTransportManager : ClientTransportManager<TcpClientTransport>
 	{
+		private readonly MessagePackObject _connectTimeoutDetail;
+
 		/// <summary>
 		///		Initializes a new instance of the <see cref="TcpClientTransportManager"/> class.
 		/// </summary>
@@ -43,6 +45,17 @@ namespace MsgPack.Rpc.Client.Protocols
 #if !API_SIGNATURE_TEST
 			base.SetTransportPool( configuration.TcpTransportPoolProvider( () => new TcpClientTransport( this ), configuration.CreateTransportPoolConfiguration() ) );
 #endif
+			this._connectTimeoutDetail =
+				new MessagePackObject(
+					new MessagePackObjectDictionary( 2 ) 
+					{
+#if !API_SIGNATURE_TEST
+						{ RpcException.MessageKeyUtf8, "Connect timeout." },
+						{ RpcException.DebugInformationKeyUtf8, "Timeout: " + configuration.ConnectTimeout },
+#endif
+					},
+					true
+				);
 		}
 
 		/// <summary>
@@ -58,7 +71,6 @@ namespace MsgPack.Rpc.Client.Protocols
 			TaskCompletionSource<ClientTransport> source = new TaskCompletionSource<ClientTransport>();
 			var context = new SocketAsyncEventArgs();
 			context.RemoteEndPoint = targetEndPoint;
-			context.UserToken = source;
 			context.Completed += this.OnCompleted;
 
 #if !API_SIGNATURE_TEST
@@ -71,7 +83,28 @@ namespace MsgPack.Rpc.Client.Protocols
 				Socket.OSSupportsIPv6
 			);
 #endif
-			context.UserToken = this.BeginConnectTimeoutWatch( () => Socket.CancelConnectAsync( context ) );
+			context.UserToken =
+				Tuple.Create(
+					source,
+					this.BeginConnectTimeoutWatch(
+						() =>
+						{
+#if !API_SIGNATURE_TEST
+							MsgPackRpcClientProtocolsTrace.TraceEvent(
+								MsgPackRpcClientProtocolsTrace.ConnectTimeout,
+								"Connect timeout. {{ \"EndPoint\" : \"{0}\", \"AddressFamily\" : {1}, \"PreferIPv4\" : {2}, \"OSSupportsIPv6\" : {3}, \"ConnectTimeout\" : {4} }}",
+								targetEndPoint,
+								targetEndPoint.AddressFamily,
+								this.Configuration.PreferIPv4,
+								Socket.OSSupportsIPv6,
+								this.Configuration.ConnectTimeout
+							);
+#endif
+							Socket.CancelConnectAsync( context );
+						}
+					)
+				);
+
 			if ( !Socket.ConnectAsync( SocketType.Stream, ProtocolType.Tcp, context ) )
 			{
 				this.OnCompleted( null, context );
@@ -83,8 +116,9 @@ namespace MsgPack.Rpc.Client.Protocols
 		private void OnCompleted( object sender, SocketAsyncEventArgs e )
 		{
 			var socket = sender as Socket;
-			var taskCompletionSource = e.UserToken as TaskCompletionSource<ClientTransport>;
-			var watcher = e.UserToken as ConnectTimeoutWatcher;
+			var userToken = e.UserToken as Tuple<TaskCompletionSource<ClientTransport>, ConnectTimeoutWatcher>;
+			var taskCompletionSource = userToken.Item1;
+			var watcher = userToken.Item2;
 			if ( watcher != null )
 			{
 				this.EndConnectTimeoutWatch( watcher );
@@ -124,18 +158,31 @@ namespace MsgPack.Rpc.Client.Protocols
 
 		private void OnConnected( SocketAsyncEventArgs context, TaskCompletionSource<ClientTransport> taskCompletionSource )
 		{
+			try
+			{
+				if ( context.ConnectSocket == null )
+				{
+					// canceled.
+					taskCompletionSource.SetException( RpcError.ConnectionTimeoutError.ToException( _connectTimeoutDetail ) );
+					return;
+				}
+
 #if !API_SIGNATURE_TEST
-			MsgPackRpcClientProtocolsTrace.TraceEvent(
-				MsgPackRpcClientProtocolsTrace.EndConnect,
-				"Connected. {{ \"Socket\" : 0x{0:X}, \"RemoteEndPoint\" : \"{1}\", \"LocalEndPoint\" : \"{2}\" }}",
-				context.ConnectSocket.Handle,
-				context.ConnectSocket.RemoteEndPoint,
-				context.ConnectSocket.LocalEndPoint
-			);
+				MsgPackRpcClientProtocolsTrace.TraceEvent(
+					MsgPackRpcClientProtocolsTrace.EndConnect,
+					"Connected. {{ \"Socket\" : 0x{0:X}, \"RemoteEndPoint\" : \"{1}\", \"LocalEndPoint\" : \"{2}\" }}",
+					context.ConnectSocket.Handle,
+					context.ConnectSocket.RemoteEndPoint,
+					context.ConnectSocket.LocalEndPoint
+				);
 #endif
 
-			taskCompletionSource.SetResult( this.GetTransport( context.ConnectSocket ) );
-			context.Dispose();
+				taskCompletionSource.SetResult( this.GetTransport( context.ConnectSocket ) );
+			}
+			finally
+			{
+				context.Dispose();
+			}
 		}
 
 		/// <summary>
