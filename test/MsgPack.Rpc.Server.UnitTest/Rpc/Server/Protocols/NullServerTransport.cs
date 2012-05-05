@@ -28,6 +28,11 @@ namespace MsgPack.Rpc.Server.Protocols
 	internal sealed class NullServerTransport : ServerTransport
 	{
 		/// <summary>
+		///		Occurs when response is sent.
+		/// </summary>
+		public event EventHandler<SentEventArgs> Sent;
+
+		/// <summary>
 		/// Initializes a new instance of the <see cref="NullServerTransport"/> class.
 		/// </summary>
 		/// <param name="manager">The manager.</param>
@@ -48,7 +53,37 @@ namespace MsgPack.Rpc.Server.Protocols
 		/// <param name="context">Context information.</param>
 		protected override void SendCore( ServerResponseContext context )
 		{
+			var handler = this.Sent;
+			if ( handler != null )
+			{
+				handler( this, new SentEventArgs( context ) );
+			}
+
 			return;
+		}
+
+		/// <summary>
+		///		Contains event data for <see cref="Sent"/> event.
+		/// </summary>
+		public sealed class SentEventArgs : EventArgs
+		{
+			private readonly ServerResponseContext _context;
+
+			/// <summary>
+			///		Gets the <see cref="ServerResponseContext"/> to be sent.
+			/// </summary>
+			/// <value>
+			///		The <see cref="ServerResponseContext"/> to be sent.
+			/// </value>
+			public ServerResponseContext Context
+			{
+				get { return this._context; }
+			}
+
+			internal SentEventArgs( ServerResponseContext context )
+			{
+				this._context = context;
+			}
 		}
 	}
 }

@@ -164,7 +164,18 @@ namespace MsgPack.Rpc.Client
 			}
 		}
 
-		// FIXME: ConnectionError
+		[Test]
+		public void TestCall_NetworkError_Exception()
+		{
+			using ( var environment = new InProcTestEnvironment() )
+			using ( var target = environment.CreateClient() )
+			{
+				target.EnsureConnected();
+				( target.Transport as InProcClientTransport ).DataSending += EmulateSocketError;
+				var args = new object[] { 1, "3" };
+				Assert.Catch<SocketException>( () => target.Call( "Test", args ) );
+			}
+		}
 
 		[Test()]
 		public void TestCallAsync_Normal_Returned()
@@ -203,7 +214,18 @@ namespace MsgPack.Rpc.Client
 			}
 		}
 
-		// FIXME: Connection Error
+		[Test]
+		public void TestCallAsync_NetworkError_ExceptionOnAsyncItSelf()
+		{
+			using ( var environment = new InProcTestEnvironment() )
+			using ( var target = environment.CreateClient() )
+			{
+				target.EnsureConnected();
+				( target.Transport as InProcClientTransport ).DataSending += EmulateSocketError;
+				var args = new object[] { 1, "3" };
+				Assert.Catch<SocketException>( () => target.CallAsync( "Test", args, null ) );
+			}
+		}
 
 		[Test()]
 		public void TestBeginCallEndCall_Normal_Returned()
@@ -221,7 +243,7 @@ namespace MsgPack.Rpc.Client
 		}
 
 		[Test()]
-		public void TestNeginCallEndCall_RemoteError_Thrown()
+		public void TestBeginCallEndCall_RemoteError_Thrown()
 		{
 			using ( var environment = new InProcTestEnvironment( new RpcMethodInvocationException( RpcError.CallError, "Test" ) ) )
 			using ( var target = environment.CreateClient() )
@@ -241,7 +263,18 @@ namespace MsgPack.Rpc.Client
 			}
 		}
 
-		// FIXME: Connection Error
+		[Test]
+		public void TestBeginCallEndCall_NetworkError_ExceptionOnBeginCall()
+		{
+			using ( var environment = new InProcTestEnvironment() )
+			using ( var target = environment.CreateClient() )
+			{
+				target.EnsureConnected();
+				( target.Transport as InProcClientTransport ).DataSending += EmulateSocketError;
+				var args = new object[] { 1, "3" };
+				Assert.Catch<SocketException>( () => target.BeginCall( "Test", args, null, null ) );
+			}
+		}
 
 		private const int _notificationIsOk = 1;
 		private const int _notificationInvalidArguments = 2;
@@ -298,7 +331,18 @@ namespace MsgPack.Rpc.Client
 			}
 		}
 
-		// FIXME: Connection Error
+		[Test]
+		public void TestNotify_NetworkError_Exception()
+		{
+			using ( var environment = new InProcTestEnvironment() )
+			using ( var target = environment.CreateClient() )
+			{
+				target.EnsureConnected();
+				( target.Transport as InProcClientTransport ).DataSending += EmulateSocketError;
+				var args = new object[] { 1, "3" };
+				Assert.Catch<SocketException>( () => target.Notify( "Test", args ) );
+			}
+		}
 
 		[Test()]
 		public void TestNotifyAsync_Normal_ReachToServer()
@@ -352,7 +396,18 @@ namespace MsgPack.Rpc.Client
 			}
 		}
 
-		// FIXME: Connection Error
+		[Test]
+		public void TestNotifyAsync_NetworkError_ExceptionOnAsyncItSelf()
+		{
+			using ( var environment = new InProcTestEnvironment() )
+			using ( var target = environment.CreateClient() )
+			{
+				target.EnsureConnected();
+				( target.Transport as InProcClientTransport ).DataSending += EmulateSocketError;
+				var args = new object[] { 1, "3" };
+				Assert.Catch<SocketException>( () => target.NotifyAsync( "Test", args, null ) );
+			}
+		}
 
 		[Test()]
 		public void TestBeginNotifyEndNotify_Normal_ReachToServer()
@@ -404,7 +459,23 @@ namespace MsgPack.Rpc.Client
 			}
 		}
 
-		// FIXME: Connection Error
+		[Test]
+		public void TestBeginNotifyEndNotify_NetworkError_ExceptionOnBeginCall()
+		{
+			using ( var environment = new InProcTestEnvironment() )
+			using ( var target = environment.CreateClient() )
+			{
+				target.EnsureConnected();
+				( target.Transport as InProcClientTransport ).DataSending += EmulateSocketError;
+				var args = new object[] { 1, "3" };
+				Assert.Catch<SocketException>( () => target.BeginNotify( "Test", args, null, null ) );
+			}
+		}
+
+		private static void EmulateSocketError( object sender, InProcDataSendingEventArgs e )
+		{
+			throw new SocketException( ( int )SocketError.ConnectionReset );
+		}
 
 		private sealed class InProcTestEnvironment : IDisposable
 		{
@@ -418,11 +489,12 @@ namespace MsgPack.Rpc.Client
 			private readonly MsgPack.Rpc.Server.CallbackServer _server;
 			private readonly MsgPack.Rpc.Server.Protocols.InProcServerTransportManager _serverTransportManager;
 
-			private readonly RpcClientConfiguration _configuration;
+			private RpcClientConfiguration _configuration;
 
 			public RpcClientConfiguration Configuration
 			{
 				get { return this._configuration; }
+				set { this._configuration = value; }
 			}
 
 			private readonly InProcClientTransportManager _clientTransportManager;
@@ -454,6 +526,11 @@ namespace MsgPack.Rpc.Client
 			{
 				this._clientTransportManager.Dispose();
 				this._serverTransportManager.Dispose();
+				this._server.Dispose();
+			}
+
+			public void ShutdownServer()
+			{
 				this._server.Dispose();
 			}
 
