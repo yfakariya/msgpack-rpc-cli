@@ -82,8 +82,9 @@ namespace MsgPack.Rpc.Client.Protocols
 		private static void TestSendReceiveRequestCore( IPEndPoint endPoint, int count, int concurrency )
 		{
 			using ( var clientTransportManager = new TcpClientTransportManager( new RpcClientConfiguration() ) )
-			using ( var connectTask = clientTransportManager.ConnectAsync( endPoint ) )
 			{
+				 var connectTask = clientTransportManager.ConnectAsync( endPoint );
+
 				if ( !connectTask.Wait( Debugger.IsAttached ? Timeout.Infinite : TimeoutMilliseconds ) )
 				{
 					throw new TimeoutException();

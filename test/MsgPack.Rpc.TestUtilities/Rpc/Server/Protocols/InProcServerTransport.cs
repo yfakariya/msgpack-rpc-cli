@@ -162,7 +162,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			{
 				if ( Interlocked.Exchange( ref this._isDisposed, 1 ) == 0 )
 				{
-					this._cancellationTokenSource.Cancel( true );
+					this._cancellationTokenSource.Cancel();
 					var receivingTask = Interlocked.CompareExchange( ref this._receivingTask, null, null );
 					if ( receivingTask != null )
 					{

@@ -21,13 +21,15 @@
 using System;
 using System.Collections.Concurrent;
 using System.Linq;
+using System.Net.Sockets;
 using System.Threading;
+using System.Threading.Tasks;
 using MsgPack.Rpc.Protocols;
 using MsgPack.Rpc.Server.Protocols;
-using System.Net.Sockets;
 
 namespace MsgPack.Rpc.Client.Protocols
 {
+	// TODO: Implement more reliable stack specifically for shutdown...
 	/// <summary>
 	///		Implements <see cref="ClientTransport"/> with in-proc method invocation.
 	/// </summary>
@@ -82,6 +84,9 @@ namespace MsgPack.Rpc.Client.Protocols
 		/// </summary>
 		public event EventHandler<InProcResponseReceivedEventArgs> ResponseReceived;
 
+		private readonly CancellationTokenSource _cancellationTokenSource;
+		private readonly CancellationTokenSource _linkedCancellationTokenSource;
+
 		/// <summary>
 		///		Initializes a new instance of the <see cref="InProcClientTransport"/> class.
 		/// </summary>
@@ -95,6 +100,8 @@ namespace MsgPack.Rpc.Client.Protocols
 			this._manager = manager;
 			this._inboundQueue = new BlockingCollection<byte[]>();
 			this._pendingPackets = new ConcurrentQueue<InProcPacket>();
+			this._cancellationTokenSource = new CancellationTokenSource();
+			this._linkedCancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource( this._cancellationTokenSource.Token, manager.CancellationToken );
 			Interlocked.Exchange( ref this._canSend, 1 );
 		}
 
@@ -123,7 +130,7 @@ namespace MsgPack.Rpc.Client.Protocols
 				destination.Response -= this.OnDestinationResponse;
 			}
 
-			this._inboundQueue.Dispose();
+			this._cancellationTokenSource.Cancel();
 			Interlocked.Exchange( ref this._canSend, 0 );
 		}
 
@@ -139,7 +146,7 @@ namespace MsgPack.Rpc.Client.Protocols
 
 			if ( handler == null )
 			{
-				this._inboundQueue.Add( e.Data, this._manager.CancellationToken );
+				this._inboundQueue.Add( e.Data, this._linkedCancellationTokenSource.Token );
 				return;
 			}
 
@@ -147,13 +154,13 @@ namespace MsgPack.Rpc.Client.Protocols
 			handler( this, eventArgs );
 			if ( eventArgs.ChunkedReceivedData == null )
 			{
-				this._inboundQueue.Add( e.Data, this._manager.CancellationToken );
+				this._inboundQueue.Add( e.Data, this._linkedCancellationTokenSource.Token );
 			}
 			else
 			{
 				foreach ( var data in eventArgs.ChunkedReceivedData )
 				{
-					this._inboundQueue.Add( data, this._manager.CancellationToken );
+					this._inboundQueue.Add( data, this._linkedCancellationTokenSource.Token );
 				}
 			}
 		}
@@ -201,8 +208,21 @@ namespace MsgPack.Rpc.Client.Protocols
 
 		protected sealed override void ReceiveCore( ClientResponseContext context )
 		{
-			InProcPacket.ProcessReceive( this._inboundQueue, this._pendingPackets, context, this._manager.CancellationToken );
-			this.OnReceived( context );
+			Task.Factory.StartNew(
+				() =>
+				{
+					try
+					{
+						InProcPacket.ProcessReceive( this._inboundQueue, this._pendingPackets, context, this._linkedCancellationTokenSource.Token );
+					}
+					catch ( OperationCanceledException )
+					{
+						return;
+					}
+
+					this.OnReceived( context );
+				}
+			);
 		}
 	}
 }

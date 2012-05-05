@@ -76,7 +76,7 @@ namespace MsgPack.Rpc.Client.Protocols
 			configuration.ConnectTimeout = TimeSpan.FromMilliseconds( 20 );
 			using ( var target = new TcpClientTransportManager( configuration ) )
 			{
-				var actual = Assert.Throws<AggregateException>( () => target.ConnectAsync( testNetworkIPEndPont ).Wait( TimeSpan.FromMilliseconds( configuration.ConnectTimeout.Value.TotalMilliseconds * 3 ) ) );
+				var actual = Assert.Throws<AggregateException>( () => target.ConnectAsync( testNetworkIPEndPont ).Wait( TimeSpan.FromSeconds( 1 ) ) );
 				Assert.That( actual.InnerExceptions.Count, Is.EqualTo( 1 ) );
 				Assert.That( actual.InnerException, Is.InstanceOf<RpcException>() );
 				Assert.That( ( actual.InnerException as RpcException ).RpcError, Is.EqualTo( RpcError.ConnectionTimeoutError ), actual.ToString() );

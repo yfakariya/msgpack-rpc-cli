@@ -87,7 +87,7 @@ namespace MsgPack.Rpc.Client.Protocols
 			this._target.Dispose();
 			if ( !this._cancellationTokenSource.IsCancellationRequested )
 			{
-				this._cancellationTokenSource.Cancel( true );
+				this._cancellationTokenSource.Cancel();
 			}
 
 			this._cancellationTokenSource.Dispose();

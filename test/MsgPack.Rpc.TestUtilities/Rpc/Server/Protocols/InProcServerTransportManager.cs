@@ -132,7 +132,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		{
 			if ( !this._cancellationTokenSource.IsCancellationRequested )
 			{
-				this._cancellationTokenSource.Cancel( true );
+				this._cancellationTokenSource.Cancel();
 			}
 
 			this._cancellationTokenSource.Dispose();
@@ -200,7 +200,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			result.StartReceive( this.GetRequestContext( result ) );
 			return result;
 		}
-				
+
 		/// <summary>
 		///		Process in-proc communication sending response.
 		/// </summary>
