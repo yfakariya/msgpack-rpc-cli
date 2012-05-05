@@ -117,6 +117,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 				responseContext = serverTransport.Manager.GetResponseContext( requestContext );
 			}
 
+			Task task;
 			var operation = this.Dispatch( requestContext.MethodName );
 			if ( operation == null )
 			{
@@ -132,13 +133,18 @@ namespace MsgPack.Rpc.Server.Dispatch
 
 				if ( responseContext != null )
 				{
-					responseContext.Serialize<object>( null, error, null );
+					task = Task.Factory.StartNew( () => responseContext.Serialize<object>( null, error, null ) );
 				}
-
-				return;
+				else
+				{
+					return;
+				}
+			}
+			else
+			{
+				task = operation( requestContext, responseContext );
 			}
 
-			var task = operation( requestContext, responseContext );
 			var sessionState = Tuple.Create( this._server, requestContext.SessionId, requestContext.MessageType == MessageType.Request ? requestContext.MessageId : default( int? ), requestContext.MethodName );
 
 #if NET_4_5
