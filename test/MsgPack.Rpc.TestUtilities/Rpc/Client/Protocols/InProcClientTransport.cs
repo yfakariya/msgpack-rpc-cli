@@ -75,6 +75,8 @@ namespace MsgPack.Rpc.Client.Protocols
 			}
 		}
 
+		private int _canSend;
+
 		/// <summary>
 		///		Occurs when response received.
 		/// </summary>
@@ -93,6 +95,7 @@ namespace MsgPack.Rpc.Client.Protocols
 			this._manager = manager;
 			this._inboundQueue = new BlockingCollection<byte[]>();
 			this._pendingPackets = new ConcurrentQueue<InProcPacket>();
+			Interlocked.Exchange( ref this._canSend, 1 );
 		}
 
 		protected override void Dispose( bool disposing )
@@ -142,6 +145,7 @@ namespace MsgPack.Rpc.Client.Protocols
 
 		protected sealed override void ShutdownSending()
 		{
+			Interlocked.Exchange( ref this._canSend, 0 );
 			this._destination.FeedData( new byte[ 0 ] );
 
 			base.ShutdownSending();
@@ -158,8 +162,16 @@ namespace MsgPack.Rpc.Client.Protocols
 			var data = context.BufferList.SelectMany( segment => segment.Array.Skip( segment.Offset ).Take( segment.Count ) ).ToArray();
 			var dataEventArgs = new InProcDataSendingEventArgs() { Data = data };
 			this.OnDataSending( dataEventArgs );
-			destination.FeedData( dataEventArgs.Data );
-			this.OnMessageSent( new InProcMessageSentEventArgs( context ) );
+
+			if ( Interlocked.CompareExchange( ref this._canSend, 0, 0 ) != 0 )
+			{
+				destination.FeedData( dataEventArgs.Data );
+				this.OnMessageSent( new InProcMessageSentEventArgs( context ) );
+			}
+			else
+			{
+				context.SocketError = SocketError.OperationAborted;
+			}
 
 			using ( var dummySocket = new Socket( AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp ) )
 			{
