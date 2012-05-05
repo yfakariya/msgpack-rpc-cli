@@ -44,6 +44,18 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\..\src\MsgPack.Rpc.Client\Rpc\Client\Protocols\Filters\ClientQuotaMessageFilter.cs">
+      <Link>Rpc\Client\Protocols\Filters\ClientQuotaMessageFilter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\MsgPack.Rpc.Client\Rpc\Client\Protocols\Filters\ClientQuotaMessageFilterProvider.cs">
+      <Link>Rpc\Client\Protocols\Filters\ClientQuotaMessageFilterProvider.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\MsgPack.Rpc.Client\Rpc\Client\Protocols\Filters\ClientStreamLoggingMessageFilter.cs">
+      <Link>Rpc\Client\Protocols\Filters\ClientStreamLoggingMessageFilter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\MsgPack.Rpc.Client\Rpc\Client\Protocols\Filters\ClientStreamLoggingMessageFilterProvider.cs">
+      <Link>Rpc\Client\Protocols\Filters\ClientStreamLoggingMessageFilterProvider.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\MsgPack.Rpc.Client\Rpc\Client\Protocols\TcpClientTransport.cs">
       <Link>Rpc\Client\Protocols\TcpClientTransport.cs</Link>
     </Compile>
@@ -56,11 +68,26 @@
     <Compile Include="..\..\src\msgpack.rpc.server\rpc\server\dispatch\LocatorBasedDispatcher.cs">
       <Link>Rpc\Server\Dispatch\LocatorBasedDispatcher.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\MsgPack.Rpc.Server\Rpc\Server\Protocols\Filters\ServerQuotaMessageFilter.cs">
+      <Link>Rpc\Server\Protocols\Filters\ServerQuotaMessageFilter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\MsgPack.Rpc.Server\Rpc\Server\Protocols\Filters\ServerQuotaMessageFilterProvider.cs">
+      <Link>Rpc\Server\Protocols\Filters\ServerQuotaMessageFilterProvider.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\MsgPack.Rpc.Server\Rpc\Server\Protocols\Filters\ServerStreamLoggingMessageFilter.cs">
+      <Link>Rpc\Server\Protocols\Filters\ServerStreamLoggingMessageFilter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\MsgPack.Rpc.Server\Rpc\Server\Protocols\Filters\ServerStreamLoggingMessageFilterProvider.cs">
+      <Link>Rpc\Server\Protocols\Filters\ServerStreamLoggingMessageFilterProvider.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\msgpack.rpc.server\rpc\server\protocols\TcpServerTransport.cs">
       <Link>Rpc\Server\Protocols\TcpServerTransport.cs</Link>
     </Compile>
     <Compile Include="..\..\src\msgpack.rpc.server\rpc\server\protocols\TcpServerTransportManager.cs">
       <Link>Rpc\Server\Protocols\TcpServerTransportManager.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\MsgPack.Rpc\Rpc\Diagnostics\FileMessagePackStreamLogger.cs">
+      <Link>Rpc\Diagnostics\FileMessagePackStreamLogger.cs</Link>
     </Compile>
     <Compile Include="..\..\src\MsgPack.Rpc\Rpc\OnTheFlyObjectPool`1.cs">
       <Link>Rpc\OnTheFlyObjectPool`1.cs</Link>
