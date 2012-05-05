@@ -870,7 +870,8 @@ namespace MsgPack.Rpc.Client.Protocols
 			{
 				if ( Interlocked.CompareExchange( ref this._shutdownSource, ( int )ShutdownSource.Server, 0 ) == 0 )
 				{
-					this.ShutdownReceiving( context );
+					// Server sent shutdown response.
+					this.ShutdownReceiving();
 
 					// recv() returns 0 when the server socket shutdown gracefully.
 					var socket = this.BoundSocket;
@@ -929,7 +930,7 @@ namespace MsgPack.Rpc.Client.Protocols
 			{
 				if ( this.IsServerShutdown )
 				{
-					this.ShutdownReceiving( context );
+					this.ShutdownReceiving();
 					this.FinishReceiving( context );
 				}
 				else
@@ -977,13 +978,6 @@ namespace MsgPack.Rpc.Client.Protocols
 
 				return unpacker.Data.Value.AsInt32();
 			}
-		}
-
-
-		private void ShutdownReceiving( ClientResponseContext context )
-		{
-			context.Clear();
-			this.ShutdownReceiving();
 		}
 
 		/// <summary>

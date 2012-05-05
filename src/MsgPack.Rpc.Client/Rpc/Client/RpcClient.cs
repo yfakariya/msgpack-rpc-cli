@@ -366,7 +366,6 @@ namespace MsgPack.Rpc.Client
 			{
 				if ( !isSucceeded )
 				{
-					context.Clear();
 					this._transport.ReturnContext( context );
 				}
 			}
@@ -539,7 +538,6 @@ namespace MsgPack.Rpc.Client
 			{
 				if ( !isSucceeded )
 				{
-					context.Clear();
 					this._transport.ReturnContext( context );
 				}
 			}
