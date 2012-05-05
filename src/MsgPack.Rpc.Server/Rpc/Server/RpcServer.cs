@@ -20,6 +20,7 @@
 
 using System;
 using System.Diagnostics.Contracts;
+using System.Globalization;
 using System.Threading;
 using MsgPack.Rpc.Server.Dispatch;
 using MsgPack.Rpc.Server.Protocols;
@@ -70,6 +71,17 @@ namespace MsgPack.Rpc.Server
 			}
 		}
 
+		/// <summary>
+		///		Gets or sets the id of this server for debugging.
+		/// </summary>
+		/// <value>
+		///		The id of this server.
+		/// </value>
+		public string Id
+		{
+			get;
+			set;
+		}
 
 		private EventHandler<RpcClientErrorEventArgs> _clientError;
 
@@ -206,11 +218,9 @@ namespace MsgPack.Rpc.Server
 			this.OnServerError( new RpcServerErrorEventArgs( exception ) );
 		}
 
-		// TODO: auto-scaling
-		// _maximumConcurrency, _currentConcurrency, _minimumIdle, _maximumIdle
-
 		private ServerTransportManager _transportManager;
 		private Dispatcher _dispatcher;
+		private int _state;
 
 		/// <summary>
 		///		Initializes a new instance of the <see cref="RpcServer"/> class with default configuration.
@@ -239,13 +249,6 @@ namespace MsgPack.Rpc.Server
 			this.Stop();
 		}
 
-		private ServerTransportManager CreateTransportManager()
-		{
-			// TODO: transport factory.
-			return new TcpServerTransportManager( this );
-		}
-
-		// FIXME : Prohibit reuse.
 		/// <summary>
 		///		Starts the server stack.
 		/// </summary>
@@ -255,6 +258,11 @@ namespace MsgPack.Rpc.Server
 		/// </returns>
 		public bool Start()
 		{
+			if ( Interlocked.CompareExchange( ref this._state, 0, 0 ) != 0 )
+			{
+				throw new ObjectDisposedException( this.ToString() );
+			}
+
 			var currentDispatcher = Interlocked.CompareExchange( ref this._dispatcher, this._configuration.DispatcherProvider( this ), null );
 			if ( currentDispatcher != null )
 			{
@@ -263,19 +271,24 @@ namespace MsgPack.Rpc.Server
 
 			MsgPackRpcServerTrace.TraceEvent(
 				MsgPackRpcServerTrace.StartServer,
-				"Start server. {{ \"Configuration\" : {0} }}",
-				this._configuration
+				"Start server. {{ \"Configuration\" : {0}, \"Id\" : \"{1}\" }}",
+				this._configuration,
+				this
 			);
 
 			this._transportManager = this._configuration.TransportManagerProvider( this );
 			return true;
 		}
 
-		// FIXME: Change to Dispose 
 		private void Stop()
 		{
 			var currentDispatcher = Interlocked.Exchange( ref this._dispatcher, null );
 			if ( currentDispatcher == null )
+			{
+				return;
+			}
+
+			if ( Interlocked.Exchange( ref _state, 1 ) != 0 )
 			{
 				return;
 			}
@@ -287,12 +300,23 @@ namespace MsgPack.Rpc.Server
 				this._transportManager = null;
 			}
 
-			// TODO: ID
 			MsgPackRpcServerTrace.TraceEvent(
 				MsgPackRpcServerTrace.StopServer,
-				"Stop server. {{ \"Configuration\" : {0} }}",
-				this._configuration
+				"Stop server. {{ \"Configuration\" : {0}, \"Id\" : \"{1}\" }}",
+				this._configuration,
+				this
 			);
+		}
+
+		/// <summary>
+		///		Returns a <see cref="System.String"/> that represents this instance.
+		/// </summary>
+		/// <returns>
+		///		A <see cref="System.String"/> that represents this instance.
+		/// </returns>
+		public override string ToString()
+		{
+			return String.IsNullOrWhiteSpace( this.Id ) ? this.GetHashCode().ToString( "X", CultureInfo.InvariantCulture ) : this.Id;
 		}
 	}
 }
