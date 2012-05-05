@@ -130,7 +130,7 @@ namespace MsgPack.Rpc
 		[Test]
 		public void TestClear_CanReuse()
 		{
-			var timeout = TimeSpan.FromMilliseconds( 20 );
+			var timeout = TimeSpan.FromMilliseconds( 50 );
 			using ( var target = new RpcApplicationContext( timeout, timeout ) )
 			{
 				for ( int i = 0; i < 2; i++ )
