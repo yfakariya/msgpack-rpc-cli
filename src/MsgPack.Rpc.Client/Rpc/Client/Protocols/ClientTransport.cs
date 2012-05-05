@@ -478,10 +478,11 @@ namespace MsgPack.Rpc.Client.Protocols
 				new RpcErrorMessage(
 					RpcError.ConnectionTimeoutError,
 					new MessagePackObject(
-						new MessagePackObjectDictionary()
+						new MessagePackObjectDictionary( 3 )
 						{
 							{ RpcException.MessageKeyUtf8, asClientRequestContext != null ? "Wait timeout on sending." : "Wait timeout on receiving." },
-							{ RpcTimeoutException.ClientTimeoutKeyUtf8, this.Manager.Configuration.WaitTimeout.ToString() }
+							{ RpcException.DebugInformationKeyUtf8, String.Empty },
+							{ RpcTimeoutException.ClientTimeoutKeyUtf8, this.Manager.Configuration.WaitTimeout.Value.Ticks }
 						},
 						true
 					)
