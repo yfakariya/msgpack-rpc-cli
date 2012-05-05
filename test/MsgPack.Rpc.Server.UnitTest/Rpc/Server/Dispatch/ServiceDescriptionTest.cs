@@ -19,8 +19,8 @@
 #endregion -- License Terms --
 
 using System;
-using NUnit.Framework;
 using System.Text.RegularExpressions;
+using NUnit.Framework;
 
 namespace MsgPack.Rpc.Server.Dispatch
 {
