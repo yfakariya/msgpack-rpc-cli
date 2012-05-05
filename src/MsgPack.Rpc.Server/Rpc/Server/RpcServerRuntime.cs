@@ -19,14 +19,13 @@
 #endregion -- License Terms --
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using MsgPack.Serialization;
-using System.Security;
 using System.Diagnostics.Contracts;
-using System.Threading;
 using System.Globalization;
+using System.Reflection;
+using System.Security;
+using System.Threading;
+using MsgPack.Rpc.Server.Dispatch;
+using MsgPack.Serialization;
 
 namespace MsgPack.Rpc.Server
 {
@@ -203,6 +202,11 @@ namespace MsgPack.Rpc.Server
 		private static void ResetThreadAbort()
 		{
 			Thread.ResetAbort();
+		}
+
+		internal string CreateMethodName( ServiceDescription serviceDescription, MethodInfo targetOperation )
+		{
+			return String.Format( CultureInfo.InvariantCulture, "{0}:{1}", ServiceIdentifier.TruncateGenericsSuffix( targetOperation.Name ), serviceDescription.ToString() );
 		}
 	}
 }

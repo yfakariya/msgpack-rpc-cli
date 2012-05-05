@@ -99,6 +99,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 			var typeCatalog = new List<string>();
 			LoadAssemblies( targetDirectory, binDirectory, typeCatalog );
 
+			// FIXME: Version range
 			var catalog =
 				typeCatalog
 				.Select( typeQualifiedName => Type.GetType( typeQualifiedName ) )

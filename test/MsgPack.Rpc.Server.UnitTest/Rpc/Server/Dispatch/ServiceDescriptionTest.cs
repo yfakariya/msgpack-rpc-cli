@@ -37,7 +37,6 @@ namespace MsgPack.Rpc.Server.Dispatch
 			Func<Object> initializer = () => new object();
 			ServiceDescription target = new ServiceDescription( name, initializer );
 
-			Assert.That( target.Application, Is.EqualTo( name ) );
 			Assert.That( target.Initializer, Is.EqualTo( initializer ) );
 			Assert.That( target.Name, Is.EqualTo( name ) );
 			Assert.That( target.ServiceType, Is.EqualTo( initializer.Method.DeclaringType ) );
@@ -104,29 +103,12 @@ namespace MsgPack.Rpc.Server.Dispatch
 		[Test()]
 		public void TestFromServiceType_Normal_PropertiesSetAsAttributeValue()
 		{
-			Type serviceType = typeof( ServiceWithApplicationName );
+			Type serviceType = typeof( ServiceWithMembers );
 
 			var result = ServiceDescription.FromServiceType( serviceType );
 
-			Assert.That( result.Application, Is.EqualTo( ServiceWithApplicationName.ApplicationName ) );
 			Assert.That( result.Initializer, Is.Not.Null );
-			Assert.That( result.Name, Is.EqualTo( ServiceWithApplicationName.Name ) );
-			Assert.That( result.ServiceType, Is.EqualTo( serviceType ) );
-			Assert.That( result.Version, Is.EqualTo( ServiceWithApplicationName.Version ) );
-
-			Assert.That( result.Initializer(), Is.Not.Null.And.TypeOf( serviceType ) );
-		}
-
-		[Test()]
-		public void TestFromServiceType_WithoutAttributeProperties_PropertiesSetAsAttributeValue()
-		{
-			Type serviceType = typeof( ServiceWithoutApplicationName );
-
-			var result = ServiceDescription.FromServiceType( serviceType );
-
-			Assert.That( result.Application, Is.EqualTo( ServiceWithoutApplicationName.Name ) );
-			Assert.That( result.Initializer, Is.Not.Null );
-			Assert.That( result.Name, Is.EqualTo( ServiceWithoutApplicationName.Name ) );
+			Assert.That( result.Name, Is.EqualTo( ServiceWithMembers.Name ) );
 			Assert.That( result.ServiceType, Is.EqualTo( serviceType ) );
 			Assert.That( result.Version, Is.EqualTo( 0 ) );
 
@@ -140,7 +122,6 @@ namespace MsgPack.Rpc.Server.Dispatch
 
 			var result = ServiceDescription.FromServiceType( serviceType );
 
-			Assert.That( result.Application, Is.EqualTo( ServiceWithoutMembers.Name ) );
 			Assert.That( result.Initializer, Is.Not.Null );
 			Assert.That( result.Name, Is.EqualTo( ServiceWithoutMembers.Name ) );
 			Assert.That( result.ServiceType, Is.EqualTo( serviceType ) );
@@ -177,7 +158,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 		}
 
 		[Test()]
-		public void TestGetHashCode_ApplicationAndVersionAreSet_Halmless()
+		public void TestGetHashCode_VersionIsNotSet_Halmless()
 		{
 
 			var name = "Name" + Guid.NewGuid().ToString( "N" );
@@ -189,7 +170,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 		}
 
 		[Test()]
-		public void TestGetHashCode_ApplicationAndVersionAreNotSet_Halmless()
+		public void TestGetHashCode_VersionIsSet_Halmless()
 		{
 
 			var name = "Name" + Guid.NewGuid().ToString( "N" );
@@ -197,7 +178,6 @@ namespace MsgPack.Rpc.Server.Dispatch
 			ServiceDescription target =
 				new ServiceDescription( name, initializer )
 				{
-					Application = "Apllication",
 					Version = 123
 				};
 
@@ -206,28 +186,25 @@ namespace MsgPack.Rpc.Server.Dispatch
 		}
 
 		[Test()]
-		public void TestToString_ApplicationAndVersionAreSet_Appeared()
+		public void TestToString_VersionIsSet_Appeared()
 		{
 			var name = "Name" + Guid.NewGuid().ToString( "N" );
 			Func<Object> initializer = () => new object();
-			var application = "Name" + Guid.NewGuid().ToString( "N" );
 			var version = DateTime.UtcNow.Millisecond;
 			ServiceDescription target =
 				new ServiceDescription( name, initializer )
 				{
-					Application = application,
 					Version = version
 				};
 
 			var result = target.ToString();
 
 			Assert.That( Regex.Matches( result, Regex.Escape( name ) ), Is.Not.Null.And.Count.EqualTo( 1 ) );
-			Assert.That( Regex.Matches( result, Regex.Escape( application ) ), Is.Not.Null.And.Count.EqualTo( 1 ) );
 			Assert.That( Regex.Matches( result, Regex.Escape( ":" + version ) ), Is.Not.Null.And.Count.EqualTo( 1 ) );
 		}
 
 		[Test()]
-		public void TestToString_ApplicationAndVersionAreNotSet_Omitted()
+		public void TestToString_VersionIsNotSet_Omitted()
 		{
 			var name = "Name" + Guid.NewGuid().ToString( "N" );
 			Func<Object> initializer = () => new object();
@@ -255,25 +232,13 @@ namespace MsgPack.Rpc.Server.Dispatch
 			public const string Name = "Name2";
 		}
 
-		[MessagePackRpcServiceContract( Name = ServiceWithoutApplicationName.Name )]
-		private sealed class ServiceWithoutApplicationName
+		[MessagePackRpcServiceContract( Name = ServiceWithMembers.Name )]
+		private sealed class ServiceWithMembers
 		{
 			public const string Name = "Name3";
 
 			[MessagePackRpcMethod]
 			public void Foo() { }
 		}
-
-		[MessagePackRpcServiceContract( Name = ServiceWithApplicationName.Name, Application = ServiceWithApplicationName.ApplicationName, Version = ServiceWithApplicationName.Version )]
-		private sealed class ServiceWithApplicationName
-		{
-			public const string Name = "Name4";
-			public const string ApplicationName = "ApplicationName4";
-			public const int Version = 1234;
-
-			[MessagePackRpcMethod]
-			public void Foo() { }
-		}
-
 	}
 }

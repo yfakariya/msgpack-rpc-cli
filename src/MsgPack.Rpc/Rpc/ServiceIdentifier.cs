@@ -32,23 +32,15 @@ namespace MsgPack.Rpc
 		/// <summary>
 		///		Creates new service ID.
 		/// </summary>
-		/// <param name="application">The application name (optional).</param>
 		/// <param name="name">The name (required).</param>
 		/// <param name="version">The version.</param>
 		/// <returns>The service ID.</returns>
-		public static string CreateServiceId( string application, string name, int version )
+		public static string CreateServiceId( string name, int version )
 		{
 			Contract.Requires( !String.IsNullOrWhiteSpace( name ) );
 			Contract.Ensures( Contract.Result<string>() != null );
 
-			if ( String.IsNullOrWhiteSpace( application ) )
-			{
-				return name + ":" + version;
-			}
-			else
-			{
-				return application + "::" + name + ":" + version;
-			}
+			return String.Format( CultureInfo.InvariantCulture, "{0}:{1}", name, version );
 		}
 
 		/// <summary>

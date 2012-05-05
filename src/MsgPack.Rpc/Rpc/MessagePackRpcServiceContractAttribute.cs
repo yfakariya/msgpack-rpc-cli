@@ -45,27 +45,6 @@ namespace MsgPack.Rpc
 			set { this._name = value; }
 		}
 
-		private string _application;
-
-		/// <summary>
-		///		Gets or sets the application name of the RPC procedure.
-		/// </summary>
-		/// <value>
-		///		The application name of the RPC procedure.
-		/// </value>
-		public string Application
-		{
-			get
-			{
-				Contract.Ensures( Contract.Result<string>() != null );
-				return this._application ?? String.Empty;
-			}
-			set
-			{
-				this._application = value;
-			}
-		}
-
 		/// <summary>
 		///		Gets or sets the version of the RPC procedure.
 		/// </summary>
@@ -83,7 +62,6 @@ namespace MsgPack.Rpc
 		{
 			return
 				ServiceIdentifier.CreateServiceId(
-					this._application,
 					String.IsNullOrWhiteSpace( this._name ) ? ServiceIdentifier.TruncateGenericsSuffix( serviceType.Name ) : this._name,
 					this.Version
 				);

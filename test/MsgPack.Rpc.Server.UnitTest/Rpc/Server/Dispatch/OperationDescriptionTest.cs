@@ -37,10 +37,10 @@ namespace MsgPack.Rpc.Server.Dispatch
 			var result = OperationDescription.FromServiceDescription( runtime, service ).OrderBy( item => item.Id ).ToArray();
 
 			Assert.That( result, Is.Not.Null.And.Length.EqualTo( 2 ) );
-			Assert.That( result[ 0 ].Id, Is.StringEnding( Service.ExpectedOperationId1 ) );
+			Assert.That( result[ 0 ].Id, Is.StringStarting( Service.ExpectedOperationId1 ) );
 			Assert.That( result[ 0 ].Operation, Is.Not.Null );
 			Assert.That( result[ 0 ].Service, Is.EqualTo( service ) );
-			Assert.That( result[ 1 ].Id, Is.StringEnding( Service.ExpectedOperationId2 ) );
+			Assert.That( result[ 1 ].Id, Is.StringStarting( Service.ExpectedOperationId2 ) );
 			Assert.That( result[ 1 ].Operation, Is.Not.Null );
 			Assert.That( result[ 1 ].Service, Is.EqualTo( service ) );
 		}

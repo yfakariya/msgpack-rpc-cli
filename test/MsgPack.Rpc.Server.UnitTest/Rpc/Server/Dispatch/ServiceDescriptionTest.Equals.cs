@@ -27,317 +27,43 @@ namespace MsgPack.Rpc.Server.Dispatch
 	{
 
 		[Test]
-		public void TestEquals_NameAreSame_ApplicationAreSame_VersionAreSame_TypeAreSame_True()
+		public void TestEquals_NameAreSame_VersionAreSame_TypeAreSame_True()
 		{
 			var left = 
 				new ServiceDescription( "TestA", () => new object() )
 				{
-					Application = "AppA",
 					Version = 1
 				};
 
 			var right =
 				new ServiceDescription( "TestA", () => new object() )
 				{
-						Application = "AppA",
-				Version = 1
+							Version = 1
 				};
 				
 			Assert.That( left.Equals( right ), Is.True );
 		}
 
 		[Test]
-		public void TestEquals_NameAreSame_ApplicationAreSame_VersionAreDiffer_TypeAreSame_False()
+		public void TestEquals_NameAreSame_VersionAreDiffer_TypeAreSame_False()
 		{
 			var left = 
 				new ServiceDescription( "TestA", () => new object() )
 				{
-					Application = "AppA",
 					Version = 1
 				};
 
 			var right =
 				new ServiceDescription( "TestA", () => new object() )
 				{
-						Application = "AppA",
-				Version = 2
+							Version = 2
 				};
 				
 			Assert.That( left.Equals( right ), Is.False );
 		}
 
 		[Test]
-		public void TestEquals_NameAreSame_ApplicationAreDiffer_VersionAreSame_TypeAreSame_False()
-		{
-			var left = 
-				new ServiceDescription( "TestA", () => new object() )
-				{
-					Application = "AppA",
-					Version = 1
-				};
-
-			var right =
-				new ServiceDescription( "TestA", () => new object() )
-				{
-						Application = "AppB",
-				Version = 1
-				};
-				
-			Assert.That( left.Equals( right ), Is.False );
-		}
-
-		[Test]
-		public void TestEquals_NameAreSame_ApplicationAreDiffer_VersionAreDiffer_TypeAreSame_False()
-		{
-			var left = 
-				new ServiceDescription( "TestA", () => new object() )
-				{
-					Application = "AppA",
-					Version = 1
-				};
-
-			var right =
-				new ServiceDescription( "TestA", () => new object() )
-				{
-						Application = "AppB",
-				Version = 2
-				};
-				
-			Assert.That( left.Equals( right ), Is.False );
-		}
-
-		[Test]
-		public void TestEquals_NameAreSame_ApplicationAreNotNullAndNull_VersionAreSame_TypeAreSame_False()
-		{
-			var left = 
-				new ServiceDescription( "TestA", () => new object() )
-				{
-					Application = "AppA",
-					Version = 1
-				};
-
-			var right =
-				new ServiceDescription( "TestA", () => new object() )
-				{
-						Version = 1
-				};
-				
-			Assert.That( left.Equals( right ), Is.False );
-		}
-
-		[Test]
-		public void TestEquals_NameAreSame_ApplicationAreNotNullAndNull_VersionAreDiffer_TypeAreSame_False()
-		{
-			var left = 
-				new ServiceDescription( "TestA", () => new object() )
-				{
-					Application = "AppA",
-					Version = 1
-				};
-
-			var right =
-				new ServiceDescription( "TestA", () => new object() )
-				{
-						Version = 2
-				};
-				
-			Assert.That( left.Equals( right ), Is.False );
-		}
-
-		[Test]
-		public void TestEquals_NameAreDiffer_ApplicationAreSame_VersionAreSame_TypeAreSame_False()
-		{
-			var left = 
-				new ServiceDescription( "TestA", () => new object() )
-				{
-					Application = "AppA",
-					Version = 1
-				};
-
-			var right =
-				new ServiceDescription( "TestB", () => new object() )
-				{
-						Application = "AppA",
-				Version = 1
-				};
-				
-			Assert.That( left.Equals( right ), Is.False );
-		}
-
-		[Test]
-		public void TestEquals_NameAreDiffer_ApplicationAreSame_VersionAreDiffer_TypeAreSame_False()
-		{
-			var left = 
-				new ServiceDescription( "TestA", () => new object() )
-				{
-					Application = "AppA",
-					Version = 1
-				};
-
-			var right =
-				new ServiceDescription( "TestB", () => new object() )
-				{
-						Application = "AppA",
-				Version = 2
-				};
-				
-			Assert.That( left.Equals( right ), Is.False );
-		}
-
-		[Test]
-		public void TestEquals_NameAreDiffer_ApplicationAreDiffer_VersionAreSame_TypeAreSame_False()
-		{
-			var left = 
-				new ServiceDescription( "TestA", () => new object() )
-				{
-					Application = "AppA",
-					Version = 1
-				};
-
-			var right =
-				new ServiceDescription( "TestB", () => new object() )
-				{
-						Application = "AppB",
-				Version = 1
-				};
-				
-			Assert.That( left.Equals( right ), Is.False );
-		}
-
-		[Test]
-		public void TestEquals_NameAreDiffer_ApplicationAreDiffer_VersionAreDiffer_TypeAreSame_False()
-		{
-			var left = 
-				new ServiceDescription( "TestA", () => new object() )
-				{
-					Application = "AppA",
-					Version = 1
-				};
-
-			var right =
-				new ServiceDescription( "TestB", () => new object() )
-				{
-						Application = "AppB",
-				Version = 2
-				};
-				
-			Assert.That( left.Equals( right ), Is.False );
-		}
-
-		[Test]
-		public void TestEquals_NameAreDiffer_ApplicationAreNotNullAndNull_VersionAreSame_TypeAreSame_False()
-		{
-			var left = 
-				new ServiceDescription( "TestA", () => new object() )
-				{
-					Application = "AppA",
-					Version = 1
-				};
-
-			var right =
-				new ServiceDescription( "TestB", () => new object() )
-				{
-						Version = 1
-				};
-				
-			Assert.That( left.Equals( right ), Is.False );
-		}
-
-		[Test]
-		public void TestEquals_NameAreDiffer_ApplicationAreNotNullAndNull_VersionAreDiffer_TypeAreSame_False()
-		{
-			var left = 
-				new ServiceDescription( "TestA", () => new object() )
-				{
-					Application = "AppA",
-					Version = 1
-				};
-
-			var right =
-				new ServiceDescription( "TestB", () => new object() )
-				{
-						Version = 2
-				};
-				
-			Assert.That( left.Equals( right ), Is.False );
-		}
-
-		[Test]
-		public void TestEquals_NameAreSame_ApplicationAreNullAndNotNull_VersionAreSame_TypeAreSame_False()
-		{
-			var left = 
-				new ServiceDescription( "TestA", () => new object() )
-				{
-					Version = 1
-				};
-
-			var right =
-				new ServiceDescription( "TestA", () => new object() )
-				{
-						Application = "AppA",
-				Version = 1
-				};
-				
-			Assert.That( left.Equals( right ), Is.False );
-		}
-
-		[Test]
-		public void TestEquals_NameAreSame_ApplicationAreNullAndNotNull_VersionAreDiffer_TypeAreSame_False()
-		{
-			var left = 
-				new ServiceDescription( "TestA", () => new object() )
-				{
-					Version = 1
-				};
-
-			var right =
-				new ServiceDescription( "TestA", () => new object() )
-				{
-						Application = "AppA",
-				Version = 2
-				};
-				
-			Assert.That( left.Equals( right ), Is.False );
-		}
-
-		[Test]
-		public void TestEquals_NameAreSame_ApplicationAreNullAndNull_VersionAreSame_TypeAreSame_True()
-		{
-			var left = 
-				new ServiceDescription( "TestA", () => new object() )
-				{
-					Version = 1
-				};
-
-			var right =
-				new ServiceDescription( "TestA", () => new object() )
-				{
-						Version = 1
-				};
-				
-			Assert.That( left.Equals( right ), Is.True );
-		}
-
-		[Test]
-		public void TestEquals_NameAreSame_ApplicationAreNullAndNull_VersionAreDiffer_TypeAreSame_False()
-		{
-			var left = 
-				new ServiceDescription( "TestA", () => new object() )
-				{
-					Version = 1
-				};
-
-			var right =
-				new ServiceDescription( "TestA", () => new object() )
-				{
-						Version = 2
-				};
-				
-			Assert.That( left.Equals( right ), Is.False );
-		}
-
-		[Test]
-		public void TestEquals_NameAreDiffer_ApplicationAreNullAndNotNull_VersionAreSame_TypeAreSame_False()
+		public void TestEquals_NameAreDiffer_VersionAreSame_TypeAreSame_False()
 		{
 			var left = 
 				new ServiceDescription( "TestA", () => new object() )
@@ -348,15 +74,14 @@ namespace MsgPack.Rpc.Server.Dispatch
 			var right =
 				new ServiceDescription( "TestB", () => new object() )
 				{
-						Application = "AppA",
-				Version = 1
+							Version = 1
 				};
 				
 			Assert.That( left.Equals( right ), Is.False );
 		}
 
 		[Test]
-		public void TestEquals_NameAreDiffer_ApplicationAreNullAndNotNull_VersionAreDiffer_TypeAreSame_False()
+		public void TestEquals_NameAreDiffer_VersionAreDiffer_TypeAreSame_False()
 		{
 			var left = 
 				new ServiceDescription( "TestA", () => new object() )
@@ -367,44 +92,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 			var right =
 				new ServiceDescription( "TestB", () => new object() )
 				{
-						Application = "AppA",
-				Version = 2
-				};
-				
-			Assert.That( left.Equals( right ), Is.False );
-		}
-
-		[Test]
-		public void TestEquals_NameAreDiffer_ApplicationAreNullAndNull_VersionAreSame_TypeAreSame_False()
-		{
-			var left = 
-				new ServiceDescription( "TestA", () => new object() )
-				{
-					Version = 1
-				};
-
-			var right =
-				new ServiceDescription( "TestB", () => new object() )
-				{
-						Version = 1
-				};
-				
-			Assert.That( left.Equals( right ), Is.False );
-		}
-
-		[Test]
-		public void TestEquals_NameAreDiffer_ApplicationAreNullAndNull_VersionAreDiffer_TypeAreSame_False()
-		{
-			var left = 
-				new ServiceDescription( "TestA", () => new object() )
-				{
-					Version = 1
-				};
-
-			var right =
-				new ServiceDescription( "TestB", () => new object() )
-				{
-						Version = 2
+							Version = 2
 				};
 				
 			Assert.That( left.Equals( right ), Is.False );

@@ -119,44 +119,6 @@ namespace MsgPack.Rpc.Server.Dispatch
 			}
 		}
 
-		private string _application;
-
-		/// <summary>
-		///		Gets the name of the application.
-		/// </summary>
-		/// <value>
-		///		The name of the service.
-		///		This value is non-null valid identifier.
-		///		Default is <see cref="Name"/>.
-		/// </value>
-		/// <exception cref="ArgumentException">
-		///		The setter is invoked by invalid value.
-		/// </exception>
-		/// <remarks>
-		///		Application is scope group of a bunch of related services like namespace.
-		///		It is flat structure, however, differ from namespace which is hierachical.
-		///		To reset to default, you can set <c>null</c> or empty to this property.
-		/// </remarks>
-		public string Application
-		{
-			get
-			{
-				Contract.Ensures( !String.IsNullOrWhiteSpace( Contract.Result<string>() ) );
-				return this._application ?? this.Name;
-			}
-			set
-			{
-				if ( String.IsNullOrEmpty( value ) )
-				{
-					this._application = null;
-				}
-				else
-				{
-					this._application = RpcIdentifierUtility.EnsureValidIdentifier( value, "value" );
-				}
-			}
-		}
-
 		/// <summary>
 		/// Initializes a new instance of the <see cref="ServiceDescription"/> class.
 		/// </summary>
@@ -252,7 +214,6 @@ namespace MsgPack.Rpc.Server.Dispatch
 			return
 				new ServiceDescription( serviceName, Expression.Lambda<Func<object>>( Expression.New( ctor ) ).Compile() )
 				{
-					Application = String.IsNullOrWhiteSpace( serviceContract.Application ) ? serviceContract.Name : serviceContract.Application,
 					Version = serviceContract.Version,
 					_serviceType = serviceType
 				};
@@ -278,7 +239,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 				return false;
 			}
 
-			return this._name == other._name && this._version == other._version && this._application == other._application && this.ServiceType == other.ServiceType;
+			return this._name == other._name && this._version == other._version && this.ServiceType == other.ServiceType;
 		}
 
 		/// <summary>
@@ -289,8 +250,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 		/// </returns>
 		public sealed override int GetHashCode()
 		{
-			// TODO: Use NLiblet
-			return this._name.GetHashCode() ^ ( this._application == null ? 0 : this._application.GetHashCode() ) ^ this._version.GetHashCode() ^ this.ServiceType.GetHashCode();
+			return this._name.GetHashCode() ^ this._version.GetHashCode() ^ this.ServiceType.GetHashCode();
 		}
 
 		/// <summary>
@@ -301,7 +261,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 		/// </returns>
 		public sealed override string ToString()
 		{
-			return ServiceIdentifier.CreateServiceId( this._application, this._name, this._version );
+			return ServiceIdentifier.CreateServiceId( this._name, this._version );
 		}
 
 		/// <summary>

@@ -28,14 +28,11 @@ var __testCases = new List<TestCase>();
 
 foreach( var name in new [] { "TestA", "TestB" } )
 {
-	foreach( var applicationName in new [] { "AppA", "AppB", null } )
+	foreach( var version in new int?[] { 1, 2, null } )
 	{
-		foreach( var version in new int?[] { 1, 2, null } )
+		foreach( var initializer in new [] { "() => new object()" } )
 		{
-			foreach( var initializer in new [] { "() => new object()" } )
-			{
-				__testCases.Add( new TestCase( name, applicationName, version, initializer ) );
-			}
+			__testCases.Add( new TestCase( name, version, initializer ) );
 		}
 	}
 }
@@ -87,13 +84,6 @@ foreach( var __left in __testCases )
 				new ServiceDescription( "<#= __left.Name #>", <#= __left.Initializer #> )
 				{
 <#
-		if( __left.Application != null )
-		{
-#>
-					Application = "<#= __left.Application #>",
-<#			
-		}
-		
 		if( __left.Version != null )
 		{
 #>
@@ -107,17 +97,10 @@ foreach( var __left in __testCases )
 				new ServiceDescription( "<#= __right.Name #>", <#= __right.Initializer #> )
 				{
 		<#
-		if( __right.Application != null )
-		{
-#>
-				Application = "<#= __right.Application #>",
-<#			
-		}
-		
 		if( __right.Version != null )
 		{
 #>
-				Version = <#= __right.Version #>
+					Version = <#= __right.Version #>
 <#
 		}
 #>
@@ -136,17 +119,6 @@ private static string ToTestBehaviorString( TestCase left, TestCase right )
 {
 	var buffer = new StringBuilder();
 	buffer.Append( "NameAre" ).Append( left.Name == right.Name ? "Same" : "Differ" );
-	buffer.Append( "_ApplicationAre" );
-	
-	if( left.Application != null && right.Application != null )
-	{
-		buffer.Append( left.Application == right.Application ? "Same" : "Differ" );
-	}
-	else 
-	{
-		buffer.Append( left.Application == null ? "Null" : "NotNull" ).Append( "And" ).Append( right.Application == null ? "Null" : "NotNull" );
-	}
-	
 	buffer.Append( "_VersionAre" ).Append( left.Version == right.Version ? "Same" : "Differ" );
 	buffer.Append( "_TypeAre" ).Append( left.Initializer == right.Initializer ? "Same" : "Differ" );
 	
@@ -156,20 +128,13 @@ private static string ToTestBehaviorString( TestCase left, TestCase right )
 private struct TestCase
 {
 	public readonly string Name;
-	public readonly string Application;
-	
-	public string ExpectedApplication
-	{
-		get{ return this.Application ?? this.Name; }
-	}
 	
 	public readonly int? Version;
 	public readonly string Initializer;
 	
-	public TestCase( string name, string application, int? version, string initializer )
+	public TestCase( string name, int? version, string initializer )
 	{
 		this.Name = name;
-		this.Application = application;
 		this.Version = version;
 		this.Initializer = initializer;
 	}

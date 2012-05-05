@@ -137,7 +137,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 			this._runtime = runtime;
 			this._serviceDescription = serviceDescription;
 			this._targetOperation = targetOperation;
-			this._operationId = serviceDescription.ToString() + "::" + targetOperation.Name;
+			this._operationId = runtime.CreateMethodName( serviceDescription, targetOperation );
 		}
 
 		/// <summary>
