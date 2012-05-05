@@ -33,7 +33,7 @@ namespace MsgPack.Rpc
 	/// <remarks>
 	///		See https://gist.github.com/470667/d33136f74584381bdb58b6444abfcb4a8bbe8abc for details.
 	/// </remarks>
-	public sealed class RpcError : IPackable
+	public sealed class RpcError
 	{
 		#region -- Built-in Errors --
 
@@ -559,19 +559,6 @@ namespace MsgPack.Rpc
 			Contract.Assume( this._exceptionUnmarshaler != null );
 
 			return this._exceptionUnmarshaler( this, detail );
-		}
-
-		// for exception marshaling.
-		void IPackable.PackToMessage( Packer packer, PackingOptions options )
-		{
-			if ( packer == null )
-			{
-				throw new ArgumentNullException( "packer" );
-			}
-
-			Contract.EndContractBlock();
-
-			packer.PackString( this.Identifier );
 		}
 
 		/// <summary>
