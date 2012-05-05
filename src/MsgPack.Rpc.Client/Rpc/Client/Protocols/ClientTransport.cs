@@ -476,7 +476,7 @@ namespace MsgPack.Rpc.Client.Protocols
 
 			var rpcError =
 				new RpcErrorMessage(
-					RpcError.ConnectionTimeoutError,
+					RpcError.TimeoutError,
 					new MessagePackObject(
 						new MessagePackObjectDictionary( 3 )
 						{
@@ -520,8 +520,8 @@ namespace MsgPack.Rpc.Client.Protocols
 				"Deserialization error. {{ \"Message ID\" : {0}, \"Error\" : {1} }}",
 				messageId == null ? "(null)" : messageId.ToString(),
 				rpcError
-			); 
-			
+			);
+
 			if ( invalidRequestHeaderProvider != null && MsgPackRpcClientProtocolsTrace.ShouldTrace( MsgPackRpcClientProtocolsTrace.DumpInvalidResponseHeader ) )
 			{
 				var array = invalidRequestHeaderProvider();
