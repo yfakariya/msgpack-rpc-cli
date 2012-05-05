@@ -177,17 +177,39 @@ namespace MsgPack.Rpc.Server.Dispatch.SvcFileInterop
 		/// </exception>
 		protected SvcDirectiveParserState OnUnexpectedCharFound( char currentChar )
 		{
-			// FIXME: Escape
 			throw new FormatException(
 				String.Format(
 					CultureInfo.CurrentCulture,
 					"Unexpected char '{0}'(0x{1}) in line:{2}, position:{3}.",
-					currentChar,
+					Escape( currentChar ),
 					( ushort )currentChar,
 					this.LineNumber,
 					this.Position
 				)
 			);
+		}
+
+		private char Escape( char c )
+		{
+			switch ( CharUnicodeInfo.GetUnicodeCategory( c ) )
+			{
+				case UnicodeCategory.Control:
+				case UnicodeCategory.EnclosingMark:
+				case UnicodeCategory.Format:
+				case UnicodeCategory.LineSeparator:
+				case UnicodeCategory.NonSpacingMark:
+				case UnicodeCategory.OtherNotAssigned:
+				case UnicodeCategory.ParagraphSeparator:
+				case UnicodeCategory.PrivateUse:
+				case UnicodeCategory.Surrogate:
+				{
+					return '\uFFFD';
+				}
+				default:
+				{
+					return c;
+				}
+			}
 		}
 
 		/// <summary>
