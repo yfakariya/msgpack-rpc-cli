@@ -528,7 +528,7 @@ namespace MsgPack.Rpc
 		{
 			get
 			{
-				// TODO: localiation key: Idnentifier ".DefaultMessage"
+				// TODO: localization key: Idnentifier ".DefaultMessage"
 				return this.DefaultMessageInvariant;
 			}
 		}

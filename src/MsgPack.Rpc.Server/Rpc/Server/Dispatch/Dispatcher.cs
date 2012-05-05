@@ -141,7 +141,6 @@ namespace MsgPack.Rpc.Server.Dispatch
 			var task = operation( requestContext, responseContext );
 			var sessionState = Tuple.Create( this._server, requestContext.SessionId, requestContext.MessageType == MessageType.Request ? requestContext.MessageId : default( int? ), requestContext.MethodName );
 
-			// FIXME: Execution timeout
 #if NET_4_5
 			task.ContinueWith( ( previous, state ) =>
 				{

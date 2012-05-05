@@ -157,7 +157,6 @@ namespace MsgPack.Rpc.Server.Protocols
 			{
 				if ( this.IsInShutdown )
 				{
-					// TODO: Trace
 					return;
 				}
 

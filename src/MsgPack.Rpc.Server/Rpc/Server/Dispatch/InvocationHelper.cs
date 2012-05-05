@@ -109,7 +109,6 @@ namespace MsgPack.Rpc.Server.Dispatch
 			}
 			else
 			{
-				// TODO: More cases?
 				var details =
 					new MessagePackObjectDictionary( isDebugMode ? 3 : 1 )
 					{
@@ -136,7 +135,6 @@ namespace MsgPack.Rpc.Server.Dispatch
 			{
 				if ( MsgPackRpcServerDispatchTrace.ShouldTrace( MsgPackRpcServerDispatchTrace.OperationSucceeded ) )
 				{
-					// FIXME: Formatting
 					MsgPackRpcServerDispatchTrace.TraceEvent(
 						MsgPackRpcServerDispatchTrace.OperationSucceeded,
 						"Operation succeeded. {{ \"SessionId\" : {0}, \"MessageType\" : \"{1}\", \"MessageID\" : {2}, \"OperationID\" : \"{3}\", \"Result\" : \"{4}\" }}",

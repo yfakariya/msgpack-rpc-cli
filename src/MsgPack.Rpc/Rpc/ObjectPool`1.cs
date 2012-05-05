@@ -23,7 +23,6 @@ using System.Diagnostics.Contracts;
 
 namespace MsgPack.Rpc
 {
-	// TODO: Move to NLiblet
 	/// <summary>
 	///		Defines common interfaces and basic features of the object pool.
 	/// </summary>

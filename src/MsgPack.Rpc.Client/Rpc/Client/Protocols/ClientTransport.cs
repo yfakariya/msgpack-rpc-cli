@@ -35,7 +35,6 @@ using MsgPack.Rpc.Protocols.Filters;
 
 namespace MsgPack.Rpc.Client.Protocols
 {
-	// FIXME: timeout -> close transport
 	/// <summary>
 	///		Defines interface of client protocol binding.
 	/// </summary>
@@ -995,7 +994,6 @@ namespace MsgPack.Rpc.Client.Protocols
 				context.ShiftCurrentReceivingBuffer();
 			}
 
-			// FIXME: Quota
 			if ( MsgPackRpcClientProtocolsTrace.ShouldTrace( MsgPackRpcClientProtocolsTrace.DeserializeResponse ) )
 			{
 				MsgPackRpcClientProtocolsTrace.TraceEvent(

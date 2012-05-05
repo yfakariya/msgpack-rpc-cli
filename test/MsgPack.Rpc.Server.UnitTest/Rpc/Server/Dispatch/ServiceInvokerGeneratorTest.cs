@@ -287,8 +287,6 @@ namespace MsgPack.Rpc.Server.Dispatch
 			}
 		}
 
-		// FIXME: More test cases. ex. Async-based
-
 		[MessagePackRpcServiceContract()]
 		public class Service<TArg1, TArg2, TResult>
 		{

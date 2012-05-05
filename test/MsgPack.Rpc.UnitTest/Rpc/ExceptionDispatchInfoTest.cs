@@ -364,8 +364,6 @@ namespace MsgPack.Rpc
 			this.DoTestWithPartialTrust( TestNotAStandardException );
 		}
 
-		// FIXME: IStackTracePreservable
-
 		private sealed class ErrorCodeException : Exception
 		{
 			public ErrorCodeException( string message, Exception inner ) : base( message, inner ) { }

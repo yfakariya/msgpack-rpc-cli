@@ -144,7 +144,6 @@ namespace MsgPack.Rpc.Client.Protocols
 
 		private void TestCore( Action<ClientTransport, Server.Protocols.InProcServerTransportManager> test, Func<int?, MessagePackObject[], MessagePackObject> callback )
 		{
-			// TODO: Timeout setting
 			using ( var server = new EchoServer( callback ) )
 			using ( var manager = new InProcClientTransportManager( RpcClientConfiguration.Default, server.TransportManager ) )
 			using ( var target = manager.ConnectAsync( _endPoint ) )

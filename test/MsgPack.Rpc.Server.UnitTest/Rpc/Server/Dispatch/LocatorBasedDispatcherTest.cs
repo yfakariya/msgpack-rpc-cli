@@ -29,6 +29,6 @@ namespace MsgPack.Rpc.Server.Dispatch
 	[TestFixture()]
 	public class LocatorBasedDispatcherTest
 	{
-		// TODO: Tests as facade.
+		// FIXME: Tests as facade.
 	}
 }

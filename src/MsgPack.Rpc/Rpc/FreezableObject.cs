@@ -23,7 +23,6 @@ using System.Threading;
 
 namespace MsgPack.Rpc
 {
-	// TODO: Move to NLiblet
 	/// <summary>
 	///		The standard implementation of the <see cref="IFreezable"/> interface.
 	/// </summary>

@@ -23,7 +23,6 @@ using System.Diagnostics.Contracts;
 
 namespace MsgPack.Rpc
 {
-	// TODO: Move to NLiblet
 	/// <summary>
 	///		The dummy implementation of the <see cref="ObjectPool{T}"/> for mainly testing purposes.
 	/// </summary>

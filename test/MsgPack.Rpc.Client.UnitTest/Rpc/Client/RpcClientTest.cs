@@ -164,7 +164,7 @@ namespace MsgPack.Rpc.Client
 			}
 		}
 
-		// TODO: Error
+		// FIXME: ConnectionError
 
 		[Test()]
 		public void TestCallAsync_Normal_Returned()
@@ -203,8 +203,7 @@ namespace MsgPack.Rpc.Client
 			}
 		}
 
-		// TODO: cancellation
-		// TODO: Error
+		// FIXME: Connection Error
 
 		[Test()]
 		public void TestBeginCallEndCall_Normal_Returned()
@@ -242,7 +241,7 @@ namespace MsgPack.Rpc.Client
 			}
 		}
 
-		// TODO: Error
+		// FIXME: Connection Error
 
 		private const int _notificationIsOk = 1;
 		private const int _notificationInvalidArguments = 2;
@@ -299,7 +298,7 @@ namespace MsgPack.Rpc.Client
 			}
 		}
 
-		// TODO: Error
+		// FIXME: Connection Error
 
 		[Test()]
 		public void TestNotifyAsync_Normal_ReachToServer()
@@ -353,7 +352,7 @@ namespace MsgPack.Rpc.Client
 			}
 		}
 
-		// TODO: Error
+		// FIXME: Connection Error
 
 		[Test()]
 		public void TestBeginNotifyEndNotify_Normal_ReachToServer()
@@ -405,7 +404,7 @@ namespace MsgPack.Rpc.Client
 			}
 		}
 
-		// TODO: Error
+		// FIXME: Connection Error
 
 		private sealed class InProcTestEnvironment : IDisposable
 		{

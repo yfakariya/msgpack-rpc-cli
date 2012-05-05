@@ -77,8 +77,6 @@ namespace MsgPack.Rpc
 #endif
 		}
 
-		// TODO: expose remote info for better logging.
-
 		// NOT readonly for safe-deserialization
 		private RemoteExceptionInformation[] _remoteExceptions;
 

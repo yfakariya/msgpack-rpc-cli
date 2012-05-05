@@ -22,8 +22,6 @@ using System;
 
 namespace MsgPack.Rpc
 {
-	// TODO: Move to NLiblet
-
 	/// <summary>
 	///		Defines exhausion policy of the object pool.
 	/// </summary>

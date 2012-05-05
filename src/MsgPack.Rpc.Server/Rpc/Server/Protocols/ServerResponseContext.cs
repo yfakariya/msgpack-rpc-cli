@@ -163,7 +163,6 @@ namespace MsgPack.Rpc.Server.Protocols
 		internal void Prepare()
 		{
 			Contract.Assert( this.SendingBuffer[ 0 ].Array != null );
-			// FIXME: Should be copied from request context.
 			this.SendingBuffer[ 1 ] = this.GetPackedMessageId();
 			this.SendingBuffer[ 2 ] = new ArraySegment<byte>( this._errorDataBuffer.GetBuffer(), 0, unchecked( ( int )this._errorDataBuffer.Length ) );
 			this.SendingBuffer[ 3 ] = new ArraySegment<byte>( this._returnDataBuffer.GetBuffer(), 0, unchecked( ( int )this._returnDataBuffer.Length ) );

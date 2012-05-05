@@ -32,7 +32,6 @@ using MsgPack.Serialization;
 
 namespace MsgPack.Rpc.Server.Protocols
 {
-	// FIXME: timeout -> close transport (in send/receive/execute)
 	/// <summary>
 	///		Encapselates underlying transport layer protocols and handle low level errors.
 	/// </summary>
@@ -904,7 +903,6 @@ namespace MsgPack.Rpc.Server.Protocols
 				context.ShiftCurrentReceivingBuffer();
 			}
 
-			// FIXME: Quota
 			if ( MsgPackRpcServerProtocolsTrace.ShouldTrace( MsgPackRpcServerProtocolsTrace.DeserializeRequest ) )
 			{
 				MsgPackRpcServerProtocolsTrace.TraceEvent(
@@ -1081,7 +1079,6 @@ namespace MsgPack.Rpc.Server.Protocols
 
 		internal void Serialize<T>( ServerResponseContext context, T returnValue, RpcErrorMessage error, MessagePackSerializer<T> returnValueSerializer )
 		{
-			// FIXME: Overwrite for error/timeout
 			if ( MsgPackRpcServerProtocolsTrace.ShouldTrace( MsgPackRpcServerProtocolsTrace.SerializeResponse ) )
 			{
 				MsgPackRpcServerProtocolsTrace.TraceEvent(

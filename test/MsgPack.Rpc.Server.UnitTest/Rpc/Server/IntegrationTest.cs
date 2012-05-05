@@ -29,17 +29,6 @@ using NUnit.Framework;
 
 namespace MsgPack.Rpc.Server
 {
-	// FIXME: Move to Integration test.
-	// TODOs
-	// Error test
-	// Refactor move deserialization from transport to session.
-
-	// Client:
-	//   IDL
-
-	// Others
-	//   UDP
-	//   
 	/// <summary>
 	///		Prototype test.
 	/// </summary>
@@ -47,7 +36,6 @@ namespace MsgPack.Rpc.Server
 	[Explicit]
 	public class IntegrationTest
 	{
-		// TODO: Error packet test.
 		private const bool _traceEnabled = true;
 		private DebugTraceSourceSetting _debugTrace;
 		private readonly TraceSource _trace = new TraceSource( "MsgPack.Rpc.Server.PreTest" );
