@@ -22,6 +22,7 @@ using System;
 using System.Diagnostics.Contracts;
 using System.IO;
 using MsgPack.Rpc.Protocols;
+using System.Diagnostics;
 
 namespace MsgPack.Rpc.Client.Protocols
 {
@@ -195,6 +196,13 @@ namespace MsgPack.Rpc.Client.Protocols
 			get { return this._requestCompletionCallback; }
 		}
 
+		private readonly Stopwatch _stopwatch;
+
+		internal TimeSpan ElapsedTime
+		{
+			get { return this._stopwatch.Elapsed; }
+		}
+
 		/// <summary>
 		///		Initializes a new instance of the <see cref="ClientRequestContext"/> class.
 		/// </summary>
@@ -207,6 +215,19 @@ namespace MsgPack.Rpc.Client.Protocols
 			this.SendingBuffer = new ArraySegment<byte>[ 4 ];
 			this._argumentsPacker = Packer.Create( this._argumentsBuffer, false );
 			this._messageType = MessageType.Response;
+			this._stopwatch = new Stopwatch();
+		}
+
+		internal override void StartWatchTimeout( TimeSpan timeout )
+		{
+			base.StartWatchTimeout( timeout );
+			this._stopwatch.Restart();
+		}
+
+		internal override void StopWatchTimeout()
+		{
+			this._stopwatch.Stop();
+			base.StopWatchTimeout();
 		}
 
 		/// <summary>

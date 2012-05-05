@@ -43,6 +43,9 @@ namespace MsgPack.Rpc.Client.Protocols
 		private static readonly EndPoint _endPoint =
 			new IPEndPoint( IPAddress.Loopback, 0 );
 
+		// Tweak point
+		private static readonly TimeSpan _waitTimeout = TimeSpan.FromMilliseconds( 50 );
+
 		[Test]
 		public void TestGetClientRequestContext_BoundTransportSetAsCallee()
 		{
@@ -316,7 +319,11 @@ namespace MsgPack.Rpc.Client.Protocols
 						}
 						finally
 						{
-							target.ReturnContext( context );
+							if ( context.BoundTransport != null )
+							{
+								// Return only if the shutdown was not occurred.
+								target.ReturnContext( context );
+							}
 						}
 					}
 				},
@@ -398,7 +405,8 @@ namespace MsgPack.Rpc.Client.Protocols
 
 		private static void TestSendCore(
 			MessageType messageType,
-			SocketError? socketErrorOnSend
+			SocketError? socketErrorOnSend,
+			TimeSpan? waitTimeout
 		)
 		{
 			int? messageId = messageType == MessageType.Request ? Math.Abs( Environment.TickCount % 1000 ) : default( int? );
@@ -413,11 +421,20 @@ namespace MsgPack.Rpc.Client.Protocols
 					return args;
 				};
 
+			var configuration = new RpcClientConfiguration();
+			configuration.WaitTimeout = waitTimeout;
+
 			using ( var server = new EchoServer( callback ) )
-			using ( var manager = new InProcClientTransportManager( RpcClientConfiguration.Default, server.TransportManager ) )
+			using ( var manager = new InProcClientTransportManager( configuration, server.TransportManager ) )
 			using ( var transport = manager.ConnectAsync( _endPoint ).Result as InProcClientTransport )
 			using ( var waitHandle = new ManualResetEventSlim() )
 			{
+				if ( waitTimeout != null )
+				{
+					transport.DataSending +=
+						( sender, e ) => Thread.Sleep( TimeSpan.FromMilliseconds( waitTimeout.Value.TotalMilliseconds * 3 ) );
+				}
+
 				if ( socketErrorOnSend != null )
 				{
 					transport.MessageSent +=
@@ -428,6 +445,7 @@ namespace MsgPack.Rpc.Client.Protocols
 				}
 				var context = transport.GetClientRequestContext();
 				MessagePackObject? result = null;
+				RpcErrorMessage responseError = RpcErrorMessage.Success;
 				Exception clientRuntimeError = null;
 
 				if ( messageType == MessageType.Request )
@@ -438,6 +456,12 @@ namespace MsgPack.Rpc.Client.Protocols
 						( responseContext, error, completedSynchronously ) =>
 						{
 							result = responseContext == null ? default( MessagePackObject? ) : Unpacking.UnpackObject( responseContext.ResultBuffer );
+						
+							if ( responseContext != null )
+							{
+								responseError = ErrorInterpreter.UnpackError( responseContext );
+							}
+
 							clientRuntimeError = error;
 							waitHandle.Set();
 						}
@@ -479,9 +503,16 @@ namespace MsgPack.Rpc.Client.Protocols
 
 				if ( messageType == MessageType.Request )
 				{
-					Assert.That( result, Is.Not.Null );
-					Assert.That( result.Value.AsList().Count, Is.EqualTo( 1 ) );
-					Assert.That( result.Value.AsList()[ 0 ] == argument, "{0} != {1}", result.Value.AsList()[ 0 ], argument );
+					if ( waitTimeout != null )
+					{
+						Assert.That( responseError.Error, Is.EqualTo( RpcError.TimeoutError ) );
+					}
+					else
+					{
+						Assert.That( result, Is.Not.Null );
+						Assert.That( result.Value.AsList().Count, Is.EqualTo( 1 ) );
+						Assert.That( result.Value.AsList()[ 0 ] == argument, "{0} != {1}", result.Value.AsList()[ 0 ], argument );
+					}
 				}
 			}
 		}
@@ -489,31 +520,37 @@ namespace MsgPack.Rpc.Client.Protocols
 		[Test]
 		public void TestSend_RequestSuccess_CallbackInvokedAndSendAsRequest()
 		{
-			TestSendCore( MessageType.Request, null );
+			TestSendCore( MessageType.Request, null, null );
 		}
 
 		[Test]
 		public void TestSend_RequestFail_CallbackInvokedWithTransportError()
 		{
-			TestSendCore( MessageType.Request, SocketError.ConnectionReset );
+			TestSendCore( MessageType.Request, SocketError.ConnectionReset, null );
 		}
 
 		[Test]
 		public void TestSend_NotifySuccess_CallbackInvokedAndSendAsNotification()
 		{
-			TestSendCore( MessageType.Notification, null );
+			TestSendCore( MessageType.Notification, null, null );
 		}
 
 		[Test]
 		public void TestSend_NotifyFail_CallbackInvokedWithTransportError()
 		{
-			TestSendCore( MessageType.Notification, SocketError.ConnectionReset );
+			TestSendCore( MessageType.Notification, SocketError.ConnectionReset, null );
 		}
 
 		[Test]
-		public void TestSend_Timeout_ConnectionReset()
+		public void TestSend_RequestTimeout_TimeoutError()
 		{
-			Assert.Inconclusive( "Not implemented yet" );
+			TestSendCore( MessageType.Request, SocketError.OperationAborted, TimeSpan.FromMilliseconds( 20 ) );
+		}
+
+		[Test]
+		public void TestSend_NotificationTimeout_TimeoutError()
+		{
+			TestSendCore( MessageType.Request, SocketError.OperationAborted, TimeSpan.FromMilliseconds( 20 ) );
 		}
 
 		#endregion
@@ -527,7 +564,8 @@ namespace MsgPack.Rpc.Client.Protocols
 			RpcError expectedError,
 			MessagePackObject? expectedResult,
 			Action<InProcResponseReceivedEventArgs> receivedBinaryModifier,
-			bool willBeUnknown
+			bool willBeUnknown,
+			TimeSpan? waitTimeout
 		)
 		{
 			int? messageId = messageType == MessageType.Request ? Math.Abs( Environment.TickCount % 100 ) : default( int? );
@@ -554,8 +592,12 @@ namespace MsgPack.Rpc.Client.Protocols
 						return expectedResult.Value;
 					}
 				};
+
+			var configuration = new RpcClientConfiguration();
+			configuration.WaitTimeout = waitTimeout;
+
 			using ( var server = new EchoServer( callback ) )
-			using ( var manager = new InProcClientTransportManager( RpcClientConfiguration.Default, server.TransportManager ) )
+			using ( var manager = new InProcClientTransportManager( configuration, server.TransportManager ) )
 			using ( var transport = manager.ConnectAsync( _endPoint ).Result as InProcClientTransport )
 			using ( var waitHandle = new ManualResetEventSlim() )
 			{
@@ -578,9 +620,13 @@ namespace MsgPack.Rpc.Client.Protocols
 						"Test",
 						( responseContext, error, completedSynchronously ) =>
 						{
-							resultMessageId = responseContext.MessageId;
-							resultReturn = Unpacking.UnpackObject( responseContext.ResultBuffer );
-							resultError = ErrorInterpreter.UnpackError( responseContext );
+							if ( responseContext != null )
+							{
+								resultMessageId = responseContext.MessageId;
+								resultReturn = Unpacking.UnpackObject( responseContext.ResultBuffer );
+								resultError = ErrorInterpreter.UnpackError( responseContext );
+							}
+
 							clientRuntimeError = error;
 							waitHandle.Set();
 						}
@@ -622,22 +668,31 @@ namespace MsgPack.Rpc.Client.Protocols
 					Assert.That( waitHandle.Wait( TimeSpan.FromSeconds( 1 ) ), "timeout" );
 				}
 
-				Assert.That( clientRuntimeError, Is.Null, "Unexpected runtime error:{0}", clientRuntimeError );
-
-				if ( willBeUnknown )
+				if ( waitTimeout != null )
 				{
-					Assert.That( wasUnknown, "Received known handler." );
+					Assert.That( clientRuntimeError, Is.InstanceOf<RpcTimeoutException>() );
+					Assert.That( ( clientRuntimeError as RpcTimeoutException ).RpcError, Is.EqualTo( RpcError.TimeoutError ) );
+					Assert.That( ( clientRuntimeError as RpcTimeoutException ).ClientTimeout, Is.EqualTo( waitTimeout ) );
 				}
-				else if ( messageType == MessageType.Request )
+				else
 				{
-					Assert.That( resultMessageId, Is.EqualTo( messageId ) );
-					if ( expectedError == null )
+					Assert.That( clientRuntimeError, Is.Null, "Unexpected runtime error:{0}", clientRuntimeError );
+
+					if ( willBeUnknown )
 					{
-						Assert.That( resultReturn == expectedResult, "{0} != {1}", resultReturn, expectedResult );
+						Assert.That( wasUnknown, "Received known handler." );
 					}
-					else
+					else if ( messageType == MessageType.Request )
 					{
-						Assert.That( resultError.Error.Identifier, Is.EqualTo( expectedError.Identifier ), resultError.ToString() );
+						Assert.That( resultMessageId, Is.EqualTo( messageId ) );
+						if ( expectedError == null )
+						{
+							Assert.That( resultReturn == expectedResult, "{0} != {1}", resultReturn, expectedResult );
+						}
+						else
+						{
+							Assert.That( resultError.Error.Identifier, Is.EqualTo( expectedError.Identifier ), resultError.ToString() );
+						}
 					}
 				}
 			}
@@ -654,8 +709,9 @@ namespace MsgPack.Rpc.Client.Protocols
 				MessageType.Request,
 				null,
 				"ReturnValue",
-				null,
-				false
+				receivedBinaryModifier: null,
+				willBeUnknown: false,
+				waitTimeout: null
 			);
 		}
 
@@ -666,8 +722,9 @@ namespace MsgPack.Rpc.Client.Protocols
 				MessageType.Request,
 				RpcError.CustomError( "AppError.DummyError", 1 ),
 				"DoNotReturnThis",
-				null,
-				false
+				receivedBinaryModifier: null,
+				willBeUnknown: false,
+				waitTimeout: null
 			);
 		}
 
@@ -678,8 +735,9 @@ namespace MsgPack.Rpc.Client.Protocols
 				MessageType.Notification,
 				null,
 				"DoNotReturnThis",
-				null,
-				false
+				receivedBinaryModifier: null,
+				willBeUnknown: false,
+				waitTimeout: null
 			);
 		}
 
@@ -690,8 +748,9 @@ namespace MsgPack.Rpc.Client.Protocols
 				MessageType.Notification,
 				RpcError.CustomError( "AppError.DummyError", 1 ),
 				"DoNotReturnThis",
-				null,
-				false
+				receivedBinaryModifier: null,
+				willBeUnknown: false,
+				waitTimeout: null
 			);
 		}
 
@@ -708,8 +767,8 @@ namespace MsgPack.Rpc.Client.Protocols
 			TestReceiveCore(
 				MessageType.Request,
 				expectedError,
-				null,
-				e =>
+				expectedResult: null,
+				receivedBinaryModifier: e =>
 				{
 					var originalResult = Unpacking.UnpackArray( e.ReceivedData ).Value;
 
@@ -720,7 +779,8 @@ namespace MsgPack.Rpc.Client.Protocols
 						e.ChunkedReceivedData = new byte[][] { buffer.ToArray() };
 					}
 				},
-				willBeConnectionReset
+				willBeUnknown: willBeConnectionReset,
+				waitTimeout: null
 			);
 		}
 
@@ -903,7 +963,8 @@ namespace MsgPack.Rpc.Client.Protocols
 		#region ---- Interruption ----
 
 		private void TestReceive_InterruptCore(
-			Func<byte, RpcError, MessagePackObject, IEnumerable<byte[]>> splitter
+			Func<byte, RpcError, MessagePackObject, IEnumerable<byte[]>> splitter,
+			TimeSpan? waitTimeout
 		)
 		{
 			var error = new RpcErrorMessage( RpcError.CustomError( "AppError.Dummy", 1 ), Guid.NewGuid().ToString() );
@@ -916,7 +977,8 @@ namespace MsgPack.Rpc.Client.Protocols
 					var response = Unpacking.UnpackObject( e.ReceivedData );
 					e.ChunkedReceivedData = splitter( response.Value.AsList()[ 1 ].AsByte(), RpcError.FromIdentifier( response.Value.AsList()[ 2 ].AsString(), null ), response.Value.AsList()[ 3 ] );
 				},
-				false
+				false,
+				waitTimeout
 			);
 		}
 
@@ -937,11 +999,12 @@ namespace MsgPack.Rpc.Client.Protocols
 		{
 			TestReceive_InterruptCore(
 				( messageId, error, returnValue ) =>
-					new byte[][]
-					{
-						new byte[]{ 0xDC },
-						new byte[]{ 0x0, 0x4, ( byte )MessageType.Response, messageId }.Concat( ToBytes( error.Identifier ) ).Concat( ToBytes( returnValue ) ).ToArray()
-					}
+				new byte[][]
+				{
+					new byte[]{ 0xDC },
+					new byte[]{ 0x0, 0x4, ( byte )MessageType.Response, messageId }.Concat( ToBytes( error.Identifier ) ).Concat( ToBytes( returnValue ) ).ToArray()
+				},
+				null
 			);
 		}
 
@@ -951,11 +1014,12 @@ namespace MsgPack.Rpc.Client.Protocols
 			Assert.Inconclusive( "Send/Receive/Execution timeout is not implemented yet." );
 			TestReceive_InterruptCore(
 				( messageId, error, returnValue ) =>
-					new byte[][]
-					{
-						new byte[]{ 0xDC },
-						new byte[]{ 0x0, 0x4, ( byte )MessageType.Response, messageId }.Concat( ToBytes( error.Identifier ) ).Concat( ToBytes( returnValue ) ).ToArray()
-					}
+				new byte[][]
+				{
+					new byte[]{ 0xDC },
+					new byte[]{ 0x0, 0x4, ( byte )MessageType.Response, messageId }.Concat( ToBytes( error.Identifier ) ).Concat( ToBytes( returnValue ) ).ToArray()
+				},
+				_waitTimeout
 			);
 		}
 
@@ -964,11 +1028,12 @@ namespace MsgPack.Rpc.Client.Protocols
 		{
 			TestReceive_InterruptCore(
 				( messageId, error, returnValue ) =>
-					new byte[][]
-					{
-						new byte[]{ 0x94 },
-						new byte[]{ ( byte )MessageType.Response, messageId }.Concat( ToBytes( error.Identifier ) ).Concat( ToBytes( returnValue ) ).ToArray()
-					}
+				new byte[][]
+				{
+					new byte[]{ 0x94 },
+					new byte[]{ ( byte )MessageType.Response, messageId }.Concat( ToBytes( error.Identifier ) ).Concat( ToBytes( returnValue ) ).ToArray()
+				},
+				null
 			);
 		}
 
@@ -978,11 +1043,12 @@ namespace MsgPack.Rpc.Client.Protocols
 			Assert.Inconclusive( "Send/Receive/Execution timeout is not implemented yet." );
 			TestReceive_InterruptCore(
 				( messageId, error, returnValue ) =>
-					new byte[][]
-					{
-						new byte[]{ 0x94 },
-						new byte[]{ ( byte )MessageType.Response, messageId }.Concat( ToBytes( error.Identifier ) ).Concat( ToBytes( returnValue ) ).ToArray()
-					}
+				new byte[][]
+				{
+					new byte[]{ 0x94 },
+					new byte[]{ ( byte )MessageType.Response, messageId }.Concat( ToBytes( error.Identifier ) ).Concat( ToBytes( returnValue ) ).ToArray()
+				},
+				_waitTimeout
 			);
 		}
 
@@ -995,11 +1061,12 @@ namespace MsgPack.Rpc.Client.Protocols
 		{
 			TestReceive_InterruptCore(
 				( messageId, error, returnValue ) =>
-					new byte[][]
-					{
-						new byte[]{ 0x94, 0xD0 },
-						new byte[]{ ( byte )MessageType.Response, messageId }.Concat( ToBytes( error.Identifier ) ).Concat( ToBytes( returnValue ) ).ToArray()
-					}
+				new byte[][]
+				{
+					new byte[]{ 0x94, 0xD0 },
+					new byte[]{ ( byte )MessageType.Response, messageId }.Concat( ToBytes( error.Identifier ) ).Concat( ToBytes( returnValue ) ).ToArray()
+				},
+				null
 			);
 		}
 
@@ -1009,11 +1076,12 @@ namespace MsgPack.Rpc.Client.Protocols
 			Assert.Inconclusive( "Send/Receive/Execution timeout is not implemented yet." );
 			TestReceive_InterruptCore(
 				( messageId, error, returnValue ) =>
-					new byte[][]
-					{
-						new byte[]{ 0x94, 0xD0 },
-						new byte[]{ ( byte )MessageType.Response, messageId }.Concat( ToBytes( error.Identifier ) ).Concat( ToBytes( returnValue ) ).ToArray()
-					}
+				new byte[][]
+				{
+					new byte[]{ 0x94, 0xD0 },
+					new byte[]{ ( byte )MessageType.Response, messageId }.Concat( ToBytes( error.Identifier ) ).Concat( ToBytes( returnValue ) ).ToArray()
+				},
+				_waitTimeout
 			);
 		}
 
@@ -1022,11 +1090,12 @@ namespace MsgPack.Rpc.Client.Protocols
 		{
 			TestReceive_InterruptCore(
 				( messageId, error, returnValue ) =>
-					new byte[][]
-					{
-						new byte[]{ 0x94, ( byte )MessageType.Response },
-						new byte[]{ messageId }.Concat( ToBytes( error.Identifier ) ).Concat( ToBytes( returnValue ) ).ToArray()
-					}
+				new byte[][]
+				{
+					new byte[]{ 0x94, ( byte )MessageType.Response },
+					new byte[]{ messageId }.Concat( ToBytes( error.Identifier ) ).Concat( ToBytes( returnValue ) ).ToArray()
+				},
+				null
 			);
 		}
 
@@ -1036,11 +1105,12 @@ namespace MsgPack.Rpc.Client.Protocols
 			Assert.Inconclusive( "Send/Receive/Execution timeout is not implemented yet." );
 			TestReceive_InterruptCore(
 				( messageId, error, returnValue ) =>
-					new byte[][]
-					{
-						new byte[]{ 0x94, ( byte )MessageType.Response },
-						new byte[]{ messageId }.Concat( ToBytes( error.Identifier ) ).Concat( ToBytes( returnValue ) ).ToArray()
-					}
+				new byte[][]
+				{
+					new byte[]{ 0x94, ( byte )MessageType.Response },
+					new byte[]{ messageId }.Concat( ToBytes( error.Identifier ) ).Concat( ToBytes( returnValue ) ).ToArray()
+				},
+				_waitTimeout
 			);
 		}
 
@@ -1053,11 +1123,12 @@ namespace MsgPack.Rpc.Client.Protocols
 		{
 			TestReceive_InterruptCore(
 				( messageId, error, returnValue ) =>
-					new byte[][]
-					{
-						new byte[]{ 0x94, ( byte )MessageType.Response, 0xD0 },
-						new byte[]{ messageId }.Concat( ToBytes( error.Identifier ) ).Concat( ToBytes( returnValue ) ).ToArray()
-					}
+				new byte[][]
+				{
+					new byte[]{ 0x94, ( byte )MessageType.Response, 0xD0 },
+					new byte[]{ messageId }.Concat( ToBytes( error.Identifier ) ).Concat( ToBytes( returnValue ) ).ToArray()
+				},
+				null
 			);
 		}
 
@@ -1067,11 +1138,12 @@ namespace MsgPack.Rpc.Client.Protocols
 			Assert.Inconclusive( "Send/Receive/Execution timeout is not implemented yet." );
 			TestReceive_InterruptCore(
 				( messageId, error, returnValue ) =>
-					new byte[][]
-					{
-						new byte[]{ 0x94, ( byte )MessageType.Response, 0xD0 },
-						new byte[]{ messageId }.Concat( ToBytes( error.Identifier ) ).Concat( ToBytes( returnValue ) ).ToArray()
-					}
+				new byte[][]
+				{
+					new byte[]{ 0x94, ( byte )MessageType.Response, 0xD0 },
+					new byte[]{ messageId }.Concat( ToBytes( error.Identifier ) ).Concat( ToBytes( returnValue ) ).ToArray()
+				},
+				_waitTimeout
 			);
 		}
 
@@ -1080,11 +1152,12 @@ namespace MsgPack.Rpc.Client.Protocols
 		{
 			TestReceive_InterruptCore(
 				( messageId, error, returnValue ) =>
-					new byte[][]
-					{
-						new byte[]{ 0x94, ( byte )MessageType.Response, messageId },
-						ToBytes( error.Identifier ).Concat( ToBytes( returnValue ) ).ToArray()
-					}
+				new byte[][]
+				{
+					new byte[]{ 0x94, ( byte )MessageType.Response, messageId },
+					ToBytes( error.Identifier ).Concat( ToBytes( returnValue ) ).ToArray()
+				},
+				null
 			);
 		}
 
@@ -1094,11 +1167,12 @@ namespace MsgPack.Rpc.Client.Protocols
 			Assert.Inconclusive( "Send/Receive/Execution timeout is not implemented yet." );
 			TestReceive_InterruptCore(
 				( messageId, error, returnValue ) =>
-					new byte[][]
-					{
-						new byte[]{ 0x94, ( byte )MessageType.Response, messageId },
-						ToBytes( error.Identifier ).Concat( ToBytes( returnValue ) ).ToArray()
-					}
+				new byte[][]
+				{
+					new byte[]{ 0x94, ( byte )MessageType.Response, messageId },
+					ToBytes( error.Identifier ).Concat( ToBytes( returnValue ) ).ToArray()
+				},
+				_waitTimeout
 			);
 		}
 
@@ -1119,7 +1193,8 @@ namespace MsgPack.Rpc.Client.Protocols
 							new byte[]{ 0x94, ( byte )MessageType.Response, messageId, errorBytes[ 0 ] },
 							errorBytes.Skip( 1 ).Concat( ToBytes( returnValue ) ).ToArray()
 						};
-				}
+				},
+				null
 			);
 		}
 
@@ -1137,7 +1212,8 @@ namespace MsgPack.Rpc.Client.Protocols
 							new byte[]{ 0x94, ( byte )MessageType.Response, messageId, errorBytes[ 0 ] },
 							errorBytes.Skip( 1 ).Concat( ToBytes( returnValue ) ).ToArray()
 						};
-				}
+				},
+				_waitTimeout
 			);
 		}
 
@@ -1146,11 +1222,12 @@ namespace MsgPack.Rpc.Client.Protocols
 		{
 			TestReceive_InterruptCore(
 				( messageId, error, returnValue ) =>
-					new byte[][]
-					{
-						new byte[]{ 0x94, ( byte )MessageType.Response, messageId }.Concat( ToBytes( error.Identifier ) ).ToArray(),
-						ToBytes( returnValue )
-					}
+				new byte[][]
+				{
+					new byte[]{ 0x94, ( byte )MessageType.Response, messageId }.Concat( ToBytes( error.Identifier ) ).ToArray(),
+					ToBytes( returnValue )
+				},
+				null
 			);
 		}
 
@@ -1160,11 +1237,12 @@ namespace MsgPack.Rpc.Client.Protocols
 			Assert.Inconclusive( "Send/Receive/Execution timeout is not implemented yet." );
 			TestReceive_InterruptCore(
 				( messageId, error, returnValue ) =>
-					new byte[][]
-					{
-						new byte[]{ 0x94, ( byte )MessageType.Response, messageId }.Concat( ToBytes( error.Identifier ) ).ToArray(),
-						ToBytes( returnValue )
-					}
+				new byte[][]
+				{
+					new byte[]{ 0x94, ( byte )MessageType.Response, messageId }.Concat( ToBytes( error.Identifier ) ).ToArray(),
+					ToBytes( returnValue )
+				},
+				_waitTimeout
 			);
 		}
 
@@ -1185,7 +1263,8 @@ namespace MsgPack.Rpc.Client.Protocols
 							new byte[]{ 0x94, ( byte )MessageType.Response, messageId }.Concat( ToBytes( error.Identifier ) ).Concat( returnValueBytes.Take( 1 ) ).ToArray(),
 							returnValueBytes.Skip( 1 ).ToArray()
 						};
-				}
+				},
+				null
 			);
 		}
 
@@ -1203,7 +1282,8 @@ namespace MsgPack.Rpc.Client.Protocols
 							new byte[]{ 0x94, ( byte )MessageType.Response, messageId }.Concat( ToBytes( error.Identifier ) ).Concat( returnValueBytes.Take( 1 ) ).ToArray(),
 							returnValueBytes.Skip( 1 ).ToArray()
 						};
-				}
+				},
+				_waitTimeout
 			);
 		}
 
@@ -1536,6 +1616,7 @@ namespace MsgPack.Rpc.Client.Protocols
 				return this.GetEnumerator();
 			}
 		}
+
 		private sealed class EchoServer : IDisposable
 		{
 			private readonly Server.RpcServer _server;

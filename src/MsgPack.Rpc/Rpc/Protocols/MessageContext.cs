@@ -308,15 +308,16 @@ namespace MsgPack.Rpc.Protocols
 		///		Starts timeout watch.
 		/// </summary>
 		/// <param name="timeout">The timeout.</param>
-		internal void StartWatchTimeout( TimeSpan timeout )
+		internal virtual void StartWatchTimeout( TimeSpan timeout )
 		{
+			Interlocked.Exchange( ref this._isTimeout, 0 );
 			this._timeoutWatcher.Start( timeout );
 		}
 
 		/// <summary>
 		///		Stops timeout watch.
 		/// </summary>
-		internal void StopWatchTimeout()
+		internal virtual void StopWatchTimeout()
 		{
 			this._timeoutWatcher.Stop();
 			this._timeoutWatcher.Reset();

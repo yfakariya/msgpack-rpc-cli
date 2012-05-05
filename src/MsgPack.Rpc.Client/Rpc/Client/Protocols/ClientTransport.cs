@@ -369,6 +369,19 @@ namespace MsgPack.Rpc.Client.Protocols
 			this.OnShutdownCompleted( new ShutdownCompletedEventArgs( ( ShutdownSource )this._shutdownSource ) );
 		}
 
+		/// <summary>
+		///		Resets the connection.
+		/// </summary>
+		protected virtual void ResetConnection()
+		{
+			var socket = this.BoundSocket;
+			if ( socket != null )
+			{
+				// Reset immediately.
+				socket.Close( 0 );
+			}
+		}
+
 		private void OnProcessFinished()
 		{
 			if ( this.IsInAnyShutdown )
@@ -430,8 +443,61 @@ namespace MsgPack.Rpc.Client.Protocols
 			this.OnSocketOperationCompleted( sender, e );
 		}
 
+
+		private void OnSendTimeout( object sender, EventArgs e )
+		{
+			this.OnWaitTimeout( sender as ClientRequestContext );
+		}
+
+		private void OnReceiveTimeout( object sender, EventArgs e )
+		{
+			this.OnWaitTimeout( sender as ClientResponseContext );
+		}
+
+		private void OnWaitTimeout( MessageContext context )
+		{
+			Contract.Assert( context != null );
+
+			var asClientRequestContext = context as ClientRequestContext;
+
+			var socket = this.BoundSocket;
+			MsgPackRpcClientProtocolsTrace.TraceEvent(
+				MsgPackRpcClientProtocolsTrace.WaitTimeout,
+					"Wait timeout. {{  \"Socket\" : 0x{0:X}, \"RemoteEndPoint\" : \"{1}\", \"LocalEndPoint\" : \"{2}\", \"Operation\" : \"{3}\", \"MessageType\" : \"{4}\"  \"MessageId\" : {5}, \"BytesTransferred\" : {6}, \"Timeout\" : \"{7}\" }}",
+					socket == null ? IntPtr.Zero : socket.Handle,
+					socket == null ? null : socket.RemoteEndPoint,
+					socket == null ? null : socket.LocalEndPoint,
+					asClientRequestContext != null ? "Send" : "Receive",
+					asClientRequestContext == null ? MessageType.Response : asClientRequestContext.MessageType,
+					context.MessageId,
+					context.BytesTransferred,
+					this._manager.Configuration.WaitTimeout
+			);
+
+			var rpcError =
+				new RpcErrorMessage(
+					RpcError.ConnectionTimeoutError,
+					new MessagePackObject(
+						new MessagePackObjectDictionary()
+						{
+							{ RpcException.MessageKeyUtf8, asClientRequestContext != null ? "Wait timeout on sending." : "Wait timeout on receiving." },
+							{ RpcTimeoutException.ClientTimeoutKeyUtf8, this.Manager.Configuration.WaitTimeout.ToString() }
+						},
+						true
+					)
+				);
+
+			this.RaiseError( context.MessageId, context.SessionId, rpcError, false );
+			this.ResetConnection();
+		}
+
 		internal bool HandleSocketError( Socket socket, MessageContext context )
 		{
+			if ( context.IsTimeout && context.SocketError == SocketError.OperationAborted )
+			{
+				return false;
+			}
+
 			var rpcError = this.Manager.HandleSocketError( socket, context.SocketContext );
 			if ( rpcError != null )
 			{
@@ -699,6 +765,12 @@ namespace MsgPack.Rpc.Client.Protocols
 			// Therefore, no catch clauses here.
 			ApplyFilters( this._afterSerializationFilters, context );
 
+			if ( this.Manager.Configuration.WaitTimeout != null )
+			{
+				context.Timeout += this.OnSendTimeout;
+				context.StartWatchTimeout( this.Manager.Configuration.WaitTimeout.Value );
+			}
+
 			this.SendCore( context );
 		}
 
@@ -741,6 +813,9 @@ namespace MsgPack.Rpc.Client.Protocols
 					);
 			}
 
+			context.StopWatchTimeout();
+			context.Timeout -= this.OnSendTimeout;
+
 			context.ClearBuffers();
 			try
 			{
@@ -770,7 +845,21 @@ namespace MsgPack.Rpc.Client.Protocols
 				}
 				else
 				{
+					if ( this.Manager.Configuration.WaitTimeout != null
+						&&( this.Manager.Configuration.WaitTimeout.Value - context.ElapsedTime).TotalMilliseconds < 1.0 )
+					{
+						this.OnWaitTimeout( context );
+						this.Manager.ReturnRequestContext( context );
+						return;
+					}
+
 					var responseContext = this.Manager.GetResponseContext( this );
+
+					if ( this.Manager.Configuration.WaitTimeout != null )
+					{
+						responseContext.Timeout += this.OnReceiveTimeout;
+						responseContext.StartWatchTimeout( this.Manager.Configuration.WaitTimeout.Value - context.ElapsedTime );
+					}
 
 					this.Manager.ReturnRequestContext( context );
 					this.Receive( responseContext );
@@ -778,7 +867,6 @@ namespace MsgPack.Rpc.Client.Protocols
 			}
 			finally
 			{
-				context.Clear();
 				this.Manager.ReturnTransport( this );
 			}
 		}
@@ -859,6 +947,11 @@ namespace MsgPack.Rpc.Client.Protocols
 				throw new ArgumentNullException( "context" );
 			}
 
+			Contract.EndContractBlock();
+
+			context.StopWatchTimeout();
+			context.Timeout -= this.OnReceiveTimeout;
+
 			if ( MsgPackRpcClientProtocolsTrace.ShouldTrace( MsgPackRpcClientProtocolsTrace.ReceiveInboundData ) )
 			{
 				var socket = this.BoundSocket;
@@ -892,7 +985,7 @@ namespace MsgPack.Rpc.Client.Protocols
 				}
 				else if ( this.IsClientShutdown )
 				{
-					// Server sent shutdown response.
+					// Client was started shutdown.
 					this.ShutdownReceiving();
 				}
 

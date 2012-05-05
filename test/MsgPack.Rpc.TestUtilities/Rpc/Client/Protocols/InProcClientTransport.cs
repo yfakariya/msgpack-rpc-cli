@@ -102,14 +102,29 @@ namespace MsgPack.Rpc.Client.Protocols
 		{
 			if ( disposing )
 			{
-				var destination = Interlocked.Exchange( ref this._destination, null );
-				if ( destination != null )
-				{
-					destination.Response -= this.OnDestinationResponse;
-				}
+				this.Disconnect();
 			}
 
 			base.Dispose( disposing );
+		}
+
+		protected override void ResetConnection()
+		{
+			this.Disconnect();
+
+			base.ResetConnection();
+		}
+
+		private void Disconnect()
+		{
+			var destination = Interlocked.Exchange( ref this._destination, null );
+			if ( destination != null )
+			{
+				destination.Response -= this.OnDestinationResponse;
+			}
+
+			this._inboundQueue.Dispose();
+			Interlocked.Exchange( ref this._canSend, 0 );
 		}
 
 		internal void SetDestination( InProcServerTransport destination )
