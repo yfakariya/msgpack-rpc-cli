@@ -94,7 +94,7 @@ namespace MsgPack.Rpc.Protocols
 				{ SocketError.SocketNotSupported, RpcError.TransportError },
 				{ SocketError.Success, RpcError.TransportError },
 				{ SocketError.SystemNotReady, RpcError.TransportError },
-				{ SocketError.TimedOut, RpcError.TimeoutError },
+				{ SocketError.TimedOut, RpcError.ConnectionTimeoutError },
 				{ SocketError.TooManyOpenSockets, RpcError.TransportError },
 				{ SocketError.TryAgain, RpcError.TransportError },
 				{ SocketError.TypeNotFound, RpcError.TransportError },

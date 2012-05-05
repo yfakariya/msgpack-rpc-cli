@@ -78,7 +78,7 @@ namespace MsgPack.Rpc.Protocols
 				}
 				case SocketError.TimedOut:
 				{
-					return RpcError.TimeoutError;
+					return RpcError.ConnectionTimeoutError;
 				}
 				default:
 				{
