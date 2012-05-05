@@ -448,6 +448,13 @@ namespace MsgPack.Rpc.Client.Protocols
 
 		private void HandleDeserializationError( ClientResponseContext context, int? messageId, RpcErrorMessage rpcError, string message, Func<byte[]> invalidRequestHeaderProvider )
 		{
+			MsgPackRpcClientProtocolsTrace.TraceRpcError(
+				rpcError.Error,
+				"Deserialization error. {{ \"Message ID\" : {0}, \"Error\" : {1} }}",
+				messageId == null ? "(null)" : messageId.ToString(),
+				rpcError
+			); 
+			
 			if ( invalidRequestHeaderProvider != null && MsgPackRpcClientProtocolsTrace.ShouldTrace( MsgPackRpcClientProtocolsTrace.DumpInvalidResponseHeader ) )
 			{
 				var array = invalidRequestHeaderProvider();
