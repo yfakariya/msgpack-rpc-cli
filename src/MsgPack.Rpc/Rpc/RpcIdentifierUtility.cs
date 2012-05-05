@@ -20,6 +20,7 @@
 
 using System;
 using System.Globalization;
+using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -63,18 +64,42 @@ namespace MsgPack.Rpc
 			string normalized = identifier.Normalize( NormalizationForm.FormC );
 			if ( !_validIdentififerPattern.IsMatch( normalized ) )
 			{
-				// FIXME: Escaping
 				throw new ArgumentException(
 					String.Format(
 						CultureInfo.CurrentCulture,
 						"'{0}' is not valid identifier.",
-						identifier
+						Escape( identifier )
 					),
 					parameterName
 				);
 			}
 
 			return normalized;
+		}
+
+		private static string Escape( string identifier )
+		{
+			var buffer = new StringBuilder( identifier.Length );
+			foreach ( var c in identifier )
+			{
+				switch ( CharUnicodeInfo.GetUnicodeCategory( c ) )
+				{
+					case UnicodeCategory.Control:
+					case UnicodeCategory.OtherNotAssigned:
+					case UnicodeCategory.PrivateUse:
+					{
+						buffer.AppendFormat( CultureInfo.InvariantCulture, "\\u{0:X}", ( ushort )c );
+						break;
+					}
+					default:
+					{
+						buffer.Append( c );
+						break;
+					}
+				}
+			}
+
+			return buffer.ToString();
 		}
 	}
 }
