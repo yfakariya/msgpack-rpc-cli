@@ -604,9 +604,7 @@ namespace MsgPack.Rpc.Client.Protocols
 		/// </exception>
 		public virtual ClientRequestContext GetClientRequestContext()
 		{
-			var context = this.Manager.RequestContextPool.Borrow();
-			context.SetTransport( this );
-			context.RenewSessionId();
+			var context = this.Manager.GetRequestContext( this );
 			return context;
 		}
 
@@ -759,14 +757,15 @@ namespace MsgPack.Rpc.Client.Protocols
 					}
 					finally
 					{
+						this.Manager.ReturnRequestContext( context );
 						this.OnProcessFinished();
 					}
 				}
 				else
 				{
-					var responseContext = this.Manager.ResponseContextPool.Borrow();
-					responseContext.SetTransport( this );
-					responseContext.SessionId = context.SessionId;
+					var responseContext = this.Manager.GetResponseContext( this );
+
+					this.Manager.ReturnRequestContext( context );
 					this.Receive( responseContext );
 				}
 			}
@@ -892,6 +891,7 @@ namespace MsgPack.Rpc.Client.Protocols
 				if ( !context.ReceivedData.Any( segment => 0 < segment.Count ) )
 				{
 					// There are no data to handle.
+					this.FinishReceiving( context );
 					return;
 				}
 			}
@@ -921,6 +921,7 @@ namespace MsgPack.Rpc.Client.Protocols
 			catch ( RpcException ex )
 			{
 				this.HandleDeserializationError( context, TryDetectMessageId( context ), new RpcErrorMessage( ex.RpcError, ex.Message, ex.DebugInformation ), "Filter rejects message.", () => context.ReceivedData.SelectMany( s => s.AsEnumerable() ).ToArray() );
+				this.FinishReceiving( context );
 				return;
 			}
 
@@ -929,6 +930,7 @@ namespace MsgPack.Rpc.Client.Protocols
 				if ( this.IsServerShutdown )
 				{
 					this.ShutdownReceiving( context );
+					this.FinishReceiving( context );
 				}
 				else
 				{
@@ -938,6 +940,11 @@ namespace MsgPack.Rpc.Client.Protocols
 
 				return;
 			}
+		}
+
+		private void FinishReceiving( ClientResponseContext context )
+		{
+			this.Manager.ReturnResponseContext( context );
 		}
 
 		private static int? TryDetectMessageId( ClientResponseContext context )
@@ -1003,8 +1010,7 @@ namespace MsgPack.Rpc.Client.Protocols
 
 			Contract.EndContractBlock();
 
-			context.UnboundTransport();
-			this._manager.RequestContextPool.Return( context );
+			this.Manager.ReturnRequestContext( context );
 		}
 
 		/// <summary>
@@ -1031,7 +1037,7 @@ namespace MsgPack.Rpc.Client.Protocols
 
 			Contract.EndContractBlock();
 
-			this._manager.ResponseContextPool.Return( context );
+			this.Manager.ReturnResponseContext( context );
 		}
 	}
 }

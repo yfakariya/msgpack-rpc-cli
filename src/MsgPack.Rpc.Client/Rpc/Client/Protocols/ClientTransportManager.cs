@@ -42,7 +42,7 @@ namespace MsgPack.Rpc.Client.Protocols
 		///		The <see cref="ObjectPool{T}"/> of <see cref="ClientRequestContext"/>.
 		///		This value will not be <c>null</c>.
 		/// </value>
-		public ObjectPool<ClientRequestContext> RequestContextPool
+		protected ObjectPool<ClientRequestContext> RequestContextPool
 		{
 			get
 			{
@@ -61,7 +61,7 @@ namespace MsgPack.Rpc.Client.Protocols
 		///		The <see cref="ObjectPool{T}"/> of <see cref="ClientResponseContext"/>.
 		///		This value will not be <c>null</c>.
 		/// </value>
-		public ObjectPool<ClientResponseContext> ResponseContextPool
+		protected ObjectPool<ClientResponseContext> ResponseContextPool
 		{
 			get
 			{
@@ -272,7 +272,7 @@ namespace MsgPack.Rpc.Client.Protocols
 		/// </summary>
 		protected virtual void BeginShutdownCore()
 		{
-			
+
 		}
 
 		/// <summary>
@@ -359,6 +359,44 @@ namespace MsgPack.Rpc.Client.Protocols
 		internal void HandleOrphan( int? messageId, long sessionId, RpcErrorMessage rpcError, MessagePackObject? returnValue )
 		{
 			this.OnUnknownResponseReceived( new UnknownResponseReceivedEventArgs( messageId, rpcError, returnValue ) );
+		}
+
+		internal ClientRequestContext GetRequestContext( ClientTransport transport )
+		{
+			Contract.Requires( transport != null );
+			Contract.Ensures( Contract.Result<ClientRequestContext>() != null );
+
+			var result = this.RequestContextPool.Borrow();
+			result.SetTransport( transport );
+			result.RenewSessionId();
+			return result;
+		}
+
+		internal ClientResponseContext GetResponseContext( ClientTransport transport )
+		{
+			Contract.Requires( transport != null );
+			Contract.Ensures( Contract.Result<ClientResponseContext>() != null );
+
+			var result = this.ResponseContextPool.Borrow();
+			result.RenewSessionId();
+			result.SetTransport( transport );
+			return result;
+		}
+
+		internal void ReturnRequestContext( ClientRequestContext context )
+		{
+			Contract.Requires( context != null );
+			context.Clear();
+			context.UnboundTransport();
+			this.RequestContextPool.Return( context );
+		}
+
+		internal void ReturnResponseContext( ClientResponseContext context )
+		{
+			Contract.Requires( context != null );
+			context.Clear();
+			context.UnboundTransport();
+			this.ResponseContextPool.Return( context );
 		}
 	}
 }
