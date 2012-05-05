@@ -818,57 +818,53 @@ namespace MsgPack.Rpc.Client.Protocols
 			context.Timeout -= this.OnSendTimeout;
 
 			context.ClearBuffers();
-			try
+
+			if ( context.MessageType == MessageType.Notification )
 			{
-				if ( context.MessageType == MessageType.Notification )
+				try
 				{
+					Action<Exception, bool> handler = null;
 					try
 					{
-						Action<Exception, bool> handler = null;
-						try
-						{
-							this._pendingNotificationTable.TryRemove( context.SessionId, out handler );
-						}
-						finally
-						{
-							var rpcError = context.SocketError.ToClientRpcError();
-							if ( handler != null )
-							{
-								handler( rpcError.IsSuccess ? null : rpcError.ToException(), context.CompletedSynchronously );
-							}
-						}
+						this._pendingNotificationTable.TryRemove( context.SessionId, out handler );
 					}
 					finally
 					{
-						this.Manager.ReturnRequestContext( context );
-						this.OnProcessFinished();
+						var rpcError = context.SocketError.ToClientRpcError();
+						if ( handler != null )
+						{
+							handler( rpcError.IsSuccess ? null : rpcError.ToException(), context.CompletedSynchronously );
+						}
 					}
 				}
-				else
+				finally
 				{
-					if ( this.Manager.Configuration.WaitTimeout != null
-						&&( this.Manager.Configuration.WaitTimeout.Value - context.ElapsedTime).TotalMilliseconds < 1.0 )
-					{
-						this.OnWaitTimeout( context );
-						this.Manager.ReturnRequestContext( context );
-						return;
-					}
-
-					var responseContext = this.Manager.GetResponseContext( this );
-
-					if ( this.Manager.Configuration.WaitTimeout != null )
-					{
-						responseContext.Timeout += this.OnReceiveTimeout;
-						responseContext.StartWatchTimeout( this.Manager.Configuration.WaitTimeout.Value - context.ElapsedTime );
-					}
-
 					this.Manager.ReturnRequestContext( context );
-					this.Receive( responseContext );
+					this.OnProcessFinished();
+					this.Manager.ReturnTransport( this );
 				}
 			}
-			finally
+			else
 			{
-				this.Manager.ReturnTransport( this );
+				if ( this.Manager.Configuration.WaitTimeout != null
+					&& ( this.Manager.Configuration.WaitTimeout.Value - context.ElapsedTime ).TotalMilliseconds < 1.0 )
+				{
+					this.OnWaitTimeout( context );
+					this.Manager.ReturnRequestContext( context );
+					this.Manager.ReturnTransport( this );
+					return;
+				}
+
+				var responseContext = this.Manager.GetResponseContext( this );
+
+				if ( this.Manager.Configuration.WaitTimeout != null )
+				{
+					responseContext.Timeout += this.OnReceiveTimeout;
+					responseContext.StartWatchTimeout( this.Manager.Configuration.WaitTimeout.Value - context.ElapsedTime );
+				}
+
+				this.Manager.ReturnRequestContext( context );
+				this.Receive( responseContext );
 			}
 		}
 
@@ -949,9 +945,6 @@ namespace MsgPack.Rpc.Client.Protocols
 			}
 
 			Contract.EndContractBlock();
-
-			context.StopWatchTimeout();
-			context.Timeout -= this.OnReceiveTimeout;
 
 			if ( MsgPackRpcClientProtocolsTrace.ShouldTrace( MsgPackRpcClientProtocolsTrace.ReceiveInboundData ) )
 			{
@@ -1046,7 +1039,10 @@ namespace MsgPack.Rpc.Client.Protocols
 
 		private void FinishReceiving( ClientResponseContext context )
 		{
+			context.StopWatchTimeout();
+			context.Timeout -= this.OnReceiveTimeout;
 			this.Manager.ReturnResponseContext( context );
+			this.Manager.ReturnTransport( this );
 		}
 
 		private static int? TryDetectMessageId( ClientResponseContext context )
