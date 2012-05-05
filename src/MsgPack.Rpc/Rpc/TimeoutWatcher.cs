@@ -154,7 +154,9 @@ namespace MsgPack.Rpc
 						this._registeredWaitHandle = null;
 					}
 
-					this._waitHandle.Reset();
+					// It is unstable to reuse wait handles...
+					this._waitHandle.Close();
+					this._waitHandle = null;
 				}
 
 				Interlocked.Exchange( ref this._state, StateIdle );
@@ -191,8 +193,7 @@ namespace MsgPack.Rpc
 
 		private void OnPulse( object state, bool isTimeout )
 		{
-			// isTimeout is not very reliable...
-			if ( Interlocked.CompareExchange( ref this._state, StateTimeout, StateWatching ) == StateWatching )
+			if ( isTimeout && Interlocked.CompareExchange( ref this._state, StateTimeout, StateWatching ) == StateWatching )
 			{
 				this.OnTimeout();
 			}
