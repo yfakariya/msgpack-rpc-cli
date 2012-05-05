@@ -714,11 +714,7 @@ namespace MsgPack.Rpc.Server.Protocols
 					this._manager.Server.Configuration.ReceiveTimeout
 			);
 
-			if ( context.MessageId == null )
-			{
-				this.ResetConnection();
-			}
-			else
+			if ( context.MessageId != null )
 			{
 				var rpcError = new RpcErrorMessage( RpcError.MessageRefusedError, "Receive timeout.", this._manager.Server.Configuration.ReceiveTimeout.ToString() );
 				// Try send error response.
@@ -726,8 +722,9 @@ namespace MsgPack.Rpc.Server.Protocols
 				// Delegates to the manager to raise error event.
 				this.Manager.RaiseClientError( context as ServerRequestContext, rpcError );
 				context.Clear();
-				this.BeginShutdown();
 			}
+
+			this.ResetConnection();
 		}
 
 		#endregion
