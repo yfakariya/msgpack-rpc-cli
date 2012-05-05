@@ -513,12 +513,6 @@ namespace MsgPack.Rpc.Server.Protocols
 			Contract.Assert( context != null );
 			Contract.Assert( invalidRequestHeaderProvider != null );
 
-			if ( invalidRequestHeaderProvider != null && MsgPackRpcServerProtocolsTrace.ShouldTrace( MsgPackRpcServerProtocolsTrace.DumpInvalidRequestHeader ) )
-			{
-				var array = invalidRequestHeaderProvider();
-				MsgPackRpcServerProtocolsTrace.TraceData( MsgPackRpcServerProtocolsTrace.DumpInvalidRequestHeader, BitConverter.ToString( array ), array );
-			}
-
 			this.HandleDeserializationError( context, RpcError.MessageRefusedError, "Invalid stream.", message, invalidRequestHeaderProvider );
 		}
 
@@ -565,6 +559,12 @@ namespace MsgPack.Rpc.Server.Protocols
 				messageId == null ? "(null)" : messageId.ToString(),
 				rpcError
 			);
+
+			if ( invalidRequestHeaderProvider != null && MsgPackRpcServerProtocolsTrace.ShouldTrace( MsgPackRpcServerProtocolsTrace.DumpInvalidRequestHeader ) )
+			{
+				var array = invalidRequestHeaderProvider();
+				MsgPackRpcServerProtocolsTrace.TraceData( MsgPackRpcServerProtocolsTrace.DumpInvalidRequestHeader, BitConverter.ToString( array ), array );
+			}
 
 			// Try send error response.
 			this.SendError( context.SessionId, messageId, rpcError );
