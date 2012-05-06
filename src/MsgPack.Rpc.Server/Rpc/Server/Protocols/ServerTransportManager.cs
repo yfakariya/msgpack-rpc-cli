@@ -24,6 +24,7 @@ using System.Globalization;
 using System.Net.Sockets;
 using System.Threading;
 using MsgPack.Rpc.Protocols;
+using System.Net;
 
 namespace MsgPack.Rpc.Server.Protocols
 {
@@ -453,18 +454,20 @@ namespace MsgPack.Rpc.Server.Protocols
 			Contract.Requires( requestContext.BoundTransport != null );
 			Contract.Ensures( Contract.Result<ServerResponseContext>() != null );
 
-			return this.GetResponseContext( requestContext.BoundTransport, requestContext.SessionId, requestContext.MessageId.Value );
+			return this.GetResponseContext( requestContext.BoundTransport, requestContext.RemoteEndPoint, requestContext.SessionId, requestContext.MessageId.Value );
 		}
 
-		internal ServerResponseContext GetResponseContext( IContextBoundableTransport transport, long sessionId, int messageId )
+		internal ServerResponseContext GetResponseContext( IContextBoundableTransport transport, EndPoint remoteEndPoint, long sessionId, int messageId )
 		{
 			Contract.Requires( transport != null );
+			Contract.Requires( remoteEndPoint != null );
 			Contract.Ensures( Contract.Result<ServerResponseContext>() != null );
 
 			var result = this.ResponseContextPool.Borrow();
 			result.MessageId = messageId;
 			result.SessionId = sessionId;
 			result.SetTransport( transport );
+			result.RemoteEndPoint = remoteEndPoint;
 			return result;
 		}
 

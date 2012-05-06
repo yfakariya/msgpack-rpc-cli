@@ -20,10 +20,9 @@
 
 using System;
 using System.Globalization;
+using System.Net;
 using System.Net.Sockets;
 using System.Threading;
-using System.Diagnostics.Contracts;
-using System.Net;
 
 namespace MsgPack.Rpc.Server.Protocols
 {
@@ -32,8 +31,23 @@ namespace MsgPack.Rpc.Server.Protocols
 	/// </summary>
 	public sealed class UdpServerTransportManager : ServerTransportManager<UdpServerTransport>
 	{
+		private readonly EndPoint _listeningEndPoint;
+		private readonly EndPoint _bindingEndPoint;
+		private readonly Thread _listeningThread;
 		private readonly Socket _listeningSocket;
-		private readonly ListeningContext _listeningContext;
+		private int _isActive;
+
+		private bool IsActive
+		{
+			get
+			{
+				return Interlocked.CompareExchange( ref this._isActive, 0, 0 ) != 0;
+			}
+			set
+			{
+				Interlocked.Exchange( ref this._isActive, value ? 1 : 0 );
+			}
+		}
 
 		/// <summary>
 		///		Initializes a new instance of the <see cref="UdpServerTransportManager"/> class.
@@ -49,7 +63,6 @@ namespace MsgPack.Rpc.Server.Protocols
 			base.SetTransportPool( server.Configuration.UdpTransportPoolProvider( () => new UdpServerTransport( this ), server.Configuration.CreateTransportPoolConfiguration() ) );
 #endif
 
-			this._listeningContext = new ListeningContext();
 			var addressFamily = ( server.Configuration.PreferIPv4 || !Socket.OSSupportsIPv6 ) ? AddressFamily.InterNetwork : AddressFamily.InterNetworkV6;
 			var bindingEndPoint = this.Configuration.BindingEndPoint;
 #if !API_SIGNATURE_TEST
@@ -66,97 +79,85 @@ namespace MsgPack.Rpc.Server.Protocols
 				);
 			}
 #endif
+			this._bindingEndPoint = bindingEndPoint;
+
+			this._listeningEndPoint = new IPEndPoint( addressFamily == AddressFamily.InterNetworkV6 ? IPAddress.IPv6Any : IPAddress.Any, 0 );
+
 			this._listeningSocket =
 				new Socket(
-					bindingEndPoint.AddressFamily,
+					this._bindingEndPoint.AddressFamily,
 					SocketType.Dgram,
 					ProtocolType.Udp
 				);
+			this._listeningSocket.Bind( this._bindingEndPoint );
+			this._listeningThread = new Thread( this.PollArrival ) { IsBackground = true, Name = "UdpListeningThread#" + this.GetHashCode() };
+			this.IsActive = true;
+			this._listeningThread.Start();
+		}
 
-			this._listeningSocket.Bind( bindingEndPoint );
-			this._listeningContext.RemoteEndPoint = bindingEndPoint;
+		/// <summary>
+		/// When overridden in derived class, releases unmanaged and - optionally - managed resources
+		/// </summary>
+		/// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
+		protected override void DisposeCore( bool disposing )
+		{
+			try
+			{
+				this.IsActive = false;
+				base.DisposeCore( disposing );
+				this._listeningSocket.Close();
+			}
+			finally
+			{
+				this._listeningThread.Join();
+			}
+		}
 
+		private void PollArrival()
+		{
 #if !API_SIGNATURE_TEST
 			MsgPackRpcServerProtocolsTrace.TraceEvent(
 				MsgPackRpcServerProtocolsTrace.StartListen,
 				"Start listen. {{ \"Socket\" : 0x{0:X}, \"EndPoint\" : \"{1}\", \"ListenBackLog\" : {2} }}",
 				this._listeningSocket.Handle,
-				bindingEndPoint,
-				server.Configuration.ListenBackLog
+				this._bindingEndPoint,
+				this.Server.Configuration.ListenBackLog
 			);
 #endif
+			var transport = this.GetTransport( this._listeningSocket );
 
-			//FIXME: Receive chain.
-			this.PollArrival();
-		}
-
-		private void PollArrival()
-		{
-			// FIXME: Configurable
-			this._listeningContext.SetBuffer( new byte[ 65536 ], 0, 65536 );
-			this._listeningContext.BufferList = null;
-
-			// FIXME: Use multicast to establish virtual connection.
-			if ( !this._listeningSocket.ReceiveFromAsync( this._listeningContext ) )
+			while ( this.IsActive )
 			{
-				this.OnArrived( this._listeningContext );
-			}
-		}
-
-		private void OnCompleted( object sender, SocketAsyncEventArgs e )
-		{
-			if ( !this.HandleSocketError( sender as Socket, e ) )
-			{
-				return;
-			}
-
-			switch ( e.LastOperation )
-			{
-				case SocketAsyncOperation.ReceiveFrom:
+				ServerRequestContext context;
+				try
 				{
-					var context = e as ListeningContext;
-					Contract.Assert( context != null );
-					this.OnArrived( context );
-					break;
+					context = this.GetRequestContext( transport );
 				}
-				default:
+				catch ( ObjectDisposedException )
 				{
-#if !API_SIGNATURE_TEST
-					var socket = sender as Socket;
-					MsgPackRpcServerProtocolsTrace.TraceEvent(
-						MsgPackRpcServerProtocolsTrace.UnexpectedLastOperation,
-						"Unexpected operation. {{ \"Socket\" : 0x{0:X}, \"RemoteEndPoint\" : \"{1}\", \"LocalEndPoint\" : \"{2}\", \"LastOperation\" : \"{3}\" }}",
-						socket.Handle,
-						socket.RemoteEndPoint,
-						socket.LocalEndPoint,
-						e.LastOperation
-					);
-#endif
-					break;
+					this.ReturnTransport( transport );
+
+					if ( this.IsActive )
+					{
+						throw;
+					}
+					else
+					{
+						return;
+					}
 				}
+
+				context.RemoteEndPoint = this._listeningEndPoint;
+
+				if ( !this.IsActive )
+				{
+					this.ReturnRequestContext( context );
+					this.ReturnTransport( transport );
+					return;
+				}
+
+				transport.Receive( context );
 			}
-		}
-
-
-		private void OnArrived( ListeningContext context )
-		{
-#if !API_SIGNATURE_TEST
-			MsgPackRpcServerProtocolsTrace.TraceEvent(
-				MsgPackRpcServerProtocolsTrace.EndAccept,
-				"Accept. {{ \"Socket\" : 0x{0:X}, \"RemoteEndPoint\" : \"{1}\", \"LocalEndPoint\" : \"{2}\" }}",
-				context.AcceptSocket.Handle,
-				context.AcceptSocket.RemoteEndPoint,
-				context.AcceptSocket.LocalEndPoint
-			);
-#endif
-
-			Contract.Assert( context.BytesTransferred == 0, context.BytesTransferred.ToString() );
-
-			var transport = this.GetTransport( context.AcceptSocket );
-			context.AcceptSocket = null;
-			this.Accept( context );
-			// FIXME: Remove context pooling
-			transport.Receive( this.GetRequestContext( transport ) );
 		}
 
 		/// <summary>

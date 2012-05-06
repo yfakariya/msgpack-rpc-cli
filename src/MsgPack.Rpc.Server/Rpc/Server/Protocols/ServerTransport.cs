@@ -956,14 +956,22 @@ namespace MsgPack.Rpc.Server.Protocols
 					return;
 				}
 
-				// Wait to arrive more data from client.
-				this.ReceiveCore( context );
+				if ( this.CanResumeReceiving )
+				{
+					// Wait to arrive more data from client.
+					this.ReceiveCore( context );
+					return;
+				}
 			}
-			else
+			else if( this.CanResumeReceiving )
 			{
 				// try next receive
 				this.PrivateReceive( context );
+				return;
 			}
+
+			this.FinishReceiving( context );
+			return;
 		}
 
 		private void FinishReceivingWithShutdown( ServerRequestContext context )
@@ -1061,6 +1069,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		/// <summary>
 		///		Sends specified RPC error as response.
 		/// </summary>
+		/// <param name="remoteEndPoint">The <see cref="EndPoint"/> of the destination.</param>
 		/// <param name="sessionId">The session ID of cause session.</param>
 		/// <param name="messageId">The message ID of the inbound message.</param>
 		/// <param name="rpcError">
@@ -1072,7 +1081,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		///	<exception cref="ObjectDisposedException">
 		///		This instance is disposed.
 		///	</exception>
-		private void SendError( long sessionId, int? messageId, RpcErrorMessage rpcError )
+		private void SendError( EndPoint remoteEndPoint, long sessionId, int? messageId, RpcErrorMessage rpcError )
 		{
 			if ( messageId == null )
 			{
@@ -1081,7 +1090,7 @@ namespace MsgPack.Rpc.Server.Protocols
 				return;
 			}
 
-			var context = this.Manager.GetResponseContext( this, sessionId, messageId.Value );
+			var context = this.Manager.GetResponseContext( this, remoteEndPoint, sessionId, messageId.Value );
 
 			context.Serialize<object>( null, rpcError, null );
 			this.PrivateSend( context );

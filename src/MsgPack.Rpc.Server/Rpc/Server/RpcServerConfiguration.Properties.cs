@@ -1048,6 +1048,48 @@ namespace MsgPack.Rpc.Server
 		
 		static partial void CoerceTcpTransportPoolProviderValue( ref Func<Func<TcpServerTransport>, ObjectPoolConfiguration, ObjectPool<TcpServerTransport>> value );
 
+		private Func<Func<UdpServerTransport>, ObjectPoolConfiguration, ObjectPool<UdpServerTransport>> _udpTransportPoolProvider = ( factory, configuration ) => new StandardObjectPool<UdpServerTransport>( factory, configuration );
+		
+		/// <summary>
+		/// 	Gets or sets the factory function which creates new <see cref="ObjectPool{T}" /> of <see cref="UdpServerTransport" />.
+		/// </summary>
+		/// <value>
+		/// 	The factory function which creates new <see cref="ObjectPool{T}" /> of <see cref="UdpServerTransport" />. The default is the delegate which creates <see cref="StandardObjectPool{T}" /> instance with <c>null</c> configuration.
+		/// </value>
+		public Func<Func<UdpServerTransport>, ObjectPoolConfiguration, ObjectPool<UdpServerTransport>> UdpTransportPoolProvider
+		{
+			get
+			{
+				Contract.Ensures( Contract.Result<Func<Func<UdpServerTransport>, ObjectPoolConfiguration, ObjectPool<UdpServerTransport>>>() != null );
+
+				return this._udpTransportPoolProvider;
+			}
+			set
+			{
+				if ( !( value != null ) )
+				{
+					throw new ArgumentNullException( "value" );
+				}
+
+				Contract.Ensures( Contract.Result<Func<Func<UdpServerTransport>, ObjectPoolConfiguration, ObjectPool<UdpServerTransport>>>() != null );
+
+				this.VerifyIsNotFrozen();
+				var coerced = value;
+				CoerceUdpTransportPoolProviderValue( ref coerced );
+				this._udpTransportPoolProvider = coerced;
+			}
+		}
+		
+		/// <summary>
+		/// 	Resets the UdpTransportPoolProvider property value.
+		/// </summary>
+		public void ResetUdpTransportPoolProvider()
+		{
+			this._udpTransportPoolProvider = ( factory, configuration ) => new StandardObjectPool<UdpServerTransport>( factory, configuration );
+		}
+		
+		static partial void CoerceUdpTransportPoolProviderValue( ref Func<Func<UdpServerTransport>, ObjectPoolConfiguration, ObjectPool<UdpServerTransport>> value );
+
 		/// <summary>
 		/// 	Returns a string that represents the current object.
 		/// </summary>
@@ -1132,6 +1174,9 @@ namespace MsgPack.Rpc.Server
 			buffer.Append( ", " );
 			buffer.Append( "\"TcpTransportPoolProvider\" : " );
 			ToString( this.TcpTransportPoolProvider, buffer );
+			buffer.Append( ", " );
+			buffer.Append( "\"UdpTransportPoolProvider\" : " );
+			ToString( this.UdpTransportPoolProvider, buffer );
 			buffer.Append( " }" );
 			return buffer.ToString();
 		}

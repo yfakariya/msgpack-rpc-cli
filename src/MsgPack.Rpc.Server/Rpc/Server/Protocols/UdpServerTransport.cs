@@ -19,6 +19,7 @@
 #endregion -- License Terms --
 
 using System;
+using System.Diagnostics.Contracts;
 
 namespace MsgPack.Rpc.Server.Protocols
 {
@@ -27,6 +28,17 @@ namespace MsgPack.Rpc.Server.Protocols
 	/// </summary>
 	public sealed class UdpServerTransport : ServerTransport
 	{
+		/// <summary>
+		/// Gets a value indicating whether this instance can resume receiving.
+		/// </summary>
+		/// <value>
+		/// 	<c>true</c> if this instance can resume receiving; otherwise, <c>false</c>.
+		/// </value>
+		protected override bool CanResumeReceiving
+		{
+			get { return false; }
+		}
+
 		/// <summary>
 		///		Initializes a new instance of the <see cref="UdpServerTransport"/> class.
 		/// </summary>
@@ -43,7 +55,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		protected sealed override void SendCore( ServerResponseContext context )
 		{
 			// Manager stores the socket which is dedicated socket to this transport in the AcceptSocket property.
-			if ( !this.BoundSocket.SendToAsync( context.SocketContext ) )
+			if ( !BoundSocket.SendToAsync( context.SocketContext ) )
 			{
 				context.SetCompletedSynchronously();
 				this.OnSent( context );
@@ -57,7 +69,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		protected sealed override void ReceiveCore( ServerRequestContext context )
 		{
 			// Manager stores the socket which is dedicated socket to this transport in the AcceptSocket property.
-			if ( !this.BoundSocket.ReceiveFromAsync( context.SocketContext ) )
+			if ( !BoundSocket.ReceiveFromAsync( context.SocketContext ) )
 			{
 				context.SetCompletedSynchronously();
 				this.OnReceived( context );

@@ -110,6 +110,7 @@
     <Compile Include="Rpc\Server\Protocols\TcpServerTransportTest.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Rpc\Server\Protocols\UdpServerTransportTest.cs" />
     <Compile Include="Rpc\Server\Protocols\_SetUpFixture.cs" />
     <Compile Include="Rpc\Server\_SetUpFixture.cs" />
   </ItemGroup>

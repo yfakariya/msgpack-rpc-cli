@@ -113,6 +113,8 @@
     <Compile Include="Rpc\Server\Protocols\TcpServerTransport.cs" />
     <Compile Include="Rpc\Server\Protocols\ServerProcessingState.cs" />
     <Compile Include="Rpc\Server\Protocols\TcpServerTransportManager.cs" />
+    <Compile Include="Rpc\Server\Protocols\UdpServerTransport.cs" />
+    <Compile Include="Rpc\Server\Protocols\UdpServerTransportManager.cs" />
     <Compile Include="Rpc\Server\RpcServer.cs">
       <SubType>Code</SubType>
     </Compile>
