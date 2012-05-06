@@ -225,6 +225,42 @@ new List<Property>()
 	},
 	new Property()
 	{
+		Name = "InitialReceiveBufferLength",
+		Type = "int",
+		Default = "65536",
+		Summary = "Gets or sets the initial buffer size to receive packets.",
+		Value = "The initial buffer size to receive packets. " +
+			"The default is <c>65536</c>."
+	},
+	new Property()
+	{
+		Name = "InitialArgumentsBufferLength",
+		Type = "int",
+		Default = "65536",
+		Summary = "Gets or sets the initial buffer size to unpack arguments.",
+		Value = "The initial buffer size to unpack arguments. " +
+			"The default is <c>65536</c>."
+	},
+	new Property()
+	{
+		Name = "InitialErrorBufferLength",
+		Type = "int",
+		Default = "128",
+		Summary = "Gets or sets the initial buffer size to pack error.",
+		Value = "The initial buffer size to pack error. " +
+			"The default is <c>128</c>."
+	},
+	new Property()
+	{
+		Name = "InitialReturnValueBufferLength",
+		Type = "int",
+		Default = "65536",
+		Summary = "Gets or sets the initial buffer size to pack return values.",
+		Value = "The initial buffer size to pack return values. " +
+			"The default is <c>65536</c>."
+	},
+	new Property()
+	{
 		Name = "IsDebugMode",
 		Type = "bool",
 		Default = "false",

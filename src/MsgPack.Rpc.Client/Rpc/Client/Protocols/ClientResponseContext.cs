@@ -56,9 +56,21 @@ namespace MsgPack.Rpc.Client.Protocols
 		internal Stream DumpStream;
 
 		/// <summary>
-		///		Initializes a new instance of the <see cref="ClientResponseContext"/> class.
+		///		Initializes a new instance of the <see cref="ClientResponseContext"/> class with default settings.
 		/// </summary>
 		public ClientResponseContext()
+			: this( null )
+		{
+		}
+
+		/// <summary>
+		///		Initializes a new instance of the <see cref="ClientResponseContext"/> class with specified configuration.
+		/// </summary>
+		/// <param name="configuration">
+		///		An <see cref="RpcClientConfiguration"/> to tweak this instance initial state.
+		/// </param>
+		public ClientResponseContext( RpcClientConfiguration configuration )
+			: base( ( configuration ?? RpcClientConfiguration.Default ).InitialReceiveBufferLength )
 		{
 			this.ErrorStartAt = -1;
 			this.ResultStartAt = -1;

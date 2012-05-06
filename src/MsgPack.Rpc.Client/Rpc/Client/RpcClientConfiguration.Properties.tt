@@ -95,6 +95,33 @@ new List<Property>()
 	},
 	new Property()
 	{
+		Name = "InitialMethodNameBufferLength",
+		Type = "int",
+		Default = "256",
+		Summary = "Gets or sets the initial buffer size to pack method name.",
+		Value = "The initial buffer size to pack method name. " +
+			"The default is <c>256</c>."
+	},
+	new Property()
+	{
+		Name = "InitialArgumentsBufferLength",
+		Type = "int",
+		Default = "65536",
+		Summary = "Gets or sets the initial buffer size to pack arguments.",
+		Value = "The initial buffer size to pack arguments. " +
+			"The default is <c>65536</c>."
+	},
+	new Property()
+	{
+		Name = "InitialReceiveBufferLength",
+		Type = "int",
+		Default = "65536",
+		Summary = "Gets or sets the initial buffer size to receive packets.",
+		Value = "The initial buffer size to receive packets. " +
+			"The default is <c>65536</c>."
+	},
+	new Property()
+	{
 		Name = "DumpCorruptResponse",
 		Type = "Boolean",
 		Default = "false",
@@ -102,6 +129,25 @@ new List<Property>()
 		Value = "<c>true</c>, if the corrupt response dumping is enabled; <c>false</c>, otherwise.",
 		Precondition = Constraints.None,
 		Postcondition = Constraints.None
+	},
+	new Property()
+	{
+		Name = "CorruptResponseDumpOutputDirectory",
+		Type = "String",
+		Default = "null",
+		Summary = "Gets or sets the directory path the corrupt response dump file is created.",
+		Value = "The directory path the corrupt response dump file is created. " +
+			"To use default location, specify <c>null</c>. " +
+			"The default is <c>null</c>. " +
+			"The enviroment variable can be embeded.",
+		Precondition = Constraints.None,
+		Postcondition = Constraints.None,
+		Remarks = new String[]
+		{
+			"The default location is <c>MsgPack\\v&lt;MsgPack.Rpc.Client AssemblyVersion&lt;\\Client\\Dump</c> under the <c>LocalApplicationDataDirectory</c>.",
+			"The <c>LocalApplicaitonDataDirectory</c> can be gotten using <see cref=\"Environment.GetFolderPath(Environment.SpecialFolder)\" /> with <see cref=\"Environment.SpecialFolder.LocalApplicationData\" />, which is platform dependent.",
+			"For example, it is <c>%UserProfile%\\Application Data\\Local</c> in Windows prior to Windows Vista/Server 2008, <c>%LocalAppData%</c> on recent Windows, and <c>/home/.config/share</c> in Mono on *nix."
+		}
 	}
 };
 

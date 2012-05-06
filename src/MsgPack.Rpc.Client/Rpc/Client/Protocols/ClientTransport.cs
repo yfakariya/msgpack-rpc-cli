@@ -528,7 +528,7 @@ namespace MsgPack.Rpc.Client.Protocols
 			}
 
 			this.RaiseError( messageId, context.SessionId, rpcError, context.CompletedSynchronously );
-			// TODO: configurable
+
 			context.NextProcess = this.DumpCorrupttedData;
 		}
 
@@ -612,7 +612,7 @@ namespace MsgPack.Rpc.Client.Protocols
 				return;
 			}
 
-			using ( var stream = OpenDumpStream( sessionStartedAt, destination, sessionId, type, messageId ) )
+			using ( var stream = this.OpenDumpStream( sessionStartedAt, destination, sessionId, type, messageId ) )
 			{
 				foreach ( var segment in requestData )
 				{
@@ -623,20 +623,25 @@ namespace MsgPack.Rpc.Client.Protocols
 			}
 		}
 
-		private static Stream OpenDumpStream( DateTimeOffset sessionStartedAt, EndPoint destination, long sessionId, MessageType type, int? messageId )
+		private Stream OpenDumpStream( DateTimeOffset sessionStartedAt, EndPoint destination, long sessionId, MessageType type, int? messageId )
 		{
-			// TODO: configurable
-			var filePath =
-				Path.Combine(
+			var directoryPath =
+				String.IsNullOrWhiteSpace( this.Manager.Configuration.CorruptResponseDumpOutputDirectory )
+				? Path.Combine(
 					Environment.GetFolderPath( Environment.SpecialFolder.LocalApplicationData ),
 					"MsgPack",
 					"v" + typeof( ClientTransport ).Assembly.GetName().Version,
 					"Client",
-					"Dump",
+					"Dump"
+				)
+				: Environment.ExpandEnvironmentVariables( this.Manager.Configuration.CorruptResponseDumpOutputDirectory );
+
+			var filePath =
+				Path.Combine(
+					directoryPath,
 					String.Format( CultureInfo.InvariantCulture, "{0:yyyy-MM-dd_HH-mm-ss}-{1}-{2}-{3}{4}.dat", sessionStartedAt, destination == null ? String.Empty : FileSystem.EscapeInvalidPathChars( destination.ToString(), "_" ), sessionId, type, messageId == null ? String.Empty : "-" + messageId )
 				);
 
-			var directoryPath = Path.GetDirectoryName( filePath );
 			if ( !Directory.Exists( directoryPath ) )
 			{
 				Directory.CreateDirectory( directoryPath );

@@ -670,6 +670,138 @@ namespace MsgPack.Rpc.Server
 		
 		static partial void CoerceUseFullMethodNameValue( ref bool value );
 
+		private int _initialReceiveBufferLength = 65536;
+		
+		/// <summary>
+		/// 	Gets or sets the initial buffer size to receive packets.
+		/// </summary>
+		/// <value>
+		/// 	The initial buffer size to receive packets. The default is <c>65536</c>.
+		/// </value>
+		public int InitialReceiveBufferLength
+		{
+			get
+			{
+				return this._initialReceiveBufferLength;
+			}
+			set
+			{
+				this.VerifyIsNotFrozen();
+				var coerced = value;
+				CoerceInitialReceiveBufferLengthValue( ref coerced );
+				this._initialReceiveBufferLength = coerced;
+			}
+		}
+		
+		/// <summary>
+		/// 	Resets the InitialReceiveBufferLength property value.
+		/// </summary>
+		public void ResetInitialReceiveBufferLength()
+		{
+			this._initialReceiveBufferLength = 65536;
+		}
+		
+		static partial void CoerceInitialReceiveBufferLengthValue( ref int value );
+
+		private int _initialArgumentsBufferLength = 65536;
+		
+		/// <summary>
+		/// 	Gets or sets the initial buffer size to unpack arguments.
+		/// </summary>
+		/// <value>
+		/// 	The initial buffer size to unpack arguments. The default is <c>65536</c>.
+		/// </value>
+		public int InitialArgumentsBufferLength
+		{
+			get
+			{
+				return this._initialArgumentsBufferLength;
+			}
+			set
+			{
+				this.VerifyIsNotFrozen();
+				var coerced = value;
+				CoerceInitialArgumentsBufferLengthValue( ref coerced );
+				this._initialArgumentsBufferLength = coerced;
+			}
+		}
+		
+		/// <summary>
+		/// 	Resets the InitialArgumentsBufferLength property value.
+		/// </summary>
+		public void ResetInitialArgumentsBufferLength()
+		{
+			this._initialArgumentsBufferLength = 65536;
+		}
+		
+		static partial void CoerceInitialArgumentsBufferLengthValue( ref int value );
+
+		private int _initialErrorBufferLength = 128;
+		
+		/// <summary>
+		/// 	Gets or sets the initial buffer size to pack error.
+		/// </summary>
+		/// <value>
+		/// 	The initial buffer size to pack error. The default is <c>128</c>.
+		/// </value>
+		public int InitialErrorBufferLength
+		{
+			get
+			{
+				return this._initialErrorBufferLength;
+			}
+			set
+			{
+				this.VerifyIsNotFrozen();
+				var coerced = value;
+				CoerceInitialErrorBufferLengthValue( ref coerced );
+				this._initialErrorBufferLength = coerced;
+			}
+		}
+		
+		/// <summary>
+		/// 	Resets the InitialErrorBufferLength property value.
+		/// </summary>
+		public void ResetInitialErrorBufferLength()
+		{
+			this._initialErrorBufferLength = 128;
+		}
+		
+		static partial void CoerceInitialErrorBufferLengthValue( ref int value );
+
+		private int _initialReturnValueBufferLength = 65536;
+		
+		/// <summary>
+		/// 	Gets or sets the initial buffer size to pack return values.
+		/// </summary>
+		/// <value>
+		/// 	The initial buffer size to pack return values. The default is <c>65536</c>.
+		/// </value>
+		public int InitialReturnValueBufferLength
+		{
+			get
+			{
+				return this._initialReturnValueBufferLength;
+			}
+			set
+			{
+				this.VerifyIsNotFrozen();
+				var coerced = value;
+				CoerceInitialReturnValueBufferLengthValue( ref coerced );
+				this._initialReturnValueBufferLength = coerced;
+			}
+		}
+		
+		/// <summary>
+		/// 	Resets the InitialReturnValueBufferLength property value.
+		/// </summary>
+		public void ResetInitialReturnValueBufferLength()
+		{
+			this._initialReturnValueBufferLength = 65536;
+		}
+		
+		static partial void CoerceInitialReturnValueBufferLengthValue( ref int value );
+
 		private bool _isDebugMode = false;
 		
 		/// <summary>
@@ -970,6 +1102,18 @@ namespace MsgPack.Rpc.Server
 			buffer.Append( ", " );
 			buffer.Append( "\"UseFullMethodName\" : " );
 			ToString( this.UseFullMethodName, buffer );
+			buffer.Append( ", " );
+			buffer.Append( "\"InitialReceiveBufferLength\" : " );
+			ToString( this.InitialReceiveBufferLength, buffer );
+			buffer.Append( ", " );
+			buffer.Append( "\"InitialArgumentsBufferLength\" : " );
+			ToString( this.InitialArgumentsBufferLength, buffer );
+			buffer.Append( ", " );
+			buffer.Append( "\"InitialErrorBufferLength\" : " );
+			ToString( this.InitialErrorBufferLength, buffer );
+			buffer.Append( ", " );
+			buffer.Append( "\"InitialReturnValueBufferLength\" : " );
+			ToString( this.InitialReturnValueBufferLength, buffer );
 			buffer.Append( ", " );
 			buffer.Append( "\"IsDebugMode\" : " );
 			ToString( this.IsDebugMode, buffer );

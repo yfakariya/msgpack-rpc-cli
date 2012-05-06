@@ -88,12 +88,24 @@ namespace MsgPack.Rpc.Server.Protocols
 		}
 
 		/// <summary>
-		///		Initializes a new instance of the <see cref="ServerRequestContext"/> class.
+		///		Initializes a new instance of the <see cref="ServerRequestContext"/> class with default settings.
 		/// </summary>
 		public ServerRequestContext()
+			: this( null )
 		{
-			// TODO: Configurable
-			this.ArgumentsBuffer = new MemoryStream( 65536 );
+		}
+
+		/// <summary>
+		///		Initializes a new instance of the <see cref="ServerRequestContext"/> class with specified configuration.
+		/// </summary>
+		/// <param name="configuration">
+		///		An <see cref="RpcServerConfiguration"/> to tweak this instance initial state.
+		/// </param>
+		public ServerRequestContext( RpcServerConfiguration configuration )
+			: base( ( configuration ?? RpcServerConfiguration.Default ).InitialReceiveBufferLength )
+		{
+			this.ArgumentsBuffer =
+				new MemoryStream( ( configuration ?? RpcServerConfiguration.Default ).InitialArgumentsBufferLength );
 		}
 
 		/// <summary>

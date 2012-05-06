@@ -90,10 +90,18 @@ namespace MsgPack.Rpc.Protocols
 		///		Initializes a new instance of the <see cref="InboundMessageContext"/> class.
 		/// </summary>
 		protected InboundMessageContext()
+			: this( 65536 ) { }
+
+		/// <summary>
+		///		Initializes a new instance of the <see cref="InboundMessageContext"/> class.
+		/// </summary>
+		/// <param name="initialReceivingBufferSize">
+		///		Initial size of receiving buffer.
+		/// </param>
+		protected InboundMessageContext( int initialReceivingBufferSize )
 			: base()
 		{
-			// TODO: Configurable
-			this._currentReceivingBuffer = new byte[ 65536 ];
+			this._currentReceivingBuffer = new byte[ initialReceivingBufferSize ];
 			// TODO: ArrayDeque is preferred.
 			this._receivedData = new List<ArraySegment<byte>>( 1 );
 		}

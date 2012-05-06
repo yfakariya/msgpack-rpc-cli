@@ -275,6 +275,105 @@ namespace MsgPack.Rpc.Client
 		
 		static partial void CoerceTransportManagerProviderValue( ref Func<RpcClientConfiguration, ClientTransportManager> value );
 
+		private int _initialMethodNameBufferLength = 256;
+		
+		/// <summary>
+		/// 	Gets or sets the initial buffer size to pack method name.
+		/// </summary>
+		/// <value>
+		/// 	The initial buffer size to pack method name. The default is <c>256</c>.
+		/// </value>
+		public int InitialMethodNameBufferLength
+		{
+			get
+			{
+				return this._initialMethodNameBufferLength;
+			}
+			set
+			{
+				this.VerifyIsNotFrozen();
+				var coerced = value;
+				CoerceInitialMethodNameBufferLengthValue( ref coerced );
+				this._initialMethodNameBufferLength = coerced;
+			}
+		}
+		
+		/// <summary>
+		/// 	Resets the InitialMethodNameBufferLength property value.
+		/// </summary>
+		public void ResetInitialMethodNameBufferLength()
+		{
+			this._initialMethodNameBufferLength = 256;
+		}
+		
+		static partial void CoerceInitialMethodNameBufferLengthValue( ref int value );
+
+		private int _initialArgumentsBufferLength = 65536;
+		
+		/// <summary>
+		/// 	Gets or sets the initial buffer size to pack arguments.
+		/// </summary>
+		/// <value>
+		/// 	The initial buffer size to pack arguments. The default is <c>65536</c>.
+		/// </value>
+		public int InitialArgumentsBufferLength
+		{
+			get
+			{
+				return this._initialArgumentsBufferLength;
+			}
+			set
+			{
+				this.VerifyIsNotFrozen();
+				var coerced = value;
+				CoerceInitialArgumentsBufferLengthValue( ref coerced );
+				this._initialArgumentsBufferLength = coerced;
+			}
+		}
+		
+		/// <summary>
+		/// 	Resets the InitialArgumentsBufferLength property value.
+		/// </summary>
+		public void ResetInitialArgumentsBufferLength()
+		{
+			this._initialArgumentsBufferLength = 65536;
+		}
+		
+		static partial void CoerceInitialArgumentsBufferLengthValue( ref int value );
+
+		private int _initialReceiveBufferLength = 65536;
+		
+		/// <summary>
+		/// 	Gets or sets the initial buffer size to receive packets.
+		/// </summary>
+		/// <value>
+		/// 	The initial buffer size to receive packets. The default is <c>65536</c>.
+		/// </value>
+		public int InitialReceiveBufferLength
+		{
+			get
+			{
+				return this._initialReceiveBufferLength;
+			}
+			set
+			{
+				this.VerifyIsNotFrozen();
+				var coerced = value;
+				CoerceInitialReceiveBufferLengthValue( ref coerced );
+				this._initialReceiveBufferLength = coerced;
+			}
+		}
+		
+		/// <summary>
+		/// 	Resets the InitialReceiveBufferLength property value.
+		/// </summary>
+		public void ResetInitialReceiveBufferLength()
+		{
+			this._initialReceiveBufferLength = 65536;
+		}
+		
+		static partial void CoerceInitialReceiveBufferLengthValue( ref int value );
+
 		private Boolean _dumpCorruptResponse = false;
 		
 		/// <summary>
@@ -307,6 +406,44 @@ namespace MsgPack.Rpc.Client
 		}
 		
 		static partial void CoerceDumpCorruptResponseValue( ref Boolean value );
+
+		private String _corruptResponseDumpOutputDirectory = null;
+		
+		/// <summary>
+		/// 	Gets or sets the directory path the corrupt response dump file is created.
+		/// </summary>
+		/// <value>
+		/// 	The directory path the corrupt response dump file is created. To use default location, specify <c>null</c>. The default is <c>null</c>. The enviroment variable can be embeded.
+		/// </value>
+		/// <remarks>
+		/// 	The default location is <c>MsgPack\v&lt;MsgPack.Rpc.Client AssemblyVersion&lt;\Client\Dump</c> under the <c>LocalApplicationDataDirectory</c>.
+		/// 	The <c>LocalApplicaitonDataDirectory</c> can be gotten using <see cref="Environment.GetFolderPath(Environment.SpecialFolder)" /> with <see cref="Environment.SpecialFolder.LocalApplicationData" />, which is platform dependent.
+		/// 	For example, it is <c>%UserProfile%\Application Data\Local</c> in Windows prior to Windows Vista/Server 2008, <c>%LocalAppData%</c> on recent Windows, and <c>/home/.config/share</c> in Mono on *nix.
+		/// </remarks>
+		public String CorruptResponseDumpOutputDirectory
+		{
+			get
+			{
+				return this._corruptResponseDumpOutputDirectory;
+			}
+			set
+			{
+				this.VerifyIsNotFrozen();
+				var coerced = value;
+				CoerceCorruptResponseDumpOutputDirectoryValue( ref coerced );
+				this._corruptResponseDumpOutputDirectory = coerced;
+			}
+		}
+		
+		/// <summary>
+		/// 	Resets the CorruptResponseDumpOutputDirectory property value.
+		/// </summary>
+		public void ResetCorruptResponseDumpOutputDirectory()
+		{
+			this._corruptResponseDumpOutputDirectory = null;
+		}
+		
+		static partial void CoerceCorruptResponseDumpOutputDirectoryValue( ref String value );
 
 		private Func<Func<ClientRequestContext>, ObjectPoolConfiguration, ObjectPool<ClientRequestContext>> _requestContextPoolProvider = ( factory, configuration ) => new StandardObjectPool<ClientRequestContext>( factory, configuration );
 		
@@ -462,8 +599,20 @@ namespace MsgPack.Rpc.Client
 			buffer.Append( "\"TransportManagerProvider\" : " );
 			ToString( this.TransportManagerProvider, buffer );
 			buffer.Append( ", " );
+			buffer.Append( "\"InitialMethodNameBufferLength\" : " );
+			ToString( this.InitialMethodNameBufferLength, buffer );
+			buffer.Append( ", " );
+			buffer.Append( "\"InitialArgumentsBufferLength\" : " );
+			ToString( this.InitialArgumentsBufferLength, buffer );
+			buffer.Append( ", " );
+			buffer.Append( "\"InitialReceiveBufferLength\" : " );
+			ToString( this.InitialReceiveBufferLength, buffer );
+			buffer.Append( ", " );
 			buffer.Append( "\"DumpCorruptResponse\" : " );
 			ToString( this.DumpCorruptResponse, buffer );
+			buffer.Append( ", " );
+			buffer.Append( "\"CorruptResponseDumpOutputDirectory\" : " );
+			ToString( this.CorruptResponseDumpOutputDirectory, buffer );
 			buffer.Append( ", " );
 			buffer.Append( "\"RequestContextPoolProvider\" : " );
 			ToString( this.RequestContextPoolProvider, buffer );

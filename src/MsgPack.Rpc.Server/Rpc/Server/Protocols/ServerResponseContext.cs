@@ -128,14 +128,25 @@ namespace MsgPack.Rpc.Server.Protocols
 		internal readonly ArraySegment<byte>[] SendingBuffer;
 
 		/// <summary>
-		///		Initializes a new instance of the <see cref="ServerResponseContext"/> class.
+		///		Initializes a new instance of the <see cref="ServerResponseContext"/> class with default settings.
 		/// </summary>
 		public ServerResponseContext()
+			: this( null )
 		{
-			// TODO: Configurable
-			this._errorDataBuffer = new MemoryStream( 128 );
-			// TODO: Configurable
-			this._returnDataBuffer = new MemoryStream( 65536 );
+		}
+
+		/// <summary>
+		///		Initializes a new instance of the <see cref="ServerResponseContext"/> class with specified configuration.
+		/// </summary>
+		/// <param name="configuration">
+		///		An <see cref="RpcServerConfiguration"/> to tweak this instance initial state.
+		/// </param>
+		public ServerResponseContext( RpcServerConfiguration configuration )
+		{
+			this._errorDataBuffer = 
+				new MemoryStream( ( configuration ?? RpcServerConfiguration.Default).InitialErrorBufferLength );
+			this._returnDataBuffer =
+				new MemoryStream( ( configuration ?? RpcServerConfiguration.Default).InitialReturnValueBufferLength);
 			this.SendingBuffer = new ArraySegment<byte>[ 4 ];
 			this.SendingBuffer[ 0 ] = _responseHeader;
 			this._returnDataPacker = Packer.Create( this._returnDataBuffer, false );

@@ -204,14 +204,25 @@ namespace MsgPack.Rpc.Client.Protocols
 		}
 
 		/// <summary>
-		///		Initializes a new instance of the <see cref="ClientRequestContext"/> class.
+		///		Initializes a new instance of the <see cref="ClientRequestContext"/> class with default settings.
 		/// </summary>
 		public ClientRequestContext()
+			: this( null )
 		{
-			// TODO: Configurable
-			this._methodNameBuffer = new MemoryStream( 256 );
-			// TODO: Configurable
-			this._argumentsBuffer = new MemoryStream( 65536 );
+		}
+
+		/// <summary>
+		///		Initializes a new instance of the <see cref="ClientRequestContext"/> class with specified configuration.
+		/// </summary>
+		/// <param name="configuration">
+		///		An <see cref="RpcClientConfiguration"/> to tweak this instance initial state.
+		/// </param>
+		public ClientRequestContext( RpcClientConfiguration configuration )
+		{
+			this._methodNameBuffer = 
+				new MemoryStream( ( configuration ?? RpcClientConfiguration.Default ).InitialMethodNameBufferLength );
+			this._argumentsBuffer = 
+				new MemoryStream( ( configuration ?? RpcClientConfiguration.Default ).InitialArgumentsBufferLength );
 			this.SendingBuffer = new ArraySegment<byte>[ 4 ];
 			this._argumentsPacker = Packer.Create( this._argumentsBuffer, false );
 			this._messageType = MessageType.Response;
