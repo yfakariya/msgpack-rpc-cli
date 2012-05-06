@@ -44,21 +44,21 @@ namespace MsgPack.Rpc.Server.Dispatch
 		}
 
 		[Test()]
-		[ExpectedException( typeof( ArgumentNullException ) )]
-		public void TestConstructor_NameIsNull()
+		public void TestConstructor_NameIsNull_AsEmpty()
 		{
 			string name = null;
 			Func<Object> initializer = () => new object();
 			ServiceDescription target = new ServiceDescription( name, initializer );
+			Assert.That( target.Name, Is.Not.Null.And.Length.EqualTo( 0 ) );
 		}
 
 		[Test()]
-		[ExpectedException( typeof( ArgumentException ) )]
-		public void TestConstructor_NameIsEmpty()
+		public void TestConstructor_NameIsEmpty_Ok()
 		{
 			string name = String.Empty;
 			Func<Object> initializer = () => new object();
 			ServiceDescription target = new ServiceDescription( name, initializer );
+			Assert.That( target.Name, Is.Not.Null.And.Length.EqualTo( 0 ) );
 		}
 
 		[Test()]

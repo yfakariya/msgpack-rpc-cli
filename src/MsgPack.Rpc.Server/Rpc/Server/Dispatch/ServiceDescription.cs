@@ -125,16 +125,13 @@ namespace MsgPack.Rpc.Server.Dispatch
 		/// <param name="name">The name of the service.</param>
 		/// <param name="initializer">The initializer of the service instance.</param>
 		/// <exception cref="ArgumentNullException">
-		///		<paramref name="name"/> is <c>null</c>.
-		///		Or <paramref name="initializer"/> is <c>null</c>.
+		///		<paramref name="initializer"/> is <c>null</c>.
 		/// </exception>
 		/// <exception cref="ArgumentException">
-		///		<paramref name="name"/> is empty, or is not valid identifier.
+		///		<paramref name="name"/> is not valid identifier.
 		/// </exception>
 		public ServiceDescription( string name, Func<object> initializer )
 		{
-			Validation.ValidateIsNotNullNorEmpty( name, "name" );
-
 			if ( initializer == null )
 			{
 				throw new ArgumentNullException( "initializer" );
@@ -142,7 +139,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 
 			Contract.EndContractBlock();
 
-			this._name = RpcIdentifierUtility.EnsureValidIdentifier( name, "name" );
+			this._name = String.IsNullOrEmpty( name ) ? String.Empty : RpcIdentifierUtility.EnsureValidIdentifier( name, "name" );
 			this._initializer = initializer;
 		}
 
