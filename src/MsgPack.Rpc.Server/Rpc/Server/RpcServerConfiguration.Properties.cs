@@ -328,6 +328,11 @@ namespace MsgPack.Rpc.Server
 		/// <value>
 		/// 	The timeout value to send all response packets.. The default is 20 seconds. <c>null</c> means inifinite timeout.
 		/// </value>
+		/// <remarks>
+		/// 	Send timeout is timeout between when the first packet of the session is sent and when entire message is sent.
+		/// 	If this timeout is exceeded, the connection will be closed because a server cannot send error when there are any problems on sending.
+		/// 	This timeout try to protect server resources from the client which occupies connection regardless whether it is arbitrary or not.
+		/// </remarks>
 		public TimeSpan? SendTimeout
 		{
 			get
@@ -370,6 +375,11 @@ namespace MsgPack.Rpc.Server
 		/// <value>
 		/// 	The timeout value to receive all request/notification packets. The default is 20 seconds. <c>null</c> means inifinite timeout.
 		/// </value>
+		/// <remarks>
+		/// 	Receive timeout is timeout between when the first packet of the session is arrived and when the deserialization of the single message is finished.
+		/// 	If this timeout is exceeded, the <see cref="RpcError.TimeoutError" /> will be returned to the client if the message ID known, and then the connection will be closed.
+		/// 	This timeout try to protect server resources from the client which occupies connection regardless whether it is arbitrary or not.
+		/// </remarks>
 		public TimeSpan? ReceiveTimeout
 		{
 			get
@@ -412,6 +422,10 @@ namespace MsgPack.Rpc.Server
 		/// <value>
 		/// 	The timeout value to execute server thread. The default is 110 seconds. <c>null</c> means inifinite timeout.
 		/// </value>
+		/// <remarks>
+		/// 	If execution timeout occurres, <see cref="RpcApplicationContext.IsCanceled" /> to be <c>true</c>, and then the <see cref="RpcError.TimeoutError" /> will be returned to the client.
+		/// 	This timeout achieves graceful timeout for the operation which takes indefinitive time.
+		/// </remarks>
 		public TimeSpan? ExecutionTimeout
 		{
 			get
@@ -454,6 +468,12 @@ namespace MsgPack.Rpc.Server
 		/// <value>
 		/// 	The timeout value to abort execution thread after execution timeout is occurred. The default is 20 seconds. <c>null</c> means inifinite timeout.
 		/// </value>
+		/// <remarks>
+		/// 	Hard execution timeout is occurred when the time is elapsed from execution timeout.
+		/// 	If hard execution timeout occurres, the application thread will be aborted, and then the <see cref="RpcError.TimeoutError" /> will be returned to the client.
+		/// 	This timeout protects server resources from consumption such as infinite loop.
+		/// 	If the application does not recover from thread abortion, disable this feature by specifying <c>null</c>.
+		/// </remarks>
 		public TimeSpan? HardExecutionTimeout
 		{
 			get
