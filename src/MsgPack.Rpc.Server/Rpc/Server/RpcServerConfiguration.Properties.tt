@@ -211,6 +211,20 @@ new List<Property>()
 	},
 	new Property()
 	{
+		Name = "UseFullMethodName",
+		Type = "bool",
+		Default = "true",
+		Summary = "Gets or sets whether the RPC method name can contain a scope and a version.",
+		Value = "<c>true</c>, the RPC method name can contain a scope and a version; otherwise, <c>false</c>. " +
+			"The default is <c>true</c>.",
+		Remarks =
+			new String[]
+			{
+				"If this value is enabled, the format \"&lt;method&gt;:&lt;scope&gt;:&lt;version&gt;\" can be used."
+			}
+	},
+	new Property()
+	{
 		Name = "IsDebugMode",
 		Type = "bool",
 		Default = "false",

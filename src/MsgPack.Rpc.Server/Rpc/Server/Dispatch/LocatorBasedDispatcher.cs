@@ -35,7 +35,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 	public sealed class LocatorBasedDispatcher : Dispatcher
 	{
 		private readonly ServiceTypeLocator _locator;
-		private readonly Dictionary<string, OperationDescription> _descriptionTable;
+		private readonly OperationCatalog _descriptionTable;
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="LocatorBasedDispatcher"/> class.
@@ -48,13 +48,13 @@ namespace MsgPack.Rpc.Server.Dispatch
 			: base( server )
 		{
 			this._locator = server.Configuration.ServiceTypeLocatorProvider( server.Configuration );
-			this._descriptionTable = new Dictionary<string, OperationDescription>();
+			this._descriptionTable = server.Configuration.UseFullMethodName ? new VersionedOperationCatalog() : ( OperationCatalog )new FlatOperationCatalog();
 
 			foreach ( var service in this._locator.FindServices() )
 			{
 				foreach ( var operation in OperationDescription.FromServiceDescription( this.Runtime, service ) )
 				{
-					this._descriptionTable.Add( operation.Id, operation );
+					this._descriptionTable.Add( operation );
 				}
 			}
 		}
@@ -85,8 +85,8 @@ namespace MsgPack.Rpc.Server.Dispatch
 		///   </exception>
 		protected sealed override Func<ServerRequestContext, ServerResponseContext, Task> Dispatch( string methodName )
 		{
-			OperationDescription description;
-			if ( !this._descriptionTable.TryGetValue( methodName, out description ) )
+			OperationDescription description = this._descriptionTable.Get( methodName );
+			if ( description == null )
 			{
 				return null;
 			}

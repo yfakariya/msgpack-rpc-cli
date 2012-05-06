@@ -69,9 +69,11 @@
       <DependentUpon>DispatchTrace.tt</DependentUpon>
     </Compile>
     <Compile Include="Rpc\Server\Dispatch\FileBasedServiceTypeLocator.cs" />
+    <Compile Include="Rpc\Server\Dispatch\FlatOperationCatalog.cs" />
     <Compile Include="Rpc\Server\Dispatch\IAsyncServiceInvoker.cs" />
     <Compile Include="Rpc\Server\Dispatch\InvocationHelper.cs" />
     <Compile Include="Rpc\Server\Dispatch\LocatorBasedDispatcher.cs" />
+    <Compile Include="Rpc\Server\Dispatch\OperationCatalog.cs" />
     <Compile Include="Rpc\Server\Dispatch\OperationDescription.cs" />
     <Compile Include="Rpc\Server\Dispatch\ServiceDescription.cs" />
     <Compile Include="Rpc\Server\Dispatch\SvcFileInterop\AttributeNameParsingState.cs" />
@@ -88,6 +90,7 @@
     <Compile Include="Rpc\Server\Dispatch\ServiceInvokerEmitter.cs" />
     <Compile Include="Rpc\Server\Dispatch\ServiceInvokerGenerator.cs" />
     <Compile Include="Rpc\Server\Dispatch\ServiceTypeLocator.cs" />
+    <Compile Include="Rpc\Server\Dispatch\VersionedOperationCatalog.cs" />
     <Compile Include="Rpc\Server\Protocols\ClientShutdownEventArgs.cs" />
     <Compile Include="Rpc\Server\Protocols\Filters\ServerQuotaMessageFilter.cs" />
     <Compile Include="Rpc\Server\Protocols\Filters\ServerQuotaMessageFilterProvider.cs" />

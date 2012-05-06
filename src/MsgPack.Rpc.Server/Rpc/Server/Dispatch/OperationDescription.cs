@@ -97,6 +97,9 @@ namespace MsgPack.Rpc.Server.Dispatch
 
 		private OperationDescription( ServiceDescription service, MethodInfo method, string id, Func<ServerRequestContext, ServerResponseContext, Task> operation )
 		{
+			Validation.ValidateMethodName( id, "id" );
+			Contract.EndContractBlock();
+
 			this._service = service;
 			this._method = method;
 			this._operation = operation;

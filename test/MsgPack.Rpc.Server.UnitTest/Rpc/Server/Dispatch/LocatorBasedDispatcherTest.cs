@@ -19,11 +19,11 @@
 #endregion -- License Terms --
 
 using System;
+using System.Globalization;
 using System.IO;
 using System.Threading;
 using MsgPack.Rpc.Server.Protocols;
 using NUnit.Framework;
-using System.Globalization;
 
 namespace MsgPack.Rpc.Server.Dispatch
 {

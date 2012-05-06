@@ -634,6 +634,42 @@ namespace MsgPack.Rpc.Server
 		
 		static partial void CoerceServiceTypeLocatorProviderValue( ref Func<RpcServerConfiguration, ServiceTypeLocator> value );
 
+		private bool _useFullMethodName = true;
+		
+		/// <summary>
+		/// 	Gets or sets whether the RPC method name can contain a scope and a version.
+		/// </summary>
+		/// <value>
+		/// 	<c>true</c>, the RPC method name can contain a scope and a version; otherwise, <c>false</c>. The default is <c>true</c>.
+		/// </value>
+		/// <remarks>
+		/// 	If this value is enabled, the format "&lt;method&gt;:&lt;scope&gt;:&lt;version&gt;" can be used.
+		/// </remarks>
+		public bool UseFullMethodName
+		{
+			get
+			{
+				return this._useFullMethodName;
+			}
+			set
+			{
+				this.VerifyIsNotFrozen();
+				var coerced = value;
+				CoerceUseFullMethodNameValue( ref coerced );
+				this._useFullMethodName = coerced;
+			}
+		}
+		
+		/// <summary>
+		/// 	Resets the UseFullMethodName property value.
+		/// </summary>
+		public void ResetUseFullMethodName()
+		{
+			this._useFullMethodName = true;
+		}
+		
+		static partial void CoerceUseFullMethodNameValue( ref bool value );
+
 		private bool _isDebugMode = false;
 		
 		/// <summary>
@@ -931,6 +967,9 @@ namespace MsgPack.Rpc.Server
 			buffer.Append( ", " );
 			buffer.Append( "\"ServiceTypeLocatorProvider\" : " );
 			ToString( this.ServiceTypeLocatorProvider, buffer );
+			buffer.Append( ", " );
+			buffer.Append( "\"UseFullMethodName\" : " );
+			ToString( this.UseFullMethodName, buffer );
 			buffer.Append( ", " );
 			buffer.Append( "\"IsDebugMode\" : " );
 			ToString( this.IsDebugMode, buffer );

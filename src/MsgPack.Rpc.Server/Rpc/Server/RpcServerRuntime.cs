@@ -203,10 +203,5 @@ namespace MsgPack.Rpc.Server
 		{
 			Thread.ResetAbort();
 		}
-
-		internal string CreateMethodName( ServiceDescription serviceDescription, MethodInfo targetOperation )
-		{
-			return String.Format( CultureInfo.InvariantCulture, "{0}:{1}", ServiceIdentifier.TruncateGenericsSuffix( targetOperation.Name ), serviceDescription.ToString() );
-		}
 	}
 }
