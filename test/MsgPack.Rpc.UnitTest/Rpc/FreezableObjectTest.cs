@@ -101,7 +101,7 @@ namespace MsgPack.Rpc
 		}
 
 		[Test]
-		public void TestVerifyIsNotFrozen_IsNotFrozen_Halmless()
+		public void TestVerifyIsNotFrozen_IsNotFrozen_Harmless()
 		{
 			var target = new Target();
 

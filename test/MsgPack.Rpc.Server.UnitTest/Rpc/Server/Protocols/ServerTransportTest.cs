@@ -777,7 +777,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		#region ------ Method Name ------
 
 		[Test]
-		public void TestReceive_Request_EmptyMethodName_Halmless()
+		public void TestReceive_Request_EmptyMethodName_Harmless()
 		{
 			TestReceiveCore(
 				null,

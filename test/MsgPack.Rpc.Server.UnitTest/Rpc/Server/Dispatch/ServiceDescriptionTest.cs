@@ -158,7 +158,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 		}
 
 		[Test()]
-		public void TestGetHashCode_VersionIsNotSet_Halmless()
+		public void TestGetHashCode_VersionIsNotSet_Harmless()
 		{
 
 			var name = "Name" + Guid.NewGuid().ToString( "N" );
@@ -170,7 +170,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 		}
 
 		[Test()]
-		public void TestGetHashCode_VersionIsSet_Halmless()
+		public void TestGetHashCode_VersionIsSet_Harmless()
 		{
 
 			var name = "Name" + Guid.NewGuid().ToString( "N" );

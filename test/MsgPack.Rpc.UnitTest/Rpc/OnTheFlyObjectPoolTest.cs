@@ -39,7 +39,7 @@ namespace MsgPack.Rpc
 		}
 
 		[Test]
-		public void TestReturn_JustHalmless()
+		public void TestReturn_JustHarmless()
 		{
 			int count = 0;
 			using ( var target = new OnTheFlyObjectPool<object>( () => Interlocked.Increment( ref count ), null ) )
@@ -49,7 +49,7 @@ namespace MsgPack.Rpc
 		}
 
 		[Test]
-		public void TestEvictExtraItems_JustHalmless()
+		public void TestEvictExtraItems_JustHarmless()
 		{
 			int count = 0;
 			using ( var target = new OnTheFlyObjectPool<object>( () => Interlocked.Increment( ref count ), null ) )

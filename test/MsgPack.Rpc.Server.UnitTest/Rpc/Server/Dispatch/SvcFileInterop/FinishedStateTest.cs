@@ -30,7 +30,7 @@ namespace MsgPack.Rpc.Server.Dispatch.SvcFileInterop
 	{
 		[Test]
 		[ExpectedException( typeof( FormatException ), MatchType = MessageMatch.Contains, ExpectedMessage = "xtra" )]
-		public void TestParse_Halmless()
+		public void TestParse_Harmless()
 		{
 			var buffer = new StringBuilder();
 			SvcDirectiveParserState target = new FinishedState( GetPrevious() );

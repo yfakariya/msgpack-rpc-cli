@@ -166,7 +166,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 		}
 
 		[Test()]
-		public void TestClearServices_Empty_Halmless()
+		public void TestClearServices_Empty_Harmless()
 		{
 			var target = new DefaultServiceTypeLocator();
 

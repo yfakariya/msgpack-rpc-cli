@@ -149,7 +149,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		}
 
 		[Test]
-		public void TestGetTransport_Null_Halmless()
+		public void TestGetTransport_Null_Harmless()
 		{
 			using ( var server = new RpcServer() )
 			using ( var target = new Target( server ) )

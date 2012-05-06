@@ -164,7 +164,7 @@ namespace MsgPack.Rpc.Client.Protocols
 		}
 
 		[Test]
-		public void TestGetTransport_Null_Halmless()
+		public void TestGetTransport_Null_Harmless()
 		{
 			using ( var target = new Target( RpcClientConfiguration.Default ) )
 			using ( var transport = new NullClientTransport( target ) )

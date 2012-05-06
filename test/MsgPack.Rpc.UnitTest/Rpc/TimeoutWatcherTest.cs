@@ -68,7 +68,7 @@ namespace MsgPack.Rpc
 		}
 
 		[Test]
-		public void TestStop_Twise_Halmless()
+		public void TestStop_Twise_Harmless()
 		{
 			using ( var target = new TimeoutWatcher() )
 			using ( var waitHandle = new ManualResetEventSlim() )
@@ -83,7 +83,7 @@ namespace MsgPack.Rpc
 		}
 
 		[Test]
-		public void TestStop_AfterTimeout_Halmless()
+		public void TestStop_AfterTimeout_Harmless()
 		{
 			using ( var target = new TimeoutWatcher() )
 			using ( var waitHandle = new ManualResetEventSlim() )
@@ -97,7 +97,7 @@ namespace MsgPack.Rpc
 		}
 
 		[Test]
-		public void TestReset_NotTimeout_Halmless()
+		public void TestReset_NotTimeout_Harmless()
 		{
 			using ( var target = new TimeoutWatcher() )
 			using ( var waitHandle = new ManualResetEventSlim() )
