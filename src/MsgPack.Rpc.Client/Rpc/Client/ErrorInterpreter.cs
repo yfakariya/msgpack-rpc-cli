@@ -30,9 +30,6 @@ namespace MsgPack.Rpc.Client
 	/// </summary>
 	internal static class ErrorInterpreter
 	{
-		// TODO: Configurable
-		private const int _unknownErrorQuota = 1024;
-
 		/// <summary>
 		///		Unpacks <see cref="RpcErrorMessage"/> from stream in the specified context.
 		/// </summary>
@@ -53,7 +50,7 @@ namespace MsgPack.Rpc.Client
 			}
 			catch ( UnpackException )
 			{
-				error = new MessagePackObject( context.ErrorBuffer.GetBuffer( 0, _unknownErrorQuota ).SelectMany( segment => segment.AsEnumerable() ).ToArray() );
+				error = new MessagePackObject( context.ErrorBuffer.GetBuffer().SelectMany( segment => segment.AsEnumerable() ).ToArray() );
 			}
 
 			if ( error.IsNil )
@@ -88,7 +85,7 @@ namespace MsgPack.Rpc.Client
 				}
 				catch ( UnpackException )
 				{
-					detail = new MessagePackObject( context.ResultBuffer.GetBuffer( 0, _unknownErrorQuota ).SelectMany( segment => segment.AsEnumerable() ).ToArray() );
+					detail = new MessagePackObject( context.ResultBuffer.GetBuffer().SelectMany( segment => segment.AsEnumerable() ).ToArray() );
 				}
 			}
 
