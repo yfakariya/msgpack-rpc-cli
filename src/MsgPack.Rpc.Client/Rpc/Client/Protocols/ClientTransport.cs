@@ -95,6 +95,17 @@ namespace MsgPack.Rpc.Client.Protocols
 			}
 		}
 
+		/// <summary>
+		///		Gets a value indicating whether the protocol used by this class can resume receiving.
+		/// </summary>
+		/// <value>
+		/// 	<c>true</c> if this instance can resume receiving; otherwise, <c>false</c>.
+		/// </value>
+		protected abstract bool CanResumeReceiving
+		{
+			get;
+		}
+
 		private int _shutdownSource;
 
 		/// <summary>

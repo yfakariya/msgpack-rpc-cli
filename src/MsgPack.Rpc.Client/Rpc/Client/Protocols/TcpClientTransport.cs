@@ -29,6 +29,17 @@ namespace MsgPack.Rpc.Client.Protocols
 	public sealed class TcpClientTransport : ClientTransport
 	{
 		/// <summary>
+		/// Gets a value indicating whether the protocol used by this class can resume receiving.
+		/// </summary>
+		/// <value>
+		/// 	<c>true</c> if this instance can resume receiving; otherwise, <c>false</c>.
+		/// </value>
+		protected override bool CanResumeReceiving
+		{
+			get { return true; }
+		}
+
+		/// <summary>
 		///		Initializes a new instance of the <see cref="TcpClientTransport"/> class.
 		/// </summary>
 		/// <param name="manager">The manager which will manage this instance.</param>

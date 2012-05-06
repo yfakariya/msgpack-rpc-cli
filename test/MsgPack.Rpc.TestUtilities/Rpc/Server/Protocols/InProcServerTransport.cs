@@ -36,6 +36,11 @@ namespace MsgPack.Rpc.Server.Protocols
 	/// </remarks>
 	public sealed class InProcServerTransport : ServerTransport
 	{
+		protected override bool CanResumeReceiving
+		{
+			get { return true; }
+		}
+
 		private readonly InProcServerTransportManager _manager;
 
 		/// <summary>

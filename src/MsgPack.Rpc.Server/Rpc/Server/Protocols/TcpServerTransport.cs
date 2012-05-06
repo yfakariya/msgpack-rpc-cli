@@ -19,8 +19,8 @@
 #endregion -- License Terms --
 
 using System;
-using System.Net.Sockets;
 using System.Diagnostics.Contracts;
+using System.Net.Sockets;
 
 namespace MsgPack.Rpc.Server.Protocols
 {
@@ -29,6 +29,17 @@ namespace MsgPack.Rpc.Server.Protocols
 	/// </summary>
 	public sealed class TcpServerTransport : ServerTransport
 	{
+		/// <summary>
+		/// Gets a value indicating whether this instance can resume receiving.
+		/// </summary>
+		/// <value>
+		/// 	<c>true</c> if this instance can resume receiving; otherwise, <c>false</c>.
+		/// </value>
+		protected override bool CanResumeReceiving
+		{
+			get { return true; }
+		}
+
 		/// <summary>
 		///		Initializes a new instance of the <see cref="TcpServerTransport"/> class.
 		/// </summary>

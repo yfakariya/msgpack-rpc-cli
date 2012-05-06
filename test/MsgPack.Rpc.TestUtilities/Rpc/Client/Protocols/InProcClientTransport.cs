@@ -52,6 +52,11 @@ namespace MsgPack.Rpc.Client.Protocols
 
 		private readonly InProcClientTransportManager _manager;
 
+		protected override bool CanResumeReceiving
+		{
+			get { return true; }
+		}
+
 		/// <summary>
 		///		Occurs when message sent.
 		/// </summary>

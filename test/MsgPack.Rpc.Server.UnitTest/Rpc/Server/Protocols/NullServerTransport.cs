@@ -27,6 +27,11 @@ namespace MsgPack.Rpc.Server.Protocols
 	/// </summary>
 	internal sealed class NullServerTransport : ServerTransport
 	{
+		protected override bool CanResumeReceiving
+		{
+			get { return true; }
+		}
+
 		/// <summary>
 		///		Occurs when response is sent.
 		/// </summary>
