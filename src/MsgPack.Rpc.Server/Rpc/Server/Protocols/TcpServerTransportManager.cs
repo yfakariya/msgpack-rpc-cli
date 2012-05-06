@@ -136,9 +136,9 @@ namespace MsgPack.Rpc.Server.Protocols
 					MsgPackRpcServerProtocolsTrace.TraceEvent(
 						MsgPackRpcServerProtocolsTrace.UnexpectedLastOperation,
 						"Unexpected operation. {{ \"Socket\" : 0x{0:X}, \"RemoteEndPoint\" : \"{1}\", \"LocalEndPoint\" : \"{2}\", \"LastOperation\" : \"{3}\" }}",
-						socket.Handle,
-						socket.RemoteEndPoint,
-						socket.LocalEndPoint,
+						ServerTransport.GetHandle( socket ),
+						ServerTransport.GetRemoteEndPoint( socket, e ),
+						ServerTransport.GetLocalEndPoint( socket ),
 						e.LastOperation
 					);
 #endif
@@ -197,9 +197,9 @@ namespace MsgPack.Rpc.Server.Protocols
 			MsgPackRpcServerProtocolsTrace.TraceEvent(
 				MsgPackRpcServerProtocolsTrace.EndAccept,
 				"Accept. {{ \"Socket\" : 0x{0:X}, \"RemoteEndPoint\" : \"{1}\", \"LocalEndPoint\" : \"{2}\" }}",
-				context.AcceptSocket.Handle,
-				context.AcceptSocket.RemoteEndPoint,
-				context.AcceptSocket.LocalEndPoint
+				ServerTransport.GetHandle( context.AcceptSocket ),
+				ServerTransport.GetRemoteEndPoint( context.AcceptSocket, context ),
+				ServerTransport.GetLocalEndPoint( context.AcceptSocket )
 			);
 #endif
 

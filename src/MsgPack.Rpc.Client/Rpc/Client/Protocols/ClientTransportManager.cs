@@ -326,22 +326,12 @@ namespace MsgPack.Rpc.Client.Protocols
 				return null;
 			}
 
-			EndPoint remoteEndPoint = null;
-			try
-			{
-				if ( socket != null )
-				{
-					remoteEndPoint = socket.RemoteEndPoint;
-				}
-			}
-			catch ( SocketException ) { }
-
 			MsgPackRpcClientProtocolsTrace.TraceEvent(
 				MsgPackRpcClientProtocolsTrace.SocketError,
 				"Socket error. {{ \"Socket\" : 0x{0:X}, \"RemoteEndpoint\" : \"{1}\", \"LocalEndpoint\" : \"{2}\", \"LastOperation\" : \"{3}\", \"SocketError\" : \"{4}\", \"ErrorCode\" : 0x{5:X} }}",
-				socket == null ? IntPtr.Zero : socket.Handle,
-				remoteEndPoint,
-				socket == null ? null : socket.LocalEndPoint,
+				ClientTransport.GetHandle( socket ),
+				ClientTransport.GetRemoteEndPoint( socket, context ),
+				ClientTransport.GetLocalEndPoint( socket ),
 				context.LastOperation,
 				context.SocketError,
 				( int )context.SocketError
@@ -372,14 +362,16 @@ namespace MsgPack.Rpc.Client.Protocols
 			return result;
 		}
 
-		internal ClientResponseContext GetResponseContext( ClientTransport transport )
+		internal ClientResponseContext GetResponseContext( ClientTransport transport, EndPoint remoteEndPoint )
 		{
 			Contract.Requires( transport != null );
+			Contract.Requires( remoteEndPoint != null );
 			Contract.Ensures( Contract.Result<ClientResponseContext>() != null );
 
 			var result = this.ResponseContextPool.Borrow();
 			result.RenewSessionId();
 			result.SetTransport( transport );
+			result.RemoteEndPoint = remoteEndPoint;
 			return result;
 		}
 

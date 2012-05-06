@@ -132,9 +132,9 @@ namespace MsgPack.Rpc.Client.Protocols
 					MsgPackRpcClientProtocolsTrace.TraceEvent(
 						MsgPackRpcClientProtocolsTrace.UnexpectedLastOperation,
 						"Unexpected operation. {{ \"Socket\" : 0x{0:X}, \"RemoteEndPoint\" : \"{1}\", \"LocalEndPoint\" : \"{2}\", \"LastOperation\" : \"{3}\" }}",
-						socket.Handle,
-						socket.RemoteEndPoint,
-						socket.LocalEndPoint,
+						ClientTransport.GetHandle( socket ),
+						ClientTransport.GetRemoteEndPoint( socket, e ),
+						ClientTransport.GetLocalEndPoint( socket ),
 						e.LastOperation
 					);
 #endif
@@ -151,12 +151,12 @@ namespace MsgPack.Rpc.Client.Protocols
 				if ( context.ConnectSocket == null )
 				{
 					// canceled.
-					taskCompletionSource.SetException( 
+					taskCompletionSource.SetException(
 						new RpcTransportException(
-							RpcError.ConnectionTimeoutError, 
-							"Connect timeout.", 
-							String.Format( CultureInfo.CurrentCulture, "Timeout: {0}", this.Configuration.ConnectTimeout ) 
-						) 
+							RpcError.ConnectionTimeoutError,
+							"Connect timeout.",
+							String.Format( CultureInfo.CurrentCulture, "Timeout: {0}", this.Configuration.ConnectTimeout )
+						)
 					);
 					return;
 				}
@@ -165,9 +165,9 @@ namespace MsgPack.Rpc.Client.Protocols
 				MsgPackRpcClientProtocolsTrace.TraceEvent(
 					MsgPackRpcClientProtocolsTrace.EndConnect,
 					"Connected. {{ \"Socket\" : 0x{0:X}, \"RemoteEndPoint\" : \"{1}\", \"LocalEndPoint\" : \"{2}\" }}",
-					context.ConnectSocket.Handle,
-					context.ConnectSocket.RemoteEndPoint,
-					context.ConnectSocket.LocalEndPoint
+					ClientTransport.GetHandle( context.ConnectSocket ),
+					ClientTransport.GetRemoteEndPoint( context.ConnectSocket, context ),
+					ClientTransport.GetLocalEndPoint( context.ConnectSocket )
 				);
 #endif
 

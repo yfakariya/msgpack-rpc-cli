@@ -405,9 +405,9 @@ namespace MsgPack.Rpc.Server.Protocols
 				MsgPackRpcServerProtocolsTrace.TraceEvent(
 					MsgPackRpcServerProtocolsTrace.IgnoreableError,
 					"Ignoreable error. {{ \"Socket\" : 0x{0:X}, \"RemoteEndpoint\" : \"{1}\", \"LocalEndpoint\" : \"{2}\", \"LastOperation\" : \"{3}\", \"SocketError\" : \"{4}\", \"ErrorCode\" : 0x{5:X} }}",
-					socket.Handle,
-					socket.RemoteEndPoint,
-					socket.LocalEndPoint,
+					ServerTransport.GetHandle( socket ),
+					ServerTransport.GetRemoteEndPoint( socket, context ),
+					ServerTransport.GetLocalEndPoint( socket ),
 					context.LastOperation,
 					context.SocketError,
 					( int )context.SocketError
@@ -420,9 +420,9 @@ namespace MsgPack.Rpc.Server.Protocols
 					String.Format(
 						CultureInfo.CurrentCulture,
 						"Socket error. {{ \"Socket\" : 0x{0:X}, \"RemoteEndpoint\" : \"{1}\", \"LocalEndpoint\" : \"{2}\", \"LastOperation\" : \"{3}\", \"SocketError\" : \"{4}\", \"ErrorCode\" : 0x{5:X} }}",
-						socket.Handle,
-						socket.RemoteEndPoint,
-						socket.LocalEndPoint,
+						ServerTransport.GetHandle( socket ),
+						ServerTransport.GetRemoteEndPoint( socket, context ),
+						ServerTransport.GetLocalEndPoint( socket ),
 						context.LastOperation,
 						context.SocketError,
 						( int )context.SocketError
