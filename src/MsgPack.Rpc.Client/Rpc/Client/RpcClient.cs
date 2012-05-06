@@ -33,7 +33,6 @@ namespace MsgPack.Rpc.Client
 	/// </summary>
 	public sealed class RpcClient : IDisposable
 	{
-		// TODO: Configurable
 		private static int _messageIdGenerator;
 		private static int NextId()
 		{

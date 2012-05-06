@@ -268,7 +268,6 @@ namespace MsgPack.Rpc.Client.Protocols
 		{
 			if ( context.BytesTransferred == 0 )
 			{
-				// TODO: Trace
 				context.Clear();
 				return false;
 			}
@@ -277,7 +276,6 @@ namespace MsgPack.Rpc.Client.Protocols
 			{
 				if ( context.DumpStream == null )
 				{
-					// TODO: Trace
 					context.DumpStream = OpenDumpStream( context.SessionStartedAt, context.RemoteEndPoint, context.SessionId, MessageType.Response, context.MessageId );
 				}
 
