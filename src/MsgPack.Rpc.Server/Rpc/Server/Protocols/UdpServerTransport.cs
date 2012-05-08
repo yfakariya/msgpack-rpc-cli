@@ -20,6 +20,7 @@
 
 using System;
 using System.Diagnostics.Contracts;
+using System.Threading.Tasks;
 
 namespace MsgPack.Rpc.Server.Protocols
 {
@@ -74,6 +75,24 @@ namespace MsgPack.Rpc.Server.Protocols
 				context.SetCompletedSynchronously();
 				this.OnReceived( context );
 			}
+		}
+
+		/// <summary>
+		///		Called when asynchronous 'Receive' operation is completed.
+		/// </summary>
+		/// <param name="context">Context information.</param>
+		///	<exception cref="InvalidOperationException">
+		///		This instance is not in 'Idle' nor 'Receiving' state.
+		///	</exception>
+		///	<exception cref="ObjectDisposedException">
+		///		This instance is disposed.
+		///	</exception>
+		protected override void OnReceived( ServerRequestContext context )
+		{
+			Task.Factory.StartNew(
+				state => base.OnReceived( state as ServerRequestContext ),
+				context
+			);
 		}
 	}
 }
