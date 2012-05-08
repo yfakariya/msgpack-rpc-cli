@@ -220,8 +220,8 @@ namespace MsgPack.Rpc.Client.Protocols
 			Contract.EndContractBlock();
 
 			this._configuration = configuration;
-			this._requestContextPool = configuration.RequestContextPoolProvider( () => new ClientRequestContext(), configuration.CreateRequestContextPoolConfiguration() );
-			this._responseContextPool = configuration.ResponseContextPoolProvider( () => new ClientResponseContext(), configuration.CreateResponseContextPoolConfiguration() );
+			this._requestContextPool = configuration.RequestContextPoolProvider( () => new ClientRequestContext( configuration ), configuration.CreateRequestContextPoolConfiguration() );
+			this._responseContextPool = configuration.ResponseContextPoolProvider( () => new ClientResponseContext( configuration ), configuration.CreateResponseContextPoolConfiguration() );
 		}
 
 		/// <summary>

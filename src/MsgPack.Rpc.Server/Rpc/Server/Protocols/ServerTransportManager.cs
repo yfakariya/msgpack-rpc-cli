@@ -289,8 +289,8 @@ namespace MsgPack.Rpc.Server.Protocols
 
 			Contract.EndContractBlock();
 
-			this._requestContextPool = server.Configuration.RequestContextPoolProvider( () => new ServerRequestContext(), server.Configuration.CreateRequestContextPoolConfiguration() );
-			this._responseContextPool = server.Configuration.ResponseContextPoolProvider( () => new ServerResponseContext(), server.Configuration.CreateResponseContextPoolConfiguration() );
+			this._requestContextPool = server.Configuration.RequestContextPoolProvider( () => new ServerRequestContext( server.Configuration ), server.Configuration.CreateRequestContextPoolConfiguration() );
+			this._responseContextPool = server.Configuration.ResponseContextPoolProvider( () => new ServerResponseContext( server.Configuration ), server.Configuration.CreateResponseContextPoolConfiguration() );
 
 			if ( this._requestContextPool == null )
 			{
