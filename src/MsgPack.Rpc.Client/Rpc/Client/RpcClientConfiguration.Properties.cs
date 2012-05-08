@@ -650,9 +650,6 @@ namespace MsgPack.Rpc.Client
 			buffer.Append( "\"InitialReceiveBufferLength\" : " );
 			ToString( this.InitialReceiveBufferLength, buffer );
 			buffer.Append( ", " );
-			buffer.Append( "\"FixedSendingBufferSize\" : " );
-			ToString( this.FixedSendingBufferSize, buffer );
-			buffer.Append( ", " );
 			buffer.Append( "\"DumpCorruptResponse\" : " );
 			ToString( this.DumpCorruptResponse, buffer );
 			buffer.Append( ", " );
