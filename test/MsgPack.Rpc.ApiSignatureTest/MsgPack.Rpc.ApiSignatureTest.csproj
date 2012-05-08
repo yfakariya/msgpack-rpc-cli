@@ -62,6 +62,12 @@
     <Compile Include="..\..\src\MsgPack.Rpc.Client\Rpc\Client\Protocols\TcpClientTransportManager.cs">
       <Link>Rpc\Client\Protocols\TcpClientTransportManager.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\MsgPack.Rpc.Client\Rpc\Client\Protocols\UdpClientTransport.cs">
+      <Link>Rpc\Client\Protocols\UdpClientTransport.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\MsgPack.Rpc.Client\Rpc\Client\Protocols\UdpClientTransportManager.cs">
+      <Link>Rpc\Client\Protocols\UdpClientTransportManager.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\msgpack.rpc.server\rpc\server\dispatch\DefaultServiceTypeLocator.cs">
       <Link>Rpc\Server\Dispatch\DefaultServiceTypeLocator.cs</Link>
     </Compile>
@@ -85,6 +91,12 @@
     </Compile>
     <Compile Include="..\..\src\msgpack.rpc.server\rpc\server\protocols\TcpServerTransportManager.cs">
       <Link>Rpc\Server\Protocols\TcpServerTransportManager.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\MsgPack.Rpc.Server\Rpc\Server\Protocols\UdpServerTransport.cs">
+      <Link>Rpc\Server\Protocols\UdpServerTransport.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\MsgPack.Rpc.Server\Rpc\Server\Protocols\UdpServerTransportManager.cs">
+      <Link>Rpc\Server\Protocols\UdpServerTransportManager.cs</Link>
     </Compile>
     <Compile Include="..\..\src\MsgPack.Rpc\Rpc\Diagnostics\FileMessagePackStreamLogger.cs">
       <Link>Rpc\Diagnostics\FileMessagePackStreamLogger.cs</Link>

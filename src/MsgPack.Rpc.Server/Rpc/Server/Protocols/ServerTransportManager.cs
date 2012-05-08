@@ -471,17 +471,43 @@ namespace MsgPack.Rpc.Server.Protocols
 			return result;
 		}
 
-		internal void ReturnRequestContext( ServerRequestContext context )
+		/// <summary>
+		///		Returns the request context to the pool.
+		/// </summary>
+		/// <param name="context">The context to the pool.</param>
+		/// <exception cref="ArgumentNullException">
+		///		<paramref name="context"/> is  <c>null</c>.
+		/// </exception>
+		protected internal void ReturnRequestContext( ServerRequestContext context )
 		{
-			Contract.Requires( context != null );
+			if ( context == null )
+			{
+				throw new ArgumentNullException( "context" ); 
+			}
+
+			Contract.EndContractBlock();
+
 			context.Clear();
 			context.UnboundTransport();
 			this.RequestContextPool.Return( context );
 		}
 
-		internal void ReturnResponseContext( ServerResponseContext context )
+		/// <summary>
+		///		Returns the response context to the pool.
+		/// </summary>
+		/// <param name="context">The response to the pool.</param>
+		/// <exception cref="ArgumentNullException">
+		///		<paramref name="context"/> is  <c>null</c>.
+		/// </exception>
+		protected internal void ReturnResponseContext( ServerResponseContext context )
 		{
-			Contract.Requires( context != null );
+			if ( context == null )
+			{
+				throw new ArgumentNullException( "context" );
+			}
+
+			Contract.EndContractBlock();
+
 			context.Clear();
 			context.UnboundTransport();
 			this.ResponseContextPool.Return( context );
