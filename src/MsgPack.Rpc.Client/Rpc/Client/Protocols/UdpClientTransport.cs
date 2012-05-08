@@ -37,6 +37,17 @@ namespace MsgPack.Rpc.Client.Protocols
 		public EndPoint RemoteEndPoint { get; internal set; }
 
 		/// <summary>
+		/// Gets a value indicating whether the protocol used by this class can resume receiving.
+		/// </summary>
+		/// <value>
+		/// 	<c>true</c> if this instance can resume receiving; otherwise, <c>false</c>.
+		/// </value>
+		protected override bool CanResumeReceiving
+		{
+			get { return false; }
+		}
+
+		/// <summary>
 		///		Initializes a new instance of the <see cref="UdpClientTransport"/> class.
 		/// </summary>
 		/// <param name="manager">The manager which will manage this instance.</param>

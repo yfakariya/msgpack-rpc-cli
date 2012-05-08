@@ -199,6 +199,11 @@ namespace MsgPack.Rpc.Client.Protocols
 
 		private sealed class DummyClientTransport : ClientTransport
 		{
+			protected override bool CanResumeReceiving
+			{
+				get { return true; }
+			}
+
 			public DummyClientTransport() : base( new DummyClientTransportManager() ) { }
 			protected override void SendCore( ClientRequestContext context )
 			{

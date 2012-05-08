@@ -79,6 +79,8 @@
     <Compile Include="Rpc\Client\Protocols\TcpClientTransportTest.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Rpc\Client\Protocols\UdpClientTransportManagerTest.cs" />
+    <Compile Include="Rpc\Client\Protocols\UdpClientTransportTest.cs" />
     <Compile Include="Rpc\Client\Protocols\_SetUpFixture.cs" />
     <Compile Include="Rpc\Client\Protocols\ClientTransportManager`1Test.cs" />
     <Compile Include="Rpc\Client\RequestMessageAsyncResultTest.cs" />

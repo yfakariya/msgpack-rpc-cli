@@ -27,6 +27,11 @@ namespace MsgPack.Rpc.Client.Protocols
 	/// </summary>
 	internal sealed class NullClientTransport : ClientTransport
 	{
+		protected override bool CanResumeReceiving
+		{
+			get { return true; }
+		}
+
 		/// <summary>
 		///		Initializes a new instance of the <see cref="NullClientTransport"/> class.
 		/// </summary>

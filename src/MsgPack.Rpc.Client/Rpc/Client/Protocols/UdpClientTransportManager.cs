@@ -19,11 +19,10 @@
 #endregion -- License Terms --
 
 using System;
+using System.Globalization;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
-using System.Globalization;
-using System.Diagnostics.Contracts;
 
 namespace MsgPack.Rpc.Client.Protocols
 {

@@ -185,12 +185,12 @@ __properties.Add(
 		"TcpClientTransport"
 	)
 );
-//__properties.Add( 
-//	__objectPoolProviderPropertyFactory(
-//		"UdpTransportPoolProvider",
-//		"UdpClientTransport"
-//	)
-//);
+__properties.Add( 
+	__objectPoolProviderPropertyFactory(
+		"UdpTransportPoolProvider",
+		"UdpClientTransport"
+	)
+);
 
 #>
 #region -- License Terms --

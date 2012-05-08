@@ -18,51 +18,54 @@
 //
 #endregion -- License Terms --
 
+using System;
+using System.Net;
+using System.Net.Sockets;
+using NUnit.Framework;
+
 namespace MsgPack.Rpc.Client.Protocols
 {
-	using System;
-	using NUnit.Framework;
-
-
-	/// <summary>
-	///Tests the Udp Client Transport Manager 
-	/// </summary>
 	[TestFixture()]
 	public class UdpClientTransportManagerTest
 	{
-
-		private UdpClientTransportManager _testClass;
-
-		/// <summary>
-		/// <see cref="NUnit"/> Set Up 
-		/// </summary>
-		[SetUp()]
-		public void SetUp()
+		[Test]
+		public void TestConnectAsync_Success()
 		{
-			MsgPack.Rpc.Client.RpcClientConfiguration configuration = null;
-			_testClass = new UdpClientTransportManager( configuration );
+			var endPoint = new IPEndPoint( IPAddress.Loopback, 57319 );
+
+			var listener = new UdpClient( endPoint );
+			try
+			{
+				using ( var target = new UdpClientTransportManager( new RpcClientConfiguration() ) )
+				using ( var result = target.ConnectAsync( endPoint ) )
+				{
+					Assert.That( result.Wait( TimeSpan.FromSeconds( 1 ) ) );
+					try
+					{
+						var transport = result.Result;
+						Assert.That( transport.BoundSocket, Is.Not.Null );
+						Assert.That( ( transport as UdpClientTransport ).RemoteEndPoint, Is.EqualTo( endPoint ) );
+					}
+					finally
+					{
+						result.Result.Dispose();
+					}
+				}
+			}
+			finally
+			{
+				listener.Close();
+			}
 		}
 
-		/// <summary>
-		/// <see cref="NUnit"/> Tear Down 
-		/// </summary>
-		[TearDown()]
-		public void TearDown()
+		[Test]
+		[ExpectedException( typeof( ArgumentNullException ) )]
+		public void TestConnectAsync_Null()
 		{
-			_testClass = null;
-		}
-
-		/// <summary>
-		/// Tests the Constructor Udp Client Transport Manager 
-		/// </summary>
-		[Test()]
-		public void TestConstructorUdpClientTransportManager()
-		{
-			MsgPack.Rpc.Client.RpcClientConfiguration configuration = null;
-			UdpClientTransportManager testUdpClientTransportManager = new UdpClientTransportManager( configuration );
-			Assert.IsNotNull( testUdpClientTransportManager, "Constructor of type, UdpClientTransportManager failed to create instance." );
-			Assert.Fail( "Create or modify test(s)." );
-
+			using ( var target = new UdpClientTransportManager( new RpcClientConfiguration() ) )
+			{
+				target.ConnectAsync( null );
+			}
 		}
 	}
 }

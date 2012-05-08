@@ -571,6 +571,48 @@ namespace MsgPack.Rpc.Client
 		
 		static partial void CoerceTcpTransportPoolProviderValue( ref Func<Func<TcpClientTransport>, ObjectPoolConfiguration, ObjectPool<TcpClientTransport>> value );
 
+		private Func<Func<UdpClientTransport>, ObjectPoolConfiguration, ObjectPool<UdpClientTransport>> _udpTransportPoolProvider = ( factory, configuration ) => new StandardObjectPool<UdpClientTransport>( factory, configuration );
+		
+		/// <summary>
+		/// 	Gets or sets the factory function which creates new <see cref="ObjectPool{T}" /> of <see cref="UdpClientTransport" />.
+		/// </summary>
+		/// <value>
+		/// 	The factory function which creates new <see cref="ObjectPool{T}" /> of <see cref="UdpClientTransport" />. The default is the delegate which creates <see cref="StandardObjectPool{T}" /> instance with <c>null</c> configuration.
+		/// </value>
+		public Func<Func<UdpClientTransport>, ObjectPoolConfiguration, ObjectPool<UdpClientTransport>> UdpTransportPoolProvider
+		{
+			get
+			{
+				Contract.Ensures( Contract.Result<Func<Func<UdpClientTransport>, ObjectPoolConfiguration, ObjectPool<UdpClientTransport>>>() != null );
+
+				return this._udpTransportPoolProvider;
+			}
+			set
+			{
+				if ( !( value != null ) )
+				{
+					throw new ArgumentNullException( "value" );
+				}
+
+				Contract.Ensures( Contract.Result<Func<Func<UdpClientTransport>, ObjectPoolConfiguration, ObjectPool<UdpClientTransport>>>() != null );
+
+				this.VerifyIsNotFrozen();
+				var coerced = value;
+				CoerceUdpTransportPoolProviderValue( ref coerced );
+				this._udpTransportPoolProvider = coerced;
+			}
+		}
+		
+		/// <summary>
+		/// 	Resets the UdpTransportPoolProvider property value.
+		/// </summary>
+		public void ResetUdpTransportPoolProvider()
+		{
+			this._udpTransportPoolProvider = ( factory, configuration ) => new StandardObjectPool<UdpClientTransport>( factory, configuration );
+		}
+		
+		static partial void CoerceUdpTransportPoolProviderValue( ref Func<Func<UdpClientTransport>, ObjectPoolConfiguration, ObjectPool<UdpClientTransport>> value );
+
 		/// <summary>
 		/// 	Returns a string that represents the current object.
 		/// </summary>
@@ -579,7 +621,7 @@ namespace MsgPack.Rpc.Client
 		/// </returns>
 		public sealed override string ToString()
 		{
-			var buffer = new StringBuilder( 2048 );
+			var buffer = new StringBuilder( 4096 );
 			buffer.Append( "{ " );
 			buffer.Append( "\"PreferIPv4\" : " );
 			ToString( this.PreferIPv4, buffer );
@@ -608,6 +650,9 @@ namespace MsgPack.Rpc.Client
 			buffer.Append( "\"InitialReceiveBufferLength\" : " );
 			ToString( this.InitialReceiveBufferLength, buffer );
 			buffer.Append( ", " );
+			buffer.Append( "\"FixedSendingBufferSize\" : " );
+			ToString( this.FixedSendingBufferSize, buffer );
+			buffer.Append( ", " );
 			buffer.Append( "\"DumpCorruptResponse\" : " );
 			ToString( this.DumpCorruptResponse, buffer );
 			buffer.Append( ", " );
@@ -622,6 +667,9 @@ namespace MsgPack.Rpc.Client
 			buffer.Append( ", " );
 			buffer.Append( "\"TcpTransportPoolProvider\" : " );
 			ToString( this.TcpTransportPoolProvider, buffer );
+			buffer.Append( ", " );
+			buffer.Append( "\"UdpTransportPoolProvider\" : " );
+			ToString( this.UdpTransportPoolProvider, buffer );
 			buffer.Append( " }" );
 			return buffer.ToString();
 		}
