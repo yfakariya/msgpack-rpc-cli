@@ -1040,7 +1040,7 @@ namespace MsgPack.Rpc.Client.Protocols
 				{
 					this.ShutdownReceiving();
 				}
-				else if( this.CanResumeReceiving )
+				else if ( this.CanResumeReceiving )
 				{
 					// Wait to arrive more data from server.
 					this.ReceiveCore( context );
