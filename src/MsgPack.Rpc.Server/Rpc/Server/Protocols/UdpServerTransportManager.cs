@@ -23,6 +23,7 @@ using System.Globalization;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
+using System.Diagnostics;
 
 namespace MsgPack.Rpc.Server.Protocols
 {
@@ -109,7 +110,37 @@ namespace MsgPack.Rpc.Server.Protocols
 			}
 			finally
 			{
-				this._listeningThread.Join();
+				if ( this.Configuration.UdpListenerThreadExitTimeout == null )
+				{
+					this._listeningThread.Join();
+				}
+				else
+				{
+					if ( !this._listeningThread.Join( this.Configuration.UdpListenerThreadExitTimeout.Value ) )
+					{
+						this._listeningThread.Interrupt();
+						if ( !this._listeningThread.Join( this.Configuration.UdpListenerThreadExitTimeout.Value ) )
+						{
+							// Suspend is needed to capture stack trace.
+#pragma warning disable 0618
+							this._listeningThread.Suspend();
+#pragma warning restore 0618
+
+#if !API_SIGNATURE_TEST
+							MsgPackRpcServerProtocolsTrace.TraceEvent(
+								MsgPackRpcServerProtocolsTrace.FailedToStopUdpServerManagerListenerThread,
+								"Failed to stop the UDP server manager listener thread. Stack trace: {0}{1}",
+								Environment.NewLine,
+								new StackTrace( this._listeningThread, true )
+							);
+#endif
+							// Suspend was needed to capture stack trace.
+#pragma warning disable 0618
+							this._listeningThread.Resume();
+#pragma warning restore 0618
+						}
+					}
+				}
 			}
 		}
 
@@ -124,39 +155,66 @@ namespace MsgPack.Rpc.Server.Protocols
 				this.Server.Configuration.ListenBackLog
 			);
 #endif
-			var transport = this.GetTransport( this._listeningSocket );
-
-			while ( this.IsActive )
+			try
 			{
-				ServerRequestContext context;
-				try
-				{
-					context = this.GetRequestContext( transport );
-				}
-				catch ( ObjectDisposedException )
-				{
-					this.ReturnTransport( transport );
+				var transport = this.GetTransport( this._listeningSocket );
 
-					if ( this.IsActive )
+				while ( this.IsActive )
+				{
+					ServerRequestContext context;
+					try
 					{
-						throw;
+						// CancellationToken is useless...
+						context = this.GetRequestContext( transport );
 					}
-					else
+					catch ( ThreadInterruptedException )
 					{
+						this.ReturnTransport( transport );
+
+						if ( this.IsActive )
+						{
+							throw;
+						}
+						else
+						{
+							return;
+						}
+					}
+					catch ( ObjectDisposedException )
+					{
+						this.ReturnTransport( transport );
+
+						if ( this.IsActive )
+						{
+							throw;
+						}
+						else
+						{
+							return;
+						}
+					}
+
+					context.RemoteEndPoint = this._listeningEndPoint;
+
+					if ( !this.IsActive )
+					{
+						this.ReturnRequestContext( context );
+						this.ReturnTransport( transport );
 						return;
 					}
+
+					transport.Receive( context );
 				}
-
-				context.RemoteEndPoint = this._listeningEndPoint;
-
-				if ( !this.IsActive )
-				{
-					this.ReturnRequestContext( context );
-					this.ReturnTransport( transport );
-					return;
-				}
-
-				transport.Receive( context );
+			}
+			catch ( Exception ex )
+			{
+#if !API_SIGNATURE_TEST
+				MsgPackRpcServerProtocolsTrace.TraceEvent(
+					MsgPackRpcServerProtocolsTrace.UdpServerManagerListenerThreadCrash,
+					"The exception has been occurred in the UDP server manager listener thread. {0}",
+					ex
+				);
+#endif
 			}
 		}
 

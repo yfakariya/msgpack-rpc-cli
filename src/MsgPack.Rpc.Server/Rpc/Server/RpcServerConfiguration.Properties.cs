@@ -508,6 +508,48 @@ namespace MsgPack.Rpc.Server
 		
 		static partial void CoerceHardExecutionTimeoutValue( ref TimeSpan? value );
 
+		private TimeSpan? _udpListenerThreadExitTimeout = TimeSpan.FromMilliseconds( 300 );
+		
+		/// <summary>
+		/// 	Gets or sets the timeout value to exit the listener thread of UDP server manager.
+		/// </summary>
+		/// <value>
+		/// 	The timeout value to exit the listener thread of UDP server manager. The default is 300 milliseconds. <c>null</c> means inifinite timeout.
+		/// </value>
+		public TimeSpan? UdpListenerThreadExitTimeout
+		{
+			get
+			{
+				Contract.Ensures( Contract.Result<TimeSpan?>() == null || Contract.Result<TimeSpan?>().Value >= default( TimeSpan ) );
+
+				return this._udpListenerThreadExitTimeout;
+			}
+			set
+			{
+				if ( !( value == null || value.Value >= default( TimeSpan ) ) )
+				{
+					throw new ArgumentOutOfRangeException( "value", "Argument cannot be negative number." );
+				}
+
+				Contract.Ensures( Contract.Result<TimeSpan?>() == null || Contract.Result<TimeSpan?>().Value >= default( TimeSpan ) );
+
+				this.VerifyIsNotFrozen();
+				var coerced = value;
+				CoerceUdpListenerThreadExitTimeoutValue( ref coerced );
+				this._udpListenerThreadExitTimeout = coerced;
+			}
+		}
+		
+		/// <summary>
+		/// 	Resets the UdpListenerThreadExitTimeout property value.
+		/// </summary>
+		public void ResetUdpListenerThreadExitTimeout()
+		{
+			this._udpListenerThreadExitTimeout = TimeSpan.FromMilliseconds( 300 );
+		}
+		
+		static partial void CoerceUdpListenerThreadExitTimeoutValue( ref TimeSpan? value );
+
 		private Func<RpcServer, ServerTransportManager> _transportManagerProvider = ( server ) => new TcpServerTransportManager( server );
 		
 		/// <summary>
@@ -1132,6 +1174,9 @@ namespace MsgPack.Rpc.Server
 			buffer.Append( ", " );
 			buffer.Append( "\"HardExecutionTimeout\" : " );
 			ToString( this.HardExecutionTimeout, buffer );
+			buffer.Append( ", " );
+			buffer.Append( "\"UdpListenerThreadExitTimeout\" : " );
+			ToString( this.UdpListenerThreadExitTimeout, buffer );
 			buffer.Append( ", " );
 			buffer.Append( "\"TransportManagerProvider\" : " );
 			ToString( this.TransportManagerProvider, buffer );

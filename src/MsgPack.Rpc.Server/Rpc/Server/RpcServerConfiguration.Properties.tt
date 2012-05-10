@@ -178,6 +178,17 @@ new List<Property>()
 	},
 	new Property()
 	{
+		Name = "UdpListenerThreadExitTimeout",
+		Type = "TimeSpan?",
+		Default = "TimeSpan.FromMilliseconds( 300 )",
+		Summary = "Gets or sets the timeout value to exit the listener thread of UDP server manager.",
+		Value = "The timeout value to exit the listener thread of UDP server manager. " +
+			"The default is 300 milliseconds. <c>null</c> means inifinite timeout.",
+		Precondition = Constraints.NullOrNotNegative,
+		Postcondition = Constraints.NullOrNotNegative,
+	},
+	new Property()
+	{
 		Name = "TransportManagerProvider",
 		Type = "Func<RpcServer, ServerTransportManager>",
 		Default = "( server ) => new TcpServerTransportManager( server )",

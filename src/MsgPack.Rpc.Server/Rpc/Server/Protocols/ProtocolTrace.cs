@@ -33,13 +33,15 @@ namespace MsgPack.Rpc.Server.Protocols
 		private static readonly TraceSource _source = new TraceSource( "MsgPack.Rpc.Server.Protocols" );
 
 		private static readonly Dictionary<MessageId, TraceEventType> _typeTable = 
-			new Dictionary<MessageId, TraceEventType> ( 35 )
+			new Dictionary<MessageId, TraceEventType> ( 37 )
 			{
 				{ MessageId.DetectClientShutdown, TraceEventType.Information },
 				{ MessageId.SocketError, TraceEventType.Warning },
 				{ MessageId.IgnoreableError, TraceEventType.Verbose },
 				{ MessageId.UnexpectedLastOperation, TraceEventType.Critical },
 				{ MessageId.DefaultEndPoint, TraceEventType.Information },
+				{ MessageId.UdpServerManagerListenerThreadCrash, TraceEventType.Error },
+				{ MessageId.FailedToStopUdpServerManagerListenerThread, TraceEventType.Error },
 				{ MessageId.BeginReceive, TraceEventType.Verbose },
 				{ MessageId.ReceiveInboundData, TraceEventType.Verbose },
 				{ MessageId.ReceiveCanceledDueToClientShutdown, TraceEventType.Verbose },
@@ -155,6 +157,14 @@ namespace MsgPack.Rpc.Server.Protocols
 		/// 	<see cref="MessageId" /> of .DefaultEndPoint (ID:104) message.
 		/// </summary>
 		public const MessageId DefaultEndPoint = MessageId.DefaultEndPoint;
+		/// <summary>
+		/// 	<see cref="MessageId" /> of .UdpServerManagerListenerThreadCrash (ID:201) message.
+		/// </summary>
+		public const MessageId UdpServerManagerListenerThreadCrash = MessageId.UdpServerManagerListenerThreadCrash;
+		/// <summary>
+		/// 	<see cref="MessageId" /> of .FailedToStopUdpServerManagerListenerThread (ID:202) message.
+		/// </summary>
+		public const MessageId FailedToStopUdpServerManagerListenerThread = MessageId.FailedToStopUdpServerManagerListenerThread;
 		/// <summary>
 		/// 	<see cref="MessageId" /> of .BeginReceive (ID:1001) message.
 		/// </summary>
@@ -282,6 +292,8 @@ namespace MsgPack.Rpc.Server.Protocols
 			IgnoreableError = 102,
 			UnexpectedLastOperation = 103,
 			DefaultEndPoint = 104,
+			UdpServerManagerListenerThreadCrash = 201,
+			FailedToStopUdpServerManagerListenerThread = 202,
 			BeginReceive = 1001,
 			ReceiveInboundData = 1002,
 			ReceiveCanceledDueToClientShutdown = 1003,
