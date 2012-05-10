@@ -25,6 +25,7 @@ using System.Diagnostics.Contracts;
 using MsgPack.Rpc.Protocols;
 using System.Threading;
 using System.Reflection;
+using System.Net.Sockets;
 
 namespace MsgPack.Rpc.Server.Protocols
 {
@@ -261,7 +262,15 @@ namespace MsgPack.Rpc.Server.Protocols
 		protected override void ReceiveCore( ServerRequestContext context )
 		{
 			this.OnReceiving();
-			InProcPacket.ProcessReceive( this._inboundQueue, this._pendingPackets, context, this._receivingCancellationTokenSource.Token );
+			try
+			{
+				InProcPacket.ProcessReceive( this._inboundQueue, this._pendingPackets, context, this._receivingCancellationTokenSource.Token );
+			}
+			catch ( OperationCanceledException )
+			{
+				context.SocketError = SocketError.OperationAborted;
+			}
+
 			this.OnReceived( context );
 			this.OnReceived();
 		}
