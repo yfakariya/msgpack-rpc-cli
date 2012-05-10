@@ -116,10 +116,19 @@ namespace MsgPack.Rpc.Client.Protocols
 				{
 					transport.Key.ShutdownCompleted += this.OnTransportShutdownCompleted;
 					Interlocked.Increment( ref this._tranportIsInShutdown );
-					Interlocked.Increment( ref registered );
+					registered++;
 				}
 
-				transport.Key.BeginShutdown();
+				if ( !transport.Key.BeginShutdown() )
+				{
+					try { }
+					finally
+					{
+						transport.Key.ShutdownCompleted -= this.OnTransportShutdownCompleted;
+						Interlocked.Increment( ref this._tranportIsInShutdown );
+						registered--;
+					}
+				}
 			}
 
 			base.BeginShutdownCore();

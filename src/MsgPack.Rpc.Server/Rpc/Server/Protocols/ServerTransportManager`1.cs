@@ -109,6 +109,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		/// </remarks>
 		protected override void BeginShutdownCore()
 		{
+			int registered = 0;
 			foreach ( var transport in this._activeTransports )
 			{
 				try { }
@@ -116,12 +117,27 @@ namespace MsgPack.Rpc.Server.Protocols
 				{
 					transport.Key.ShutdownCompleted += this.OnTransportShutdownCompleted;
 					Interlocked.Increment( ref this._tranportIsInShutdown );
+					registered++;
 				}
 
-				transport.Key.BeginShutdown();
+				if ( !transport.Key.BeginShutdown() )
+				{
+					try { }
+					finally
+					{
+						transport.Key.ShutdownCompleted -= this.OnTransportShutdownCompleted;
+						Interlocked.Decrement( ref this._tranportIsInShutdown );
+						registered--;
+					}
+				}
 			}
 
 			base.BeginShutdownCore();
+
+			if ( registered == 0 )
+			{
+				this.OnShutdownCompleted( new ShutdownCompletedEventArgs( ShutdownSource.Server ) );
+			}
 		}
 
 		private void OnTransportClientShutdown( object sender, ClientShutdownEventArgs e )

@@ -259,11 +259,20 @@ namespace MsgPack.Rpc.Client.Protocols
 		/// <summary>
 		///		Initiates client shutdown.
 		/// </summary>
-		public void BeginShutdown()
+		/// <returns>
+		///		If shutdown process is initiated, then <c>true</c>.
+		///		If shutdown is already initiated or completed, then <c>false</c>.
+		/// </returns>
+		public bool BeginShutdown()
 		{
 			if ( Interlocked.Exchange( ref this._isInShutdown, 1 ) == 0 )
 			{
 				this.BeginShutdownCore();
+				return true;
+			}
+			else
+			{
+				return false;
 			}
 		}
 

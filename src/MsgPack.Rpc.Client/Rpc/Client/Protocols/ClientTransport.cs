@@ -334,7 +334,11 @@ namespace MsgPack.Rpc.Client.Protocols
 		/// <summary>
 		///		Initiates shutdown process.
 		/// </summary>
-		public void BeginShutdown()
+		/// <returns>
+		///		If shutdown process is initiated, then <c>true</c>.
+		///		If shutdown is already initiated or completed, then <c>false</c>.
+		/// </returns>
+		public bool BeginShutdown()
 		{
 			if ( Interlocked.CompareExchange( ref this._shutdownSource, ( int )ShutdownSource.Client, 0 ) == 0 )
 			{
@@ -344,6 +348,12 @@ namespace MsgPack.Rpc.Client.Protocols
 				{
 					this.ShutdownReceiving();
 				}
+
+				return true;
+			}
+			else
+			{
+				return false;
 			}
 		}
 
@@ -1044,6 +1054,7 @@ namespace MsgPack.Rpc.Client.Protocols
 				{
 					// Wait to arrive more data from server.
 					this.ReceiveCore( context );
+					return;
 				}
 
 				this.FinishReceiving( context );

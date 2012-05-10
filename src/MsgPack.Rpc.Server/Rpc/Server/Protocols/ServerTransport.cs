@@ -396,7 +396,11 @@ namespace MsgPack.Rpc.Server.Protocols
 		/// <summary>
 		///		Called from the manager, begins graceful shutdown on this transport.
 		/// </summary>
-		internal void BeginShutdown()
+		/// <returns>
+		///		If shutdown process is initiated, then <c>true</c>.
+		///		If shutdown is already initiated or completed, then <c>false</c>.
+		/// </returns>
+		internal bool BeginShutdown()
 		{
 			if ( Interlocked.CompareExchange( ref this._shutdownSource, ( int )ShutdownSource.Server, 0 ) == 0 )
 			{
@@ -411,6 +415,11 @@ namespace MsgPack.Rpc.Server.Protocols
 
 				this.PrivateShutdownReceiving();
 				this.TrySendShutdownSending();
+				return true;
+			}
+			else
+			{
+				return false;
 			}
 		}
 

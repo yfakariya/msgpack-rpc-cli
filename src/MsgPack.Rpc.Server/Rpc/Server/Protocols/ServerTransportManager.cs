@@ -347,10 +347,14 @@ namespace MsgPack.Rpc.Server.Protocols
 		/// <summary>
 		///		Initiates server shutdown process.
 		/// </summary>
+		/// <returns>
+		///		If shutdown process is initiated, then <c>true</c>.
+		///		If shutdown is already initiated or completed, then <c>false</c>.
+		/// </returns>
 		/// <remarks>
 		///		To observe shutdown completion, subscribe <see cref="ShutdownCompleted"/> event.
 		/// </remarks>
-		public void BeginShutdown()
+		public bool BeginShutdown()
 		{
 			if ( Interlocked.Exchange( ref this._isInShutdown, 1 ) == 0 )
 			{
@@ -360,6 +364,11 @@ namespace MsgPack.Rpc.Server.Protocols
 					this
 				);
 				this.BeginShutdownCore();
+				return true;
+			}
+			else
+			{
+				return false;
 			}
 		}
 
