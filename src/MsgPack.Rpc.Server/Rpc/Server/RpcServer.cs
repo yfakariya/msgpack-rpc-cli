@@ -295,7 +295,22 @@ namespace MsgPack.Rpc.Server
 
 			if ( this._transportManager != null )
 			{
-				this._transportManager.BeginShutdown();
+				using ( var tracker = new ShutdownTracker() )
+				{
+					this._transportManager.ShutdownCompleted += tracker.OnTransportManagerShutdownCompleted;
+					try
+					{
+						if ( this._transportManager.BeginShutdown() )
+						{
+							tracker.Wait();
+						}
+					}
+					finally
+					{
+						this._transportManager.ShutdownCompleted -= tracker.OnTransportManagerShutdownCompleted;
+					}
+
+				}
 				this._transportManager.Dispose();
 				this._transportManager = null;
 			}
@@ -318,5 +333,31 @@ namespace MsgPack.Rpc.Server
 		{
 			return String.IsNullOrWhiteSpace( this.Id ) ? this.GetHashCode().ToString( "X", CultureInfo.InvariantCulture ) : this.Id;
 		}
+
+		private sealed class ShutdownTracker : IDisposable
+		{
+			private readonly ManualResetEventSlim _waitHandle;
+
+			public ShutdownTracker()
+			{
+				this._waitHandle = new ManualResetEventSlim();
+			}
+
+			public void Dispose()
+			{
+				this._waitHandle.Dispose();
+			}
+
+			public void Wait()
+			{
+				this._waitHandle.Wait();
+			}
+
+			public void OnTransportManagerShutdownCompleted( object sender, EventArgs e )
+			{
+				this._waitHandle.Set();
+			}
+		}
+
 	}
 }
