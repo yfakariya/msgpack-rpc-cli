@@ -206,16 +206,18 @@ namespace MsgPack.Rpc.Server.Protocols
 					transport.Receive( context );
 				}
 			}
+#if !API_SIGNATURE_TEST
 			catch ( Exception ex )
 			{
-#if !API_SIGNATURE_TEST
 				MsgPackRpcServerProtocolsTrace.TraceEvent(
 					MsgPackRpcServerProtocolsTrace.UdpServerManagerListenerThreadCrash,
 					"The exception has been occurred in the UDP server manager listener thread. {0}",
 					ex
 				);
-#endif
 			}
+#else
+			catch { }
+#endif
 		}
 
 		/// <summary>
