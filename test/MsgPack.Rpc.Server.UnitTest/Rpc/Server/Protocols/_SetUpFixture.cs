@@ -19,6 +19,7 @@
 #endregion -- License Terms --
 
 using System;
+using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using NUnit.Framework;
 
@@ -31,7 +32,13 @@ namespace MsgPack.Rpc.Server.Protocols
 		[SetUp]
 		public void SetupCurrentNamespaceTests()
 		{
-			Contract.ContractFailed += ( sender, e ) => e.SetUnwind();
+			Contract.ContractFailed +=
+				( sender, e ) =>
+				{
+					Console.WriteLine( "{0} {1}", e.Message, e.Condition );
+					Console.WriteLine( new StackTrace( 0, true ) );
+					e.SetUnwind();
+				};
 		}
 	}
 }
