@@ -188,10 +188,10 @@ namespace MsgPack.Rpc.Server.Protocols
 
 			public Target( RpcServer server ) : base( server ) { }
 
-			protected override void DisposeCore( bool disposing )
+			protected override void Dispose( bool disposing )
 			{
 				this.DisposeCalled = disposing;
-				base.DisposeCore( disposing );
+				base.Dispose( disposing );
 			}
 
 			protected override void BeginShutdownCore()

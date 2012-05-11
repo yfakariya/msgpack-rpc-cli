@@ -19,6 +19,7 @@
 #endregion -- License Terms --
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 
 namespace MsgPack.Rpc.Client.Protocols
@@ -77,6 +78,8 @@ namespace MsgPack.Rpc.Client.Protocols
 		}
 
 		[ContractInvariantMethod]
+		[SuppressMessage( "Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Justification = "ObjectInvariant." )]
+		[SuppressMessage( "Microsoft.Performance", "CA1822:MarkMembersAsStatic", Justification = "ObjectInvariant." )]
 		private void ObjectInvariant()
 		{
 			Contract.Invariant( ( this.Error.IsSuccess && Contract.Result<MessagePackObject?>() != null )

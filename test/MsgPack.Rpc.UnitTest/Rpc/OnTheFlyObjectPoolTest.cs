@@ -31,7 +31,7 @@ namespace MsgPack.Rpc
 		public void TestBorrow_AlwaysFactoryCalled()
 		{
 			int count = 0;
-			using ( var target = new OnTheFlyObjectPool<object>( () => Interlocked.Increment( ref count ), null ) )
+			using ( var target = new OnTheFlyObjectPool<object>( conf => Interlocked.Increment( ref count ), new ObjectPoolConfiguration() ) )
 			{
 				Assert.That( target.Borrow(), Is.EqualTo( 1 ) );
 				Assert.That( target.Borrow(), Is.EqualTo( 2 ) );
@@ -42,7 +42,7 @@ namespace MsgPack.Rpc
 		public void TestReturn_JustHarmless()
 		{
 			int count = 0;
-			using ( var target = new OnTheFlyObjectPool<object>( () => Interlocked.Increment( ref count ), null ) )
+			using ( var target = new OnTheFlyObjectPool<object>( conf => Interlocked.Increment( ref count ), new ObjectPoolConfiguration() ) )
 			{
 				target.Return( new object() );
 			}
@@ -52,7 +52,7 @@ namespace MsgPack.Rpc
 		public void TestEvictExtraItems_JustHarmless()
 		{
 			int count = 0;
-			using ( var target = new OnTheFlyObjectPool<object>( () => Interlocked.Increment( ref count ), null ) )
+			using ( var target = new OnTheFlyObjectPool<object>( conf => Interlocked.Increment( ref count ), new ObjectPoolConfiguration() ) )
 			{
 				target.EvictExtraItems();
 			}
@@ -70,7 +70,7 @@ namespace MsgPack.Rpc
 		public void TestReturn_Null()
 		{
 			int count = 0;
-			using ( var target = new OnTheFlyObjectPool<object>( () => Interlocked.Increment( ref count ), null ) )
+			using ( var target = new OnTheFlyObjectPool<object>( conf => Interlocked.Increment( ref count ), new ObjectPoolConfiguration() ) )
 			{
 				target.Return( null );
 			}

@@ -35,30 +35,38 @@ namespace MsgPack.Rpc
 	public sealed class OnTheFlyObjectPool<T> : ObjectPool<T>
 		where T : class
 	{
-		private readonly Func<T> _factory;
+		private readonly Func<ObjectPoolConfiguration, T> _factory;
+		private readonly ObjectPoolConfiguration _configuration;
 
 		/// <summary>
 		///		Initializes a new instance of the <see cref="OnTheFlyObjectPool&lt;T&gt;"/> class.
 		/// </summary>
 		/// <param name="factory">
-		///		The factory delegate to create <typeparamref name="T"/> type instance.
+		///		The factory delegate to create <typeparamref name="T"/> type instance using <see cref="ObjectPoolConfiguration"/>.
 		///	</param>
 		/// <param name="configuration">
 		///		The <see cref="ObjectPoolConfiguration"/> which contains various settings of this object pool.
 		/// </param>
 		/// <exception cref="ArgumentNullException">
 		///		<paramref name="factory"/> is <c>null</c>.
+		///		Or <paramref name="configuration"/> is <c>null</c>.
 		/// </exception>
-		public OnTheFlyObjectPool( Func<T> factory, ObjectPoolConfiguration configuration )
+		public OnTheFlyObjectPool( Func<ObjectPoolConfiguration, T> factory, ObjectPoolConfiguration configuration )
 		{
 			if ( factory == null )
 			{
 				throw new ArgumentNullException( "factory" );
 			}
 
+			if ( configuration == null )
+			{
+				throw new ArgumentNullException( "configuration" );
+			}
+
 			Contract.EndContractBlock();
 
 			this._factory = factory;
+			this._configuration = configuration;
 		}
 
 		/// <summary>
@@ -70,7 +78,7 @@ namespace MsgPack.Rpc
 		/// </returns>
 		protected sealed override T BorrowCore()
 		{
-			var result = this._factory();
+			var result = this._factory( this._configuration );
 			Contract.Assume( result != null );
 			return result;
 		}

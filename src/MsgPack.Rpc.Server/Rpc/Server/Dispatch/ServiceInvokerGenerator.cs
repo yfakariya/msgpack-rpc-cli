@@ -44,8 +44,6 @@ namespace MsgPack.Rpc.Server.Dispatch
 		private static readonly object[] _debuggableAttributeCtorArguments = new object[] { true, true };
 		private static readonly MethodInfo _func_1_Invoke =
 			FromExpression.ToMethod( ( Func<object> @this ) => @this.Invoke() );
-		private static readonly FieldInfo _missingValueProperty =
-			typeof( Missing ).GetField( "Value" );
 		private static readonly PropertyInfo _rpcErrorMessageSuccessProperty =
 			FromExpression.ToProperty( () => RpcErrorMessage.Success );
 		private static readonly MethodInfo _unpackerReadSubtreeMethod =
@@ -392,7 +390,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 				}
 				else
 				{
-					EmitWrapperInvocation( emitter, il, service, targetOperation, returnType, unpackedArguments );
+					EmitWrapperInvocation( emitter, il, service, targetOperation, unpackedArguments );
 				}
 
 				// Set to arg.2
@@ -429,7 +427,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 					&& m.GetParameters()[ 1 ].ParameterType == typeof( object )
 			);
 
-		private static void EmitWrapperInvocation( ServiceInvokerEmitter emitter, TracingILGenerator il, LocalBuilder service, MethodInfo targetOperation, Type returnType, LocalBuilder[] unpackedArguments )
+		private static void EmitWrapperInvocation( ServiceInvokerEmitter emitter, TracingILGenerator il, LocalBuilder service, MethodInfo targetOperation, LocalBuilder[] unpackedArguments )
 		{
 			/*
 			 * returnValue = Task.Factory.StartNew( this.PrivateInvokeCore( state as Tuple<...> ), new Tuple<...>(...) );

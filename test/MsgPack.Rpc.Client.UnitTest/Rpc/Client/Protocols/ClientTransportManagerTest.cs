@@ -70,10 +70,10 @@ namespace MsgPack.Rpc.Client.Protocols
 
 			public Target( RpcClientConfiguration configuration ) : base( configuration ) { }
 
-			protected override void DisposeCore( bool disposing )
+			protected override void Dispose( bool disposing )
 			{
 				this.DisposeCalled = disposing;
-				base.DisposeCore( disposing );
+				base.Dispose( disposing );
 			}
 
 			protected override void BeginShutdownCore()

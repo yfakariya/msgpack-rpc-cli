@@ -20,10 +20,13 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Globalization;
 using System.Reflection;
 using MsgPack.Rpc.Protocols;
+
+[module: SuppressMessage( "Microsoft.Performance", "CA1810:InitializeReferenceTypeStaticFieldsInline", Scope = "member", Target = "MsgPack.Rpc.RpcError.#.cctor()", Justification = "Type initializer is required." )]
 
 namespace MsgPack.Rpc
 {
@@ -42,7 +45,6 @@ namespace MsgPack.Rpc
 				"RPCError.TimeoutError",
 				-60,
 				"Request has been timeout.",
-				typeof( RpcTimeoutException ),
 				( error, data ) => new RpcTimeoutException( data )
 			);
 
@@ -68,7 +70,6 @@ namespace MsgPack.Rpc
 				"RPCError.ClientError.TransportError",
 				-50,
 				"Cannot initiate transferring message.",
-				typeof( RpcTransportException ),
 				( error, data ) => new RpcTransportException( error, data )
 			);
 
@@ -94,7 +95,6 @@ namespace MsgPack.Rpc
 				"RPCError.ClientError.TranportError.NetworkUnreacheableError",
 				-51,
 				"Cannot reach specified remote end point.",
-				typeof( RpcTransportException ),
 				( error, data ) => new RpcTransportException( error, data )
 			);
 
@@ -120,7 +120,6 @@ namespace MsgPack.Rpc
 				"RPCError.ClientError.TranportError.ConnectionRefusedError",
 				-52,
 				"Connection was refused explicitly by remote end point.",
-				typeof( RpcTransportException ),
 				( error, data ) => new RpcTransportException( error, data )
 			);
 
@@ -147,7 +146,6 @@ namespace MsgPack.Rpc
 				"RPCError.ClientError.TranportError.ConnectionTimeoutError",
 				-53,
 				"Connection timout was occurred.",
-				typeof( RpcTransportException ),
 				( error, data ) => new RpcTransportException( error, data )
 			);
 
@@ -174,7 +172,6 @@ namespace MsgPack.Rpc
 				"RPCError.ClientError.MessageRefusedError",
 				-40,
 				"Message was refused explicitly by remote end point.",
-				typeof( RpcProtocolException ),
 				( error, data ) => new RpcProtocolException( error, data )
 			);
 
@@ -225,7 +222,6 @@ namespace MsgPack.Rpc
 			new RpcError(
 				"RPCError.ClientError.MessageRefusedError.MessageTooLargeError",
 				-41, "Message is too large.",
-				typeof( RpcMessageTooLongException ),
 				( error, data ) => new RpcMessageTooLongException( data )
 			);
 
@@ -269,7 +265,6 @@ namespace MsgPack.Rpc
 				"RPCError.ClientError.CallError",
 				-20,
 				"Failed to call specified method.",
-				typeof( RpcMethodInvocationException ),
 				( error, data ) => new RpcMethodInvocationException( error, data )
 			);
 
@@ -295,7 +290,6 @@ namespace MsgPack.Rpc
 				"RPCError.ClientError.CallError.NoMethodError",
 				-21,
 				"Specified method was not found.",
-				typeof( RpcMissingMethodException ),
 				( error, data ) => new RpcMissingMethodException( data )
 			);
 
@@ -321,7 +315,6 @@ namespace MsgPack.Rpc
 				"RPCError.ClientError.CallError.ArgumentError",
 				-22,
 				"Some argument(s) were wrong.",
-				typeof( RpcArgumentException ),
 				( error, data ) => new RpcArgumentException( data )
 			);
 
@@ -347,7 +340,6 @@ namespace MsgPack.Rpc
 				"RPCError.ServerError",
 				-30,
 				"Server cannot process received message.",
-				typeof( RpcServerUnavailableException ),
 				( error, data ) => new RpcServerUnavailableException( error, data )
 			);
 
@@ -373,7 +365,6 @@ namespace MsgPack.Rpc
 				"RPCError.ServerError.ServerBusyError",
 				-31,
 				"Server is busy.",
-				typeof( RpcServerUnavailableException ),
 				( error, data ) => new RpcServerUnavailableException( error, data )
 			);
 
@@ -399,7 +390,6 @@ namespace MsgPack.Rpc
 				"RPCError.RemoteRuntimeError",
 				-10,
 				"Remote end point failed to process request.",
-				typeof( RpcException ),
 				( error, data ) => new RpcException( error, data )
 			);
 
@@ -429,7 +419,6 @@ namespace MsgPack.Rpc
 				_unexpectedErrorIdentifier,
 				_unexpectedErrorCode,
 				"Unexpected RPC error is occurred.",
-				typeof( UnexpcetedRpcException ),
 				( error, data ) => new RpcException( error, data )
 			);
 
@@ -533,15 +522,13 @@ namespace MsgPack.Rpc
 			}
 		}
 
-		private readonly Type _exceptionType;
 		private readonly Func<RpcError, MessagePackObject, RpcException> _exceptionUnmarshaler;
 
-		private RpcError( string identifier, int errorCode, string defaultMessageInvariant, Type exceptionType, Func<RpcError, MessagePackObject, RpcException> exceptionUnmarshaler )
+		private RpcError( string identifier, int errorCode, string defaultMessageInvariant, Func<RpcError, MessagePackObject, RpcException> exceptionUnmarshaler )
 		{
 			this._identifier = identifier;
 			this._errorCode = errorCode;
 			this._defaultMessageInvariant = defaultMessageInvariant;
-			this._exceptionType = exceptionType;
 			this._exceptionUnmarshaler = exceptionUnmarshaler;
 		}
 
@@ -651,7 +638,6 @@ namespace MsgPack.Rpc
 					identifier,
 					errorCode,
 					"Application throw exception.",
-					typeof( RpcFaultException ),
 					( error, data ) => new RpcFaultException( error, data )
 				);
 		}

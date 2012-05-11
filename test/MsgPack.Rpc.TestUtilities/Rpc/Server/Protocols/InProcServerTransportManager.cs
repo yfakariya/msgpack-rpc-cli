@@ -118,7 +118,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			this._cancellationTokenSource = new CancellationTokenSource();
 			this._arrivedQueueTable = new ConcurrentDictionary<long, BlockingCollection<byte[]>>();
 			this._receivingQueueTable = new ConcurrentDictionary<long, BlockingCollection<byte[]>>();
-			this.SetTransportPool( ( transportPoolProvider ?? ( manager => new OnTheFlyObjectPool<InProcServerTransport>( () => new InProcServerTransport( manager ), null ) ) )( this ) );
+			this.SetTransportPool( ( transportPoolProvider ?? ( manager => new OnTheFlyObjectPool<InProcServerTransport>( conf => new InProcServerTransport( manager ), null ) ) )( this ) );
 		}
 
 		protected sealed override void BeginShutdownCore()
@@ -128,7 +128,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			base.BeginShutdownCore();
 		}
 
-		protected sealed override void DisposeCore( bool disposing )
+		protected sealed override void Dispose( bool disposing )
 		{
 			if ( !this._cancellationTokenSource.IsCancellationRequested )
 			{
@@ -155,7 +155,7 @@ namespace MsgPack.Rpc.Server.Protocols
 				}
 			}
 
-			base.DisposeCore( disposing );
+			base.Dispose( disposing );
 		}
 
 		protected override InProcServerTransport GetTransportCore( Socket bindingSocket )

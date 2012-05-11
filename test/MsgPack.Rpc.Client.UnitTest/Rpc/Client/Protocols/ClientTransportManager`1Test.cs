@@ -58,7 +58,7 @@ namespace MsgPack.Rpc.Client.Protocols
 			using ( var transportManager = new NullClientTransportManager() )
 			using ( var transportPool =
 				new OnTheFlyObjectPool<NullClientTransport>(
-					() => new NullClientTransport( transportManager ),
+					conf => new NullClientTransport( transportManager ),
 					RpcClientConfiguration.Default.CreateTransportPoolConfiguration()
 				)
 			)
@@ -86,7 +86,7 @@ namespace MsgPack.Rpc.Client.Protocols
 			using ( var transportManager = new NullClientTransportManager() )
 			using ( var transportPool =
 				new OnTheFlyObjectPool<NullClientTransport>(
-					() => new NullClientTransport( transportManager ),
+					conf => new NullClientTransport( transportManager ),
 					RpcClientConfiguration.Default.CreateTransportPoolConfiguration()
 				)
 			)

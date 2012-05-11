@@ -22,6 +22,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
+using System.Security;
 using System.Threading;
 
 namespace MsgPack.Rpc.Diagnostics
@@ -37,6 +38,25 @@ namespace MsgPack.Rpc.Diagnostics
 
 		private static DateTime GetProcessStartTimeUtc()
 		{
+			try
+			{
+				return PrivilegedGetProcessStartTimeUtc();
+			}
+			catch ( SecurityException )
+			{
+				// This value ensures that resulting process identifier is unique.
+				return DateTime.UtcNow;
+			}
+			catch ( MemberAccessException )
+			{
+				// This value ensures that resulting process identifier is unique.
+				return DateTime.UtcNow;
+			}
+		}
+
+		[SecuritySafeCritical]
+		private static DateTime PrivilegedGetProcessStartTimeUtc()
+		{
 			using ( var process = Process.GetCurrentProcess() )
 			{
 				return process.StartTime.ToUniversalTime();
@@ -44,6 +64,23 @@ namespace MsgPack.Rpc.Diagnostics
 		}
 
 		private static string GetProcessName()
+		{
+			try
+			{
+				return PrivilegedGetProcessName();
+			}
+			catch ( SecurityException )
+			{
+				return String.Empty;
+			}
+			catch ( MemberAccessException )
+			{
+				return String.Empty;
+			}
+		}
+
+		[SecuritySafeCritical]
+		private static string PrivilegedGetProcessName()
 		{
 			using ( var process = Process.GetCurrentProcess() )
 			{

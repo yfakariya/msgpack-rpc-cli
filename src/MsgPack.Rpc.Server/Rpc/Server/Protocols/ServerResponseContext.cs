@@ -162,10 +162,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		/// <param name="returnValueSerializer">The serializer for the return value.</param>
 		internal void Serialize<T>( T returnValue, RpcErrorMessage error, MessagePackSerializer<T> returnValueSerializer )
 		{
-			var transport = ( this.BoundTransport as ServerTransport );
-			Contract.Assert( transport != null, this.BoundTransport == null ? "(null)" : this.BoundTransport.ToString() );
-
-			transport.Serialize( this, returnValue, error, returnValueSerializer );
+			ServerTransport.Serialize( this, returnValue, error, returnValueSerializer );
 		}
 
 		/// <summary>

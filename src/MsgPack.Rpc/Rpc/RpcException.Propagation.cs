@@ -106,6 +106,7 @@ namespace MsgPack.Rpc
 			}
 		}
 
+		[Serializable]
 		private sealed class RemoteStackFrame
 		{
 			public readonly string MethodSignature;
@@ -151,7 +152,6 @@ namespace MsgPack.Rpc
 		internal static readonly MessagePackObject DebugInformationKeyUtf8 = MessagePackConvert.EncodeString( "DebugInformation" );
 		private static readonly MessagePackObject _errorCodeUtf8 = MessagePackConvert.EncodeString( "ErrorCode" );
 		private static readonly MessagePackObject _remoteExceptionsUtf8 = MessagePackConvert.EncodeString( "RemoteExceptions" );
-		private static readonly MessagePackObject _remoteDataUtf8 = MessagePackConvert.EncodeString( "RemoteData" );
 
 		/// <summary>
 		///		Get <see cref="MessagePackObject"/> which contains data about this instance.
@@ -280,8 +280,15 @@ namespace MsgPack.Rpc
 			}
 			else if ( _safeGetHRFromExceptionMethod.IsSecuritySafeCritical )
 			{
-				// Can invoke Marshal.GetHRForException because this assembly is fully trusted.
-				return Marshal.GetHRForException( exception );
+				try
+				{
+					// Can invoke Marshal.GetHRForException because this assembly is fully trusted.
+					return Marshal.GetHRForException( exception );
+				}
+				catch ( SecurityException ) { }
+				catch ( MemberAccessException ) { }
+
+				return 0;
 			}
 			else
 			{

@@ -19,6 +19,7 @@
 #endregion -- License Terms --
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Net;
 using System.Net.Sockets;
@@ -227,9 +228,10 @@ namespace MsgPack.Rpc.Client.Protocols
 		/// <summary>
 		///		Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
 		/// </summary>
+		[SuppressMessage( "Microsoft.Design", "CA1063:ImplementIDisposableCorrectly", Justification = "Must ensure exactly once." )]
 		public void Dispose()
 		{
-			this.Dispose( true );
+			this.DisposeOnce( true );
 			GC.SuppressFinalize( this );
 		}
 
@@ -237,11 +239,11 @@ namespace MsgPack.Rpc.Client.Protocols
 		///		Releases unmanaged and - optionally - managed resources.
 		/// </summary>
 		/// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
-		protected void Dispose( bool disposing )
+		private void DisposeOnce( bool disposing )
 		{
 			if ( Interlocked.CompareExchange( ref this._isDisposed, 1, 0 ) == 0 )
 			{
-				this.DisposeCore( disposing );
+				this.Dispose( disposing );
 			}
 		}
 
@@ -254,7 +256,7 @@ namespace MsgPack.Rpc.Client.Protocols
 		/// <remarks>
 		///		This method is guaranteed that this is invoked exactly once and after <see cref="IsDisposed"/> changed <c>true</c>.
 		/// </remarks>
-		protected virtual void DisposeCore( bool disposing ) { }
+		protected virtual void Dispose( bool disposing ) { }
 
 		/// <summary>
 		///		Initiates client shutdown.
@@ -328,6 +330,7 @@ namespace MsgPack.Rpc.Client.Protocols
 		///		<see cref="RpcErrorMessage"/> corresponds for the socket error.
 		///		<c>null</c> if the operation result is not socket error.
 		/// </returns>
+		[SuppressMessage( "Microsoft.Performance", "CA1822:MarkMembersAsStatic", Justification = "Logically be instance method." )]
 		protected internal RpcErrorMessage? HandleSocketError( Socket socket, SocketAsyncEventArgs context )
 		{
 			if ( context.SocketError.IsError() == false )
@@ -355,7 +358,7 @@ namespace MsgPack.Rpc.Client.Protocols
 		/// <param name="transport">The <see cref="ClientTransport"/> to be returned.</param>
 		internal abstract void ReturnTransport( ClientTransport transport );
 
-		internal void HandleOrphan( int? messageId, long sessionId, RpcErrorMessage rpcError, MessagePackObject? returnValue )
+		internal void HandleOrphan( int? messageId, RpcErrorMessage rpcError, MessagePackObject? returnValue )
 		{
 			this.OnUnknownResponseReceived( new UnknownResponseReceivedEventArgs( messageId, rpcError, returnValue ) );
 		}
@@ -460,6 +463,7 @@ namespace MsgPack.Rpc.Client.Protocols
 		/// <exception cref="ArgumentNullException">
 		///		<paramref name="watcher"/> is <c>null</c>.
 		/// </exception>
+		[SuppressMessage( "Microsoft.Performance", "CA1822:MarkMembersAsStatic", Justification = "Logically be instance method." )]
 		protected void EndConnectTimeoutWatch( ConnectTimeoutWatcher watcher )
 		{
 			if ( watcher == null )

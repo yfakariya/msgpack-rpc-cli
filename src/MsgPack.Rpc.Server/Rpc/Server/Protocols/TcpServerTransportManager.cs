@@ -92,14 +92,14 @@ namespace MsgPack.Rpc.Server.Protocols
 		///		Releases unmanaged and - optionally - managed resources
 		/// </summary>
 		/// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
-		protected sealed override void DisposeCore( bool disposing )
+		protected sealed override void Dispose( bool disposing )
 		{
 			if ( disposing )
 			{
 				this._listeningSocket.Close();
 			}
 
-			base.DisposeCore( disposing );
+			base.Dispose( disposing );
 		}
 
 		private void StartAccept()
@@ -115,7 +115,8 @@ namespace MsgPack.Rpc.Server.Protocols
 
 		private void OnCompleted( object sender, SocketAsyncEventArgs e )
 		{
-			if ( !this.HandleSocketError( sender as Socket, e ) )
+			var socket = sender as Socket;
+			if ( !this.HandleSocketError( socket, e ) )
 			{
 				return;
 			}
@@ -132,7 +133,6 @@ namespace MsgPack.Rpc.Server.Protocols
 				default:
 				{
 #if !API_SIGNATURE_TEST
-					var socket = sender as Socket;
 					MsgPackRpcServerProtocolsTrace.TraceEvent(
 						MsgPackRpcServerProtocolsTrace.UnexpectedLastOperation,
 						"Unexpected operation. {{ \"Socket\" : 0x{0:X}, \"RemoteEndPoint\" : \"{1}\", \"LocalEndPoint\" : \"{2}\", \"LastOperation\" : \"{3}\" }}",

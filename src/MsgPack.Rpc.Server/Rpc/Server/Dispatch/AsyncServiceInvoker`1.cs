@@ -20,14 +20,15 @@
 
 using System;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Reflection;
-using System.Security;
-using System.Threading;
 using System.Threading.Tasks;
 using MsgPack.Rpc.Protocols;
 using MsgPack.Rpc.Server.Protocols;
 using MsgPack.Serialization;
+using System.Security;
+using System.Security.Permissions;
 
 namespace MsgPack.Rpc.Server.Dispatch
 {
@@ -42,6 +43,8 @@ namespace MsgPack.Rpc.Server.Dispatch
 	[ContractClass( typeof( AsyncServiceInvokerContract<> ) )]
 	public abstract class AsyncServiceInvoker<T> : AsyncServiceInvoker
 	{
+		private static readonly SecurityPermission _unmanagedCodePermission = new SecurityPermission( SecurityPermissionFlag.UnmanagedCode );
+
 		private readonly MessagePackSerializer<T> _returnValueSerializer;
 
 		/// <summary>
@@ -76,6 +79,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 		/// <returns>
 		///		The <see cref="Task"/> to control entire process including sending response.
 		/// </returns>
+		[SuppressMessage( "Microsoft.Design", "CA1031:DoNotCatchGeneralExceptionTypes", Justification = "Transfers the exception." )]
 		public sealed override Task InvokeAsync( ServerRequestContext requestContext, ServerResponseContext responseContext )
 		{
 			if ( requestContext == null )
@@ -92,7 +96,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 			Contract.Assert( readMustSuccess, "Arguments is not an array." );
 			Contract.Assert( arguments.IsArrayHeader );
 
-			Trace.CorrelationManager.StartLogicalOperation();
+			SafeStartLogicalOperation();
 			if ( MsgPackRpcServerDispatchTrace.ShouldTrace( MsgPackRpcServerDispatchTrace.OperationStart ) )
 			{
 				MsgPackRpcServerDispatchTrace.TraceData(
@@ -185,7 +189,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 			}
 			finally
 			{
-				Trace.CorrelationManager.StopLogicalOperation();
+				SafeStopLogicalOperation();
 			}
 
 			if ( responseContext != null )
@@ -199,12 +203,58 @@ namespace MsgPack.Rpc.Server.Dispatch
 		/// </summary>
 		/// <param name="arguments"><see cref="Unpacker"/> to unpack arguments.</param>
 		/// <param name="task">The <see cref="Task"/> to control asynchronous target invocation will be stored.</param>
-		/// <param name="error">The RPC error will be stored.</param>
+		/// <param name="rpcError">The RPC error will be stored.</param>
 		/// <remarks>
 		///		<paramref name="arguments"/> will be disposed asynchronously after this method returns.
 		///		So, you must deserialize all arguments synchronously, or copy its content as <see cref="MessagePackObject"/> tree.
 		/// </remarks>
-		protected abstract void InvokeCore( Unpacker arguments, out Task task, out RpcErrorMessage error );
+		protected abstract void InvokeCore( Unpacker arguments, out Task task, out RpcErrorMessage rpcError );
+
+		private static void SafeStartLogicalOperation()
+		{
+			try
+			{
+				PrivilegedStartLogicalOperation();
+			}
+			catch ( SecurityException ) { }
+			catch ( MemberAccessException ) { }
+		}
+
+		[SecuritySafeCritical]
+		[SuppressMessage( "Microsoft.Security", "CA2122:DoNotIndirectlyExposeMethodsWithLinkDemands" )]
+		[SuppressMessage( "Microsoft.Security", "CA2106:SecureAsserts" )]
+		private static void PrivilegedStartLogicalOperation()
+		{
+			_unmanagedCodePermission.Assert();
+			try
+			{
+				Trace.CorrelationManager.StartLogicalOperation();
+			}
+			finally
+			{
+				SecurityPermission.RevertAssert();
+			}
+		}
+
+		private static void SafeStopLogicalOperation()
+		{
+			PrivilegedStopLogicalOperation();
+		}
+
+		[SecuritySafeCritical]
+		[SuppressMessage( "Microsoft.Security", "CA2122:DoNotIndirectlyExposeMethodsWithLinkDemands" )]
+		private static void PrivilegedStopLogicalOperation()
+		{
+			_unmanagedCodePermission.Assert();
+			try
+			{
+				Trace.CorrelationManager.StopLogicalOperation();
+			}
+			finally
+			{
+				SecurityPermission.RevertAssert();
+			}
+		}
 	}
 
 	[ContractClassFor( typeof( AsyncServiceInvoker<> ) )]

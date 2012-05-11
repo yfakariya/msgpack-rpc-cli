@@ -301,6 +301,7 @@ namespace MsgPack.Rpc.Protocols
 			if ( disposing )
 			{
 				this._socketContext.Dispose();
+				this._timeoutWatcher.Dispose();
 			}
 		}
 

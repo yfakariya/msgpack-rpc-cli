@@ -19,6 +19,7 @@
 #endregion -- License Terms --
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.Serialization;
 using MsgPack.Rpc.Protocols;
 
@@ -30,6 +31,8 @@ namespace MsgPack.Rpc
 #if !SILVERLIGHT
 	[Serializable]
 #endif
+	[SuppressMessage( "Microsoft.Usage", "CA2240:ImplementISerializableCorrectly", Justification = "Using ISafeSerializationData." )]
+	[SuppressMessage( "Microsoft.Design", "CA1032:ImplementStandardExceptionConstructors", Justification = "Using ISafeSerializationData." )]
 	public sealed class RpcMissingMethodException : RpcMethodInvocationException
 	{
 		/// <summary>

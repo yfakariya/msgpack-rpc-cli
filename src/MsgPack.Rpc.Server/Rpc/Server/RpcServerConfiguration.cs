@@ -21,8 +21,17 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using MsgPack.Rpc.Protocols.Filters;
+
+[module: SuppressMessage( "Microsoft.Design", "CA1006:DoNotNestGenericTypesInMemberSignatures", Scope = "member", Target = "MsgPack.Rpc.Server.RpcServerConfiguration.#RequestContextPoolProvider" )]
+[module: SuppressMessage( "Microsoft.Design", "CA1006:DoNotNestGenericTypesInMemberSignatures", Scope = "member", Target = "MsgPack.Rpc.Server.RpcServerConfiguration.#TcpTransportPoolProvider" )]
+[module: SuppressMessage( "Microsoft.Design", "CA1006:DoNotNestGenericTypesInMemberSignatures", Scope = "member", Target = "MsgPack.Rpc.Server.RpcServerConfiguration.#ListeningContextPoolProvider" )]
+[module: SuppressMessage( "Microsoft.Design", "CA1006:DoNotNestGenericTypesInMemberSignatures", Scope = "member", Target = "MsgPack.Rpc.Server.RpcServerConfiguration.#UdpTransportPoolProvider" )]
+[module: SuppressMessage( "Microsoft.Design", "CA1006:DoNotNestGenericTypesInMemberSignatures", Scope = "member", Target = "MsgPack.Rpc.Server.RpcServerConfiguration.#ApplicationContextPoolProvider" )]
+[module: SuppressMessage( "Microsoft.Design", "CA1006:DoNotNestGenericTypesInMemberSignatures", Scope = "member", Target = "MsgPack.Rpc.Server.RpcServerConfiguration.#ResponseContextPoolProvider" )]
+[module: SuppressMessage( "Microsoft.Globalization", "CA1308:NormalizeStringsToUppercase", Scope = "member", Target = "MsgPack.Rpc.Server.RpcServerConfiguration.#ToString`1(!!0,System.Text.StringBuilder)", Justification = "Boolean value should be lower case." )]
 
 namespace MsgPack.Rpc.Server
 {

@@ -19,6 +19,7 @@
 #endregion -- License Terms --
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 
 namespace MsgPack.Rpc
@@ -103,6 +104,7 @@ namespace MsgPack.Rpc
 			return this.CloneCore().FreezeCore();
 		}
 
+		[SuppressMessage( "Microsoft.Design", "CA1033:InterfaceMethodsShouldBeCallableByChildTypes", Justification = "Exposed via CloneCore()." )]
 		object ICloneable.Clone()
 		{
 			return this.CloneCore();
@@ -115,11 +117,13 @@ namespace MsgPack.Rpc
 		/// This instance if it is already frozen.
 		/// Otherwise, frozen copy of this instance.
 		/// </returns>
+		[SuppressMessage( "Microsoft.Design", "CA1033:InterfaceMethodsShouldBeCallableByChildTypes", Justification = "Exposed via AsFrozenCore()." )]
 		IFreezable IFreezable.AsFrozen()
 		{
 			return this.AsFrozenCore();
 		}
 
+		[SuppressMessage( "Microsoft.Design", "CA1033:InterfaceMethodsShouldBeCallableByChildTypes", Justification = "Exposed via FreezeCore()." )]
 		IFreezable IFreezable.Freeze()
 		{
 			return this.FreezeCore();

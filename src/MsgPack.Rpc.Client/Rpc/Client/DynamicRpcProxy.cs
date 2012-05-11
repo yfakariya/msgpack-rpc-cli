@@ -23,7 +23,6 @@ using System.Diagnostics.Contracts;
 using System.Dynamic;
 using System.Net;
 using MsgPack.Serialization;
-using MsgPack.Rpc.Client.Protocols;
 
 namespace MsgPack.Rpc.Client
 {

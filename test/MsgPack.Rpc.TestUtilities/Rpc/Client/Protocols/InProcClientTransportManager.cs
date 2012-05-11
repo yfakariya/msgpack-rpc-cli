@@ -79,10 +79,10 @@ namespace MsgPack.Rpc.Client.Protocols
 
 			this._target = target;
 			this._cancellationTokenSource = new CancellationTokenSource();
-			this.SetTransportPool( new OnTheFlyObjectPool<InProcClientTransport>( () => new InProcClientTransport( this ), null ) );
+			this.SetTransportPool( new OnTheFlyObjectPool<InProcClientTransport>( conf => new InProcClientTransport( this ), new ObjectPoolConfiguration() ) );
 		}
 
-		protected sealed override void DisposeCore( bool disposing )
+		protected sealed override void Dispose( bool disposing )
 		{
 			this._target.Dispose();
 			if ( !this._cancellationTokenSource.IsCancellationRequested )
@@ -91,7 +91,7 @@ namespace MsgPack.Rpc.Client.Protocols
 			}
 
 			this._cancellationTokenSource.Dispose();
-			base.DisposeCore( disposing );
+			base.Dispose( disposing );
 		}
 
 		protected sealed override void BeginShutdownCore()

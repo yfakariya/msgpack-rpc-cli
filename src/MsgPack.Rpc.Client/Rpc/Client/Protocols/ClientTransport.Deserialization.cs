@@ -286,25 +286,5 @@ namespace MsgPack.Rpc.Client.Protocols
 
 			return true;
 		}
-
-		private int GetItemsCount( ClientResponseContext context, Unpacker unpacker )
-		{
-			try
-			{
-				long rawItemsCount = unpacker.ItemsCount;
-				if ( rawItemsCount > Int32.MaxValue )
-				{
-					this.HandleDeserializationError( context, "Too many error items. Items greater than Int32.MaxValue is not supported.", null );
-					return -1;
-				}
-
-				return unchecked( ( int )rawItemsCount );
-			}
-			catch ( InvalidOperationException )
-			{
-				this.HandleDeserializationError( context, "Too many error items. Items greater than Int32.MaxValue is not supported.", null );
-				return -1;
-			}
-		}
 	}
 }

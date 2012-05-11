@@ -54,8 +54,6 @@ namespace MsgPack.Rpc.Server.Dispatch
 			}
 		}
 
-		private readonly MethodInfo _method;
-
 		private readonly Func<ServerRequestContext, ServerResponseContext, Task> _operation;
 
 		/// <summary>
@@ -95,13 +93,12 @@ namespace MsgPack.Rpc.Server.Dispatch
 			}
 		}
 
-		private OperationDescription( ServiceDescription service, MethodInfo method, string id, Func<ServerRequestContext, ServerResponseContext, Task> operation )
+		private OperationDescription( ServiceDescription service, string id, Func<ServerRequestContext, ServerResponseContext, Task> operation )
 		{
 			Validation.ValidateMethodName( id, "id" );
 			Contract.EndContractBlock();
 
 			this._service = service;
-			this._method = method;
 			this._operation = operation;
 			this._id = id;
 		}
@@ -162,7 +159,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 			Contract.Ensures( Contract.Result<OperationDescription>() != null );
 
 			var serviceInvoker = ServiceInvokerGenerator.Default.GetServiceInvoker( runtime, service, operation );
-			return new OperationDescription( service, operation, serviceInvoker.OperationId, serviceInvoker.InvokeAsync );
+			return new OperationDescription( service, serviceInvoker.OperationId, serviceInvoker.InvokeAsync );
 		}
 	}
 }

@@ -32,6 +32,7 @@ using System.Net.Sockets;
 using System.Threading;
 using MsgPack.Rpc.Protocols;
 using MsgPack.Rpc.Protocols.Filters;
+using System.Diagnostics.CodeAnalysis;
 
 namespace MsgPack.Rpc.Client.Protocols
 {
@@ -537,7 +538,8 @@ namespace MsgPack.Rpc.Client.Protocols
 		{
 			MsgPackRpcClientProtocolsTrace.TraceRpcError(
 				rpcError.Error,
-				"Deserialization error. {{ \"Message ID\" : {0}, \"Error\" : {1} }}",
+				"Deserialization error. {0} {{ \"Message ID\" : {1}, \"Error\" : {2} }}",
+				message,
 				messageId == null ? "(null)" : messageId.ToString(),
 				rpcError
 			);
@@ -613,7 +615,7 @@ namespace MsgPack.Rpc.Client.Protocols
 			MsgPackRpcClientProtocolsTrace.TraceEvent(
 				MsgPackRpcClientProtocolsTrace.OrphanError,
 				"There are no handlers to handle message which has MessageID:{0}, SessionID:{1}. This may indicate runtime problem or due to client recycling. {{ \"Socket\" : 0x{2:X}, \"RemoteEndPoint\" : \"{3}\", \"LocalEndPoint\" : \"{4}\", \"SessionID\" :{1}, \"MessageID\" : {0}, \"Error\" : {5}, \"ReturnValue\" : {6}, \"CallStack\" : \"{7}\" }}",
-				messageId == null ? "(null)" : messageId.Value.ToString(),
+				messageId == null ? "(null)" : messageId.Value.ToString( CultureInfo.InvariantCulture ),
 				sessionId,
 				GetHandle( socket ),
 				remoteEndPoint,
@@ -623,25 +625,7 @@ namespace MsgPack.Rpc.Client.Protocols
 				new StackTrace( 0, true )
 			);
 
-			this._manager.HandleOrphan( messageId, sessionId, rpcError, returnValue );
-		}
-
-		private void DumpRequestData( DateTimeOffset sessionStartedAt, EndPoint destination, long sessionId, MessageType type, int? messageId, IList<ArraySegment<byte>> requestData )
-		{
-			if ( !this.Manager.Configuration.DumpCorruptResponse )
-			{
-				return;
-			}
-
-			using ( var stream = this.OpenDumpStream( sessionStartedAt, destination, sessionId, type, messageId ) )
-			{
-				foreach ( var segment in requestData )
-				{
-					stream.Write( segment.Array, segment.Offset, segment.Count );
-				}
-
-				stream.Flush();
-			}
+			this._manager.HandleOrphan( messageId, rpcError, returnValue );
 		}
 
 		private Stream OpenDumpStream( DateTimeOffset sessionStartedAt, EndPoint destination, long sessionId, MessageType type, int? messageId )
@@ -701,6 +685,7 @@ namespace MsgPack.Rpc.Client.Protocols
 		/// <exception cref="InvalidOperationException">
 		///		This object is not ready to invoke this method.
 		/// </exception>
+		[SuppressMessage( "Microsoft.Design", "CA1024:UsePropertiesWhereAppropriate", Justification = "Keep symmetric for ReturnContext." )]
 		public virtual ClientRequestContext GetClientRequestContext()
 		{
 			var context = this.Manager.GetRequestContext( this );
@@ -1167,7 +1152,8 @@ namespace MsgPack.Rpc.Client.Protocols
 				{
 					return socket.Handle;
 				}
-				catch { }
+				catch ( SocketException ) { }
+				catch ( ObjectDisposedException ) { }
 			}
 
 			return IntPtr.Zero;
@@ -1185,7 +1171,8 @@ namespace MsgPack.Rpc.Client.Protocols
 						return result;
 					}
 				}
-				catch { }
+				catch ( SocketException ) { }
+				catch ( ObjectDisposedException ) { }
 			}
 
 			if ( socket != null )
@@ -1194,7 +1181,8 @@ namespace MsgPack.Rpc.Client.Protocols
 				{
 					return socket.RemoteEndPoint;
 				}
-				catch { }
+				catch ( SocketException ) { }
+				catch ( ObjectDisposedException ) { }
 			}
 
 			return null;
@@ -1212,7 +1200,8 @@ namespace MsgPack.Rpc.Client.Protocols
 						return result;
 					}
 				}
-				catch { }
+				catch ( SocketException ) { }
+				catch ( ObjectDisposedException ) { }
 			}
 
 			if ( socket != null )
@@ -1221,7 +1210,8 @@ namespace MsgPack.Rpc.Client.Protocols
 				{
 					return socket.RemoteEndPoint;
 				}
-				catch { }
+				catch ( SocketException ) { }
+				catch ( ObjectDisposedException ) { }
 			}
 
 			return null;
@@ -1235,7 +1225,8 @@ namespace MsgPack.Rpc.Client.Protocols
 				{
 					return socket.LocalEndPoint;
 				}
-				catch { }
+				catch ( SocketException ) { }
+				catch ( ObjectDisposedException ) { }
 			}
 
 			return null;

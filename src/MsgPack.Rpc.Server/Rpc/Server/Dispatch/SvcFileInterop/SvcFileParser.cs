@@ -28,19 +28,14 @@ namespace MsgPack.Rpc.Server.Dispatch.SvcFileInterop
 	/// <summary>
 	///		Parser for WCF .svc file content.
 	/// </summary>
-	internal sealed class SvcFileParser
+	internal static class SvcFileParser
 	{
-		/// <summary>
-		///		Initializes a new instance of the <see cref="SvcFileParser"/> class.
-		/// </summary>
-		public SvcFileParser() { }
-
 		/// <summary>
 		///		Parses content as <see cref="ServiceHostDirective"/>.
 		/// </summary>
 		/// <param name="input"><see cref="TextReader"/> to read the content.</param>
 		/// <returns>Parsed <see cref="ServiceHostDirective"/>.</returns>
-		public ServiceHostDirective Parse( TextReader input )
+		public static ServiceHostDirective Parse( TextReader input )
 		{
 			Contract.Assert( input != null );
 

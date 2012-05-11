@@ -20,7 +20,9 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
+using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
 
@@ -96,7 +98,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 
 			methodName = match.Groups[ MethodGroup ].Value;
 			scope = match.Groups[ ScopeGroup ].Success ? match.Groups[ ScopeGroup ].Value : null;
-			version = match.Groups[ VersionGroup ].Success ? Int32.Parse( match.Groups[ VersionGroup ].Value ) : default( int? );
+			version = match.Groups[ VersionGroup ].Success ? Int32.Parse( match.Groups[ VersionGroup ].Value, CultureInfo.InvariantCulture ) : default( int? );
 		}
 
 		private readonly Dictionary<string, Dictionary<string, SortedList<int, OperationDescription>>> _catalog;
@@ -188,7 +190,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 				return null;
 			}
 
-			var versionedMethod = this.PrivateGetVersionedMethods( methods, methodName );
+			var versionedMethod = PrivateGetVersionedMethods( methods, methodName );
 
 			if ( versionedMethod == null )
 			{
@@ -214,7 +216,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 			return result;
 		}
 
-		private SortedList<int, OperationDescription> PrivateGetVersionedMethods( IDictionary<string, SortedList<int, OperationDescription>> methods, string methodName )
+		private static SortedList<int, OperationDescription> PrivateGetVersionedMethods( IDictionary<string, SortedList<int, OperationDescription>> methods, string methodName )
 		{
 			SortedList<int, OperationDescription> result;
 			methods.TryGetValue( methodName, out result );
@@ -258,7 +260,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 				this._catalog.Add( scope, methods );
 			}
 
-			var versions = this.PrivateGetVersionedMethods( methods, methodName );
+			var versions = PrivateGetVersionedMethods( methods, methodName );
 			if ( versions == null )
 			{
 				mayExist = false;
@@ -352,7 +354,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 				return false;
 			}
 
-			var versions = this.PrivateGetVersionedMethods( methods, methodName );
+			var versions = PrivateGetVersionedMethods( methods, methodName );
 			if ( versions == null )
 			{
 				return false;
@@ -489,6 +491,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 		/// <exception cref="ArgumentException">
 		///		<paramref name="scope"/> is invalid.
 		/// </exception>
+		[SuppressMessage( "Microsoft.Design", "CA1006:DoNotNestGenericTypesInMemberSignatures", Justification = "By design." )]
 		public IEnumerable<KeyValuePair<string, IEnumerable<OperationDescription>>> GetMethods( string scope )
 		{
 			if ( !String.IsNullOrEmpty( scope ) )
@@ -546,7 +549,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 			var methods = this.PrivateGetMethodsInScope( scope );
 			if ( methods != null )
 			{
-				var versions = this.PrivateGetVersionedMethods( methods, methodName );
+				var versions = PrivateGetVersionedMethods( methods, methodName );
 				if ( versions != null )
 				{
 					foreach ( var version in versions.Values )

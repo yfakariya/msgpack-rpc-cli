@@ -452,7 +452,7 @@ namespace MsgPack.Rpc
 			}
 		}
 
-		private T SafeGetTarget( WeakReference item )
+		private static T SafeGetTarget( WeakReference item )
 		{
 			try
 			{

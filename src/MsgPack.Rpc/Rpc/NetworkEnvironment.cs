@@ -23,6 +23,7 @@ using System.Linq;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
+using System.Security;
 
 namespace MsgPack.Rpc
 {
@@ -30,7 +31,7 @@ namespace MsgPack.Rpc
 	{
 		internal static EndPoint GetDefaultEndPoint( int port, bool preferIPv4 )
 		{
-			var iface = NetworkInterface.GetAllNetworkInterfaces().FirstOrDefault();
+			var iface = SafeGetDefaultEndPoint();
 			if ( iface != null )
 			{
 				bool canUseIPv6;
@@ -67,6 +68,18 @@ namespace MsgPack.Rpc
 			}
 
 			return new IPEndPoint( preferIPv4 ? IPAddress.Any : IPAddress.IPv6Any, port );
+		}
+
+		private static NetworkInterface SafeGetDefaultEndPoint()
+		{
+			try
+			{
+				return NetworkInterface.GetAllNetworkInterfaces().FirstOrDefault();
+			}
+			catch ( SecurityException ) { }
+			catch ( MemberAccessException ) { }
+
+			return null;
 		}
 	}
 }

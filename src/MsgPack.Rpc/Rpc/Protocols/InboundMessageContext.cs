@@ -20,6 +20,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 namespace MsgPack.Rpc.Protocols
@@ -38,6 +39,7 @@ namespace MsgPack.Rpc.Protocols
 		///		The received data.
 		///		This value wlll not be <c>null</c>.
 		/// </value>
+		[SuppressMessage( "Microsoft.Design", "CA1006:DoNotNestGenericTypesInMemberSignatures", Justification = "Follwing SocketAsyncEventArgs signature." )]
 		public IList<ArraySegment<byte>> ReceivedData
 		{
 			get { return this._receivedData; }

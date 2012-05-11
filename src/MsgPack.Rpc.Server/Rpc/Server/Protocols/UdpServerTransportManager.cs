@@ -19,11 +19,12 @@
 #endregion -- License Terms --
 
 using System;
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
-using System.Diagnostics;
 
 namespace MsgPack.Rpc.Server.Protocols
 {
@@ -100,12 +101,12 @@ namespace MsgPack.Rpc.Server.Protocols
 		/// When overridden in derived class, releases unmanaged and - optionally - managed resources
 		/// </summary>
 		/// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
-		protected override void DisposeCore( bool disposing )
+		protected override void Dispose( bool disposing )
 		{
 			try
 			{
 				this.IsActive = false;
-				base.DisposeCore( disposing );
+				base.Dispose( disposing );
 				this._listeningSocket.Close();
 			}
 			finally
@@ -144,6 +145,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			}
 		}
 
+		[SuppressMessage( "Microsoft.Design", "CA1031:DoNotCatchGeneralExceptionTypes", Justification = "Transfers the exception." )]
 		private void PollArrival()
 		{
 #if !API_SIGNATURE_TEST

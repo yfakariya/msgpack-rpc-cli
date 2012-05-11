@@ -1105,7 +1105,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			this.PrivateSend( context );
 		}
 
-		internal void Serialize<T>( ServerResponseContext context, T returnValue, RpcErrorMessage error, MessagePackSerializer<T> returnValueSerializer )
+		internal static void Serialize<T>( ServerResponseContext context, T returnValue, RpcErrorMessage error, MessagePackSerializer<T> returnValueSerializer )
 		{
 			if ( MsgPackRpcServerProtocolsTrace.ShouldTrace( MsgPackRpcServerProtocolsTrace.SerializeResponse ) )
 			{
@@ -1266,7 +1266,8 @@ namespace MsgPack.Rpc.Server.Protocols
 				{
 					return socket.Handle;
 				}
-				catch { }
+				catch ( SocketException ) { }
+				catch ( ObjectDisposedException ) { }
 			}
 
 			return IntPtr.Zero;
@@ -1284,7 +1285,8 @@ namespace MsgPack.Rpc.Server.Protocols
 						return result;
 					}
 				}
-				catch { }
+				catch ( SocketException ) { }
+				catch ( ObjectDisposedException ) { }
 			}
 
 			if ( socket != null )
@@ -1293,7 +1295,8 @@ namespace MsgPack.Rpc.Server.Protocols
 				{
 					return socket.RemoteEndPoint;
 				}
-				catch { }
+				catch ( SocketException ) { }
+				catch ( ObjectDisposedException ) { }
 			}
 
 			return null;
@@ -1311,7 +1314,8 @@ namespace MsgPack.Rpc.Server.Protocols
 						return result;
 					}
 				}
-				catch { }
+				catch ( SocketException ) { }
+				catch ( ObjectDisposedException ) { }
 			}
 
 			if ( socket != null )
@@ -1320,7 +1324,8 @@ namespace MsgPack.Rpc.Server.Protocols
 				{
 					return socket.RemoteEndPoint;
 				}
-				catch { }
+				catch ( SocketException ) { }
+				catch ( ObjectDisposedException ) { }
 			}
 
 			return null;
@@ -1334,7 +1339,8 @@ namespace MsgPack.Rpc.Server.Protocols
 				{
 					return socket.LocalEndPoint;
 				}
-				catch { }
+				catch ( SocketException ) { }
+				catch ( ObjectDisposedException ) { }
 			}
 
 			return null;

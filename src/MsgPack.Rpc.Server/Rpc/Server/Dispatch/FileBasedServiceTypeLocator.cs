@@ -165,7 +165,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 			using ( var stream = new FileStream( svcFile, FileMode.Open, FileAccess.Read, FileShare.Read, 1024, FileOptions.SequentialScan ) )
 			using ( var reader = new StreamReader( stream ) )
 			{
-				directive = new SvcFileParser().Parse( reader );
+				directive = SvcFileParser.Parse( reader );
 			}
 
 			if ( directive.Service == null )

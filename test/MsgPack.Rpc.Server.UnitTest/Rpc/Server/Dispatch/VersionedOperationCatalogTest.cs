@@ -754,27 +754,24 @@ namespace MsgPack.Rpc.Server.Dispatch
 
 		#endregion
 
-		private static readonly Func<ServiceDescription, MethodInfo, string, Func<ServerRequestContext, ServerResponseContext, Task>, OperationDescription> _operationDescriptionConstructor =
+		private static readonly Func<ServiceDescription, string, Func<ServerRequestContext, ServerResponseContext, Task>, OperationDescription> _operationDescriptionConstructor =
 			GetOperationDescriptionConstructor();
 
-		private static Func<ServiceDescription, MethodInfo, string, Func<ServerRequestContext, ServerResponseContext, Task>, OperationDescription> GetOperationDescriptionConstructor()
+		private static Func<ServiceDescription, string, Func<ServerRequestContext, ServerResponseContext, Task>, OperationDescription> GetOperationDescriptionConstructor()
 		{
 			var serviceDescription = Expression.Parameter( typeof( ServiceDescription ) );
-			var method = Expression.Parameter( typeof( MethodInfo ) );
 			var id = Expression.Parameter( typeof( string ) );
 			var operation = Expression.Parameter( typeof( Func<ServerRequestContext, ServerResponseContext, Task> ) );
 
 			return
-				Expression.Lambda<Func<ServiceDescription, MethodInfo, string, Func<ServerRequestContext, ServerResponseContext, Task>, OperationDescription>>(
+				Expression.Lambda<Func<ServiceDescription, string, Func<ServerRequestContext, ServerResponseContext, Task>, OperationDescription>>(
 					Expression.New(
 						typeof( OperationDescription ).GetConstructors( BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance ).Single(),
 						serviceDescription,
-						method,
 						id,
 						operation
 					),
 						serviceDescription,
-						method,
 						id,
 						operation
 				).Compile();
@@ -784,10 +781,9 @@ namespace MsgPack.Rpc.Server.Dispatch
 		{
 			var serviceDescription = new ServiceDescription( scope, () => null );
 			serviceDescription.Version = version;
-			var method = MethodBase.GetCurrentMethod() as MethodInfo;
 			var id = methodName;
 			Func<ServerRequestContext, ServerResponseContext, Task> operation = ( _0, _1 ) => null;
-			return _operationDescriptionConstructor( serviceDescription, method, id, operation );
+			return _operationDescriptionConstructor( serviceDescription, id, operation );
 		}
 	}
 }

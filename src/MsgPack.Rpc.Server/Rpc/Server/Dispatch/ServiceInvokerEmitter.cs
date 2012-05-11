@@ -35,7 +35,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 	/// <summary>
 	///		Emits skelton of the generated service invoker derived class.
 	/// </summary>
-	internal sealed class ServiceInvokerEmitter
+	internal sealed class ServiceInvokerEmitter : IDisposable
 	{
 		private static readonly PropertyInfo _serverRuntimeSerializationContextProperty =
 			FromExpression.ToProperty( ( RpcServerRuntime runtime ) => runtime.SerializationContext );
@@ -135,6 +135,14 @@ namespace MsgPack.Rpc.Server.Dispatch
 
 			this._serializers = new Dictionary<RuntimeTypeHandle, FieldBuilder>();
 			this._isDebuggable = isDebuggable;
+		}
+
+		public void Dispose()
+		{
+			if ( this._trace != null )
+			{
+				this._trace.Dispose();
+			}
 		}
 
 		/// <summary>

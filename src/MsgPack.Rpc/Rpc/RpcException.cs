@@ -20,6 +20,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Globalization;
 using System.Runtime.Serialization;
@@ -77,6 +78,8 @@ namespace MsgPack.Rpc
 #if !SILVERLIGHT
 	[Serializable]
 #endif
+	[SuppressMessage( "Microsoft.Usage", "CA2240:ImplementISerializableCorrectly", Justification = "Using ISafeSerializationData." )]
+	[SuppressMessage( "Microsoft.Design", "CA1032:ImplementStandardExceptionConstructors", Justification = "Using ISafeSerializationData." )]
 	public partial class RpcException : Exception
 	{
 		private const string _debugInformationKey = "DebugInformation";

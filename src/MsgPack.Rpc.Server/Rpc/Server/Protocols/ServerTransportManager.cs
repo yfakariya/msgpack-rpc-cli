@@ -19,12 +19,13 @@
 #endregion -- License Terms --
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Globalization;
+using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using MsgPack.Rpc.Protocols;
-using System.Net;
 
 namespace MsgPack.Rpc.Server.Protocols
 {
@@ -308,9 +309,10 @@ namespace MsgPack.Rpc.Server.Protocols
 		/// <summary>
 		///		Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
 		/// </summary>
+		[SuppressMessage( "Microsoft.Design", "CA1063:ImplementIDisposableCorrectly", Justification = "Must ensure exactly once." )]
 		public void Dispose()
 		{
-			this.Dispose( true );
+			this.DisposeOnce( true );
 			GC.SuppressFinalize( this );
 		}
 
@@ -320,7 +322,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		/// <param name="disposing">
 		///		<c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.
 		///	</param>
-		protected void Dispose( bool disposing )
+		private void DisposeOnce( bool disposing )
 		{
 			if ( Interlocked.CompareExchange( ref this._isDisposed, 1, 0 ) == 0 )
 			{
@@ -329,7 +331,7 @@ namespace MsgPack.Rpc.Server.Protocols
 					"Dispose. {{ \"Manager\" : \"{0}\" }}",
 					this
 				);
-				this.DisposeCore( disposing );
+				this.Dispose( disposing );
 			}
 		}
 
@@ -342,7 +344,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		/// <remarks>
 		///		This method is guaranteed that this is invoked exactly once and after <see cref="IsDisposed"/> changed <c>true</c>.
 		/// </remarks>
-		protected virtual void DisposeCore( bool disposing ) { }
+		protected virtual void Dispose( bool disposing ) { }
 
 		/// <summary>
 		///		Initiates server shutdown process.

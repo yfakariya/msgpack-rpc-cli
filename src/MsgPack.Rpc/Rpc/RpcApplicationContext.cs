@@ -106,7 +106,7 @@ namespace MsgPack.Rpc
 		/// 	<c>true</c> if the execution timeout is enabled on this application thread; otherwise, <c>false</c>.
 		/// 	Note that if <see cref="Current"/> returns <c>null</c>, then this property returns <c>false</c>.
 		/// </value>
-		public bool IsExecutionTimeoutEnabled
+		public static bool IsExecutionTimeoutEnabled
 		{
 			get
 			{

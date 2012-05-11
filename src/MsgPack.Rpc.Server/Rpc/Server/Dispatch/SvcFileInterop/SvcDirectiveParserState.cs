@@ -189,7 +189,7 @@ namespace MsgPack.Rpc.Server.Dispatch.SvcFileInterop
 			);
 		}
 
-		private char Escape( char c )
+		private static char Escape( char c )
 		{
 			switch ( CharUnicodeInfo.GetUnicodeCategory( c ) )
 			{

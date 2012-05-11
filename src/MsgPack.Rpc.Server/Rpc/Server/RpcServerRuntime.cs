@@ -19,12 +19,11 @@
 #endregion -- License Terms --
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Globalization;
-using System.Reflection;
 using System.Security;
 using System.Threading;
-using MsgPack.Rpc.Server.Dispatch;
 using MsgPack.Serialization;
 
 namespace MsgPack.Rpc.Server
@@ -179,6 +178,7 @@ namespace MsgPack.Rpc.Server
 		/// <exception cref="ThreadStateException">
 		///		<paramref name="mayBeHardTimeoutException"/> is not thrown on the current thread.
 		/// </exception>
+		[SuppressMessage( "Microsoft.Performance", "CA1822:MarkMembersAsStatic", Justification = "Logically be instance method." )]
 		public void HandleThreadAbortException( ThreadAbortException mayBeHardTimeoutException )
 		{
 			if ( mayBeHardTimeoutException == null )
@@ -195,6 +195,7 @@ namespace MsgPack.Rpc.Server
 					ResetThreadAbort();
 				}
 				catch ( SecurityException ) { }
+				catch ( MemberAccessException ) { }
 			}
 		}
 

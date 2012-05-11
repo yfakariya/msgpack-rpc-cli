@@ -138,7 +138,7 @@ namespace MsgPack.Rpc.Client.Protocols
 						e.LastOperation
 					);
 #endif
-					taskCompletionSource.SetException( new ApplicationException( String.Format( CultureInfo.CurrentCulture, "Unknown socket operation : {0}", e.LastOperation ) ) );
+					taskCompletionSource.SetException( new InvalidOperationException( String.Format( CultureInfo.CurrentCulture, "Unknown socket operation : {0}", e.LastOperation ) ) );
 					break;
 				}
 			}

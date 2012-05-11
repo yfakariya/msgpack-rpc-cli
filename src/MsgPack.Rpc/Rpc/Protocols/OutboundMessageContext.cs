@@ -20,6 +20,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.IO;
 
@@ -42,6 +43,8 @@ namespace MsgPack.Rpc.Protocols
 		/// <value>
 		///		The <see cref="IList{T}"/> of <see cref="ArraySegment{T}"/> of <see cref="Byte"/> which is the buffer lists for sending by socket.
 		/// </value>
+		[SuppressMessage( "Microsoft.Design", "CA1006:DoNotNestGenericTypesInMemberSignatures", Justification = "Follwing SocketAsyncEventArgs signature." )]
+		[SuppressMessage( "Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly", Justification = "Follwing SocketAsyncEventArgs signature." )]
 		public IList<ArraySegment<byte>> SendingSocketBuffers
 		{
 			get { return this.SocketContext.BufferList; }

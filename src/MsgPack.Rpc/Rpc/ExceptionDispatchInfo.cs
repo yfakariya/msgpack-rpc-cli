@@ -20,12 +20,14 @@
 
 using System;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Runtime.Serialization;
 using System.Security;
 
 namespace MsgPack.Rpc
@@ -58,6 +60,7 @@ namespace MsgPack.Rpc
 		}
 
 		[ContractInvariantMethod]
+		[SuppressMessage( "Microsoft.Performance", "CA1822:MarkMembersAsStatic", Justification = "ContractInvariantMethod" )]
 		private void ObjectInvariant()
 		{
 			Contract.Invariant( this._source != null );
@@ -200,7 +203,6 @@ namespace MsgPack.Rpc
 			return null;
 		}
 
-
 		[SecuritySafeCritical]
 		private static Exception SafeCreateMatroshika( ExternalException inner )
 		{
@@ -251,7 +253,9 @@ namespace MsgPack.Rpc
 			{
 				this.HResult = inner.ErrorCode;
 			}
-		}
+
+			private WrapperExternalException( SerializationInfo info, StreamingContext context ) : base( info, context ) { }
+	}
 
 		[Serializable]
 		private sealed class WrapperCOMException : COMException
@@ -261,6 +265,8 @@ namespace MsgPack.Rpc
 			{
 				this.HResult = inner.ErrorCode;
 			}
+
+			private WrapperCOMException( SerializationInfo info, StreamingContext context ) : base( info, context ) { }
 		}
 
 		[Serializable]
@@ -271,9 +277,12 @@ namespace MsgPack.Rpc
 			{
 				this.HResult = inner.ErrorCode;
 			}
+
+			private WrapperSEHException( SerializationInfo info, StreamingContext context ) : base( info, context ) { }
 		}
 
 		[Serializable]
+		[SecuritySafeCritical]
 		private sealed class WrapperWin32Exception : Win32Exception
 		{
 			public WrapperWin32Exception( string message, Win32Exception inner )
@@ -281,6 +290,8 @@ namespace MsgPack.Rpc
 			{
 				this.HResult = inner.ErrorCode;
 			}
+
+			private WrapperWin32Exception( SerializationInfo info, StreamingContext context ) : base( info, context ) { }
 		}
 
 		[Serializable]
@@ -307,6 +318,8 @@ namespace MsgPack.Rpc
 			{
 				this._innerStackTrace = inner.StackTrace;
 			}
+
+			private WrapperHttpListenerException( SerializationInfo info, StreamingContext context ) : base( info, context ) { }
 		}
 
 		[Serializable]
@@ -333,7 +346,9 @@ namespace MsgPack.Rpc
 			{
 				this._innerStackTrace = inner.StackTrace;
 			}
-		}
+	
+			private WrapperNetworkInformationException( SerializationInfo info, StreamingContext context ) : base( info, context ) { }
+	}
 
 		[Serializable]
 		private sealed class WrapperSocketException : SocketException
@@ -359,7 +374,9 @@ namespace MsgPack.Rpc
 			{
 				this._innerStackTrace = inner.StackTrace;
 			}
-		}
+	
+			private WrapperSocketException( SerializationInfo info, StreamingContext context ) : base( info, context ) { }
+	}
 	}
 #endif
 }

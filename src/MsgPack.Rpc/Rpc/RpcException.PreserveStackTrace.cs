@@ -18,9 +18,9 @@
 //
 #endregion -- License Terms --
 
-using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 
 namespace MsgPack.Rpc
@@ -29,6 +29,7 @@ namespace MsgPack.Rpc
 	{
 		private List<string> _preservedStackTrace;
 
+		[SuppressMessage( "Microsoft.Design", "CA1033:InterfaceMethodsShouldBeCallableByChildTypes", Justification = "Infrastracture." )]
 		void IStackTracePreservable.PreserveStackTrace()
 		{
 			if ( this._preservedStackTrace == null )
