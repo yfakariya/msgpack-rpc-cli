@@ -108,20 +108,18 @@ namespace MsgPack.Rpc.Server.Dispatch
 				);
 			}
 
-			Task task;
-			RpcErrorMessage error;
+			AsyncInvocationResult result;
 			try
 			{
-				this.InvokeCore( arguments, out task, out error );
+				result = this.InvokeCore( arguments );
 			}
 			catch ( Exception ex )
 			{
-				task = null;
-				error = InvocationHelper.HandleInvocationException( requestContext.SessionId, requestContext.MessageType, requestContext.MessageId, this.OperationId, ex, this.IsDebugMode );
+				result = new AsyncInvocationResult( InvocationHelper.HandleInvocationException( requestContext.SessionId, requestContext.MessageType, requestContext.MessageId, this.OperationId, ex, this.IsDebugMode ) );
 			}
 
-			var tuple = Tuple.Create( this, requestContext.SessionId, messageId.GetValueOrDefault(), this.OperationId, responseContext, error );
-			if ( task == null )
+			var tuple = Tuple.Create( this, requestContext.SessionId, messageId.GetValueOrDefault(), this.OperationId, responseContext, result.InvocationError );
+			if ( result.AsyncTask == null )
 			{
 				return Task.Factory.StartNew( state => HandleInvocationResult( null, state as Tuple<AsyncServiceInvoker<T>, long, int, string, ServerResponseContext, RpcErrorMessage> ), tuple );
 			}
@@ -129,7 +127,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 			{
 #if NET_4_5
 					return
-						task.ContinueWith(
+						result.AsyncTask.ContinueWith(
 							( previous, state ) => HandleInvocationResult( 
 								previous, 
 								state as Tuple<AsyncServiceInvoker<T>, long, int, string, ServerResponseContext, RpcErrorMessage>
@@ -138,7 +136,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 						);
 #else
 				return
-					task.ContinueWith(
+					result.AsyncTask.ContinueWith(
 						previous => HandleInvocationResult(
 							previous,
 							tuple
@@ -202,13 +200,14 @@ namespace MsgPack.Rpc.Server.Dispatch
 		///		Invokes target service operation asynchronously.
 		/// </summary>
 		/// <param name="arguments"><see cref="Unpacker"/> to unpack arguments.</param>
-		/// <param name="task">The <see cref="Task"/> to control asynchronous target invocation will be stored.</param>
-		/// <param name="rpcError">The RPC error will be stored.</param>
+		/// <returns>
+		///		An <see cref="AsyncInvocationResult"/> which represents the result of asynchronopus operation invocation.
+		/// </returns>
 		/// <remarks>
 		///		<paramref name="arguments"/> will be disposed asynchronously after this method returns.
 		///		So, you must deserialize all arguments synchronously, or copy its content as <see cref="MessagePackObject"/> tree.
 		/// </remarks>
-		protected abstract void InvokeCore( Unpacker arguments, out Task task, out RpcErrorMessage rpcError );
+		protected abstract AsyncInvocationResult InvokeCore( Unpacker arguments );
 
 		private static void SafeStartLogicalOperation()
 		{
@@ -262,13 +261,14 @@ namespace MsgPack.Rpc.Server.Dispatch
 	{
 		protected AsyncServiceInvokerContract() : base( null, null, null ) { }
 
-		protected override void InvokeCore( Unpacker arguments, out Task task, out RpcErrorMessage error )
+		protected override AsyncInvocationResult InvokeCore( Unpacker arguments )
 		{
 			Contract.Requires( arguments != null );
 			Contract.Requires( arguments.IsArrayHeader );
-			task = default( Task );
-			error = default( RpcErrorMessage );
+			Contract.Ensures( Contract.Result<AsyncInvocationResult>() != null );
+			Contract.Ensures( Contract.Result<AsyncInvocationResult>().AsyncTask != null || !Contract.Result<AsyncInvocationResult>().InvocationError.IsSuccess );
+
+			return null;
 		}
 	}
-
 }

@@ -40,7 +40,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 		private static readonly PropertyInfo _serverRuntimeSerializationContextProperty =
 			FromExpression.ToProperty( ( RpcServerRuntime runtime ) => runtime.SerializationContext );
 		private static readonly Type[] _constructorParameterTypes = new[] { typeof( RpcServerRuntime ), typeof( ServiceDescription ), typeof( MethodInfo ) };
-		private static readonly Type[] _invokeCoreParameterTypes = new[] { typeof( Unpacker ), typeof( Task ).MakeByRefType(), typeof( RpcErrorMessage ).MakeByRefType() };
+		private static readonly Type[] _invokeCoreParameterTypes = new[] { typeof( Unpacker ) };
 
 		/// <summary>
 		///		 Gets a value indicating whether this instance is trace enabled.
@@ -127,7 +127,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 					"InvokeCore",
 					MethodAttributes.Family | MethodAttributes.Virtual | MethodAttributes.Final,
 					CallingConventions.HasThis,
-					typeof( void ),
+					typeof( AsyncInvocationResult ),
 					_invokeCoreParameterTypes
 				);
 

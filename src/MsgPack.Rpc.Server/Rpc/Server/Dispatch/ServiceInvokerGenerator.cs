@@ -64,6 +64,10 @@ namespace MsgPack.Rpc.Server.Dispatch
 			FromExpression.ToMethod( ( AsyncServiceInvoker @base, ThreadAbortException exception ) => @base.HandleThreadAbortException( exception ) );
 		private static readonly MethodInfo _dispatcherEndOperationMethod =
 			FromExpression.ToMethod( ( AsyncServiceInvoker @base ) => @base.EndOperation() );
+		private static readonly ConstructorInfo _asyncInvocationResultErrorConstructor =
+			FromExpression.ToConstructor( ( RpcErrorMessage invocationError ) => new AsyncInvocationResult( invocationError ) );
+		private static readonly ConstructorInfo _asyncInvocationResultTaskConstructor =
+			FromExpression.ToConstructor( ( Task asyncTask ) => new AsyncInvocationResult( asyncTask ) );
 
 
 		private static ServiceInvokerGenerator _default = new ServiceInvokerGenerator( false );
@@ -272,6 +276,8 @@ namespace MsgPack.Rpc.Server.Dispatch
 				var unpackedArguments = parameters.Select( item => il.DeclareLocal( item.ParameterType, item.Name ) ).ToArray();
 				var serializers = unpackedArguments.Select( item => emitter.RegisterSerializer( item.LocalType ) ).ToArray();
 
+				var result = il.DeclareLocal( typeof( AsyncInvocationResult ), "result" );
+
 				/*
 				 *	using( var argumentsItemUnpacker = arguments.ReadSubTree() )
 				 *	{
@@ -301,8 +307,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 					 *	}
 					 *	catch( Exception ex )
 					 *	{
-					 *		error = InvocationHelper.HandleArgumentDeserializationException( ex, "argN" );
-					 *		returnValue = default( T );
+					 *		return new AsyncInvocatonResult( InvocationHelper.HandleArgumentDeserializationException( ex, "argN" ) );
 					 *		return;
 					 *	}
 					 */
@@ -345,6 +350,8 @@ namespace MsgPack.Rpc.Server.Dispatch
 							il0.EmitAnyLdarg( 0 );
 							il0.EmitGetProperty( asyncInvokerIsDebugModeProperty );
 							il0.EmitCall( InvocationHelper.HandleArgumentDeserializationExceptionMethod );
+							il0.EmitNewobj( _asyncInvocationResultErrorConstructor );
+							il0.EmitAnyStloc( result );
 						}
 					);
 				}
@@ -368,15 +375,11 @@ namespace MsgPack.Rpc.Server.Dispatch
 
 				/*
 				 *	#if IS_TASK
-				 *	returnValue = service.Target( arg1, ..., argN );
+				 *	return new AsyncInvocationResult( service.Target( arg1, ..., argN ) );
 				 *	#else
-				 *	returnValue = Task.Factory.StartNew( this.PrivateInvokeCore( state as Tuple<...> ), new Tuple<...>(...) );
+				 *	return new AsyncInvocationResult( this.PrivateInvokeCore( state as Tuple<...> ), new Tuple<...>(...) ) );
 				 *	#endif
-				 *	error = RpcErrorMessage.Success;
-				 *	return;
 				 */
-				// Dereference managed pointer.
-				il.EmitAnyLdarg( 2 );
 
 				if ( !isWrapperNeeded )
 				{
@@ -393,16 +396,10 @@ namespace MsgPack.Rpc.Server.Dispatch
 					EmitWrapperInvocation( emitter, il, service, targetOperation, unpackedArguments );
 				}
 
-				// Set to arg.2
-				il.EmitStobj( returnType );
-
-				// Dereference managed pointer.
-				il.EmitAnyLdarg( 3 );
-				il.EmitGetProperty( _rpcErrorMessageSuccessProperty );
-				// Set to arg.3
-				il.EmitStobj( typeof( RpcErrorMessage ) );
-
+				il.EmitNewobj( _asyncInvocationResultTaskConstructor );
+				il.EmitAnyStloc( result );
 				il.MarkLabel( endOfMethod );
+				il.EmitAnyLdloc( result );
 				il.EmitRet();
 			}
 			finally
@@ -629,15 +626,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 			il.BeginCatchBlock( typeof( Exception ) );
 			var exception = il.DeclareLocal( typeof( Exception ), "exception" );
 			il.EmitAnyStloc( exception );
-			// Dereference (out) managed pointer.
-			il.EmitAnyLdarg( 3 );
 			exceptionHandlerInvocation( il, exception );
-			// Set value to the location.
-			il.EmitStobj( typeof( RpcErrorMessage ) );
-			// Dereference (out) managed pointer.
-			il.EmitAnyLdarg( 2 );
-			// Init referenced location with default.
-			il.EmitInitobj( returnType );
 			il.EmitLeave( endOfMethod );
 			il.EndExceptionBlock();
 		}

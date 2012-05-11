@@ -142,7 +142,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 					arg2,
 					responseContext =>
 					{
-						Assert.That( Unpacking.UnpackObject( responseContext.GetErrorData() ).Value.IsNil );
+						Assert.That( Unpacking.UnpackObject( responseContext.GetErrorData() ).Value.IsNil, Unpacking.UnpackObject( responseContext.GetErrorData() ).Value.ToString() );
 						Assert.That( Unpacking.UnpackObject( responseContext.GetReturnValueData() ).Value.AsBoolean() );
 					}
 				);

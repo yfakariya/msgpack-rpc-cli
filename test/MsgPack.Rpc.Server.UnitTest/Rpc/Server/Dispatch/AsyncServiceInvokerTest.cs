@@ -19,11 +19,10 @@
 #endregion -- License Terms --
 
 using System;
-using NUnit.Framework;
 using System.Threading.Tasks;
 using MsgPack.Rpc.Server.Protocols;
 using MsgPack.Serialization;
-using System.Linq;
+using NUnit.Framework;
 
 namespace MsgPack.Rpc.Server.Dispatch
 {
@@ -106,7 +105,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 				this._methodError = methodError;
 			}
 
-			protected override void InvokeCore( Unpacker arguments, out Task task, out RpcErrorMessage error )
+			protected override AsyncInvocationResult InvokeCore( Unpacker arguments )
 			{
 				if ( this._fatalError != null )
 				{
@@ -115,13 +114,11 @@ namespace MsgPack.Rpc.Server.Dispatch
 
 				if ( this._methodError.IsSuccess )
 				{
-					task = Task.Factory.StartNew( () => 123 );
-					error = RpcErrorMessage.Success;
+					return new AsyncInvocationResult( Task.Factory.StartNew( () => 123 ) );
 				}
 				else
 				{
-					task = Task.Factory.StartNew( () => 1 );
-					error = this._methodError;
+					return new AsyncInvocationResult( this._methodError );
 				}
 			}
 		}
