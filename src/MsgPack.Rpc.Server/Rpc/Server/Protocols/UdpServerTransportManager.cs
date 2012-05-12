@@ -70,7 +70,13 @@ namespace MsgPack.Rpc.Server.Protocols
 #if !API_SIGNATURE_TEST
 			if ( bindingEndPoint == null )
 			{
-				bindingEndPoint = NetworkEnvironment.GetDefaultEndPoint( 57319, server.Configuration.PreferIPv4 );
+				bindingEndPoint =
+					new IPEndPoint(
+						this.Configuration.PreferIPv4 && Socket.OSSupportsIPv4
+						? IPAddress.Any
+						: IPAddress.IPv6Any,
+						57319 // arbitrary number
+					);
 				MsgPackRpcServerProtocolsTrace.TraceEvent(
 					MsgPackRpcServerProtocolsTrace.DefaultEndPoint,
 					"Default end point is selected. {{ \"EndPoint\" : \"{0}\", \"AddressFamily\" : {1}, \"PreferIPv4\" : {2}, \"OSSupportsIPv6\" : {3} }}",
