@@ -22,7 +22,9 @@ using System;
 using System.Diagnostics.Contracts;
 using System.Net;
 using System.Threading;
+#if !WINDOWS_PHONE
 using System.Threading.Tasks;
+#endif
 using MsgPack.Rpc.Client.Protocols;
 using MsgPack.Serialization;
 
@@ -51,7 +53,7 @@ namespace MsgPack.Rpc.Client
 		internal ClientTransportManager TransportManager
 		{
 			get { return this._transportManager; }
-		} 
+		}
 
 		private ClientTransport _transport;
 
@@ -125,7 +127,7 @@ namespace MsgPack.Rpc.Client
 		/// <exception cref="ArgumentNullException">
 		///		<paramref name="targetEndPoint"/> is <c>null</c>.
 		/// </exception>
-		public RpcClient( EndPoint targetEndPoint,  SerializationContext serializationContext ) : this( targetEndPoint, null, serializationContext ) { }
+		public RpcClient( EndPoint targetEndPoint, SerializationContext serializationContext ) : this( targetEndPoint, null, serializationContext ) { }
 
 		/// <summary>
 		///		Initializes a new instance of the <see cref="RpcClient"/> class.
@@ -261,6 +263,7 @@ namespace MsgPack.Rpc.Client
 			return this.EndCall( this.BeginCall( methodName, arguments, null, null ) );
 		}
 
+#if !WINDOWS_PHONE
 		/// <summary>
 		///		Calls specified remote method with specified argument asynchronously. 
 		/// </summary>
@@ -295,6 +298,7 @@ namespace MsgPack.Rpc.Client
 		{
 			return Task.Factory.FromAsync<string, object[], MessagePackObject>( this.BeginCall, this.EndCall, methodName, arguments, asyncState, TaskCreationOptions.None );
 		}
+#endif
 
 		/// <summary>
 		///		Calls specified remote method with specified argument asynchronously. 
@@ -436,6 +440,7 @@ namespace MsgPack.Rpc.Client
 			this.EndNotify( this.BeginNotify( methodName, arguments, null, null ) );
 		}
 
+#if !WINDOWS_PHONE
 		/// <summary>
 		///		Sends specified remote method with specified argument as notification message asynchronously.
 		/// </summary>
@@ -468,6 +473,7 @@ namespace MsgPack.Rpc.Client
 		{
 			return Task.Factory.FromAsync<string, object[]>( this.BeginNotify, this.EndNotify, methodName, arguments, asyncState, TaskCreationOptions.None );
 		}
+#endif
 
 		/// <summary>
 		///		Sends specified remote method with specified argument as notification message asynchronously.

@@ -1,0 +1,350 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>10.0.20506</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{AACC4E2A-E8E8-45B3-87E0-C83CE72BBCFC}</ProjectGuid>
+    <ProjectTypeGuids>{C089C8C0-30E0-4E22-80C0-CE093F111A43};{fae04ec0-301f-11d3-bf4b-00c04f79efbc}</ProjectTypeGuids>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>MsgPack</RootNamespace>
+    <AssemblyName>MsgPack.Rpc</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <SilverlightVersion>$(TargetFrameworkVersion)</SilverlightVersion>
+    <TargetFrameworkProfile>WindowsPhone71</TargetFrameworkProfile>
+    <TargetFrameworkIdentifier>Silverlight</TargetFrameworkIdentifier>
+    <SilverlightApplication>false</SilverlightApplication>
+    <ValidateXaml>true</ValidateXaml>
+    <ThrowErrorsInValidation>true</ThrowErrorsInValidation>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>..\..\bin\sl4-windowsphone71\</OutputPath>
+    <DefineConstants>DEBUG;TRACE;SILVERLIGHT;WINDOWS_PHONE</DefineConstants>
+    <NoStdLib>true</NoStdLib>
+    <NoConfig>true</NoConfig>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <DocumentationFile>..\..\bin\sl4-windowsphone71\MsgPack.Rpc.XML</DocumentationFile>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>..\..\bin\sl4-windowsphone71\</OutputPath>
+    <DefineConstants>TRACE;SILVERLIGHT;WINDOWS_PHONE</DefineConstants>
+    <NoStdLib>true</NoStdLib>
+    <NoConfig>true</NoConfig>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <DocumentationFile>..\..\bin\sl4-windowsphone71\MsgPack.Rpc.XML</DocumentationFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="MsgPack">
+      <HintPath>..\..\lib\sl4-windowsphone71\MsgPack.dll</HintPath>
+    </Reference>
+    <Reference Include="MsgPack.Serialization">
+      <HintPath>..\..\lib\sl4-windowsphone71\MsgPack.Serialization.dll</HintPath>
+    </Reference>
+    <Reference Include="system" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Net" />
+    <Reference Include="mscorlib.extensions" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\CommonAssemblyInfo.cs">
+      <Link>Properties\CommonAssemblyInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\CommonAssemblyInfo.Rpc.cs">
+      <Link>Properties\CommonAssemblyInfo.Rpc.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Silverlight.5\Compatibility\ArrayExtensions.cs">
+      <Link>Compatibility\ArrayExtensions.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Silverlight.5\Compatibility\Collections\Concurrent\BlockingCollection.cs">
+      <Link>Compatibility\Collections\Concurrent\BlockingCollection.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Silverlight.5\Compatibility\Collections\Concurrent\ConcurrentDictionary.cs">
+      <Link>Compatibility\Collections\Concurrent\ConcurrentDictionary.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Silverlight.5\Compatibility\Collections\Concurrent\ConcurrentQueue.cs">
+      <Link>Compatibility\Collections\Concurrent\ConcurrentQueue.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Silverlight.5\Compatibility\Collections\Concurrent\ConcurrentStack.cs">
+      <Link>Compatibility\Collections\Concurrent\ConcurrentStack.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Silverlight.5\Compatibility\Collections\Concurrent\IProducerConsumerCollection.cs">
+      <Link>Compatibility\Collections\Concurrent\IProducerConsumerCollection.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Silverlight.5\Compatibility\Collections\Concurrent\SplitOrderedList.cs">
+      <Link>Compatibility\Collections\Concurrent\SplitOrderedList.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Silverlight.5\Compatibility\Collections\Generic\CollectionDebuggerView.cs">
+      <Link>Compatibility\Collections\Generic\CollectionDebuggerView.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Silverlight.5\Compatibility\Collections\Generic\List`1.cs">
+      <Link>Compatibility\Collections\Generic\List`1.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Silverlight.5\Compatibility\Collections\Generic\SortedList.cs">
+      <Link>Compatibility\Collections\Generic\SortedList.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Silverlight.5\Compatibility\Diagnostics\SourceLevels.cs">
+      <Link>Compatibility\Diagnostics\SourceLevels.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Silverlight.5\Compatibility\Diagnostics\SourceSwitch.cs">
+      <Link>Compatibility\Diagnostics\SourceSwitch.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Silverlight.5\Compatibility\Diagnostics\Stopwatch.cs">
+      <Link>Compatibility\Diagnostics\Stopwatch.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Silverlight.5\Compatibility\Diagnostics\TraceEventCache.cs">
+      <Link>Compatibility\Diagnostics\TraceEventCache.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Silverlight.5\Compatibility\Diagnostics\TraceEventType.cs">
+      <Link>Compatibility\Diagnostics\TraceEventType.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Silverlight.5\Compatibility\Diagnostics\TraceSource.cs">
+      <Link>Compatibility\Diagnostics\TraceSource.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Silverlight.5\Compatibility\Threading\AtomicBoolean.cs">
+      <Link>Compatibility\Threading\AtomicBoolean.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Silverlight.5\Compatibility\Threading\LazyInitializer.cs">
+      <Link>Compatibility\Threading\LazyInitializer.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Silverlight.5\Compatibility\Threading\LockRecursionException.cs">
+      <Link>Compatibility\Threading\LockRecursionException.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Silverlight.5\Compatibility\Threading\LockRecursionPolicy.cs">
+      <Link>Compatibility\Threading\LockRecursionPolicy.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Silverlight.5\Compatibility\Threading\ManualResetEventSlim.cs">
+      <Link>Compatibility\Threading\ManualResetEventSlim.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Silverlight.5\Compatibility\Threading\ReaderWriterLockSlim.cs">
+      <Link>Compatibility\Threading\ReaderWriterLockSlim.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Silverlight.5\Compatibility\Threading\ReaderWriterLockSlimExtensions.cs">
+      <Link>Compatibility\Threading\ReaderWriterLockSlimExtensions.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Silverlight.5\Compatibility\Threading\SpinWait.cs">
+      <Link>Compatibility\Threading\SpinWait.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Silverlight.5\Compatibility\Threading\SynchronizationLockException.cs">
+      <Link>Compatibility\Threading\SynchronizationLockException.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Silverlight.5\Compatibility\Threading\ThreadLocal`1.cs">
+      <Link>Compatibility\Threading\ThreadLocal`1.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Silverlight.5\Compatibility\Threading\ThreadLockState.cs">
+      <Link>Compatibility\Threading\ThreadLockState.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Silverlight.5\Compatibility\Threading\Watch.cs">
+      <Link>Compatibility\Threading\Watch.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc\Rpc\ArraySegmentExtensions.cs">
+      <Link>RPC\ArraySegmentExtensions.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc\Rpc\ByteArraySegmentStream.cs">
+      <Link>RPC\ByteArraySegmentStream.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc\Rpc\Diagnostics\IMessagePackStreamLogger.cs">
+      <Link>RPC\Diagnostics\IMessagePackStreamLogger.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc\Rpc\Diagnostics\IsolatedStorageFileMessagePackStreamLogger.cs">
+      <Link>RPC\Diagnostics\IsolatedStorageFileMessagePackStreamLogger.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc\Rpc\Diagnostics\MessagePackStreamLogger.cs">
+      <Link>RPC\Diagnostics\MessagePackStreamLogger.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc\Rpc\ExceptionDispatchInfo.cs">
+      <Link>RPC\ExceptionDispatchInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc\Rpc\ExceptionExtensions.cs">
+      <Link>RPC\ExceptionExtensions.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc\Rpc\ExceptionModifiers.cs">
+      <Link>RPC\ExceptionModifiers.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc\Rpc\ExhausionPolicy.cs">
+      <Link>RPC\ExhausionPolicy.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc\Rpc\FreezableObject.cs">
+      <Link>RPC\FreezableObject.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc\Rpc\IFreezable.cs">
+      <Link>RPC\IFreezable.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc\Rpc\IStackTracePreservable.cs">
+      <Link>RPC\IStackTracePreservable.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc\Rpc\MessagePackObjectExtension.cs">
+      <Link>RPC\MessagePackObjectExtension.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc\Rpc\MessagePackRpcMethodAttribute.cs">
+      <Link>RPC\MessagePackRpcMethodAttribute.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc\Rpc\MessagePackRpcServiceContractAttribute.cs">
+      <Link>RPC\MessagePackRpcServiceContractAttribute.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc\Rpc\ObjectPoolConfiguration.cs">
+      <Link>RPC\ObjectPoolConfiguration.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc\Rpc\ObjectPoolConfiguration.Properties.cs">
+      <Link>RPC\ObjectPoolConfiguration.Properties.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc\Rpc\ObjectPoolCorruptedException.cs">
+      <Link>RPC\ObjectPoolCorruptedException.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc\Rpc\ObjectPoolEmptyException.cs">
+      <Link>RPC\ObjectPoolEmptyException.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc\Rpc\ObjectPool`1.cs">
+      <Link>RPC\ObjectPool`1.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc\Rpc\OnTheFlyObjectPool`1.cs">
+      <Link>RPC\OnTheFlyObjectPool`1.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc\Rpc\Protocols\Filters\MessageFilteringLocation.cs">
+      <Link>RPC\Protocols\Filters\MessageFilteringLocation.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc\Rpc\Protocols\Filters\MessageFilterProvider.cs">
+      <Link>RPC\Protocols\Filters\MessageFilterProvider.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc\Rpc\Protocols\Filters\MessageFilterProvider`1.cs">
+      <Link>RPC\Protocols\Filters\MessageFilterProvider`1.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc\Rpc\Protocols\Filters\MessageFilter`1.cs">
+      <Link>RPC\Protocols\Filters\MessageFilter`1.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc\Rpc\Protocols\Filters\QuotaMessageFilterProvider`1.cs">
+      <Link>RPC\Protocols\Filters\QuotaMessageFilterProvider`1.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc\Rpc\Protocols\Filters\QuotaMessageFilter`1.cs">
+      <Link>RPC\Protocols\Filters\QuotaMessageFilter`1.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc\Rpc\Protocols\Filters\StreamLoggingMessageFilterProvider`1.cs">
+      <Link>RPC\Protocols\Filters\StreamLoggingMessageFilterProvider`1.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc\Rpc\Protocols\Filters\StreamLoggingMessageFilter`1.cs">
+      <Link>RPC\Protocols\Filters\StreamLoggingMessageFilter`1.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc\Rpc\Protocols\IContextBoundableTransport.cs">
+      <Link>RPC\Protocols\IContextBoundableTransport.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc\Rpc\Protocols\InboundMessageContext.cs">
+      <Link>RPC\Protocols\InboundMessageContext.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc\Rpc\Protocols\MessageContext.cs">
+      <Link>RPC\Protocols\MessageContext.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc\Rpc\Protocols\MessageType.cs">
+      <Link>RPC\Protocols\MessageType.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc\Rpc\Protocols\OutboundMessageContext.cs">
+      <Link>RPC\Protocols\OutboundMessageContext.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc\Rpc\Protocols\RpcMessageTooLongException.cs">
+      <Link>RPC\Protocols\RpcMessageTooLongException.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc\Rpc\Protocols\RpcMethodInvocationException.cs">
+      <Link>RPC\Protocols\RpcMethodInvocationException.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc\Rpc\Protocols\RpcProtocolException.cs">
+      <Link>RPC\Protocols\RpcProtocolException.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc\Rpc\Protocols\RpcTransportException.cs">
+      <Link>RPC\Protocols\RpcTransportException.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc\Rpc\Protocols\ShutdownCompletedEventArgs.cs">
+      <Link>RPC\Protocols\ShutdownCompletedEventArgs.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc\Rpc\Protocols\ShutdownSource.cs">
+      <Link>RPC\Protocols\ShutdownSource.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc\Rpc\Protocols\SocketAsyncEventArgsExtensions.cs">
+      <Link>RPC\Protocols\SocketAsyncEventArgsExtensions.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc\Rpc\Protocols\SocketErrorCodeExtension.cs">
+      <Link>RPC\Protocols\SocketErrorCodeExtension.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc\Rpc\RpcApplicationContext.cs">
+      <Link>RPC\RpcApplicationContext.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc\Rpc\RpcArgumentException.cs">
+      <Link>RPC\RpcArgumentException.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc\Rpc\RpcError.cs">
+      <Link>RPC\RpcError.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc\Rpc\RpcErrorMessage.cs">
+      <Link>RPC\RpcErrorMessage.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc\Rpc\RpcException.cs">
+      <Link>RPC\RpcException.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc\Rpc\RpcException.PreserveStackTrace.cs">
+      <Link>RPC\RpcException.PreserveStackTrace.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc\Rpc\RpcException.Propagation.cs">
+      <Link>RPC\RpcException.Propagation.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc\Rpc\RpcException.ToString.cs">
+      <Link>RPC\RpcException.ToString.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc\Rpc\RpcFaultException.cs">
+      <Link>RPC\RpcFaultException.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc\Rpc\RpcIdentifierUtility.cs">
+      <Link>RPC\RpcIdentifierUtility.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc\Rpc\RpcMissingMethodException.cs">
+      <Link>RPC\RpcMissingMethodException.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc\Rpc\RpcServerUnavailableException.cs">
+      <Link>RPC\RpcServerUnavailableException.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc\Rpc\RpcTimeoutException.cs">
+      <Link>RPC\RpcTimeoutException.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc\Rpc\ServiceIdentifier.cs">
+      <Link>RPC\ServiceIdentifier.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc\Rpc\StandardObjectPoolTrace.cs">
+      <Link>RPC\StandardObjectPoolTrace.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc\Rpc\StandardObjectPoolTrace.Extension.cs">
+      <Link>RPC\StandardObjectPoolTrace.Extension.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc\Rpc\StandardObjectPool`1.cs">
+      <Link>RPC\StandardObjectPool`1.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc\Rpc\TimeoutWatcher.cs">
+      <Link>RPC\TimeoutWatcher.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc\Rpc\UnexpcetedRpcException.cs">
+      <Link>RPC\UnexpcetedRpcException.cs</Link>
+    </Compile>
+    <Compile Include="Compatibility\AggregateException.cs" />
+    <Compile Include="Compatibility\Diagnostics\Contracts\Contract.cs" />
+    <Compile Include="Compatibility\OperationCanceledException.cs" />
+    <Compile Include="Compatibility\Threading\CancellationToken.cs" />
+    <Compile Include="Compatibility\Threading\CancellationTokenRegistration.cs" />
+    <Compile Include="Compatibility\Threading\CancellationTokenSource.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup />
+  <Import Project="$(MSBuildExtensionsPath)\Microsoft\Silverlight for Phone\$(TargetFrameworkVersion)\Microsoft.Silverlight.$(TargetFrameworkProfile).Overrides.targets" />
+  <Import Project="$(MSBuildExtensionsPath)\Microsoft\Silverlight for Phone\$(TargetFrameworkVersion)\Microsoft.Silverlight.CSharp.targets" />
+  <ProjectExtensions />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

@@ -24,7 +24,9 @@ using System.Diagnostics.Contracts;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
+#if !WINDOWS_PHONE
 using System.Threading.Tasks;
+#endif
 using MsgPack.Rpc.Protocols;
 
 namespace MsgPack.Rpc.Client.Protocols

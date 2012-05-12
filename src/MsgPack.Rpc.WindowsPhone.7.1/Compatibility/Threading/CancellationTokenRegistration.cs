@@ -1,5 +1,5 @@
 // 
-// LazyInitializer.cs
+// CancellationTokenRegistration.cs
 //  
 // Author:
 //       Jérémie "Garuma" Laval <jeremie.laval@gmail.com>
@@ -24,56 +24,57 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-
 using System;
 using System.Threading;
 
 namespace Mono.Threading
 {
-	internal static class LazyInitializer
+	internal struct CancellationTokenRegistration: IDisposable, IEquatable<CancellationTokenRegistration>
 	{
-		public static T EnsureInitialized<T> (ref T target) where T : class
+		int id;
+		CancellationTokenSource source;
+		
+		internal CancellationTokenRegistration (int id, CancellationTokenSource source)
 		{
-			return EnsureInitialized (ref target, GetDefaultCtorValue<T>);
+			this.id = id;
+			this.source = source;
 		}
 		
-		public static T EnsureInitialized<T> (ref T target, Func<T> valueFactory) where T : class
+		#region IDisposable implementation
+		public void Dispose ()
 		{
-			if (target == null)
-				Interlocked.CompareExchange (ref target, valueFactory (), null);
-			
-			return target;
+			// Remove the corresponding callback from source
+			source.RemoveCallback (this);
 		}
 
-		public static T EnsureInitialized<T> (ref T target, ref bool initialized, ref object syncLock)
+		#endregion
+
+		#region IEquatable<CancellationTokenRegistration> implementation
+		public bool Equals (CancellationTokenRegistration other)
 		{
-			return EnsureInitialized (ref target, ref initialized, ref syncLock, GetDefaultCtorValue<T>);
+			return this.id == other.id && this.source == other.source;
 		}
 		
-		public static T EnsureInitialized<T> (ref T target, ref bool initialized, ref object syncLock, Func<T> valueFactory)
+		public static bool operator== (CancellationTokenRegistration left, CancellationTokenRegistration right)
 		{
-			lock (syncLock) {
-				if (initialized)
-					return target;
-				
-				initialized = true;
-				return target = valueFactory ();
-			}
+			return left.Equals (right);
 		}
 		
-		internal static T GetDefaultCtorValue<T> ()
+		public static bool operator!= (CancellationTokenRegistration left, CancellationTokenRegistration right)
 		{
-			try { 
-				return Activator.CreateInstance<T> ();
-			} catch { 
-				throw new MissingMemberException ("The type being lazily initialized does not have a "
-				                                  + "public, parameterless constructor.");
-			}
+			return !left.Equals (right);
+		}
+		#endregion
+		
+		public override int GetHashCode ()
+		{
+			return id.GetHashCode () ^ source.GetHashCode ();
 		}
 
-		internal static T GetDefaultValueFactory<T> ()
+		public override bool Equals (object obj)
 		{
-			return default (T);
+			return (obj is CancellationTokenRegistration) ? Equals ((CancellationTokenRegistration)obj) : false;
 		}
+
 	}
 }

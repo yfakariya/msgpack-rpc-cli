@@ -1,0 +1,163 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>10.0.20506</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{4691D212-00ED-40B7-B497-ACF4A6EE3E6E}</ProjectGuid>
+    <ProjectTypeGuids>{C089C8C0-30E0-4E22-80C0-CE093F111A43};{fae04ec0-301f-11d3-bf4b-00c04f79efbc}</ProjectTypeGuids>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>MsgPack</RootNamespace>
+    <AssemblyName>MsgPack.Rpc.Client</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <SilverlightVersion>$(TargetFrameworkVersion)</SilverlightVersion>
+    <TargetFrameworkProfile>WindowsPhone71</TargetFrameworkProfile>
+    <TargetFrameworkIdentifier>Silverlight</TargetFrameworkIdentifier>
+    <SilverlightApplication>false</SilverlightApplication>
+    <ValidateXaml>true</ValidateXaml>
+    <ThrowErrorsInValidation>true</ThrowErrorsInValidation>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>Bin\Debug</OutputPath>
+    <DefineConstants>DEBUG;TRACE;SILVERLIGHT;WINDOWS_PHONE</DefineConstants>
+    <NoStdLib>true</NoStdLib>
+    <NoConfig>true</NoConfig>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>Bin\Release</OutputPath>
+    <DefineConstants>TRACE;SILVERLIGHT;WINDOWS_PHONE</DefineConstants>
+    <NoStdLib>true</NoStdLib>
+    <NoConfig>true</NoConfig>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="MsgPack">
+      <HintPath>..\..\lib\sl4-windowsphone71\MsgPack.dll</HintPath>
+    </Reference>
+    <Reference Include="MsgPack.Serialization">
+      <HintPath>..\..\lib\sl4-windowsphone71\MsgPack.Serialization.dll</HintPath>
+    </Reference>
+    <Reference Include="system" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Net" />
+    <Reference Include="mscorlib.extensions" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\CommonAssemblyInfo.cs">
+      <Link>Properties\CommonAssemblyInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\CommonAssemblyInfo.Rpc.cs">
+      <Link>Properties\CommonAssemblyInfo.Rpc.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client\Rpc\Client\AsyncResult.cs">
+      <Link>Rpc\Client\AsyncResult.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client\Rpc\Client\ErrorInterpreter.cs">
+      <Link>Rpc\Client\ErrorInterpreter.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client\Rpc\Client\MessageAsyncResult.cs">
+      <Link>Rpc\Client\MessageAsyncResult.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client\Rpc\Client\NotificationMessageAsyncResult.cs">
+      <Link>Rpc\Client\NotificationMessageAsyncResult.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client\Rpc\Client\Protocols\ClientRequestContext.cs">
+      <Link>Rpc\Client\Protocols\ClientRequestContext.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client\Rpc\Client\Protocols\ClientResponseContext.cs">
+      <Link>Rpc\Client\Protocols\ClientResponseContext.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client\Rpc\Client\Protocols\ClientSocketError.cs">
+      <Link>Rpc\Client\Protocols\ClientSocketError.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client\Rpc\Client\Protocols\ClientTransport.cs">
+      <Link>Rpc\Client\Protocols\ClientTransport.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client\Rpc\Client\Protocols\ClientTransport.Deserialization.cs">
+      <Link>Rpc\Client\Protocols\ClientTransport.Deserialization.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client\Rpc\Client\Protocols\ClientTransportManager.cs">
+      <Link>Rpc\Client\Protocols\ClientTransportManager.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client\Rpc\Client\Protocols\ClientTransportManager`1.cs">
+      <Link>Rpc\Client\Protocols\ClientTransportManager`1.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client\Rpc\Client\Protocols\Filters\ClientQuotaMessageFilter.cs">
+      <Link>Rpc\Client\Protocols\Filters\ClientQuotaMessageFilter.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client\Rpc\Client\Protocols\Filters\ClientQuotaMessageFilterProvider.cs">
+      <Link>Rpc\Client\Protocols\Filters\ClientQuotaMessageFilterProvider.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client\Rpc\Client\Protocols\Filters\ClientStreamLoggingMessageFilter.cs">
+      <Link>Rpc\Client\Protocols\Filters\ClientStreamLoggingMessageFilter.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client\Rpc\Client\Protocols\Filters\ClientStreamLoggingMessageFilterProvider.cs">
+      <Link>Rpc\Client\Protocols\Filters\ClientStreamLoggingMessageFilterProvider.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client\Rpc\Client\Protocols\ProtocolTrace.cs">
+      <Link>Rpc\Client\Protocols\ProtocolTrace.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client\Rpc\Client\Protocols\ProtocolTrace.FromRpcError.cs">
+      <Link>Rpc\Client\Protocols\ProtocolTrace.FromRpcError.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client\Rpc\Client\Protocols\TcpClientTransport.cs">
+      <Link>Rpc\Client\Protocols\TcpClientTransport.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client\Rpc\Client\Protocols\TcpClientTransportManager.cs">
+      <Link>Rpc\Client\Protocols\TcpClientTransportManager.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client\Rpc\Client\Protocols\UdpClientTransport.cs">
+      <Link>Rpc\Client\Protocols\UdpClientTransport.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client\Rpc\Client\Protocols\UdpClientTransportManager.cs">
+      <Link>Rpc\Client\Protocols\UdpClientTransportManager.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client\Rpc\Client\Protocols\UnknownResponseReceivedEventArgs.cs">
+      <Link>Rpc\Client\Protocols\UnknownResponseReceivedEventArgs.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client\Rpc\Client\RequestMessageAsyncResult.cs">
+      <Link>Rpc\Client\RequestMessageAsyncResult.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client\Rpc\Client\RpcClient.cs">
+      <Link>Rpc\Client\RpcClient.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client\Rpc\Client\RpcClientConfiguration.cs">
+      <Link>Rpc\Client\RpcClientConfiguration.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client\Rpc\Client\RpcClientConfiguration.Properties.cs">
+      <Link>Rpc\Client\RpcClientConfiguration.Properties.cs</Link>
+    </Compile>
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Rpc\Client\Task.cs" />
+    <Compile Include="Rpc\Client\TaskScheduler.cs" />
+    <Compile Include="Rpc\Client\Task`1.cs" />
+    <Compile Include="Rpc\Client\TaskCompletionSource`1.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\MsgPack.Rpc.WindowsPhone.7.1\MsgPack.Rpc.WindowsPhone.7.1.csproj">
+      <Project>{AACC4E2A-E8E8-45B3-87E0-C83CE72BBCFC}</Project>
+      <Name>MsgPack.Rpc.WindowsPhone.7.1</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup />
+  <Import Project="$(MSBuildExtensionsPath)\Microsoft\Silverlight for Phone\$(TargetFrameworkVersion)\Microsoft.Silverlight.$(TargetFrameworkProfile).Overrides.targets" />
+  <Import Project="$(MSBuildExtensionsPath)\Microsoft\Silverlight for Phone\$(TargetFrameworkVersion)\Microsoft.Silverlight.CSharp.targets" />
+  <ProjectExtensions />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

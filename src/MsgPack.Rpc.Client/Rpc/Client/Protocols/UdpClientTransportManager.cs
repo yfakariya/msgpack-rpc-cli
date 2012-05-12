@@ -22,7 +22,9 @@ using System;
 using System.Globalization;
 using System.Net;
 using System.Net.Sockets;
+#if !WINDOWS_PHONE
 using System.Threading.Tasks;
+#endif
 
 namespace MsgPack.Rpc.Client.Protocols
 {

@@ -48,7 +48,7 @@ namespace Mono.Collections.Generic
 	[ComVisible(false)]
 	[DebuggerDisplay ("Count={Count}")]
 	[DebuggerTypeProxy (typeof (CollectionDebuggerView<,>))]
-	public class SortedList<TKey, TValue> : IDictionary<TKey, TValue>, 
+	internal class SortedList<TKey, TValue> : IDictionary<TKey, TValue>, 
 		IDictionary,
 		ICollection,
 		ICollection<KeyValuePair<TKey, TValue>>,

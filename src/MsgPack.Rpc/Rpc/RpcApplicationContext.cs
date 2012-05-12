@@ -21,6 +21,10 @@
 using System;
 using System.Security;
 using System.Threading;
+#if WINDOWS_PHONE
+using Mono;
+using Mono.Threading;
+#endif
 
 namespace MsgPack.Rpc
 {
@@ -137,7 +141,11 @@ namespace MsgPack.Rpc
 		/// <value>
 		///		The <see cref="CancellationToken"/> associated with this context.
 		/// </value>
+#if WINDOWS_PHONE
+		internal CancellationToken CancellationToken
+#else
 		public CancellationToken CancellationToken
+#endif
 		{
 			get { return this._cancellationTokenSource.Token; }
 		}
