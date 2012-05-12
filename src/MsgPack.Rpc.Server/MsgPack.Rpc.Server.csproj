@@ -49,8 +49,8 @@
     <ErrorReport>prompt</ErrorReport>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="MsgPack">
-      <HintPath>..\..\lib\MsgPack.dll</HintPath>
+    <Reference Include="MsgPack, Version=0.2.0.0, Culture=neutral, PublicKeyToken=a2625990d5dc0167, processorArchitecture=MSIL">
+      <HintPath>..\..\lib\net40-client\MsgPack.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -87,6 +87,15 @@
     <Compile Include="Rpc\Server\Dispatch\LocatorBasedDispatcher.cs" />
     <Compile Include="Rpc\Server\Dispatch\OperationCatalog.cs" />
     <Compile Include="Rpc\Server\Dispatch\OperationDescription.cs" />
+    <Compile Include="Rpc\Server\Dispatch\Reflection\FromExpression.cs" />
+    <Compile Include="Rpc\Server\Dispatch\Reflection\FromExpression.ToConstructor.cs" />
+    <Compile Include="Rpc\Server\Dispatch\Reflection\FromExpression.ToMethod.cs" />
+    <Compile Include="Rpc\Server\Dispatch\Reflection\GenericTypeExtensions.cs" />
+    <Compile Include="Rpc\Server\Dispatch\Reflection\ReflectionExtensions.cs" />
+    <Compile Include="Rpc\Server\Dispatch\Reflection\Tracer.cs" />
+    <Compile Include="Rpc\Server\Dispatch\Reflection\TracingILGenerator.conveniences.cs" />
+    <Compile Include="Rpc\Server\Dispatch\Reflection\TracingILGenerator.cs" />
+    <Compile Include="Rpc\Server\Dispatch\Reflection\TracingILGenerator.emits.cs" />
     <Compile Include="Rpc\Server\Dispatch\ServiceDescription.cs" />
     <Compile Include="Rpc\Server\Dispatch\SvcFileInterop\AttributeNameParsingState.cs" />
     <Compile Include="Rpc\Server\Dispatch\SvcFileInterop\AttributeValueParsingState.cs" />
@@ -102,6 +111,7 @@
     <Compile Include="Rpc\Server\Dispatch\ServiceInvokerEmitter.cs" />
     <Compile Include="Rpc\Server\Dispatch\ServiceInvokerGenerator.cs" />
     <Compile Include="Rpc\Server\Dispatch\ServiceTypeLocator.cs" />
+    <Compile Include="Rpc\Server\Dispatch\TupleItems.cs" />
     <Compile Include="Rpc\Server\Dispatch\VersionedOperationCatalog.cs" />
     <Compile Include="Rpc\Server\Protocols\ClientShutdownEventArgs.cs" />
     <Compile Include="Rpc\Server\Protocols\Filters\ServerQuotaMessageFilter.cs" />
@@ -145,6 +155,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>ServerTrace.tt</DependentUpon>
     </Compile>
+    <Compile Include="Validation.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\MsgPack.snk">

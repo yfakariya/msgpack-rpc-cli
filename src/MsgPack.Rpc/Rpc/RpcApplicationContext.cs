@@ -58,7 +58,9 @@ namespace MsgPack.Rpc
 		{
 			_current = context;
 			context._boundThread = new WeakReference( Thread.CurrentThread );
+#if !SILVERLIGHT
 			context._hardTimeoutWatcher.Reset();
+#endif
 			context._softTimeoutWatcher.Reset();
 		}
 
@@ -124,7 +126,9 @@ namespace MsgPack.Rpc
 		private WeakReference _boundThread;
 		private AggregateException _exceptionInCancellationCallback;
 		private readonly TimeoutWatcher _softTimeoutWatcher;
+#if !SILVERLIGHT
 		private readonly TimeoutWatcher _hardTimeoutWatcher;
+#endif
 		private readonly CancellationTokenSource _cancellationTokenSource;
 
 		/// <summary>
@@ -140,7 +144,9 @@ namespace MsgPack.Rpc
 
 		private TimeSpan? _softTimeout;
 
+#if !SILVERLIGHT
 		private TimeSpan? _hardTimeout;
+#endif
 
 		private int _state;
 
@@ -153,11 +159,15 @@ namespace MsgPack.Rpc
 		internal RpcApplicationContext( TimeSpan? softTimeout, TimeSpan? hardTimeout )
 		{
 			this._softTimeout = softTimeout;
+#if !SILVERLIGHT
 			this._hardTimeout = hardTimeout;
+#endif
 			this._softTimeoutWatcher = new TimeoutWatcher();
 			this._softTimeoutWatcher.Timeout += ( sender, e ) => this.OnSoftTimeout();
+#if !SILVERLIGHT
 			this._hardTimeoutWatcher = new TimeoutWatcher();
 			this._hardTimeoutWatcher.Timeout += ( sender, e ) => this.OnHardTimeout();
+#endif
 			this._cancellationTokenSource = new CancellationTokenSource();
 		}
 
@@ -168,7 +178,9 @@ namespace MsgPack.Rpc
 		{
 			if ( Interlocked.Exchange( ref this._state, StateDisposed ) != StateDisposed )
 			{
+#if !SILVERLIGHT
 				this._hardTimeoutWatcher.Dispose();
+#endif
 				this._softTimeoutWatcher.Dispose();
 				this._cancellationTokenSource.Dispose();
 			}
@@ -190,12 +202,15 @@ namespace MsgPack.Rpc
 				Interlocked.Exchange( ref this._exceptionInCancellationCallback, ex );
 			}
 
+#if !SILVERLIGHT
 			if ( this._hardTimeout != null )
 			{
 				this._hardTimeoutWatcher.Start( this._hardTimeout.Value );
 			}
+#endif
 		}
 
+#if !SILVERLIGHT
 		private void OnHardTimeout()
 		{
 			if ( Interlocked.CompareExchange( ref this._state, StateHardTimeout, StateSoftTimeout ) != StateSoftTimeout )
@@ -224,6 +239,7 @@ namespace MsgPack.Rpc
 				catch ( ThreadStateException ) { }
 			}
 		}
+#endif
 
 		internal void StartTimeoutWatch()
 		{
@@ -237,7 +253,9 @@ namespace MsgPack.Rpc
 
 		internal void StopTimeoutWatch()
 		{
+#if !SILVERLIGHT
 			this._hardTimeoutWatcher.Stop();
+#endif
 			this._softTimeoutWatcher.Stop();
 
 			var exceptionInCancellationCallback = Interlocked.Exchange( ref _exceptionInCancellationCallback, null );

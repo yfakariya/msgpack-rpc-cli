@@ -19,10 +19,15 @@
 #endregion -- License Terms --
 
 using System;
+#if !SILVERLIGHT
 using System.Collections.Concurrent;
+#endif
 using System.Diagnostics.Contracts;
 using System.Net.Sockets;
 using System.Threading;
+#if SILVERLIGHT
+using Mono.Collections.Concurrent;
+#endif
 using MsgPack.Rpc.Protocols;
 
 namespace MsgPack.Rpc.Server.Protocols

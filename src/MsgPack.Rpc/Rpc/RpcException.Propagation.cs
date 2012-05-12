@@ -80,7 +80,9 @@ namespace MsgPack.Rpc
 		// NOT readonly for safe-deserialization
 		private RemoteExceptionInformation[] _remoteExceptions;
 
+#if !SILVERLIGHT
 		[Serializable]
+#endif
 		private sealed class RemoteExceptionInformation
 		{
 			public readonly int Hop;
@@ -106,7 +108,9 @@ namespace MsgPack.Rpc
 			}
 		}
 
+#if !SILVERLIGHT
 		[Serializable]
+#endif
 		private sealed class RemoteStackFrame
 		{
 			public readonly string MethodSignature;
@@ -204,7 +208,11 @@ namespace MsgPack.Rpc
 						properties[ 2 ] = remoteException.HResult;
 						properties[ 3 ] = MessagePackConvert.EncodeString( remoteException.Message );
 						properties[ 4 ] =
+#if !SILVERLIGHT
 							Array.ConvertAll(
+#else
+							ArrayExtensions.ConvertAll(
+#endif
 								remoteException.StackTrace,
 								frame =>
 									frame.FileName == null
@@ -226,19 +234,28 @@ namespace MsgPack.Rpc
 					properties[ 3 ] = MessagePackConvert.EncodeString( inner.Message );
 
 					// stack trace
-					var innerStackTrace = new StackTrace( inner, true );
+					var innerStackTrace = 
+#if !SILVERLIGHT
+						new StackTrace( inner, true );
+#else
+						new StackTrace( inner );
+#endif
 					var frames = new MessagePackObject[ innerStackTrace.FrameCount ];
 					for ( int i = 0; i < frames.Length; i++ )
 					{
 						var frame = innerStackTrace.GetFrame( innerStackTrace.FrameCount - ( i + 1 ) );
+#if !SILVERLIGHT
 						if ( frame.GetFileName() == null )
 						{
+#endif
 							frames[ i ] = new MessagePackObject[] { ToStackFrameMethodSignature( frame.GetMethod() ), frame.GetILOffset(), frame.GetNativeOffset() };
+#if !SILVERLIGHT
 						}
 						else
 						{
 							frames[ i ] = new MessagePackObject[] { ToStackFrameMethodSignature( frame.GetMethod() ), frame.GetILOffset(), frame.GetNativeOffset(), frame.GetFileName(), frame.GetFileLineNumber(), frame.GetFileColumnNumber() };
 						}
+#endif
 					}
 					properties[ 4 ] = new MessagePackObject( frames );
 
@@ -278,6 +295,7 @@ namespace MsgPack.Rpc
 				// ExternalException.ErrorCode is SecuritySafeCritical and its assembly must be fully trusted.
 				return asExternalException.ErrorCode;
 			}
+#if !SILVERLIGHT
 			else if ( _safeGetHRFromExceptionMethod.IsSecuritySafeCritical )
 			{
 				try
@@ -290,6 +308,7 @@ namespace MsgPack.Rpc
 
 				return 0;
 			}
+#endif
 			else
 			{
 				// Cannot get HResult due to partial trust.

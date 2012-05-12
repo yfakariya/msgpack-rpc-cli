@@ -25,6 +25,9 @@ using System.Diagnostics.Contracts;
 using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
+#if SILVERLIGHT
+using Mono.Collections.Generic;
+#endif
 
 namespace MsgPack.Rpc.Server.Dispatch
 {

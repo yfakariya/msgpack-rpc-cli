@@ -19,12 +19,18 @@
 #endregion -- License Terms --
 
 using System;
+#if !SILVERLIGHT
 using System.Collections.Concurrent;
+#endif
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.Globalization;
 using System.Threading;
+#if SILVERLIGHT
+using Mono.Collections.Concurrent;
+using Mono.Threading;
+#endif
 using MsgPack.Rpc.StandardObjectPoolTracing;
 
 namespace MsgPack.Rpc
@@ -143,7 +149,14 @@ namespace MsgPack.Rpc
 			this._leasesLock = new ReaderWriterLockSlim( LockRecursionPolicy.NoRecursion );
 			int estimatedConcurrency = ( configuration.MaximumPooled ?? Environment.ProcessorCount * 2 ) / 2;
 			this._borrowTimeout = safeConfiguration.BorrowTimeout ?? TimeSpan.FromMilliseconds( Timeout.Infinite );
-			this._pool = new BlockingCollection<T>( new ConcurrentStack<T>() );
+			this._pool = 
+				new BlockingCollection<T>( 
+#if !SILVERLIGHT
+					new ConcurrentStack<T>() 
+#else
+					new ConcurrentStack<T>() 
+#endif
+				);
 
 			if ( safeConfiguration.MaximumPooled == null )
 			{

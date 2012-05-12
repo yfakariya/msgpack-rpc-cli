@@ -26,9 +26,8 @@ using System.IO;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Reflection.Emit;
-using System.Threading.Tasks;
+using MsgPack.Rpc.Server.Dispatch.Reflection;
 using MsgPack.Serialization;
-using MsgPack.Serialization.Reflection;
 
 namespace MsgPack.Rpc.Server.Dispatch
 {
@@ -41,6 +40,8 @@ namespace MsgPack.Rpc.Server.Dispatch
 			FromExpression.ToProperty( ( RpcServerRuntime runtime ) => runtime.SerializationContext );
 		private static readonly Type[] _constructorParameterTypes = new[] { typeof( RpcServerRuntime ), typeof( ServiceDescription ), typeof( MethodInfo ) };
 		private static readonly Type[] _invokeCoreParameterTypes = new[] { typeof( Unpacker ) };
+		private static readonly MethodInfo _SerializationContextGetSerializer1_Method =
+			typeof( SerializationContext ).GetMethod( "GetSerializer", Type.EmptyTypes );
 
 		/// <summary>
 		///		 Gets a value indicating whether this instance is trace enabled.
@@ -110,7 +111,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 				Type.Delimiter.ToString(),
 				typeof( ServiceInvokerEmitter ).Namespace,
 				"Generated",
-				IdentifierUtility.EscapeTypeName( targetType ) + "Serializer" + sequence
+				RpcIdentifierUtility.EnsureValidIdentifier( targetType.Name, "targetType" ) + "Serializer" + sequence
 			);
 			Tracer.Emit.TraceEvent( Tracer.EventType.DefineType, Tracer.EventId.DefineType, "Create {0}", typeName );
 			this._typeBuilder =
@@ -223,7 +224,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 				foreach ( var entry in this._serializers )
 				{
 					var targetType = Type.GetTypeFromHandle( entry.Key );
-					var getMethod = MsgPack.Serialization.Metadata._SerializationContext.GetSerializer1_Method.MakeGenericMethod( targetType );
+					var getMethod = _SerializationContextGetSerializer1_Method.MakeGenericMethod( targetType );
 					il.Emit( OpCodes.Ldarg_0 );
 					il.Emit( OpCodes.Ldloc_0 );
 					il.Emit( OpCodes.Callvirt, getMethod );

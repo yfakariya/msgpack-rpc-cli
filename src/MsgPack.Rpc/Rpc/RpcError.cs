@@ -628,7 +628,11 @@ namespace MsgPack.Rpc
 
 			if ( errorCode < 0 )
 			{
+#if !SILVERLIGHT
 				throw new ArgumentOutOfRangeException( "errorCode", errorCode, "Application error code must be grator than or equal to 0." );
+#else
+				throw new ArgumentOutOfRangeException( "errorCode", "Application error code must be grator than or equal to 0." );
+#endif
 			}
 
 			Contract.EndContractBlock();

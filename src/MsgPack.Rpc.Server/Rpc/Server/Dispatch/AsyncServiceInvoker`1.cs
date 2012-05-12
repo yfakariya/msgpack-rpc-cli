@@ -43,7 +43,9 @@ namespace MsgPack.Rpc.Server.Dispatch
 	[ContractClass( typeof( AsyncServiceInvokerContract<> ) )]
 	public abstract class AsyncServiceInvoker<T> : AsyncServiceInvoker
 	{
+#if !SILVERLIGHT
 		private static readonly SecurityPermission _unmanagedCodePermission = new SecurityPermission( SecurityPermissionFlag.UnmanagedCode );
+#endif
 
 		private readonly MessagePackSerializer<T> _returnValueSerializer;
 
@@ -211,14 +213,17 @@ namespace MsgPack.Rpc.Server.Dispatch
 
 		private static void SafeStartLogicalOperation()
 		{
+#if !SILVERLIGHT
 			try
 			{
 				PrivilegedStartLogicalOperation();
 			}
 			catch ( SecurityException ) { }
 			catch ( MemberAccessException ) { }
+#endif
 		}
 
+#if !SILVERLIGHT
 		[SecuritySafeCritical]
 		[SuppressMessage( "Microsoft.Security", "CA2122:DoNotIndirectlyExposeMethodsWithLinkDemands" )]
 		[SuppressMessage( "Microsoft.Security", "CA2106:SecureAsserts" )]
@@ -234,12 +239,16 @@ namespace MsgPack.Rpc.Server.Dispatch
 				SecurityPermission.RevertAssert();
 			}
 		}
+#endif
 
 		private static void SafeStopLogicalOperation()
 		{
+#if !SILVERLIGHT
 			PrivilegedStopLogicalOperation();
+#endif
 		}
 
+#if !SILVERLIGHT
 		[SecuritySafeCritical]
 		[SuppressMessage( "Microsoft.Security", "CA2122:DoNotIndirectlyExposeMethodsWithLinkDemands" )]
 		private static void PrivilegedStopLogicalOperation()
@@ -254,6 +263,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 				SecurityPermission.RevertAssert();
 			}
 		}
+#endif
 	}
 
 	[ContractClassFor( typeof( AsyncServiceInvoker<> ) )]

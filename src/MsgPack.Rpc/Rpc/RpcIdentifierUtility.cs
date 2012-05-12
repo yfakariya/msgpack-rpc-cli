@@ -40,7 +40,7 @@ namespace MsgPack.Rpc
 		private static readonly Regex _validIdentififerPattern =
 			new Regex(
 				"^[" + _idStart + "]([" + _idContinue + "]*)$",
-#if !SIVERLIGHT
+#if !SILVERLIGHT
  RegexOptions.Compiled |
 #endif
  RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture | RegexOptions.Singleline
@@ -61,7 +61,12 @@ namespace MsgPack.Rpc
 				return identifier;
 			}
 
-			string normalized = identifier.Normalize( NormalizationForm.FormC );
+			string normalized =
+#if !SILVERLIGHT
+				identifier.Normalize( NormalizationForm.FormC );
+#else
+				identifier;
+#endif
 			if ( !_validIdentififerPattern.IsMatch( normalized ) )
 			{
 				throw new ArgumentException(

@@ -149,11 +149,18 @@ namespace MsgPack.Rpc.Protocols
 			Contract.Requires( this.BoundTransport == null );
 			Contract.Ensures( this.BoundTransport != null );
 
+#if !SILVERLIGHT
+#warning Is this property needed?
 			this.SocketContext.AcceptSocket = transport.BoundSocket;
+#endif
 			var oldBoundTransport = Interlocked.CompareExchange( ref this._boundTransport, transport, null );
 			if ( oldBoundTransport != null )
 			{
+#if !SILVERLIGHT
 				throw new InvalidOperationException( String.Format( CultureInfo.CurrentCulture, "This context is already bounded to '{0}'(Socket: 0x{1:X}).", transport.GetType(), transport.BoundSocket == null ? IntPtr.Zero : transport.BoundSocket.Handle ) );
+#else
+				throw new InvalidOperationException( String.Format( CultureInfo.CurrentCulture, "This context is already bounded to '{0}'(Socket: 0x{1:X}).", transport.GetType(), transport.BoundSocket == null ? 0 : transport.BoundSocket.GetHashCode() ) );
+#endif
 			}
 
 			this.SocketContext.Completed += transport.OnSocketOperationCompleted;

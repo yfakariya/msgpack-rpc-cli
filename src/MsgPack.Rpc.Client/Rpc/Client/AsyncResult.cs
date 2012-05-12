@@ -22,6 +22,9 @@ using System;
 using System.Diagnostics.Contracts;
 using System.Threading;
 using System.Diagnostics;
+#if SILVERLIGHT
+using Mono.Threading;
+#endif
 
 namespace MsgPack.Rpc
 {

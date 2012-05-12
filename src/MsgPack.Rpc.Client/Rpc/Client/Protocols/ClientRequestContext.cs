@@ -19,10 +19,13 @@
 #endregion -- License Terms --
 
 using System;
+using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.IO;
+#if SILVERLIGHT
+using Mono.Diagnostics;
+#endif
 using MsgPack.Rpc.Protocols;
-using System.Diagnostics;
 
 namespace MsgPack.Rpc.Client.Protocols
 {

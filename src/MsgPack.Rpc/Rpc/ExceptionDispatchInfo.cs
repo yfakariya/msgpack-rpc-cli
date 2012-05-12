@@ -32,7 +32,7 @@ using System.Security;
 
 namespace MsgPack.Rpc
 {
-#if !NET_4_5
+#if !NET_4_5 && !SILVERLIGHT
 	internal sealed class ExceptionDispatchInfo
 	{
 		private static readonly Type[] _constructorParameterStringException = new[] { typeof( string ), typeof( Exception ) };
@@ -89,13 +89,12 @@ namespace MsgPack.Rpc
 				return result;
 			}
 
-#if !SILVERLIGHT
 			result = TryCreateMatroshikaWithExternalExceptionMatroshka( inner );
 			if ( result != null )
 			{
 				return result;
 			}
-#endif
+
 			result = HandleExternalExceptionInPartialTrust( inner );
 			if ( result != null )
 			{
@@ -179,6 +178,7 @@ namespace MsgPack.Rpc
 			COMException asCOMException;
 			SEHException asSEHException;
 			ExternalException asExternalException;
+
 			if ( ( asCOMException = inner as COMException ) != null )
 			{
 				var result = new WrapperCOMException( asCOMException.Message, asCOMException );
@@ -255,7 +255,7 @@ namespace MsgPack.Rpc
 			}
 
 			private WrapperExternalException( SerializationInfo info, StreamingContext context ) : base( info, context ) { }
-	}
+		}
 
 		[Serializable]
 		private sealed class WrapperCOMException : COMException
@@ -346,9 +346,9 @@ namespace MsgPack.Rpc
 			{
 				this._innerStackTrace = inner.StackTrace;
 			}
-	
+
 			private WrapperNetworkInformationException( SerializationInfo info, StreamingContext context ) : base( info, context ) { }
-	}
+		}
 
 		[Serializable]
 		private sealed class WrapperSocketException : SocketException
@@ -374,9 +374,9 @@ namespace MsgPack.Rpc
 			{
 				this._innerStackTrace = inner.StackTrace;
 			}
-	
+
 			private WrapperSocketException( SerializationInfo info, StreamingContext context ) : base( info, context ) { }
-	}
+		}
 	}
 #endif
 }

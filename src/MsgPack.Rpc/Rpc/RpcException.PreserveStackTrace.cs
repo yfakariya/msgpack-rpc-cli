@@ -37,7 +37,13 @@ namespace MsgPack.Rpc
 				this._preservedStackTrace = new List<string>();
 			}
 
-			this._preservedStackTrace.Add( new StackTrace( this, true ).ToString() );
+			this._preservedStackTrace.Add(
+#if !SILVERLIGHT
+				new StackTrace( this, true )
+#else
+				new StackTrace( this )
+#endif
+				.ToString() );
 		}
 
 		/// <summary>

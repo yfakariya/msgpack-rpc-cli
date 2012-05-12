@@ -183,6 +183,7 @@ namespace MsgPack.Rpc
 #endif
 		}
 
+#if !SILVERLIGHT
 		internal static T Get<T>( SerializationEntry entry, string name, Func<SerializationEntry, T> getter )
 		{
 			Contract.Assert( name != null );
@@ -197,8 +198,6 @@ namespace MsgPack.Rpc
 				throw new SerializationException( String.Format( CultureInfo.CurrentCulture, "Invalid '{0}' value.", name ), ex );
 			}
 		}
-
-#if !SILVERLIGHT
 
 		/// <summary>
 		///		When overridden on the derived class, handles <see cref="E:Exception.SerializeObjectState"/> event to add type-specified serialization state.

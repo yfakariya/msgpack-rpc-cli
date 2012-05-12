@@ -23,7 +23,7 @@ using System.ComponentModel;
 using System.Globalization;
 using System.Reflection;
 using MsgPack.Rpc.Protocols;
-using MsgPack.Serialization;
+using MsgPack.Rpc.Server.Dispatch.Reflection;
 
 namespace MsgPack.Rpc.Server.Dispatch
 {
