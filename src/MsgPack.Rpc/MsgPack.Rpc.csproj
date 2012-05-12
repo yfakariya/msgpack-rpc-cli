@@ -75,6 +75,7 @@
     <Compile Include="Rpc\ByteArraySegmentStream.cs" />
     <Compile Include="Rpc\Diagnostics\FileMessagePackStreamLogger.cs" />
     <Compile Include="Rpc\Diagnostics\IMessagePackStreamLogger.cs" />
+    <Compile Include="Rpc\Diagnostics\IsolatedStorageFileMessagePackStreamLogger.cs" />
     <Compile Include="Rpc\ExceptionDispatchInfo.cs" />
     <Compile Include="Rpc\ExceptionExtensions.cs" />
     <Compile Include="Rpc\ExceptionModifiers.cs" />
@@ -84,7 +85,6 @@
     <Compile Include="Rpc\IStackTracePreservable.cs" />
     <Compile Include="Rpc\MessagePackRpcMethodAttribute.cs" />
     <Compile Include="Rpc\MessagePackRpcServiceContractAttribute.cs" />
-    <Compile Include="Rpc\NetworkEnvironment.cs" />
     <Compile Include="Rpc\ObjectPoolCorruptedException.cs" />
     <Compile Include="Rpc\ObjectPool`1.cs" />
     <Compile Include="Rpc\ObjectPoolConfiguration.cs" />
