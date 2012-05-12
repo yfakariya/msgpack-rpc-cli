@@ -43,15 +43,11 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="MsgPack">
-      <HintPath>..\..\lib\MsgPack.dll</HintPath>
+      <HintPath>..\..\lib\net40-client\MsgPack.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\..\src\MsgPack.Rpc.Client\Rpc\Client\Protocols\Filters\ClientQuotaMessageFilter.cs">
@@ -136,7 +132,6 @@
       <Name>MsgPack.Rpc</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
