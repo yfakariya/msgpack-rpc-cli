@@ -149,10 +149,6 @@ namespace MsgPack.Rpc.Protocols
 			Contract.Requires( this.BoundTransport == null );
 			Contract.Ensures( this.BoundTransport != null );
 
-#if !SILVERLIGHT
-#warning Is this property needed?
-			this.SocketContext.AcceptSocket = transport.BoundSocket;
-#endif
 			var oldBoundTransport = Interlocked.CompareExchange( ref this._boundTransport, transport, null );
 			if ( oldBoundTransport != null )
 			{
