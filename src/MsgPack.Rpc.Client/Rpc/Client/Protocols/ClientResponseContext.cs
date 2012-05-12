@@ -49,12 +49,6 @@ namespace MsgPack.Rpc.Client.Protocols
 		/// </summary>
 		internal ByteArraySegmentStream ResultBuffer;
 
-
-		/// <summary>
-		///		<see cref="Stream"/> to dump corrupt response for the future manual recovery by humans.
-		/// </summary>
-		internal Stream DumpStream;
-
 		/// <summary>
 		///		Initializes a new instance of the <see cref="ClientResponseContext"/> class with default settings.
 		/// </summary>

@@ -36,7 +36,6 @@ namespace MsgPack.Rpc.Client.Protocols
 			Assert.That( target.BoundTransport, Is.Null );
 			Assert.That( target.CurrentReceivingBuffer, Is.Not.Null );
 			Assert.That( target.CurrentReceivingBufferOffset, Is.EqualTo( 0 ) );
-			Assert.That( target.DumpStream, Is.Null );
 			Assert.That( target.ErrorBuffer, Is.Null );
 			Assert.That( target.ErrorStartAt, Is.EqualTo( -1 ) );
 			Assert.That( target.HeaderUnpacker, Is.Null );
@@ -125,7 +124,6 @@ namespace MsgPack.Rpc.Client.Protocols
 			target.SetReceivingBuffer( new byte[] { 1, 2, 3, 4 } );
 			target.SetBytesTransferred( 1 );
 			target.ShiftCurrentReceivingBuffer();
-			target.DumpStream = new MemoryStream();
 			target.ErrorBuffer = new ByteArraySegmentStream( CreateDirtyBytes() );
 			target.ErrorStartAt = 1;
 			target.HeaderUnpacker = Unpacker.Create();
@@ -153,7 +151,6 @@ namespace MsgPack.Rpc.Client.Protocols
 			Assert.That( target.BoundTransport, Is.Not.Null );
 			Assert.That( target.CurrentReceivingBuffer, Is.Not.Null );
 			Assert.That( target.CurrentReceivingBufferOffset, Is.Not.EqualTo( 0 ) );
-			Assert.That( target.DumpStream, Is.Not.Null );
 			Assert.That( target.ErrorBuffer, Is.Null );
 			Assert.That( target.ErrorStartAt, Is.EqualTo( -1 ) );
 			Assert.That( target.HeaderUnpacker, Is.Null );
@@ -181,7 +178,6 @@ namespace MsgPack.Rpc.Client.Protocols
 			Assert.That( target.BoundTransport, Is.Not.Null );
 			Assert.That( target.CurrentReceivingBuffer, Is.Not.Null );
 			Assert.That( target.CurrentReceivingBufferOffset, Is.Not.EqualTo( 0 ) );
-			Assert.That( target.DumpStream, Is.Not.Null );
 			Assert.That( target.ErrorBuffer, Is.Null );
 			Assert.That( target.ErrorStartAt, Is.EqualTo( -1 ) );
 			Assert.That( target.HeaderUnpacker, Is.Null );
