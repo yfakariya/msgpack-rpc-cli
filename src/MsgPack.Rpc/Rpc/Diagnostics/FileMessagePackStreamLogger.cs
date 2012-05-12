@@ -31,7 +31,7 @@ namespace MsgPack.Rpc.Diagnostics
 	///		File based <see cref="MessagePackStreamLogger"/> implementation.
 	/// </summary>
 	/// <remarks>
-	///		The log file path will be <c>// {BaseDirectory}\{ProcessName}[-{AppDomainName}]\{ProcessStartTime}-{ProcessId}\{TimeStamp}-{EndPoint}-{ThreadId}.mpac</c>,
+	///		The log file path will be <c>{BaseDirectory}\{ProcessName}[-{AppDomainName}]\{ProcessStartTime}-{ProcessId}\{TimeStamp}-{EndPoint}-{ThreadId}.mpac</c>,
 	///		so you should specify short path to <see cref="BaseDirectoryPath"/>.
 	///		<note>
 	///			AppDomainName is omitted in default AppDomain.
