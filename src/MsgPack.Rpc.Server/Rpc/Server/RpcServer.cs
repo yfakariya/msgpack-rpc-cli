@@ -22,9 +22,6 @@ using System;
 using System.Diagnostics.Contracts;
 using System.Globalization;
 using System.Threading;
-#if SILVERLIGHT
-using Mono.Threading;
-#endif
 using MsgPack.Rpc.Server.Dispatch;
 using MsgPack.Rpc.Server.Protocols;
 using MsgPack.Serialization;

@@ -111,7 +111,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 				Type.Delimiter.ToString(),
 				typeof( ServiceInvokerEmitter ).Namespace,
 				"Generated",
-				RpcIdentifierUtility.EnsureValidIdentifier( targetType.Name, "targetType" ) + "Serializer" + sequence
+				IdentifierUtility.EscapeTypeName( targetType ) + "Serializer" + sequence
 			);
 			Tracer.Emit.TraceEvent( Tracer.EventType.DefineType, Tracer.EventId.DefineType, "Create {0}", typeName );
 			this._typeBuilder =

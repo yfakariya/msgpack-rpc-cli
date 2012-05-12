@@ -29,10 +29,6 @@ using System.Reflection.Emit;
 using System.Runtime.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
-#if SILVERLIGHT
-using ReaderWriterLockSlim = Mono.Threading.ReaderWriterLockSlim;
-using Mono.Threading;
-#endif
 using MsgPack.Rpc.Server.Dispatch.Reflection;
 
 namespace MsgPack.Rpc.Server.Dispatch
@@ -99,12 +95,10 @@ namespace MsgPack.Rpc.Server.Dispatch
 			}
 		}
 
-#if !SILVERLIGHT
 		internal void Dump()
 		{
 			this._assemblyBuilder.Save( this._assemblyName.Name + ".dll" );
 		}
-#endif
 
 		private static long _assemblySequence;
 		private long _typeSequence;
@@ -158,18 +152,14 @@ namespace MsgPack.Rpc.Server.Dispatch
 				)
 			);
 #endif
-#if !SILVERLIGHT
 			if ( isDebuggable )
 			{
 				this._moduleBuilder = this._assemblyBuilder.DefineDynamicModule( this._assemblyName.Name, this._assemblyName.Name + ".dll", true );
 			}
 			else
 			{
-#endif
 				this._moduleBuilder = this._assemblyBuilder.DefineDynamicModule( this._assemblyName.Name, true );
-#if !SILVERLIGHT
 			}
-#endif
 
 			this._cache = new Dictionary<RuntimeMethodHandle, IAsyncServiceInvoker>();
 			this._lock = new ReaderWriterLockSlim( LockRecursionPolicy.NoRecursion );

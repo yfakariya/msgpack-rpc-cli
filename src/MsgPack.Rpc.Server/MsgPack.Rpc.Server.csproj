@@ -83,6 +83,7 @@
     <Compile Include="Rpc\Server\Dispatch\FileBasedServiceTypeLocator.cs" />
     <Compile Include="Rpc\Server\Dispatch\FlatOperationCatalog.cs" />
     <Compile Include="Rpc\Server\Dispatch\IAsyncServiceInvoker.cs" />
+    <Compile Include="Rpc\Server\Dispatch\IdentifierUtility.cs" />
     <Compile Include="Rpc\Server\Dispatch\InvocationHelper.cs" />
     <Compile Include="Rpc\Server\Dispatch\LocatorBasedDispatcher.cs" />
     <Compile Include="Rpc\Server\Dispatch\OperationCatalog.cs" />
