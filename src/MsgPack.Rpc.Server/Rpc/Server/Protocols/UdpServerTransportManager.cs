@@ -72,7 +72,11 @@ namespace MsgPack.Rpc.Server.Protocols
 			{
 				bindingEndPoint =
 					new IPEndPoint(
+#if MONO
+						this.Configuration.PreferIPv4 && Socket.SupportsIPv4
+#else
 						this.Configuration.PreferIPv4 && Socket.OSSupportsIPv4
+#endif
 						? IPAddress.Any
 						: IPAddress.IPv6Any,
 						57319 // arbitrary number
@@ -129,9 +133,9 @@ namespace MsgPack.Rpc.Server.Protocols
 						if ( !this._listeningThread.Join( this.Configuration.UdpListenerThreadExitTimeout.Value ) )
 						{
 							// Suspend is needed to capture stack trace.
-#pragma warning disable 0618
+#pragma warning disable 0612,0618
 							this._listeningThread.Suspend();
-#pragma warning restore 0618
+#pragma warning restore 0612,0618
 
 #if !API_SIGNATURE_TEST
 							MsgPackRpcServerProtocolsTrace.TraceEvent(
@@ -142,9 +146,9 @@ namespace MsgPack.Rpc.Server.Protocols
 							);
 #endif
 							// Suspend was needed to capture stack trace.
-#pragma warning disable 0618
+#pragma warning disable 0612,0618
 							this._listeningThread.Resume();
-#pragma warning restore 0618
+#pragma warning restore 0612,0618
 						}
 					}
 				}

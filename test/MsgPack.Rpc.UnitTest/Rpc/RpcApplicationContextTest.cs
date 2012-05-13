@@ -45,12 +45,26 @@ namespace MsgPack.Rpc
 		{
 			var timeout = TimeSpan.FromMilliseconds( 50 );
 			using ( var target = new RpcApplicationContext( timeout, null ) )
+			using ( var cancellationEvent = new ManualResetEventSlim() )
 			{
 				var message = Guid.NewGuid().ToString();
 				RpcApplicationContext.SetCurrent( target );
-				target.CancellationToken.Register( () => { throw new Exception( message ); } );
+				target.CancellationToken.Register( () => 
+					{
+						try
+						{
+							throw new Exception( message );
+						}
+						finally
+						{
+							cancellationEvent.Set();
+						}
+					}
+				);
 				target.StartTimeoutWatch();
 				Assert.That( target.CancellationToken.WaitHandle.WaitOne( TimeSpan.FromSeconds( 1 ) ) );
+				// Mono sets WaitHandle eagerly (CLR might set after callback)
+				Assert.That ( cancellationEvent.Wait ( TimeSpan.FromSeconds( 1 ) ) );
 				Assert.That( RpcApplicationContext.IsCanceled );
 				var exception = Assert.Throws<AggregateException>( () => target.StopTimeoutWatch() );
 				Assert.That( exception.InnerException.Message, Is.EqualTo( message ) );

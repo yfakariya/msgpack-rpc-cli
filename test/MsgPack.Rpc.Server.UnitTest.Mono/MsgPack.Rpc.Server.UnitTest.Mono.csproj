@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>8.0.30703</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{A6B62032-39BF-47FB-916D-FB81E70CD456}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>MsgPack</RootNamespace>
+    <AssemblyName>MsgPack.Rpc.Server.UnitTest</AssemblyName>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE;MONO</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <NoWarn>0219</NoWarn>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE;MONO</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup>
+    <SignAssembly>true</SignAssembly>
+  </PropertyGroup>
+  <PropertyGroup>
+    <AssemblyOriginatorKeyFile>..\..\src\MsgPack.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="MsgPack">
+      <HintPath>..\..\lib\net40\MsgPack.dll</HintPath>
+    </Reference>
+    <Reference Include="nunit.framework">
+      <HintPath>..\..\packages\NUnit.2.6.0.12054\lib\nunit.framework.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\MsgPack.Rpc.Server.UnitTest\Rpc\Server\DebugTraceSourceSetting.cs">
+      <Link>Rpc\Server\DebugTraceSourceSetting.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server.UnitTest\Rpc\Server\Dispatch\AsyncServiceInvokerTest.cs">
+      <Link>Rpc\Server\Dispatch\AsyncServiceInvokerTest.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server.UnitTest\Rpc\Server\Dispatch\DefaultServiceTypeLocatorTest.cs">
+      <Link>Rpc\Server\Dispatch\DefaultServiceTypeLocatorTest.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server.UnitTest\Rpc\Server\Dispatch\DispatcherTest.cs">
+      <Link>Rpc\Server\Dispatch\DispatcherTest.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server.UnitTest\Rpc\Server\Dispatch\DispatchTestHelper.cs">
+      <Link>Rpc\Server\Dispatch\DispatchTestHelper.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server.UnitTest\Rpc\Server\Dispatch\FileBasedServiceTypeLocatorTest.cs">
+      <Link>Rpc\Server\Dispatch\FileBasedServiceTypeLocatorTest.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server.UnitTest\Rpc\Server\Dispatch\InvocationHelperTest.cs">
+      <Link>Rpc\Server\Dispatch\InvocationHelperTest.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server.UnitTest\Rpc\Server\Dispatch\LocatorBasedDispatcherTest.cs">
+      <Link>Rpc\Server\Dispatch\LocatorBasedDispatcherTest.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server.UnitTest\Rpc\Server\Dispatch\OperationDescriptionTest.cs">
+      <Link>Rpc\Server\Dispatch\OperationDescriptionTest.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server.UnitTest\Rpc\Server\Dispatch\ServiceDescriptionTest.cs">
+      <Link>Rpc\Server\Dispatch\ServiceDescriptionTest.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server.UnitTest\Rpc\Server\Dispatch\ServiceDescriptionTest.Equals.cs">
+      <Link>Rpc\Server\Dispatch\ServiceDescriptionTest.Equals.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server.UnitTest\Rpc\Server\Dispatch\ServiceInvokerGeneratorTest.cs">
+      <Link>Rpc\Server\Dispatch\ServiceInvokerGeneratorTest.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server.UnitTest\Rpc\Server\Dispatch\SvcFileInterop\AttributeNameParsingStateTest.cs">
+      <Link>Rpc\Server\Dispatch\SvcFileInterop\AttributeNameParsingStateTest.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server.UnitTest\Rpc\Server\Dispatch\SvcFileInterop\AttributeValueParsingStateTest.cs">
+      <Link>Rpc\Server\Dispatch\SvcFileInterop\AttributeValueParsingStateTest.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server.UnitTest\Rpc\Server\Dispatch\SvcFileInterop\FinishedStateTest.cs">
+      <Link>Rpc\Server\Dispatch\SvcFileInterop\FinishedStateTest.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server.UnitTest\Rpc\Server\Dispatch\SvcFileInterop\InitialStateTest.cs">
+      <Link>Rpc\Server\Dispatch\SvcFileInterop\InitialStateTest.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server.UnitTest\Rpc\Server\Dispatch\SvcFileInterop\RuntimeDirectiveIndicatorFoundStateTest.cs">
+      <Link>Rpc\Server\Dispatch\SvcFileInterop\RuntimeDirectiveIndicatorFoundStateTest.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server.UnitTest\Rpc\Server\Dispatch\SvcFileInterop\ServerDirectiveIndicatorFoundStateTest.cs">
+      <Link>Rpc\Server\Dispatch\SvcFileInterop\ServerDirectiveIndicatorFoundStateTest.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server.UnitTest\Rpc\Server\Dispatch\SvcFileInterop\StartTagFoundStateTest.cs">
+      <Link>Rpc\Server\Dispatch\SvcFileInterop\StartTagFoundStateTest.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server.UnitTest\Rpc\Server\Dispatch\SvcFileInterop\SvcDirectiveParserStateTest.cs">
+      <Link>Rpc\Server\Dispatch\SvcFileInterop\SvcDirectiveParserStateTest.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server.UnitTest\Rpc\Server\Dispatch\SvcFileInterop\SvcFileParserTest.cs">
+      <Link>Rpc\Server\Dispatch\SvcFileInterop\SvcFileParserTest.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server.UnitTest\Rpc\Server\Dispatch\VersionedOperationCatalogTest.cs">
+      <Link>Rpc\Server\Dispatch\VersionedOperationCatalogTest.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server.UnitTest\Rpc\Server\IntegrationTest.cs">
+      <Link>Rpc\Server\IntegrationTest.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server.UnitTest\Rpc\Server\Protocols\Filters\ServerQuotaMessageFilterTest.cs">
+      <Link>Rpc\Server\Protocols\Filters\ServerQuotaMessageFilterTest.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server.UnitTest\Rpc\Server\Protocols\Filters\ServerStreamLoggingMessageFilterTest.cs">
+      <Link>Rpc\Server\Protocols\Filters\ServerStreamLoggingMessageFilterTest.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server.UnitTest\Rpc\Server\Protocols\Filters\_SetUpFixture.cs">
+      <Link>Rpc\Server\Protocols\Filters\_SetUpFixture.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server.UnitTest\Rpc\Server\Protocols\ListeningContextTest.cs">
+      <Link>Rpc\Server\Protocols\ListeningContextTest.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server.UnitTest\Rpc\Server\Protocols\NullServerTransport.cs">
+      <Link>Rpc\Server\Protocols\NullServerTransport.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server.UnitTest\Rpc\Server\Protocols\NullServerTransportManager.cs">
+      <Link>Rpc\Server\Protocols\NullServerTransportManager.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server.UnitTest\Rpc\Server\Protocols\ServerRequestContextTest.cs">
+      <Link>Rpc\Server\Protocols\ServerRequestContextTest.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server.UnitTest\Rpc\Server\Protocols\ServerResponseContextTest.cs">
+      <Link>Rpc\Server\Protocols\ServerResponseContextTest.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server.UnitTest\Rpc\Server\Protocols\ServerTransportManagerTest.cs">
+      <Link>Rpc\Server\Protocols\ServerTransportManagerTest.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server.UnitTest\Rpc\Server\Protocols\ServerTransportManager`1Test.cs">
+      <Link>Rpc\Server\Protocols\ServerTransportManager`1Test.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server.UnitTest\Rpc\Server\Protocols\ServerTransportTest.cs">
+      <Link>Rpc\Server\Protocols\ServerTransportTest.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server.UnitTest\Rpc\Server\Protocols\TcpServerTransportTest.cs">
+      <Link>Rpc\Server\Protocols\TcpServerTransportTest.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server.UnitTest\Rpc\Server\Protocols\UdpServerTransportTest.cs">
+      <Link>Rpc\Server\Protocols\UdpServerTransportTest.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server.UnitTest\Rpc\Server\Protocols\_SetUpFixture.cs">
+      <Link>Rpc\Server\Protocols\_SetUpFixture.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server.UnitTest\Rpc\Server\_SetUpFixture.cs">
+      <Link>Rpc\Server\_SetUpFixture.cs</Link>
+    </Compile>
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\src\MsgPack.snk">
+      <Link>MsgPack.snk</Link>
+    </None>
+    <None Include="..\MsgPack.Rpc.Server.UnitTest\App.config">
+      <Link>App.config</Link>
+    </None>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\MsgPack.Rpc.Mono\MsgPack.Rpc.Mono.csproj">
+      <Project>{F9F4124A-B629-4285-A164-3137BF281892}</Project>
+      <Name>MsgPack.Rpc.Mono</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\src\MsgPack.Rpc.Server.Mono\MsgPack.Rpc.Server.Mono.csproj">
+      <Project>{D8DAC23E-5CAD-4CB9-B40C-B55D72DFAA07}</Project>
+      <Name>MsgPack.Rpc.Server.Mono</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\MsgPack.Rpc.TestUtilities.Mono\MsgPack.Rpc.TestUtilities.Mono.csproj">
+      <Project>{59F7A3B9-3580-4087-AFAC-627384B0BB7E}</Project>
+      <Name>MsgPack.Rpc.TestUtilities.Mono</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup />
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

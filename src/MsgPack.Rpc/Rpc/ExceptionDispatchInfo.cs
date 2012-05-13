@@ -32,7 +32,7 @@ using System.Security;
 
 namespace MsgPack.Rpc
 {
-#if !NET_4_5 && !SILVERLIGHT
+#if !NET_4_5 && !SILVERLIGHT && !MONO
 	internal sealed class ExceptionDispatchInfo
 	{
 		private static readonly Type[] _constructorParameterStringException = new[] { typeof( string ), typeof( Exception ) };

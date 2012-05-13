@@ -44,7 +44,7 @@ namespace MsgPack.Rpc.Server.Dispatch.SvcFileInterop
 		/// </returns>
 		protected sealed override SvcDirectiveParserState ParseCore( char currentChar, TextReader nextReader )
 		{
-			if ( !XmlConvert.IsStartNCNameChar( currentChar ) && currentChar != '%' )
+			if ( !XmlValidation.IsStartNCNameChar( currentChar ) && currentChar != '%' )
 			{
 				return this.OnUnexpectedCharFound( currentChar );
 			}
@@ -98,7 +98,7 @@ namespace MsgPack.Rpc.Server.Dispatch.SvcFileInterop
 				{
 					isNameEnd = true;
 				}
-				else if ( XmlConvert.IsXmlChar( ( char )read ) )
+				else if ( XmlValidation.IsXmlChar( ( char )read ) )
 				{
 					if ( isNameEnd )
 					{

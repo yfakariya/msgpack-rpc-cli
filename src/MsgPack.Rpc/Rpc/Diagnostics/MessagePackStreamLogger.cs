@@ -21,6 +21,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Net;
 using System.Security;
 using System.Threading;
@@ -95,7 +96,7 @@ namespace MsgPack.Rpc.Diagnostics
 		{
 			using ( var process = Process.GetCurrentProcess() )
 			{
-				return process.MainModule.ModuleName;
+				return Path.GetFileNameWithoutExtension( process.MainModule.ModuleName );
 			}
 		}
 #endif

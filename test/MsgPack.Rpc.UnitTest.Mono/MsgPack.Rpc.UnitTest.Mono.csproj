@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>8.0.30703</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{2BE666D4-7851-46B8-8ED0-2E491FA4C092}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>MsgPack</RootNamespace>
+    <AssemblyName>MsgPack.Rpc.UnitTest</AssemblyName>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE;MONO</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <NoWarn>0219</NoWarn>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE;MONO</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <NoWarn>0219</NoWarn>
+  </PropertyGroup>
+  <PropertyGroup>
+    <SignAssembly>true</SignAssembly>
+  </PropertyGroup>
+  <PropertyGroup>
+    <AssemblyOriginatorKeyFile>..\..\src\MsgPack.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="MsgPack">
+      <HintPath>..\..\lib\net40\MsgPack.dll</HintPath>
+    </Reference>
+    <Reference Include="nunit.framework">
+      <HintPath>..\..\packages\NUnit.2.6.0.12054\lib\nunit.framework.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\MsgPack.Rpc.UnitTest\Rpc\ArraySegmentExtensionTests.cs">
+      <Link>Rpc\ArraySegmentExtensionTests.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.UnitTest\Rpc\ByteArraySegmentStreamTest.cs">
+      <Link>Rpc\ByteArraySegmentStreamTest.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.UnitTest\Rpc\Diagnostics\FileMessagePackStreamLoggerTest.cs">
+      <Link>Rpc\Diagnostics\FileMessagePackStreamLoggerTest.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.UnitTest\Rpc\Diagnostics\FileMessagePackStreamLoggerTester.cs">
+      <Link>Rpc\Diagnostics\FileMessagePackStreamLoggerTester.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.UnitTest\Rpc\DisposableExtensions.cs">
+      <Link>Rpc\DisposableExtensions.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.UnitTest\Rpc\ExceptionExtensionsTest.cs">
+      <Link>Rpc\ExceptionExtensionsTest.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.UnitTest\Rpc\FreezableObjectTest.cs">
+      <Link>Rpc\FreezableObjectTest.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.UnitTest\Rpc\ObjectPoolCorruptedExceptionTest.cs">
+      <Link>Rpc\ObjectPoolCorruptedExceptionTest.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.UnitTest\Rpc\ObjectPoolEmptyExceptionTest.cs">
+      <Link>Rpc\ObjectPoolEmptyExceptionTest.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.UnitTest\Rpc\OnTheFlyObjectPoolTest.cs">
+      <Link>Rpc\OnTheFlyObjectPoolTest.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.UnitTest\Rpc\PooledObject.cs">
+      <Link>Rpc\PooledObject.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.UnitTest\Rpc\Protocols\MessageContextTest.cs">
+      <Link>Rpc\Protocols\MessageContextTest.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.UnitTest\Rpc\Protocols\RpcMessageTooLongExceptionTest.cs">
+      <Link>Rpc\Protocols\RpcMessageTooLongExceptionTest.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.UnitTest\Rpc\Protocols\RpcMethodInvocationExceptionTest.cs">
+      <Link>Rpc\Protocols\RpcMethodInvocationExceptionTest.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.UnitTest\Rpc\Protocols\RpcProtocolExceptionTest.cs">
+      <Link>Rpc\Protocols\RpcProtocolExceptionTest.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.UnitTest\Rpc\Protocols\RpcTransportExceptionTest.cs">
+      <Link>Rpc\Protocols\RpcTransportExceptionTest.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.UnitTest\Rpc\Protocols\SocketErrorCodeExtensionTest.cs">
+      <Link>Rpc\Protocols\SocketErrorCodeExtensionTest.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.UnitTest\Rpc\Protocols\_SetUpFixture.cs">
+      <Link>Rpc\Protocols\_SetUpFixture.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.UnitTest\Rpc\RpcApplicationContextTest.cs">
+      <Link>Rpc\RpcApplicationContextTest.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.UnitTest\Rpc\RpcArgumentExceptionTest.cs">
+      <Link>Rpc\RpcArgumentExceptionTest.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.UnitTest\Rpc\RpcErrorMessageTest.cs">
+      <Link>Rpc\RpcErrorMessageTest.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.UnitTest\Rpc\RpcErrorTest.cs">
+      <Link>Rpc\RpcErrorTest.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.UnitTest\Rpc\RpcExceptionTest.cs">
+      <Link>Rpc\RpcExceptionTest.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.UnitTest\Rpc\RpcExceptionTestBase`1.cs">
+      <Link>Rpc\RpcExceptionTestBase`1.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.UnitTest\Rpc\RpcFaultExceptionTest.cs">
+      <Link>Rpc\RpcFaultExceptionTest.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.UnitTest\Rpc\RpcMissingMethodExceptionTest.cs">
+      <Link>Rpc\RpcMissingMethodExceptionTest.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.UnitTest\Rpc\RpcServerUnavailableExceptionTest.cs">
+      <Link>Rpc\RpcServerUnavailableExceptionTest.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.UnitTest\Rpc\RpcTimeoutExceptionTest.cs">
+      <Link>Rpc\RpcTimeoutExceptionTest.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.UnitTest\Rpc\StandardObjectPoolTest.cs">
+      <Link>Rpc\StandardObjectPoolTest.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.UnitTest\Rpc\TimeoutWatcherTest.cs">
+      <Link>Rpc\TimeoutWatcherTest.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.UnitTest\Rpc\UnexpcetedRpcExceptionTest.cs">
+      <Link>Rpc\UnexpcetedRpcExceptionTest.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.UnitTest\Rpc\_SetUpFixture.cs">
+      <Link>Rpc\_SetUpFixture.cs</Link>
+    </Compile>
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\src\MsgPack.snk">
+      <Link>MsgPack.snk</Link>
+    </None>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\MsgPack.Rpc.Mono\MsgPack.Rpc.Mono.csproj">
+      <Project>{F9F4124A-B629-4285-A164-3137BF281892}</Project>
+      <Name>MsgPack.Rpc.Mono</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\MsgPack.Rpc.TestUtilities.Mono\MsgPack.Rpc.TestUtilities.Mono.csproj">
+      <Project>{59F7A3B9-3580-4087-AFAC-627384B0BB7E}</Project>
+      <Name>MsgPack.Rpc.TestUtilities.Mono</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

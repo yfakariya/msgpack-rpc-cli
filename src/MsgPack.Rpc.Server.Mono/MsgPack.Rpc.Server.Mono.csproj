@@ -1,0 +1,289 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>8.0.30703</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{D8DAC23E-5CAD-4CB9-B40C-B55D72DFAA07}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>MsgPack</RootNamespace>
+    <AssemblyName>MsgPack.Rpc.Server</AssemblyName>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE;MONO</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>..\..\bin\net40\</OutputPath>
+    <DefineConstants>TRACE;MONO</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <DocumentationFile>..\..\bin\net40\MsgPack.Rpc.Server.XML</DocumentationFile>
+  </PropertyGroup>
+  <PropertyGroup>
+    <SignAssembly>true</SignAssembly>
+  </PropertyGroup>
+  <PropertyGroup>
+    <AssemblyOriginatorKeyFile>..\MsgPack.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="MsgPack">
+      <HintPath>..\..\lib\net40\MsgPack.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\CommonAssemblyInfo.cs">
+      <Link>Properties\CommonAssemblyInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\CommonAssemblyInfo.Rpc.cs">
+      <Link>Properties\CommonAssemblyInfo.Rpc.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server\GlobalSuppressions.cs">
+      <Link>GlobalSuppressions.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server\Rpc\Server\Dispatch\AsyncInvocationResult.cs">
+      <Link>Rpc\Server\Dispatch\AsyncInvocationResult.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server\Rpc\Server\Dispatch\AsyncServiceInvoker.cs">
+      <Link>Rpc\Server\Dispatch\AsyncServiceInvoker.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server\Rpc\Server\Dispatch\AsyncServiceInvoker`1.cs">
+      <Link>Rpc\Server\Dispatch\AsyncServiceInvoker`1.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server\Rpc\Server\Dispatch\DefaultServiceTypeLocator.cs">
+      <Link>Rpc\Server\Dispatch\DefaultServiceTypeLocator.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server\Rpc\Server\Dispatch\Dispatcher.cs">
+      <Link>Rpc\Server\Dispatch\Dispatcher.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server\Rpc\Server\Dispatch\DispatchTrace.cs">
+      <Link>Rpc\Server\Dispatch\DispatchTrace.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server\Rpc\Server\Dispatch\FileBasedServiceTypeLocator.cs">
+      <Link>Rpc\Server\Dispatch\FileBasedServiceTypeLocator.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server\Rpc\Server\Dispatch\FlatOperationCatalog.cs">
+      <Link>Rpc\Server\Dispatch\FlatOperationCatalog.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server\Rpc\Server\Dispatch\IAsyncServiceInvoker.cs">
+      <Link>Rpc\Server\Dispatch\IAsyncServiceInvoker.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server\Rpc\Server\Dispatch\IdentifierUtility.cs">
+      <Link>Rpc\Server\Dispatch\IdentifierUtility.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server\Rpc\Server\Dispatch\InvocationHelper.cs">
+      <Link>Rpc\Server\Dispatch\InvocationHelper.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server\Rpc\Server\Dispatch\LocatorBasedDispatcher.cs">
+      <Link>Rpc\Server\Dispatch\LocatorBasedDispatcher.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server\Rpc\Server\Dispatch\OperationCatalog.cs">
+      <Link>Rpc\Server\Dispatch\OperationCatalog.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server\Rpc\Server\Dispatch\OperationDescription.cs">
+      <Link>Rpc\Server\Dispatch\OperationDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server\Rpc\Server\Dispatch\Reflection\FromExpression.cs">
+      <Link>Rpc\Server\Dispatch\Reflection\FromExpression.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server\Rpc\Server\Dispatch\Reflection\FromExpression.ToConstructor.cs">
+      <Link>Rpc\Server\Dispatch\Reflection\FromExpression.ToConstructor.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server\Rpc\Server\Dispatch\Reflection\FromExpression.ToMethod.cs">
+      <Link>Rpc\Server\Dispatch\Reflection\FromExpression.ToMethod.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server\Rpc\Server\Dispatch\Reflection\GenericTypeExtensions.cs">
+      <Link>Rpc\Server\Dispatch\Reflection\GenericTypeExtensions.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server\Rpc\Server\Dispatch\Reflection\ReflectionExtensions.cs">
+      <Link>Rpc\Server\Dispatch\Reflection\ReflectionExtensions.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server\Rpc\Server\Dispatch\Reflection\Tracer.cs">
+      <Link>Rpc\Server\Dispatch\Reflection\Tracer.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server\Rpc\Server\Dispatch\Reflection\TracingILGenerator.conveniences.cs">
+      <Link>Rpc\Server\Dispatch\Reflection\TracingILGenerator.conveniences.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server\Rpc\Server\Dispatch\Reflection\TracingILGenerator.cs">
+      <Link>Rpc\Server\Dispatch\Reflection\TracingILGenerator.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server\Rpc\Server\Dispatch\Reflection\TracingILGenerator.emits.cs">
+      <Link>Rpc\Server\Dispatch\Reflection\TracingILGenerator.emits.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server\Rpc\Server\Dispatch\ServiceDescription.cs">
+      <Link>Rpc\Server\Dispatch\ServiceDescription.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server\Rpc\Server\Dispatch\ServiceInvokerEmitter.cs">
+      <Link>Rpc\Server\Dispatch\ServiceInvokerEmitter.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server\Rpc\Server\Dispatch\ServiceInvokerGenerator.cs">
+      <Link>Rpc\Server\Dispatch\ServiceInvokerGenerator.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server\Rpc\Server\Dispatch\ServiceTypeLocator.cs">
+      <Link>Rpc\Server\Dispatch\ServiceTypeLocator.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server\Rpc\Server\Dispatch\SvcFileInterop\AttributeNameParsingState.cs">
+      <Link>Rpc\Server\Dispatch\SvcFileInterop\AttributeNameParsingState.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server\Rpc\Server\Dispatch\SvcFileInterop\AttributeValueParsingState.cs">
+      <Link>Rpc\Server\Dispatch\SvcFileInterop\AttributeValueParsingState.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server\Rpc\Server\Dispatch\SvcFileInterop\FinishedState.cs">
+      <Link>Rpc\Server\Dispatch\SvcFileInterop\FinishedState.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server\Rpc\Server\Dispatch\SvcFileInterop\InitialState.cs">
+      <Link>Rpc\Server\Dispatch\SvcFileInterop\InitialState.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server\Rpc\Server\Dispatch\SvcFileInterop\RuntimeDirectiveIndicatorFoundState.cs">
+      <Link>Rpc\Server\Dispatch\SvcFileInterop\RuntimeDirectiveIndicatorFoundState.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server\Rpc\Server\Dispatch\SvcFileInterop\ServerDirectiveIndicatorFoundState.cs">
+      <Link>Rpc\Server\Dispatch\SvcFileInterop\ServerDirectiveIndicatorFoundState.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server\Rpc\Server\Dispatch\SvcFileInterop\ServiceHostDirective.cs">
+      <Link>Rpc\Server\Dispatch\SvcFileInterop\ServiceHostDirective.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server\Rpc\Server\Dispatch\SvcFileInterop\ServiceHostDirectiveParsingState.cs">
+      <Link>Rpc\Server\Dispatch\SvcFileInterop\ServiceHostDirectiveParsingState.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server\Rpc\Server\Dispatch\SvcFileInterop\StartTagFoundState.cs">
+      <Link>Rpc\Server\Dispatch\SvcFileInterop\StartTagFoundState.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server\Rpc\Server\Dispatch\SvcFileInterop\SvcDirectiveParserState.cs">
+      <Link>Rpc\Server\Dispatch\SvcFileInterop\SvcDirectiveParserState.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server\Rpc\Server\Dispatch\SvcFileInterop\SvcFileParser.cs">
+      <Link>Rpc\Server\Dispatch\SvcFileInterop\SvcFileParser.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server\Rpc\Server\Dispatch\TupleItems.cs">
+      <Link>Rpc\Server\Dispatch\TupleItems.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server\Rpc\Server\Dispatch\VersionedOperationCatalog.cs">
+      <Link>Rpc\Server\Dispatch\VersionedOperationCatalog.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server\Rpc\Server\Protocols\ClientShutdownEventArgs.cs">
+      <Link>Rpc\Server\Protocols\ClientShutdownEventArgs.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server\Rpc\Server\Protocols\Filters\ServerQuotaMessageFilter.cs">
+      <Link>Rpc\Server\Protocols\Filters\ServerQuotaMessageFilter.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server\Rpc\Server\Protocols\Filters\ServerQuotaMessageFilterProvider.cs">
+      <Link>Rpc\Server\Protocols\Filters\ServerQuotaMessageFilterProvider.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server\Rpc\Server\Protocols\Filters\ServerStreamLoggingMessageFilter.cs">
+      <Link>Rpc\Server\Protocols\Filters\ServerStreamLoggingMessageFilter.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server\Rpc\Server\Protocols\Filters\ServerStreamLoggingMessageFilterProvider.cs">
+      <Link>Rpc\Server\Protocols\Filters\ServerStreamLoggingMessageFilterProvider.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server\Rpc\Server\Protocols\ListeningContext.cs">
+      <Link>Rpc\Server\Protocols\ListeningContext.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server\Rpc\Server\Protocols\ProtocolTrace.cs">
+      <Link>Rpc\Server\Protocols\ProtocolTrace.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server\Rpc\Server\Protocols\ProtocolTrace.FromRpcError.cs">
+      <Link>Rpc\Server\Protocols\ProtocolTrace.FromRpcError.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server\Rpc\Server\Protocols\ServerProcessingState.cs">
+      <Link>Rpc\Server\Protocols\ServerProcessingState.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server\Rpc\Server\Protocols\ServerRequestContext.cs">
+      <Link>Rpc\Server\Protocols\ServerRequestContext.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server\Rpc\Server\Protocols\ServerResponseContext.cs">
+      <Link>Rpc\Server\Protocols\ServerResponseContext.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server\Rpc\Server\Protocols\ServerSocketError.cs">
+      <Link>Rpc\Server\Protocols\ServerSocketError.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server\Rpc\Server\Protocols\ServerTransport.Contracts.cs">
+      <Link>Rpc\Server\Protocols\ServerTransport.Contracts.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server\Rpc\Server\Protocols\ServerTransport.cs">
+      <Link>Rpc\Server\Protocols\ServerTransport.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server\Rpc\Server\Protocols\ServerTransport.Deserialization.cs">
+      <Link>Rpc\Server\Protocols\ServerTransport.Deserialization.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server\Rpc\Server\Protocols\ServerTransportManager.cs">
+      <Link>Rpc\Server\Protocols\ServerTransportManager.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server\Rpc\Server\Protocols\ServerTransportManager`1.cs">
+      <Link>Rpc\Server\Protocols\ServerTransportManager`1.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server\Rpc\Server\Protocols\TcpServerTransport.cs">
+      <Link>Rpc\Server\Protocols\TcpServerTransport.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server\Rpc\Server\Protocols\TcpServerTransportManager.cs">
+      <Link>Rpc\Server\Protocols\TcpServerTransportManager.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server\Rpc\Server\Protocols\UdpServerTransport.cs">
+      <Link>Rpc\Server\Protocols\UdpServerTransport.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server\Rpc\Server\Protocols\UdpServerTransportManager.cs">
+      <Link>Rpc\Server\Protocols\UdpServerTransportManager.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server\Rpc\Server\RpcClientErrorEventArgs.cs">
+      <Link>Rpc\Server\RpcClientErrorEventArgs.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server\Rpc\Server\RpcServer.cs">
+      <Link>Rpc\Server\RpcServer.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server\Rpc\Server\RpcServerConfiguration.cs">
+      <Link>Rpc\Server\RpcServerConfiguration.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server\Rpc\Server\RpcServerConfiguration.Properties.cs">
+      <Link>Rpc\Server\RpcServerConfiguration.Properties.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server\Rpc\Server\RpcServerErrorEventArgs.cs">
+      <Link>Rpc\Server\RpcServerErrorEventArgs.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server\Rpc\Server\RpcServerRuntime.cs">
+      <Link>Rpc\Server\RpcServerRuntime.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server\Rpc\Server\ServerTrace.cs">
+      <Link>Rpc\Server\ServerTrace.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Server\Validation.cs">
+      <Link>Validation.cs</Link>
+    </Compile>
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="..\MsgPack.Rpc.Server\Rpc\Server\Dispatch\SvcFileInterop\XmlValidation.cs" >
+      <Link>XmlValidation.cs</Link>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\MsgPack.snk">
+      <Link>MsgPack.snk</Link>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\MsgPack.Rpc.Mono\MsgPack.Rpc.Mono.csproj">
+      <Project>{F9F4124A-B629-4285-A164-3137BF281892}</Project>
+      <Name>MsgPack.Rpc.Mono</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

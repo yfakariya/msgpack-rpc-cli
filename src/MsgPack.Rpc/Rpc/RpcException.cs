@@ -178,12 +178,12 @@ namespace MsgPack.Rpc
 		{
 			this._rpcError = rpcError ?? RpcError.RemoteRuntimeError;
 			this._debugInformation = debugInformation;
-#if !SILVERLIGHT
+#if !SILVERLIGHT && !MONO
 			this.RegisterSerializeObjectStateEventHandler();
 #endif
 		}
 
-#if !SILVERLIGHT
+#if !SILVERLIGHT && !MONO
 		internal static T Get<T>( SerializationEntry entry, string name, Func<SerializationEntry, T> getter )
 		{
 			Contract.Assert( name != null );

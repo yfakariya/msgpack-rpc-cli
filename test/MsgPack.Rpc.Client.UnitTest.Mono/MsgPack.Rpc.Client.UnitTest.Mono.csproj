@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>8.0.30703</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{F2686A16-BDB4-4514-ABE4-0C7D2E270DE5}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>MsgPack</RootNamespace>
+    <AssemblyName>MsgPack.Rpc.Client.UnitTest</AssemblyName>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <NoWarn>0219</NoWarn>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup>
+    <SignAssembly>true</SignAssembly>
+  </PropertyGroup>
+  <PropertyGroup>
+    <AssemblyOriginatorKeyFile>..\..\src\MsgPack.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="MsgPack">
+      <HintPath>..\..\lib\net40\MsgPack.dll</HintPath>
+    </Reference>
+    <Reference Include="nunit.framework">
+      <HintPath>..\..\packages\NUnit.2.6.0.12054\lib\nunit.framework.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="Microsoft.CSharp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\MsgPack.Rpc.Client.UnitTest\Rpc\Client\AsyncResultTest.cs">
+      <Link>Rpc\Client\AsyncResultTest.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client.UnitTest\Rpc\Client\DynamicRpcProxyTest.cs">
+      <Link>Rpc\Client\DynamicRpcProxyTest.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client.UnitTest\Rpc\Client\ErrorInterpreterTest.cs">
+      <Link>Rpc\Client\ErrorInterpreterTest.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client.UnitTest\Rpc\Client\FileSystemTest.cs">
+      <Link>Rpc\Client\FileSystemTest.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client.UnitTest\Rpc\Client\IntegrationTest.cs">
+      <Link>Rpc\Client\IntegrationTest.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client.UnitTest\Rpc\Client\MessageAsyncResultTest.cs">
+      <Link>Rpc\Client\MessageAsyncResultTest.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client.UnitTest\Rpc\Client\NotificationMessageAsyncResultTest.cs">
+      <Link>Rpc\Client\NotificationMessageAsyncResultTest.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client.UnitTest\Rpc\Client\Protocols\ClientRequestContextTest.cs">
+      <Link>Rpc\Client\Protocols\ClientRequestContextTest.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client.UnitTest\Rpc\Client\Protocols\ClientResponseContextTest.cs">
+      <Link>Rpc\Client\Protocols\ClientResponseContextTest.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client.UnitTest\Rpc\Client\Protocols\ClientSocketErrorTest.cs">
+      <Link>Rpc\Client\Protocols\ClientSocketErrorTest.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client.UnitTest\Rpc\Client\Protocols\ClientTransportManagerTest.cs">
+      <Link>Rpc\Client\Protocols\ClientTransportManagerTest.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client.UnitTest\Rpc\Client\Protocols\ClientTransportManager`1Test.cs">
+      <Link>Rpc\Client\Protocols\ClientTransportManager`1Test.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client.UnitTest\Rpc\Client\Protocols\ClientTransportTest.cs">
+      <Link>Rpc\Client\Protocols\ClientTransportTest.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client.UnitTest\Rpc\Client\Protocols\Filters\ClientQuotaMessageFilterTest.cs">
+      <Link>Rpc\Client\Protocols\Filters\ClientQuotaMessageFilterTest.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client.UnitTest\Rpc\Client\Protocols\Filters\ClientStreamLoggingMessageFilterTest.cs">
+      <Link>Rpc\Client\Protocols\Filters\ClientStreamLoggingMessageFilterTest.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client.UnitTest\Rpc\Client\Protocols\Filters\_SetUpFixture.cs">
+      <Link>Rpc\Client\Protocols\Filters\_SetUpFixture.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client.UnitTest\Rpc\Client\Protocols\NullClientTransport.cs">
+      <Link>Rpc\Client\Protocols\NullClientTransport.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client.UnitTest\Rpc\Client\Protocols\NullClientTransportManager.cs">
+      <Link>Rpc\Client\Protocols\NullClientTransportManager.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client.UnitTest\Rpc\Client\Protocols\TcpClientTransportManagerTest.cs">
+      <Link>Rpc\Client\Protocols\TcpClientTransportManagerTest.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client.UnitTest\Rpc\Client\Protocols\TcpClientTransportTest.cs">
+      <Link>Rpc\Client\Protocols\TcpClientTransportTest.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client.UnitTest\Rpc\Client\Protocols\UdpClientTransportManagerTest.cs">
+      <Link>Rpc\Client\Protocols\UdpClientTransportManagerTest.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client.UnitTest\Rpc\Client\Protocols\UdpClientTransportTest.cs">
+      <Link>Rpc\Client\Protocols\UdpClientTransportTest.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client.UnitTest\Rpc\Client\Protocols\_SetUpFixture.cs">
+      <Link>Rpc\Client\Protocols\_SetUpFixture.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client.UnitTest\Rpc\Client\RequestMessageAsyncResultTest.cs">
+      <Link>Rpc\Client\RequestMessageAsyncResultTest.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client.UnitTest\Rpc\Client\RpcClientTest.cs">
+      <Link>Rpc\Client\RpcClientTest.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client.UnitTest\Rpc\Client\_SetUpFixture.cs">
+      <Link>Rpc\Client\_SetUpFixture.cs</Link>
+    </Compile>
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\MsgPack.Rpc.Client.Mono\MsgPack.Rpc.Client.Mono.csproj">
+      <Project>{1401A337-17BC-41A6-ACE8-F8FE2AB94960}</Project>
+      <Name>MsgPack.Rpc.Client.Mono</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\src\MsgPack.Rpc.Mono\MsgPack.Rpc.Mono.csproj">
+      <Project>{F9F4124A-B629-4285-A164-3137BF281892}</Project>
+      <Name>MsgPack.Rpc.Mono</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\src\MsgPack.Rpc.Server.Mono\MsgPack.Rpc.Server.Mono.csproj">
+      <Project>{D8DAC23E-5CAD-4CB9-B40C-B55D72DFAA07}</Project>
+      <Name>MsgPack.Rpc.Server.Mono</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\MsgPack.Rpc.TestUtilities.Mono\MsgPack.Rpc.TestUtilities.Mono.csproj">
+      <Project>{59F7A3B9-3580-4087-AFAC-627384B0BB7E}</Project>
+      <Name>MsgPack.Rpc.TestUtilities.Mono</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\src\MsgPack.snk">
+      <Link>MsgPack.snk</Link>
+    </None>
+    <None Include="..\MsgPack.Rpc.Client.UnitTest\App.config">
+      <Link>App.config</Link>
+    </None>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup />
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

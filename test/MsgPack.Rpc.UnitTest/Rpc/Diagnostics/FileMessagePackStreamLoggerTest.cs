@@ -171,7 +171,7 @@ namespace MsgPack.Rpc.Diagnostics
 			// {BaseDirectory}\{ProcessName}[-{AppDomainName}]\{ProcessStartTime}-{ProcessId}\{TimeStamp}-{EndPoint}-{ThreadId}.mpac
 			using ( var process = Process.GetCurrentProcess() )
 			{
-				Assert.That( directory, Is.StringContaining( process.MainModule.ModuleName ) );
+				Assert.That( directory, Is.StringContaining( Path.GetFileNameWithoutExtension( process.MainModule.ModuleName ) ) );
 
 				if ( !AppDomain.CurrentDomain.IsDefaultAppDomain() )
 				{
@@ -191,7 +191,7 @@ namespace MsgPack.Rpc.Diagnostics
 					Assert.That( file.Name, Is.StringContaining( endPoint.Replace( '.', '_' ).Replace( ':', '_' ).Replace( '/', '_' ) ) );
 				}
 
-				Assert.That( file.Name, Is.StringContaining( Thread.CurrentThread.ManagedThreadId.ToString( CultureInfo.InvariantCulture ) ) );
+				Assert.That( file.Name, Is.StringContaining( new TraceEventCache().ThreadId ) );
 				Assert.That( file.Extension, Is.EqualTo( ".mpac" ) );
 
 				return file.FullName;

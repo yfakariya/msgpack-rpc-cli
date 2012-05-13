@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>8.0.30703</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{1401A337-17BC-41A6-ACE8-F8FE2AB94960}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>MsgPack</RootNamespace>
+    <AssemblyName>MsgPack.Rpc.Client</AssemblyName>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE;MONO</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>..\..\bin\net40\</OutputPath>
+    <DefineConstants>TRACE;MONO</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <DocumentationFile>..\..\bin\net40\MsgPack.Rpc.Client.XML</DocumentationFile>
+  </PropertyGroup>
+  <PropertyGroup>
+    <SignAssembly>true</SignAssembly>
+  </PropertyGroup>
+  <PropertyGroup>
+    <AssemblyOriginatorKeyFile>..\MsgPack.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="MsgPack">
+      <HintPath>..\..\lib\net40\MsgPack.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="Microsoft.CSharp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\CommonAssemblyInfo.cs">
+      <Link>Properties\CommonAssemblyInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\CommonAssemblyInfo.Rpc.cs">
+      <Link>Properties\CommonAssemblyInfo.Rpc.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client\GlobalSuppressions.cs">
+      <Link>GlobalSuppressions.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client\Rpc\Client\AsyncResult.cs">
+      <Link>Rpc\Client\AsyncResult.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client\Rpc\Client\DynamicRpcProxy.cs">
+      <Link>Rpc\Client\DynamicRpcProxy.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client\Rpc\Client\ErrorInterpreter.cs">
+      <Link>Rpc\Client\ErrorInterpreter.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client\Rpc\Client\FileSystem.cs">
+      <Link>Rpc\Client\FileSystem.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client\Rpc\Client\MessageAsyncResult.cs">
+      <Link>Rpc\Client\MessageAsyncResult.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client\Rpc\Client\NotificationMessageAsyncResult.cs">
+      <Link>Rpc\Client\NotificationMessageAsyncResult.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client\Rpc\Client\Protocols\ClientRequestContext.cs">
+      <Link>Rpc\Client\Protocols\ClientRequestContext.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client\Rpc\Client\Protocols\ClientResponseContext.cs">
+      <Link>Rpc\Client\Protocols\ClientResponseContext.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client\Rpc\Client\Protocols\ClientSocketError.cs">
+      <Link>Rpc\Client\Protocols\ClientSocketError.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client\Rpc\Client\Protocols\ClientTransport.cs">
+      <Link>Rpc\Client\Protocols\ClientTransport.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client\Rpc\Client\Protocols\ClientTransport.Deserialization.cs">
+      <Link>Rpc\Client\Protocols\ClientTransport.Deserialization.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client\Rpc\Client\Protocols\ClientTransportManager.cs">
+      <Link>Rpc\Client\Protocols\ClientTransportManager.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client\Rpc\Client\Protocols\ClientTransportManager`1.cs">
+      <Link>Rpc\Client\Protocols\ClientTransportManager`1.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client\Rpc\Client\Protocols\Filters\ClientQuotaMessageFilter.cs">
+      <Link>Rpc\Client\Protocols\Filters\ClientQuotaMessageFilter.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client\Rpc\Client\Protocols\Filters\ClientQuotaMessageFilterProvider.cs">
+      <Link>Rpc\Client\Protocols\Filters\ClientQuotaMessageFilterProvider.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client\Rpc\Client\Protocols\Filters\ClientStreamLoggingMessageFilter.cs">
+      <Link>Rpc\Client\Protocols\Filters\ClientStreamLoggingMessageFilter.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client\Rpc\Client\Protocols\Filters\ClientStreamLoggingMessageFilterProvider.cs">
+      <Link>Rpc\Client\Protocols\Filters\ClientStreamLoggingMessageFilterProvider.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client\Rpc\Client\Protocols\ProtocolTrace.cs">
+      <Link>Rpc\Client\Protocols\ProtocolTrace.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client\Rpc\Client\Protocols\ProtocolTrace.FromRpcError.cs">
+      <Link>Rpc\Client\Protocols\ProtocolTrace.FromRpcError.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client\Rpc\Client\Protocols\TcpClientTransport.cs">
+      <Link>Rpc\Client\Protocols\TcpClientTransport.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client\Rpc\Client\Protocols\TcpClientTransportManager.cs">
+      <Link>Rpc\Client\Protocols\TcpClientTransportManager.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client\Rpc\Client\Protocols\UdpClientTransport.cs">
+      <Link>Rpc\Client\Protocols\UdpClientTransport.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client\Rpc\Client\Protocols\UdpClientTransportManager.cs">
+      <Link>Rpc\Client\Protocols\UdpClientTransportManager.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client\Rpc\Client\Protocols\UnknownResponseReceivedEventArgs.cs">
+      <Link>Rpc\Client\Protocols\UnknownResponseReceivedEventArgs.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client\Rpc\Client\RequestMessageAsyncResult.cs">
+      <Link>Rpc\Client\RequestMessageAsyncResult.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client\Rpc\Client\RpcClient.cs">
+      <Link>Rpc\Client\RpcClient.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client\Rpc\Client\RpcClientConfiguration.cs">
+      <Link>Rpc\Client\RpcClientConfiguration.cs</Link>
+    </Compile>
+    <Compile Include="..\MsgPack.Rpc.Client\Rpc\Client\RpcClientConfiguration.Properties.cs">
+      <Link>Rpc\Client\RpcClientConfiguration.Properties.cs</Link>
+    </Compile>
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\MsgPack.snk">
+      <Link>MsgPack.snk</Link>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\MsgPack.Rpc.Mono\MsgPack.Rpc.Mono.csproj">
+      <Project>{F9F4124A-B629-4285-A164-3137BF281892}</Project>
+      <Name>MsgPack.Rpc.Mono</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

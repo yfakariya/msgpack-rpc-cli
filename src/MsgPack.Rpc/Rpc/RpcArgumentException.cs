@@ -197,7 +197,7 @@ namespace MsgPack.Rpc
 			store.Add( ParameterNameKeyUtf8, MessagePackConvert.EncodeString( this._parameterName ) );
 		}
 
-#if !SILVERLIGHT
+#if !SILVERLIGHT && !MONO
 		/// <summary>
 		///		When overridden on the derived class, handles <see cref="E:Exception.SerializeObjectState"/> event to add type-specified serialization state.
 		/// </summary>

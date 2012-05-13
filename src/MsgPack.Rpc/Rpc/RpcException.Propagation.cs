@@ -32,7 +32,9 @@ namespace MsgPack.Rpc
 {
 	partial class RpcException
 	{
+#if !SILVERLIGHT && !MONO
 		private static readonly MethodInfo _safeGetHRFromExceptionMethod = typeof( RpcException ).GetMethod( "SafeGetHRFromException", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static );
+#endif
 
 		/// <summary>
 		///		Initialize new sintance with unpacked data.
@@ -72,7 +74,7 @@ namespace MsgPack.Rpc
 				}
 			}
 
-#if !SILVERLIGHT
+#if !SILVERLIGHT && !MONO
 			this.RegisterSerializeObjectStateEventHandler();
 #endif
 		}
@@ -295,7 +297,7 @@ namespace MsgPack.Rpc
 				// ExternalException.ErrorCode is SecuritySafeCritical and its assembly must be fully trusted.
 				return asExternalException.ErrorCode;
 			}
-#if !SILVERLIGHT
+#if !SILVERLIGHT && !MONO
 			else if ( _safeGetHRFromExceptionMethod.IsSecuritySafeCritical )
 			{
 				try

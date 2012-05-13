@@ -108,6 +108,7 @@
     <Compile Include="Rpc\Server\Dispatch\ServiceInvokerEmitter.cs" />
     <Compile Include="Rpc\Server\Dispatch\ServiceInvokerGenerator.cs" />
     <Compile Include="Rpc\Server\Dispatch\ServiceTypeLocator.cs" />
+    <Compile Include="Rpc\Server\Dispatch\SvcFileInterop\XmlValidation.cs" />
     <Compile Include="Rpc\Server\Dispatch\TupleItems.cs" />
     <Compile Include="Rpc\Server\Dispatch\VersionedOperationCatalog.cs" />
     <Compile Include="Rpc\Server\Protocols\ClientShutdownEventArgs.cs" />

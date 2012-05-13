@@ -277,6 +277,9 @@ namespace MsgPack.Rpc.Server.Dispatch
 		[ExpectedException( typeof( ArgumentException ) )]
 		public void TestBaseDirectory_ContainsInvalidChar()
 		{
+#if MONO
+			Assert.Ignore( "Mono can accept colon." );
+#endif
 			new FileBasedServiceTypeLocator().BaseDirectory = "*";
 		}
 
@@ -284,6 +287,9 @@ namespace MsgPack.Rpc.Server.Dispatch
 		[ExpectedException( typeof( ArgumentException ) )]
 		public void TestBaseDirectory_ContainsNamedStreamSpecifier()
 		{
+#if MONO
+			Assert.Ignore( "Mono can accept colon." );
+#endif
 			new FileBasedServiceTypeLocator().BaseDirectory = ".\\Test:Foo";
 		}
 
@@ -291,6 +297,9 @@ namespace MsgPack.Rpc.Server.Dispatch
 		[ExpectedException( typeof( ArgumentException ) )]
 		public void TestBaseDirectory_TooLong()
 		{
+#if MONO
+			Assert.Ignore( "Mono can accept long path in Win32." );
+#endif
 			new FileBasedServiceTypeLocator().BaseDirectory = ".\\" + new String( 'A', 255 ); ;
 		}
 

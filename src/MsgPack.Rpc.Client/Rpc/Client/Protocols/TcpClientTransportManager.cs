@@ -73,6 +73,9 @@ namespace MsgPack.Rpc.Client.Protocols
 				Socket.OSSupportsIPv6
 			);
 #endif
+#if MONO
+			var connectingSocket = new Socket( targetEndPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp );
+#endif
 			context.UserToken =
 				Tuple.Create(
 					source,
@@ -90,12 +93,24 @@ namespace MsgPack.Rpc.Client.Protocols
 								this.Configuration.ConnectTimeout
 							);
 #endif
+#if MONO
+							// Cancel ConnectAsync.
+							connectingSocket.Close();
+#else
 							Socket.CancelConnectAsync( context );
+#endif
 						}
 					)
+#if MONO
+					, connectingSocket
+#endif
 				);
 
+#if MONO
+			if( !connectingSocket.ConnectAsync( context ) )
+#else
 			if ( !Socket.ConnectAsync( SocketType.Stream, ProtocolType.Tcp, context ) )
+#endif
 			{
 				this.OnCompleted( null, context );
 			}
@@ -106,15 +121,23 @@ namespace MsgPack.Rpc.Client.Protocols
 		private void OnCompleted( object sender, SocketAsyncEventArgs e )
 		{
 			var socket = sender as Socket;
+#if MONO
+			var userToken = e.UserToken as Tuple<TaskCompletionSource<ClientTransport>, ConnectTimeoutWatcher, Socket>;
+#else
 			var userToken = e.UserToken as Tuple<TaskCompletionSource<ClientTransport>, ConnectTimeoutWatcher>;
+#endif
 			var taskCompletionSource = userToken.Item1;
 			var watcher = userToken.Item2;
 			if ( watcher != null )
 			{
 				this.EndConnectTimeoutWatch( watcher );
 			}
-
+			
+#if MONO
+			var error = this.HandleSocketError( userToken.Item3 ?? socket, e );
+#else
 			var error = this.HandleSocketError( e.ConnectSocket ?? socket, e );
+#endif
 			if ( error != null )
 			{
 				taskCompletionSource.SetException( error.Value.ToException() );
@@ -125,7 +148,11 @@ namespace MsgPack.Rpc.Client.Protocols
 			{
 				case SocketAsyncOperation.Connect:
 				{
-					this.OnConnected( e, taskCompletionSource );
+#if MONO
+					this.OnConnected( userToken.Item3, e, taskCompletionSource );
+#else
+					this.OnConnected( e.ConnectSocket, e, taskCompletionSource );
+#endif
 					break;
 				}
 				default:
@@ -146,11 +173,11 @@ namespace MsgPack.Rpc.Client.Protocols
 			}
 		}
 
-		private void OnConnected( SocketAsyncEventArgs context, TaskCompletionSource<ClientTransport> taskCompletionSource )
+		private void OnConnected( Socket connectSocket, SocketAsyncEventArgs context, TaskCompletionSource<ClientTransport> taskCompletionSource )
 		{
 			try
 			{
-				if ( context.ConnectSocket == null )
+				if ( connectSocket == null )
 				{
 					// canceled.
 					taskCompletionSource.SetException(
@@ -167,13 +194,13 @@ namespace MsgPack.Rpc.Client.Protocols
 				MsgPackRpcClientProtocolsTrace.TraceEvent(
 					MsgPackRpcClientProtocolsTrace.EndConnect,
 					"Connected. {{ \"Socket\" : 0x{0:X}, \"RemoteEndPoint\" : \"{1}\", \"LocalEndPoint\" : \"{2}\" }}",
-					ClientTransport.GetHandle( context.ConnectSocket ),
-					ClientTransport.GetRemoteEndPoint( context.ConnectSocket, context ),
-					ClientTransport.GetLocalEndPoint( context.ConnectSocket )
+					ClientTransport.GetHandle( connectSocket ),
+					ClientTransport.GetRemoteEndPoint( connectSocket, context ),
+					ClientTransport.GetLocalEndPoint( connectSocket )
 				);
 #endif
 
-				taskCompletionSource.SetResult( this.GetTransport( context.ConnectSocket ) );
+				taskCompletionSource.SetResult( this.GetTransport( connectSocket ) );
 			}
 			finally
 			{

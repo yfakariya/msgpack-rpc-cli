@@ -57,7 +57,11 @@ namespace MsgPack.Rpc.Server.Protocols
 			{
 				bindingEndPoint =
 					new IPEndPoint(
+#if MONO
+						this.Configuration.PreferIPv4 && Socket.SupportsIPv4
+#else
 						this.Configuration.PreferIPv4 && Socket.OSSupportsIPv4
+#endif
 						? IPAddress.Any
 						: IPAddress.IPv6Any,
 						57129 // arbitrary number
