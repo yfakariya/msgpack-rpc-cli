@@ -43,8 +43,6 @@ namespace MsgPack.Rpc.Server.Dispatch
 		private static readonly object[] _debuggableAttributeCtorArguments = new object[] { true, true };
 		private static readonly MethodInfo _func_1_Invoke =
 			FromExpression.ToMethod( ( Func<object> @this ) => @this.Invoke() );
-		private static readonly PropertyInfo _rpcErrorMessageSuccessProperty =
-			FromExpression.ToProperty( () => RpcErrorMessage.Success );
 		private static readonly MethodInfo _unpackerReadSubtreeMethod =
 			FromExpression.ToMethod( ( Unpacker unpacker ) => unpacker.ReadSubtree() );
 		private static readonly MethodInfo _unpackerReadMethod =

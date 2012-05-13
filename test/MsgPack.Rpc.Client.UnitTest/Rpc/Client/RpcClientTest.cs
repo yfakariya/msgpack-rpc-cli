@@ -542,7 +542,6 @@ namespace MsgPack.Rpc.Client
 
 		private sealed class TcpTestEnvironment : IDisposable
 		{
-			private readonly EndPoint _endPoint;
 			private readonly TcpListener _server;
 			private readonly TcpClientTransportManager _clientTransportManager;
 
@@ -553,7 +552,6 @@ namespace MsgPack.Rpc.Client
 
 			public TcpTestEnvironment()
 			{
-				this._endPoint = new IPEndPoint( IPAddress.Loopback, MsgPack.Rpc.Server.CallbackServer.PortNumber );
 				this._server = new TcpListener( IPAddress.Loopback, MsgPack.Rpc.Server.CallbackServer.PortNumber );
 				this._clientTransportManager = new TcpClientTransportManager( new RpcClientConfiguration() );
 				this._server.Start();

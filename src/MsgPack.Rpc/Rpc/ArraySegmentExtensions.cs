@@ -42,11 +42,6 @@ namespace MsgPack.Rpc
 
 		public static int CopyTo<T>( this ArraySegment<T> source, int sourceOffset, T[] array, int arrayOffset, int count )
 		{
-			if ( source == null )
-			{
-				throw new ArgumentNullException( "source" );
-			}
-
 			if ( array == null )
 			{
 				throw new ArgumentNullException( "array" );

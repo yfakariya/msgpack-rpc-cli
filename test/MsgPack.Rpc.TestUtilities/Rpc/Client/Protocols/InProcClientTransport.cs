@@ -50,8 +50,6 @@ namespace MsgPack.Rpc.Client.Protocols
 
 		private InProcServerTransport _destination;
 
-		private readonly InProcClientTransportManager _manager;
-
 		protected override bool CanResumeReceiving
 		{
 			get { return true; }
@@ -102,7 +100,6 @@ namespace MsgPack.Rpc.Client.Protocols
 		public InProcClientTransport( InProcClientTransportManager manager )
 			: base( manager )
 		{
-			this._manager = manager;
 			this._inboundQueue = new BlockingCollection<byte[]>();
 			this._pendingPackets = new ConcurrentQueue<InProcPacket>();
 			this._cancellationTokenSource = new CancellationTokenSource();

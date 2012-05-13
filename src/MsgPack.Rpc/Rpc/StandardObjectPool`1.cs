@@ -147,7 +147,6 @@ namespace MsgPack.Rpc
 			this._configuration = safeConfiguration;
 			this._factory = factory;
 			this._leasesLock = new ReaderWriterLockSlim( LockRecursionPolicy.NoRecursion );
-			int estimatedConcurrency = ( configuration.MaximumPooled ?? Environment.ProcessorCount * 2 ) / 2;
 			this._borrowTimeout = safeConfiguration.BorrowTimeout ?? TimeSpan.FromMilliseconds( Timeout.Infinite );
 			this._pool = 
 				new BlockingCollection<T>( 
