@@ -37,7 +37,7 @@ namespace MsgPack.Rpc
 #endif
 
 		/// <summary>
-		///		Initialize new sintance with unpacked data.
+		///		Initialize new instance with unpacked data.
 		/// </summary>
 		/// <param name="rpcError">
 		///		Metadata of error. If you specify null, <see cref="MsgPack.Rpc.RpcError.RemoteRuntimeError"/> is used.
