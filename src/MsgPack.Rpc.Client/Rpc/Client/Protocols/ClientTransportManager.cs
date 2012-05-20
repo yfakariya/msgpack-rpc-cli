@@ -285,7 +285,7 @@ namespace MsgPack.Rpc.Client.Protocols
 		/// </summary>
 		protected virtual void BeginShutdownCore()
 		{
-
+			// nop
 		}
 
 		/// <summary>
