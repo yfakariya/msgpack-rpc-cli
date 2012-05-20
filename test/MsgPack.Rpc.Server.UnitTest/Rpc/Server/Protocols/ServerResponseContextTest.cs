@@ -97,7 +97,7 @@ namespace MsgPack.Rpc.Server.Protocols
 				{
 					target.MessageId = 123;
 					target.Serialize( default( object ), new RpcErrorMessage( RpcError.CallError, "Detail" ), null );
-					target.Prepare();
+					target.Prepare( true );
 
 					Assert.That( target.SendingBuffer.Length, Is.EqualTo( 4 ) );
 					Assert.That( target.SendingBuffer[ 0 ].AsEnumerable().ToArray(), Is.EqualTo( new byte[] { 0x94, 0x1 } ) );
@@ -115,7 +115,7 @@ namespace MsgPack.Rpc.Server.Protocols
 				{
 					target.MessageId = 123;
 					target.Serialize( default( object ), new RpcErrorMessage( RpcError.CallError, "Detail" ), null );
-					target.Prepare();
+					target.Prepare( true );
 					target.SetCompletedSynchronously();
 
 					target.Clear();

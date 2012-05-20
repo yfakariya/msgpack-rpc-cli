@@ -32,7 +32,7 @@ namespace MsgPack.Rpc.Client.Protocols
 {
 
 	[TestFixture()]
-	//[Timeout( 3000 )]
+	[Timeout( TimeoutMilliseconds )]
 	public class UdpClientTransportTest
 	{
 		public const int TimeoutMilliseconds = 3000;
@@ -56,6 +56,7 @@ namespace MsgPack.Rpc.Client.Protocols
 						MaximumConnection = 1,
 						TransportManagerProvider = s => new MsgPack.Rpc.Server.Protocols.UdpServerTransportManager( s ),
 						DispatcherProvider = s => new MsgPack.Rpc.Server.Dispatch.CallbackDispatcher( s, ( id, args ) => args ),
+						UdpListenerThreadExitTimeout = TimeSpan.FromSeconds( 1 ),
 						IsDebugMode = true,
 					}
 				)

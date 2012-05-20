@@ -127,6 +127,10 @@ namespace MsgPack.Rpc.Server.Protocols
 		/// </remarks>
 		internal readonly ArraySegment<byte>[] SendingBuffer;
 
+#if MONO
+		private readonly MemoryStream _unifiedSendingBuffer;
+#endif
+
 		/// <summary>
 		///		Initializes a new instance of the <see cref="ServerResponseContext"/> class with default settings.
 		/// </summary>
@@ -149,6 +153,10 @@ namespace MsgPack.Rpc.Server.Protocols
 				new MemoryStream( ( configuration ?? RpcServerConfiguration.Default).InitialReturnValueBufferLength);
 			this.SendingBuffer = new ArraySegment<byte>[ 4 ];
 			this.SendingBuffer[ 0 ] = _responseHeader;
+#if MONO
+			this._unifiedSendingBuffer = new MemoryStream( ( configuration ?? RpcServerConfiguration.Default ).InitialReceiveBufferLength );
+			this._unifiedSendingBuffer.Write( this.SendingBuffer[ 0 ].Array, this.SendingBuffer[ 0 ].Offset, this.SendingBuffer[ 0 ].Count );
+#endif
 			this._returnDataPacker = Packer.Create( this._returnDataBuffer, false );
 			this._errorDataPacker = Packer.Create( this._errorDataBuffer, false );
 		}
@@ -168,12 +176,25 @@ namespace MsgPack.Rpc.Server.Protocols
 		/// <summary>
 		///		Prepares this instance to send response.
 		/// </summary>
-		internal void Prepare()
+		internal void Prepare( bool canUseChunkedBuffer )
 		{
 			Contract.Assert( this.SendingBuffer[ 0 ].Array != null );
 			this.SendingBuffer[ 1 ] = this.GetPackedMessageId();
 			this.SendingBuffer[ 2 ] = new ArraySegment<byte>( this._errorDataBuffer.GetBuffer(), 0, unchecked( ( int )this._errorDataBuffer.Length ) );
 			this.SendingBuffer[ 3 ] = new ArraySegment<byte>( this._returnDataBuffer.GetBuffer(), 0, unchecked( ( int )this._returnDataBuffer.Length ) );
+#if MONO
+			if ( !canUseChunkedBuffer )
+			{
+				this._unifiedSendingBuffer.Position = this.SendingBuffer[ 0 ].Count;
+				this._unifiedSendingBuffer.SetLength( this.SendingBuffer[ 0 ].Count );
+				this._unifiedSendingBuffer.Write( this.SendingBuffer[ 1 ].Array, this.SendingBuffer[ 1 ].Offset, this.SendingBuffer[ 1 ].Count );
+				this._unifiedSendingBuffer.Write( this.SendingBuffer[ 2 ].Array, this.SendingBuffer[ 2 ].Offset, this.SendingBuffer[ 2 ].Count );
+				this._unifiedSendingBuffer.Write( this.SendingBuffer[ 3 ].Array, this.SendingBuffer[ 3 ].Offset, this.SendingBuffer[ 3 ].Count );
+				this.SocketContext.SetBuffer( this._unifiedSendingBuffer.GetBuffer(), 0, unchecked( ( int )this._unifiedSendingBuffer.Length ) );
+				this.SocketContext.BufferList = null;
+				return;
+			}
+#endif
 			this.SocketContext.SetBuffer( null, 0, 0 );
 			this.SocketContext.BufferList = this.SendingBuffer;
 		}

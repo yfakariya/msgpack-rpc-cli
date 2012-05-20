@@ -144,6 +144,18 @@ namespace MsgPack.Rpc.Client.Protocols
 			get { return Interlocked.CompareExchange( ref this._shutdownSource, 0, 0 ) != 0; }
 		}
 
+		/// <summary>
+		///		Gets a value indicating whether the underlying transport used by this instance can accept chunked buffer.
+		/// </summary>
+		/// <value>
+		/// 	<c>true</c> if the underlying transport can use chunked buffer; otherwise, <c>false</c>.
+		/// 	This implementation returns <c>true</c>.
+		/// </value>
+		protected virtual bool CanUseChunkedBuffer
+		{
+			get { return true; }
+		}
+
 		private readonly IList<MessageFilter<ClientRequestContext>> _afterSerializationFilters;
 
 		internal IList<MessageFilter<ClientRequestContext>> AfterSerializationFilters
@@ -763,7 +775,7 @@ namespace MsgPack.Rpc.Client.Protocols
 				throw new RpcErrorMessage( RpcError.TransportError, "Server did shutdown socket.", null ).ToException();
 			}
 
-			context.Prepare();
+			context.Prepare( this.CanUseChunkedBuffer );
 
 			if ( context.MessageType == MessageType.Request )
 			{

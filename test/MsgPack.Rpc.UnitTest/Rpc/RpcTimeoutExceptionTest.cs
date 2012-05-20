@@ -31,7 +31,7 @@ namespace MsgPack.Rpc
 			get { return RpcError.TimeoutError; }
 		}
 
-		protected override RpcTimeoutException NewRpcException( RpcExceptionTestBase<RpcTimeoutException>.ConstructorKind kind, System.Collections.Generic.IDictionary<string, object> properties )
+		protected override RpcTimeoutException NewRpcException( ConstructorKind kind, System.Collections.Generic.IDictionary<string, object> properties )
 		{
 			switch ( kind )
 			{

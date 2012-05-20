@@ -88,7 +88,7 @@ namespace MsgPack.Rpc
 				return result;
 			}
 
-			protected override UnexpcetedRpcException NewRpcException( RpcExceptionTestBase<UnexpcetedRpcException>.ConstructorKind kind, System.Collections.Generic.IDictionary<string, object> properties )
+			protected override UnexpcetedRpcException NewRpcException( ConstructorKind kind, System.Collections.Generic.IDictionary<string, object> properties )
 			{
 				return new UnexpcetedRpcException( ( MessagePackObject )properties[ "Error" ], ( MessagePackObject )properties[ "ErrorDetail" ] );
 			}
@@ -98,7 +98,7 @@ namespace MsgPack.Rpc
 				throw new NotSupportedException();
 			}
 
-			protected override void AssertProperties( UnexpcetedRpcException target, RpcExceptionTestBase<UnexpcetedRpcException>.ConstructorKind kind, System.Collections.Generic.IDictionary<string, object> properties )
+			protected override void AssertProperties( UnexpcetedRpcException target, ConstructorKind kind, System.Collections.Generic.IDictionary<string, object> properties )
 			{
 				base.AssertProperties( target, kind, properties );
 				Assert.That( target.Error, Is.EqualTo( ( MessagePackObject )properties[ "Error" ] ) );

@@ -48,6 +48,9 @@ namespace MsgPack.Rpc
 
 		private static void TestGetExceptionMessage_InnerException_IsDebugMode_WithStackTraceCore()
 		{
+#if MONO
+			Assert.Ignore( "Mono has different timing to capture stack trace." );
+#endif
 			var message = Guid.NewGuid().ToString();
 			var debugInformation = Guid.NewGuid().ToString();
 			Exception inner = null;
@@ -102,6 +105,9 @@ namespace MsgPack.Rpc
 
 		private static void TestGetExceptionMessage_RethrownOnClinetInnerException_IsDebugMode_WithStackTraceCore()
 		{
+#if MONO
+			Assert.Ignore( "Mono has different timing to capture stack trace." );
+#endif
 			var message = Guid.NewGuid().ToString();
 			var debugInformation = Guid.NewGuid().ToString();
 			Exception inner = null;

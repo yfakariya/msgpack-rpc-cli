@@ -62,7 +62,18 @@ namespace MsgPack.Rpc.Server.Protocols
 
 			Contract.Assert( this.BoundSocket != null );
 
-			this.BoundSocket.Shutdown( SocketShutdown.Receive );
+			try
+			{
+				this.BoundSocket.Shutdown( SocketShutdown.Receive );
+			}
+			catch( SocketException ex )
+			{
+				if( ex.SocketErrorCode != SocketError.NotConnected )
+				{
+					throw;
+				}
+			}
+
 			base.ShutdownReceiving();
 		}
 
@@ -77,8 +88,19 @@ namespace MsgPack.Rpc.Server.Protocols
 			}
 
 			Contract.Assert( this.BoundSocket != null );
+			
+			try
+			{
+				this.BoundSocket.Shutdown( SocketShutdown.Send );
+			}
+			catch( SocketException ex )
+			{
+				if( ex.SocketErrorCode != SocketError.NotConnected )
+				{
+					throw;
+				}
+			}
 
-			this.BoundSocket.Shutdown( SocketShutdown.Send );
 			base.ShutdownSending();
 		}
 
@@ -88,9 +110,18 @@ namespace MsgPack.Rpc.Server.Protocols
 		/// <param name="context">Context information.</param>
 		protected sealed override void ReceiveCore( ServerRequestContext context )
 		{
-			Contract.Assert( this.BoundSocket != null );
+			bool isAsyncOperationStarted;
+			try
+			{
+				isAsyncOperationStarted = this.BoundSocket.ReceiveAsync( context.SocketContext );
+			}
+			catch( ObjectDisposedException )
+			{
+				// Canceled.
+				return;
+			}
 
-			if ( !this.BoundSocket.ReceiveAsync( context.SocketContext ) )
+			if ( !isAsyncOperationStarted )
 			{
 				context.SetCompletedSynchronously();
 				this.OnReceived( context );

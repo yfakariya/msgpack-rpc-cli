@@ -177,7 +177,7 @@ namespace MsgPack.Rpc.Client.Protocols
 		{
 			try
 			{
-				if ( connectSocket == null )
+				if ( connectSocket == null || !connectSocket.Connected )
 				{
 					// canceled.
 					taskCompletionSource.SetException(

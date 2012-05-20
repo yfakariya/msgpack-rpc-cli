@@ -46,7 +46,11 @@ namespace MsgPack.Rpc.Server.Dispatch
 		}
 
 		[Test()]
+#if !MONO
 		[ExpectedException( typeof( InvalidOperationException ) )]
+#else
+		[ExpectedException( typeof( NotSupportedException ) )]
+#endif
 		public void TestConstructorServiceInvokerGenerator_IsNotDebuggable_CannotDump()
 		{
 			var isDebuggable = false;

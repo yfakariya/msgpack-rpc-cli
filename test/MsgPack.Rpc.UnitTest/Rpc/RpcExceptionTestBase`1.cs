@@ -458,13 +458,14 @@ namespace MsgPack.Rpc
 		}
 #endif
 
-		[Serializable]
-		protected enum ConstructorKind
-		{
-			Default,
-			WithInnerException,
-			Serialization,
-			WithoutDebugInformation
-		}
+	}
+	
+	[Serializable]
+	public enum ConstructorKind
+	{
+		Default,
+		WithInnerException,
+		Serialization,
+		WithoutDebugInformation
 	}
 }

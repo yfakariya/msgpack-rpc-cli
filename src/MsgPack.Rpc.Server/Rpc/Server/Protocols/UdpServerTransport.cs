@@ -40,6 +40,23 @@ namespace MsgPack.Rpc.Server.Protocols
 			get { return false; }
 		}
 
+#if MONO
+		/// <summary>
+		///		Gets a value indicating whether the underlying transport used by this instance can accept chunked buffer.
+		/// </summary>
+		/// <value>
+		/// 	<c>true</c> if the underlying transport can use chunked buffer; otherwise, <c>false</c>.
+		/// 	This implementation returns <c>false</c>.
+		/// </value>
+		protected override bool CanUseChunkedBuffer
+		{
+			get
+			{
+				return false;
+			}
+		}
+#endif
+
 		/// <summary>
 		///		Initializes a new instance of the <see cref="UdpServerTransport"/> class.
 		/// </summary>
@@ -56,7 +73,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		protected sealed override void SendCore( ServerResponseContext context )
 		{
 			// Manager stores the socket which is dedicated socket to this transport in the AcceptSocket property.
-			if ( !BoundSocket.SendToAsync( context.SocketContext ) )
+			if ( !this.BoundSocket.SendToAsync( context.SocketContext ) )
 			{
 				context.SetCompletedSynchronously();
 				this.OnSent( context );
@@ -70,7 +87,18 @@ namespace MsgPack.Rpc.Server.Protocols
 		protected sealed override void ReceiveCore( ServerRequestContext context )
 		{
 			// Manager stores the socket which is dedicated socket to this transport in the AcceptSocket property.
-			if ( !BoundSocket.ReceiveFromAsync( context.SocketContext ) )
+			bool isAsyncOperationStarted;
+			try
+			{
+				isAsyncOperationStarted = this.BoundSocket.ReceiveFromAsync( context.SocketContext );
+			}
+			catch( ObjectDisposedException )
+			{
+				// Canceled.
+				return;
+			}
+
+			if ( !isAsyncOperationStarted )
 			{
 				context.SetCompletedSynchronously();
 				this.OnReceived( context );

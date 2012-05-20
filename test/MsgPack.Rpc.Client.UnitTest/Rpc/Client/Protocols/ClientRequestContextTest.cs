@@ -139,7 +139,7 @@ namespace MsgPack.Rpc.Client.Protocols
 			target.SetRequest( 1, "A", ( _0, _1, _2 ) => { } );
 			var oldSessionId = target.SessionId;
 
-			target.Prepare();
+			target.Prepare( true );
 			Assert.That( target.SendingBuffer.All( segment => segment.Array != null ), Is.Not.Null );
 			Assert.That( target.BufferList, Is.SameAs( target.SendingBuffer ) );
 		}
@@ -151,7 +151,7 @@ namespace MsgPack.Rpc.Client.Protocols
 			target.SetNotification( "A", ( _0, _1 ) => { } );
 			var oldSessionId = target.SessionId;
 
-			target.Prepare();
+			target.Prepare( true );
 			Assert.That( target.SendingBuffer.All( segment => segment.Array != null ), Is.Not.Null );
 			Assert.That( target.BufferList, Is.SameAs( target.SendingBuffer ) );
 		}
@@ -160,7 +160,7 @@ namespace MsgPack.Rpc.Client.Protocols
 		[ExpectedException( typeof( InvalidOperationException ) )]
 		public void TestPrepare_SetXAreNotInvoked_Fail()
 		{
-			new ClientRequestContext().Prepare();
+			new ClientRequestContext().Prepare( true );
 		}
 
 		[Test]

@@ -81,8 +81,8 @@ namespace MsgPack.Rpc.Server.Protocols
 			Assert.That( result[ 0 ] == 1, result[ 0 ].ToString() );
 			Assert.That( result[ 1 ] == 1, result[ 1 ].ToString() );
 			Assert.That( result[ 2 ].IsNil, result[ 2 ].ToString() );
-			Assert.That( result[ 3 ].IsArray );
-			Assert.That( result[ 3 ].AsList().Count, Is.EqualTo( 1 ) );
+			Assert.That( result[ 3 ].IsArray, result[ 3 ].ToString() );
+			Assert.That( result[ 3 ].AsList().Count, Is.EqualTo( 1 ), result[ 3 ].ToString() );
 			Assert.That( ids.Contains( result[ 3 ].AsList()[ 0 ].ToString() ), "[{0}] contains '{1}'", String.Join( ", ", ids ), result[ 3 ].AsList()[ 0 ].ToString() );
 		}
 

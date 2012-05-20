@@ -47,6 +47,23 @@ namespace MsgPack.Rpc.Client.Protocols
 			get { return false; }
 		}
 
+#if MONO
+		/// <summary>
+		///		Gets a value indicating whether the underlying transport used by this instance can accept chunked buffer.
+		/// </summary>
+		/// <value>
+		/// 	<c>true</c> if the underlying transport can use chunked buffer; otherwise, <c>false</c>.
+		///		This implementation returns <c>false</c>.
+		/// </value>
+		protected override bool CanUseChunkedBuffer
+		{
+			get
+			{
+				return false;
+			}
+		}
+#endif
+
 		/// <summary>
 		///		Initializes a new instance of the <see cref="UdpClientTransport"/> class.
 		/// </summary>

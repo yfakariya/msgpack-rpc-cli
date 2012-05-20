@@ -54,7 +54,17 @@ namespace MsgPack.Rpc.Client.Protocols
 		/// </summary>
 		protected sealed override void ShutdownSending()
 		{
-			this.BoundSocket.Shutdown( SocketShutdown.Send );
+			try
+			{
+				this.BoundSocket.Shutdown( SocketShutdown.Send );
+			}
+			catch( SocketException ex )
+			{
+				if( ex.SocketErrorCode != SocketError.NotConnected )
+				{
+					throw;
+				}
+			}
 
 			base.ShutdownSending();
 		}
@@ -64,7 +74,17 @@ namespace MsgPack.Rpc.Client.Protocols
 		/// </summary>
 		protected sealed override void ShutdownReceiving()
 		{
-			this.BoundSocket.Shutdown( SocketShutdown.Receive );
+			try
+			{
+				this.BoundSocket.Shutdown( SocketShutdown.Receive );
+			}
+			catch( SocketException ex )
+			{
+				if( ex.SocketErrorCode != SocketError.NotConnected )
+				{
+					throw;
+				}
+			}
 
 			base.ShutdownReceiving();
 		}

@@ -76,6 +76,19 @@ namespace MsgPack.Rpc.Server.Protocols
 			get;
 		}
 
+		/// <summary>
+		///		Gets a value indicating whether the underlying transport used by this instance can accept chunked buffer.
+		/// </summary>
+		/// <value>
+		/// 	<c>true</c> if the underlying transport can use chunked buffer; otherwise, <c>false</c>.
+		/// 	This implementation returns <c>true</c>.
+		/// </value>
+		protected virtual bool CanUseChunkedBuffer
+		{
+			get { return true; }
+		}
+
+
 		#region ---- States ----
 
 		private int _isDisposed;
@@ -143,6 +156,8 @@ namespace MsgPack.Rpc.Server.Protocols
 
 		private int _sendingShutdown;
 		private int _receivingShutdown;
+
+		private readonly ManualResetEventSlim _receivingShutdownEvent;
 
 		#endregion
 
@@ -329,6 +344,7 @@ namespace MsgPack.Rpc.Server.Protocols
 					.Reverse()
 					.ToArray()
 				);
+			this._receivingShutdownEvent = new ManualResetEventSlim();
 		}
 
 		/// <summary>
@@ -377,6 +393,8 @@ namespace MsgPack.Rpc.Server.Protocols
 							"Dispose transport. {{ \"Socket\" : \"Disposed\", \"RemoteEndPoint\" : \"Disposed\", \"LocalEndPoint\" : \"Disposed\" }}"
 						);
 					}
+
+					this._receivingShutdownEvent.Dispose();
 				}
 			}
 		}
@@ -474,6 +492,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		/// </remarks>
 		protected virtual void ShutdownSending()
 		{
+			this._receivingShutdownEvent.Wait();
 			this.OnShutdownCompleted( new ShutdownCompletedEventArgs( ( ShutdownSource )Interlocked.CompareExchange( ref this._shutdownSource, 0, 0 ) ) );
 		}
 
@@ -502,7 +521,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		/// </remarks>
 		protected virtual void ShutdownReceiving()
 		{
-			// nop
+			this._receivingShutdownEvent.Set();
 		}
 
 		/// <summary>
@@ -972,7 +991,7 @@ namespace MsgPack.Rpc.Server.Protocols
 					return;
 				}
 			}
-			else if( this.CanResumeReceiving )
+			else if ( this.CanResumeReceiving )
 			{
 				// try next receive
 				this.PrivateReceive( context );
@@ -1172,7 +1191,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		{
 			Contract.Assert( context != null );
 
-			context.Prepare();
+			context.Prepare( this.CanUseChunkedBuffer );
 
 			if ( MsgPackRpcServerProtocolsTrace.ShouldTrace( MsgPackRpcServerProtocolsTrace.SendOutboundData ) )
 			{
