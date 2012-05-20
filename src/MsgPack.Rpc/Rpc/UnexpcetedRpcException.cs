@@ -21,6 +21,7 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.Serialization;
+using System.Security.Permissions;
 
 namespace MsgPack.Rpc
 {
@@ -37,6 +38,9 @@ namespace MsgPack.Rpc
 	[SuppressMessage( "Microsoft.Design", "CA1032:ImplementStandardExceptionConstructors", Justification = "Using ISafeSerializationData." )]
 	public sealed class UnexpcetedRpcException : RpcException
 	{
+		private const string _errorKey = "Error";
+		private const string _errorDetailKey = "ErrorDetail";
+
 		// NOT readonly for safe deserialization
 		private MessagePackObject _error;
 
@@ -84,6 +88,57 @@ namespace MsgPack.Rpc
 			this._error = error;
 			this._errorDetail = errorDetail;
 		}
+
+#if MONO
+		/// <summary>
+		///		Initializes a new instance with serialized data. 
+		/// </summary>
+		/// <param name="info">
+		///		The <see cref="SerializationInfo"/> that holds the serialized object data about the exception being thrown. 
+		/// </param>
+		/// <param name="context">
+		///		The <see cref="StreamingContext"/> that contains contextual information about the source or destination.
+		/// </param>
+		/// <exception cref="T:System.ArgumentNullException">
+		///   <paramref name="info"/><paramref name="info"/> is <c>null</c>.
+		/// </exception>
+		/// <exception cref="T:System.Runtime.Serialization.SerializationException">
+		///		The class name is <c>null</c>.
+		///		Or <see cref="P:System.Exception.HResult"/> is zero(0).
+		///		Or <see cref="P:Error"/> is <c>null</c>.
+		///		Or <see cref="P:ErrorDetail"/> is <c>null</c>.
+		/// </exception>
+		/// <permission cref="System.Security.Permissions.SecurityPermission"><c>LinkDemand</c>, <c>Flags=SerializationFormatter</c></permission>
+		[SecurityPermission( SecurityAction.LinkDemand, SerializationFormatter = true )]
+		private UnexpcetedRpcException( SerializationInfo info, StreamingContext context )
+			: base( info, context )
+		{
+			this._error = ( MessagePackObject )info.GetValue( _errorKey, typeof( MessagePackObject ) );
+			this._errorDetail = ( MessagePackObject )info.GetValue( _errorDetailKey, typeof( MessagePackObject ) );
+		}
+
+		/// <summary>
+		///		When overridden in a derived class, sets the <see cref="SerializationInfo"/> with information about the exception.
+		/// </summary>
+		/// <param name="info">
+		///		The <see cref="SerializationInfo"/> that holds the serialized object data about the exception being thrown. 
+		/// </param>
+		/// <param name="context">
+		///		The <see cref="StreamingContext"/> that contains contextual information about the source or destination.
+		/// </param>
+		/// <exception cref="T:System.ArgumentNullException">
+		///   <paramref name="info"/><paramref name="info"/> is <c>null</c>.
+		/// </exception>
+		/// <permission cref="System.Security.Permissions.SecurityPermission"><c>LinkDemand</c>, <c>Flags=SerializationFormatter</c></permission>
+		[SecurityPermission( SecurityAction.LinkDemand, SerializationFormatter = true )]
+		public override void GetObjectData( SerializationInfo info, StreamingContext context )
+		{
+			base.GetObjectData( info, context );
+
+			info.AddValue( _errorKey, this._error );
+			info.AddValue( _errorDetailKey, this._errorDetail );
+		}
+#endif
 
 #if !SILVERLIGHT && !MONO
 		/// <summary>

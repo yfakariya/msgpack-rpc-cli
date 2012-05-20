@@ -23,6 +23,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Runtime.Serialization;
+using System.Security.Permissions;
 
 namespace MsgPack.Rpc
 {
@@ -128,6 +129,60 @@ namespace MsgPack.Rpc
 			this._clientTimeout = unpackedException.GetTimeSpan( ClientTimeoutKeyUtf8 );
 			Contract.Assume( this._clientTimeout != null, "Unpacked data does not have ClientTimeout." );
 		}
+
+#if MONO
+		/// <summary>
+		///		Initializes a new instance with serialized data. 
+		/// </summary>
+		/// <param name="info">
+		///		The <see cref="SerializationInfo"/> that holds the serialized object data about the exception being thrown. 
+		/// </param>
+		/// <param name="context">
+		///		The <see cref="StreamingContext"/> that contains contextual information about the source or destination.
+		/// </param>
+		/// <exception cref="T:System.ArgumentNullException">
+		///   <paramref name="info"/><paramref name="info"/> is <c>null</c>.
+		/// </exception>
+		/// <exception cref="T:System.Runtime.Serialization.SerializationException">
+		///		The class name is <c>null</c>.
+		///		Or <see cref="P:System.Exception.HResult"/> is zero(0).
+		///		Or <see cref="P:ClientTimeout"/> is <c>null</c>.
+		/// </exception>
+		/// <permission cref="System.Security.Permissions.SecurityPermission"><c>LinkDemand</c>, <c>Flags=SerializationFormatter</c></permission>
+		[SecurityPermission( SecurityAction.LinkDemand, SerializationFormatter = true )]
+		private RpcTimeoutException( SerializationInfo info, StreamingContext context )
+			: base( info, context )
+		{
+			var clientTimeout = info.GetValue( _clientTimeoutKey, typeof( TimeSpan? ) );
+			if ( clientTimeout == null || !( clientTimeout is TimeSpan? ) )
+			{
+				throw new SerializationException( "'ClientTimeout' is required." );
+			}
+
+			this._clientTimeout = ( TimeSpan? )clientTimeout;
+		}
+
+		/// <summary>
+		///		When overridden in a derived class, sets the <see cref="SerializationInfo"/> with information about the exception.
+		/// </summary>
+		/// <param name="info">
+		///		The <see cref="SerializationInfo"/> that holds the serialized object data about the exception being thrown. 
+		/// </param>
+		/// <param name="context">
+		///		The <see cref="StreamingContext"/> that contains contextual information about the source or destination.
+		/// </param>
+		/// <exception cref="T:System.ArgumentNullException">
+		///   <paramref name="info"/><paramref name="info"/> is <c>null</c>.
+		/// </exception>
+		/// <permission cref="System.Security.Permissions.SecurityPermission"><c>LinkDemand</c>, <c>Flags=SerializationFormatter</c></permission>
+		[SecurityPermission( SecurityAction.LinkDemand, SerializationFormatter = true )]
+		public override void GetObjectData( SerializationInfo info, StreamingContext context )
+		{
+			base.GetObjectData( info, context );
+
+			info.AddValue( _clientTimeoutKey, this._clientTimeout );
+		}
+#endif
 
 		/// <summary>
 		///		Stores derived type specific information to specified dictionary.

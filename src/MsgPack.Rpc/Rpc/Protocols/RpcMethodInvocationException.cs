@@ -23,6 +23,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Runtime.Serialization;
+using System.Security.Permissions;
 
 namespace MsgPack.Rpc.Protocols
 {
@@ -182,6 +183,59 @@ namespace MsgPack.Rpc.Protocols
 			this._methodName = unpackedException.GetString( MethodNameKeyUtf8 );
 			Contract.Assume( this._methodName != null, "Unpacked data does not have MethodName." );
 		}
+
+#if MONO
+		/// <summary>
+		///		Initializes a new instance with serialized data. 
+		/// </summary>
+		/// <param name="info">
+		///		The <see cref="SerializationInfo"/> that holds the serialized object data about the exception being thrown. 
+		/// </param>
+		/// <param name="context">
+		///		The <see cref="StreamingContext"/> that contains contextual information about the source or destination.
+		/// </param>
+		/// <exception cref="T:System.ArgumentNullException">
+		///   <paramref name="info"/><paramref name="info"/> is <c>null</c>.
+		/// </exception>
+		/// <exception cref="T:System.Runtime.Serialization.SerializationException">
+		///		The class name is <c>null</c>.
+		///		Or <see cref="P:System.Exception.HResult"/> is zero(0).
+		///		Or <see cref="MethodName"/> is <c>null</c> or blank.
+		/// </exception>
+		/// <permission cref="System.Security.Permissions.SecurityPermission"><c>LinkDemand</c>, <c>Flags=SerializationFormatter</c></permission>
+		[SecurityPermission( SecurityAction.LinkDemand, SerializationFormatter = true )]
+		protected RpcMethodInvocationException( SerializationInfo info, StreamingContext context )
+			: base( info, context )
+		{
+			this._methodName = info.GetString( _methodNameKey );
+
+			if ( String.IsNullOrWhiteSpace( this._methodName ) )
+			{
+				throw new SerializationException( "'MethodName' is required" );
+			}
+		}
+
+		/// <summary>
+		///		When overridden in a derived class, sets the <see cref="SerializationInfo"/> with information about the exception.
+		/// </summary>
+		/// <param name="info">
+		///		The <see cref="SerializationInfo"/> that holds the serialized object data about the exception being thrown. 
+		/// </param>
+		/// <param name="context">
+		///		The <see cref="StreamingContext"/> that contains contextual information about the source or destination.
+		/// </param>
+		/// <exception cref="T:System.ArgumentNullException">
+		///   <paramref name="info"/><paramref name="info"/> is <c>null</c>.
+		/// </exception>
+		/// <permission cref="System.Security.Permissions.SecurityPermission"><c>LinkDemand</c>, <c>Flags=SerializationFormatter</c></permission>
+		[SecurityPermission( SecurityAction.LinkDemand, SerializationFormatter = true )]
+		public override void GetObjectData( SerializationInfo info, StreamingContext context )
+		{
+			base.GetObjectData( info, context );
+
+			info.AddValue( _methodNameKey, this._methodName );
+		}
+#endif
 
 		/// <summary>
 		///		Stores derived type specific information to specified dictionary.

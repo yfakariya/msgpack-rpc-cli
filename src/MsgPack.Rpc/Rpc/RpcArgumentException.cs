@@ -23,7 +23,9 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Runtime.Serialization;
+using System.Security;
 using MsgPack.Rpc.Protocols;
+using System.Security.Permissions;
 
 namespace MsgPack.Rpc
 {
@@ -167,7 +169,7 @@ namespace MsgPack.Rpc
 		}
 
 		/// <summary>
-		///		Initializes a new instance of the <see cref="RpcException"/> class with the unpacked data.
+		///		Initializes a new instance with serialized data. 
 		/// </summary>
 		/// <param name="unpackedException">
 		///		Exception data from remote MessagePack-RPC server.
@@ -181,6 +183,61 @@ namespace MsgPack.Rpc
 			this._parameterName = unpackedException.GetString( ParameterNameKeyUtf8 );
 			Contract.Assume( this._parameterName != null, "Unpacked data does not have ParameterName." );
 		}
+
+#if MONO
+		/// <summary>
+		///		Initializes a new instance of the <see cref="RpcException"/> class with serialized data. 
+		/// </summary>
+		/// <param name="info">
+		///		The <see cref="SerializationInfo"/> that holds the serialized object data about the exception being thrown. 
+		/// </param>
+		/// <param name="context">
+		///		The <see cref="StreamingContext"/> that contains contextual information about the source or destination.
+		/// </param>
+		/// <exception cref="T:System.ArgumentNullException">
+		///   <paramref name="info"/><paramref name="info"/> is <c>null</c>.
+		/// </exception>
+		/// <exception cref="T:System.Runtime.Serialization.SerializationException">
+		///		The class name is <c>null</c>.
+		///		Or <see cref="P:System.Exception.HResult"/> is zero(0).
+		///		Or <see cref="P:MethodName"/> is <c>null</c> or blank.
+		///		Or <see cref="P:ParameterName"/> is <c>null</c> or blank.
+		/// </exception>
+		/// <permission cref="System.Security.Permissions.FileIOPermission"><c>Read=AllFiles</c>, <c>PathDiscovery=AllFiles</c>.</permission>
+		/// <permission cref="System.Security.Permissions.SecurityPermission"><c>Flags=SerializationFormatter</c></permission>
+		[SecurityCritical]
+		private RpcArgumentException( SerializationInfo info, StreamingContext context )
+			: base( info, context )
+		{
+			this._parameterName = info.GetString( _parameterNameKey );
+
+			if ( String.IsNullOrWhiteSpace( this._parameterName ) )
+			{
+				throw new SerializationException( "'ParameterName' is required" );
+			}
+		}
+
+		/// <summary>
+		///		When overridden in a derived class, sets the <see cref="SerializationInfo"/> with information about the exception.
+		/// </summary>
+		/// <param name="info">
+		///		The <see cref="SerializationInfo"/> that holds the serialized object data about the exception being thrown. 
+		/// </param>
+		/// <param name="context">
+		///		The <see cref="StreamingContext"/> that contains contextual information about the source or destination.
+		/// </param>
+		/// <exception cref="T:System.ArgumentNullException">
+		///   <paramref name="info"/><paramref name="info"/> is <c>null</c>.
+		/// </exception>
+		/// <permission cref="System.Security.Permissions.SecurityPermission"><c>LinkDemand</c>, <c>Flags=SerializationFormatter</c></permission>
+		[SecurityPermission( SecurityAction.LinkDemand, SerializationFormatter = true )]
+		public override void GetObjectData( SerializationInfo info, StreamingContext context )
+		{
+			base.GetObjectData( info, context );
+
+			info.AddValue( _parameterNameKey, this._parameterName );
+		}
+#endif
 
 		/// <summary>
 		///		Stores derived type specific information to specified dictionary.

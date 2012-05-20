@@ -24,6 +24,8 @@ using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Globalization;
 using System.Runtime.Serialization;
+using System.Security;
+using System.Security.Permissions;
 
 namespace MsgPack.Rpc
 {
@@ -85,6 +87,8 @@ namespace MsgPack.Rpc
 		private const string _debugInformationKey = "DebugInformation";
 		private const string _remoteExceptionsKey = "RemoteExceptions";
 		private const string _rpcErrorIdentifierKey = "RpcError";
+		private const string _rpcErrorCodeKey = "RpcErrorCode";
+		private const string _preservedStackTraceKey = "PreservedStackTrace";
 
 		// NOT readonly for safe-deserialization
 		private RpcError _rpcError;
@@ -182,6 +186,60 @@ namespace MsgPack.Rpc
 			this.RegisterSerializeObjectStateEventHandler();
 #endif
 		}
+
+#if MONO
+		/// <summary>
+		///		Initializes a new instance with serialized data. 
+		/// </summary>
+		/// <param name="info">
+		///		The <see cref="SerializationInfo"/> that holds the serialized object data about the exception being thrown. 
+		/// </param>
+		/// <param name="context">
+		///		The <see cref="StreamingContext"/> that contains contextual information about the source or destination.
+		/// </param>
+		/// <exception cref="T:System.ArgumentNullException">
+		///   <paramref name="info"/><paramref name="info"/> is <c>null</c>.
+		/// </exception>
+		/// <exception cref="T:System.Runtime.Serialization.SerializationException">
+		///		The class name is <c>null</c>.
+		///		Or <see cref="P:System.Exception.HResult"/> is zero(0).
+		/// </exception>
+		/// <permission cref="System.Security.Permissions.SecurityPermission"><c>LinkDemand</c>, <c>Flags=SerializationFormatter</c></permission>
+		[SecurityPermission( SecurityAction.LinkDemand, SerializationFormatter = true )]
+		protected RpcException( SerializationInfo info, StreamingContext context )
+			: base( info, context )
+		{
+			this._debugInformation = info.GetString( _debugInformationKey );
+			this._remoteExceptions = info.GetValue( _remoteExceptionsKey, typeof( RemoteExceptionInformation[] ) ) as RemoteExceptionInformation[];
+			this._rpcError = Rpc.RpcError.FromIdentifier( info.GetString( _rpcErrorIdentifierKey ), info.GetInt32( _rpcErrorCodeKey ) );
+			this._preservedStackTrace = info.GetValue( _preservedStackTraceKey, typeof( List<string> ) ) as List<string>;
+		}
+
+		/// <summary>
+		///		When overridden in a derived class, sets the <see cref="SerializationInfo"/> with information about the exception.
+		/// </summary>
+		/// <param name="info">
+		///		The <see cref="SerializationInfo"/> that holds the serialized object data about the exception being thrown. 
+		/// </param>
+		/// <param name="context">
+		///		The <see cref="StreamingContext"/> that contains contextual information about the source or destination.
+		/// </param>
+		/// <exception cref="T:System.ArgumentNullException">
+		///   <paramref name="info"/><paramref name="info"/> is <c>null</c>.
+		/// </exception>
+		/// <permission cref="System.Security.Permissions.SecurityPermission"><c>LinkDemand</c>, <c>Flags=SerializationFormatter</c></permission>
+		[SecurityPermission( SecurityAction.LinkDemand, SerializationFormatter = true )]
+		public override void GetObjectData( SerializationInfo info, StreamingContext context )
+		{
+			base.GetObjectData( info, context );
+
+			info.AddValue( _debugInformationKey, this._debugInformation );
+			info.AddValue( _remoteExceptionsKey, this._remoteExceptions );
+			info.AddValue( _rpcErrorIdentifierKey, this._rpcError.Identifier );
+			info.AddValue( _rpcErrorCodeKey, this._rpcError.ErrorCode );
+			info.AddValue( _preservedStackTraceKey, this._preservedStackTrace );
+		}
+#endif
 
 #if !SILVERLIGHT && !MONO
 		internal static T Get<T>( SerializationEntry entry, string name, Func<SerializationEntry, T> getter )
