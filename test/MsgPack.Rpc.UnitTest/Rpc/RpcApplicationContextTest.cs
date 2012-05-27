@@ -49,22 +49,18 @@ namespace MsgPack.Rpc
 			{
 				var message = Guid.NewGuid().ToString();
 				RpcApplicationContext.SetCurrent( target );
-				target.CancellationToken.Register( () => 
+#pragma warning disable 0618
+				target.DebugSoftTimeout += ( sender, e ) => cancellationEvent.Set();
+#pragma warning restore 0618
+				target.CancellationToken.Register( () =>
 					{
-						try
-						{
-							throw new Exception( message );
-						}
-						finally
-						{
-							cancellationEvent.Set();
-						}
+						throw new Exception( message );
 					}
 				);
 				target.StartTimeoutWatch();
 				Assert.That( target.CancellationToken.WaitHandle.WaitOne( TimeSpan.FromSeconds( 1 ) ) );
 				// Mono sets WaitHandle eagerly (CLR might set after callback)
-				Assert.That ( cancellationEvent.Wait ( TimeSpan.FromSeconds( 1 ) ) );
+				Assert.That( cancellationEvent.Wait( TimeSpan.FromSeconds( 1 ) ) );
 				Assert.That( RpcApplicationContext.IsCanceled );
 				var exception = Assert.Throws<AggregateException>( () => target.StopTimeoutWatch() );
 				Assert.That( exception.InnerException.Message, Is.EqualTo( message ) );

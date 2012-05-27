@@ -135,6 +135,20 @@ namespace MsgPack.Rpc
 #endif
 		private readonly CancellationTokenSource _cancellationTokenSource;
 
+#if DEBUG
+		[Obsolete("DO NOT use this member except testing purposes.")]
+		internal event EventHandler DebugSoftTimeout;
+
+		private void OnDebugSoftTimeout()
+		{
+			var handler = this.DebugSoftTimeout;
+			if ( handler != null )
+			{
+				handler( this, EventArgs.Empty );
+			}
+		}
+#endif
+
 		/// <summary>
 		///		Gets the <see cref="CancellationToken"/> associated with this context.
 		/// </summary>
@@ -215,6 +229,9 @@ namespace MsgPack.Rpc
 			{
 				this._hardTimeoutWatcher.Start( this._hardTimeout.Value );
 			}
+#endif
+#if DEBUG
+			this.OnDebugSoftTimeout();
 #endif
 		}
 
