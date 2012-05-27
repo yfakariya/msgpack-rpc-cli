@@ -58,10 +58,14 @@ namespace MsgPack.Rpc.Client
 				return RpcErrorMessage.Success;
 			}
 
+			bool isUnknown = false;
 			RpcError errorIdentifier;
 			if ( error.IsTypeOf<string>().GetValueOrDefault() )
 			{
-				errorIdentifier = RpcError.FromIdentifier( error.AsString(), null );
+				var asString = error.AsString();
+				errorIdentifier = RpcError.FromIdentifier( asString, null );
+				// Check if the error is truely Unexpected error.
+				isUnknown = errorIdentifier.ErrorCode == RpcError.Unexpected.ErrorCode && asString != RpcError.Unexpected.Identifier;
 			}
 			else if ( error.IsTypeOf<int>().GetValueOrDefault() )
 			{
@@ -70,6 +74,7 @@ namespace MsgPack.Rpc.Client
 			else
 			{
 				errorIdentifier = RpcError.Unexpected;
+				isUnknown = true;
 			}
 
 			MessagePackObject detail;
@@ -89,7 +94,25 @@ namespace MsgPack.Rpc.Client
 				}
 			}
 
-			return new RpcErrorMessage( errorIdentifier, detail );
+			if ( isUnknown )
+			{
+				// Unknown error, the error should contain original Error field as message.
+				if ( detail.IsNil )
+				{
+					return new RpcErrorMessage( errorIdentifier, error.AsString(), null );
+				}
+				else
+				{
+					var details = new MessagePackObjectDictionary( 2 );
+					details[ RpcException.MessageKeyUtf8 ] = error;
+					details[ RpcException.DebugInformationKeyUtf8 ] = detail;
+					return new RpcErrorMessage( errorIdentifier, new MessagePackObject( details, true ) );
+				}
+			}
+			else
+			{
+				return new RpcErrorMessage( errorIdentifier, detail );
+			}
 		}
 	}
 }

@@ -641,7 +641,7 @@ namespace MsgPack.Rpc
 				new RpcError(
 					identifier,
 					errorCode,
-					"Application throw exception.",
+					"Application throws exception.",
 					( error, data ) => new RpcFaultException( error, data )
 				);
 		}
