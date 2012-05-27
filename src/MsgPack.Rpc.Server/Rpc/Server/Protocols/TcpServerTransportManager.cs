@@ -24,6 +24,7 @@ using System.Globalization;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
+using System.Diagnostics;
 
 namespace MsgPack.Rpc.Server.Protocols
 {
@@ -33,6 +34,13 @@ namespace MsgPack.Rpc.Server.Protocols
 	public sealed class TcpServerTransportManager : ServerTransportManager<TcpServerTransport>
 	{
 		private readonly Socket _listeningSocket;
+
+		[Conditional("DEBUG")]
+		internal void GetListeningSocket(ref Socket result)
+		{
+			result = this._listeningSocket;
+		}
+
 		private readonly ObjectPool<ListeningContext> _listeningContextPool;
 
 		/// <summary>
@@ -82,6 +90,20 @@ namespace MsgPack.Rpc.Server.Protocols
 					SocketType.Stream,
 					ProtocolType.Tcp
 				);
+
+			if ( !this.Configuration.PreferIPv4
+				&& Environment.OSVersion.Platform == PlatformID.Win32NT
+				&& Environment.OSVersion.Version.Major >= 6
+#if MONO
+				&& Socket.SupportsIPv6
+#else
+				&& Socket.OSSupportsIPv6
+#endif
+			)
+			{
+				// Listen both of IPv4 and IPv6
+				this._listeningSocket.SetSocketOption( SocketOptionLevel.IPv6, SocketOptionName.IPv6Only, 0 );
+			}
 
 			this._listeningSocket.Bind( bindingEndPoint );
 			this._listeningSocket.Listen( server.Configuration.ListenBackLog );

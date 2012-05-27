@@ -369,5 +369,23 @@ namespace MsgPack.Rpc.Server.Protocols
 				}
 			);
 		}
+
+		[Test]
+		public void TestListen_NotIPv6OnlyOnWinNT6OrLator()
+		{
+			if ( Environment.OSVersion.Platform != PlatformID.Win32NT || Environment.OSVersion.Version.Major < 6 )
+			{
+				Assert.Ignore( "This test can be run on WinNT 6 or later." );
+			}
+
+			var config = new RpcServerConfiguration() { PreferIPv4 = false };
+			using ( var server = new RpcServer() )
+			using ( var target = new UdpServerTransportManager( server ) )
+			{
+				Socket listeningSocket = null;
+				target.GetListeningSocket( ref listeningSocket );
+				Assert.That( listeningSocket.GetSocketOption( SocketOptionLevel.IPv6, SocketOptionName.IPv6Only ), Is.EqualTo( 0 ) );
+			}
+		}
 	}
 }

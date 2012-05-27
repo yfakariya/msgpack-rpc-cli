@@ -37,6 +37,13 @@ namespace MsgPack.Rpc.Server.Protocols
 		private readonly EndPoint _bindingEndPoint;
 		private readonly Thread _listeningThread;
 		private readonly Socket _listeningSocket;
+
+		[Conditional( "DEBUG" )]
+		internal void GetListeningSocket( ref Socket result )
+		{
+			result = this._listeningSocket;
+		}
+	
 		private int _isActive;
 
 		private bool IsActive
@@ -101,6 +108,21 @@ namespace MsgPack.Rpc.Server.Protocols
 					SocketType.Dgram,
 					ProtocolType.Udp
 				);
+
+			if ( !this.Configuration.PreferIPv4
+				&& Environment.OSVersion.Platform == PlatformID.Win32NT
+				&& Environment.OSVersion.Version.Major >= 6
+#if MONO
+				&& Socket.SupportsIPv6
+#else
+				&& Socket.OSSupportsIPv6
+#endif			
+			)
+			{
+				// Listen both of IPv4 and IPv6
+				this._listeningSocket.SetSocketOption( SocketOptionLevel.IPv6, SocketOptionName.IPv6Only, 0 );
+			}
+
 			this._listeningSocket.Bind( this._bindingEndPoint );
 			this._listeningThread = new Thread( this.PollArrival ) { IsBackground = true, Name = "UdpListeningThread#" + this.GetHashCode() };
 			this.IsActive = true;
