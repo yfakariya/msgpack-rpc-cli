@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>MsgPack-RPC-client</id>
+    <title>MessagePack-RPC for CLI(Client Library Only)</title>
+    <description>MessagePack-RPC is fast and interoperable RPC framework using MessagePack serialization protocol.
+This library provides MessagePack-RPC for Common Language Infrastructure environments. 
+This package only contains client-side libraries.</description>
+  </metadata>
+  <files>
+    <file src="bin\**\MsgPack.Rpc.dll" target="lib" />
+    <file src="bin\**\MsgPack.Rpc.XML" target="lib" />
+    <file src="bin\**\MsgPack.Rpc.Client.dll" target="lib" />
+    <file src="bin\**\MsgPack.Rpc.Client.XML" target="lib" />
+  </files>
+</package>

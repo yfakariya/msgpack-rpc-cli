@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>MsgPack-RPC-server</id>
+    <title>MessagePack-RPC for CLI(Server Library Only)</title>
+    <description>MessagePack-RPC is fast and interoperable RPC framework using MessagePack serialization protocol.
+This library provides MessagePack-RPC for Common Language Infrastructure environments.
+This package only contains server-side libraries.</description>
+  </metadata>
+  <files>
+    <file src="bin\net40-client\MsgPack.Rpc.dll" target="lib\net40-client" />
+    <file src="bin\net40-client\MsgPack.Rpc.XML" target="lib\net40-client" />
+    <file src="bin\net40-client\MsgPack.Rpc.Server.dll" target="lib\net40-client" />
+    <file src="bin\net40-client\MsgPack.Rpc.Server.XML" target="lib\net40-client" />
+  </files>
+</package>
