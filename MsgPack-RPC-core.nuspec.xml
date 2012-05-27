@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package >
   <metadata>
-    <id>MsgPack-RPC-core</id>
+    <id>MsgPack.Cli.Rpc.Core</id>
     <title>MessagePack-RPC for CLI(Core Library Only)</title>
     <description>MessagePack-RPC is fast and interoperable RPC framework using MessagePack serialization protocol.
 This library provides MessagePack-RPC for Common Language Infrastructure environments.
