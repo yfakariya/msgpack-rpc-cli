@@ -47,8 +47,8 @@
     <ErrorReport>prompt</ErrorReport>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="MsgPack">
-      <HintPath>..\..\lib\net40-client\MsgPack.dll</HintPath>
+    <Reference Include="MsgPack, Version=0.2.0.0, Culture=neutral, PublicKeyToken=a2625990d5dc0167, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\MsgPack.Cli.0.2-beta1\lib\net40-client\MsgPack.dll</HintPath>
     </Reference>
     <Reference Include="nunit.framework">
       <HintPath>..\..\packages\NUnit.2.6.0.12054\lib\nunit.framework.dll</HintPath>

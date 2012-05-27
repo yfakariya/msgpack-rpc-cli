@@ -17,6 +17,8 @@
     <SilverlightApplication>false</SilverlightApplication>
     <ValidateXaml>true</ValidateXaml>
     <ThrowErrorsInValidation>true</ThrowErrorsInValidation>
+    <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\..\</SolutionDir>
+    <RestorePackages>true</RestorePackages>
   </PropertyGroup>
   <!-- This property group is only here to support building this project using the 
        MSBuild 3.5 toolset. In order to work correctly with this older toolset, it needs 
@@ -54,11 +56,11 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="mscorlib" />
-    <Reference Include="MsgPack">
-      <HintPath>..\..\lib\sl5\MsgPack.dll</HintPath>
+    <Reference Include="MsgPack, Version=0.2.0.0, Culture=neutral, PublicKeyToken=a2625990d5dc0167, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\MsgPack.Cli.0.2-beta1\lib\sl5\MsgPack.dll</HintPath>
     </Reference>
-    <Reference Include="MsgPack.Serialization">
-      <HintPath>..\..\lib\sl5\MsgPack.Serialization.dll</HintPath>
+    <Reference Include="MsgPack.Serialization, Version=0.2.0.0, Culture=neutral, PublicKeyToken=a2625990d5dc0167, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\MsgPack.Cli.0.2-beta1\lib\sl5\MsgPack.Serialization.dll</HintPath>
     </Reference>
     <Reference Include="system" />
     <Reference Include="System.Core" />
@@ -158,6 +160,7 @@
     <None Include="..\MsgPack.snk">
       <Link>MsgPack.snk</Link>
     </None>
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\MsgPack.Rpc.Silverlight.5\MsgPack.Rpc.Silverlight.5.csproj">
@@ -173,6 +176,7 @@
       </FlavorProperties>
     </VisualStudio>
   </ProjectExtensions>
+  <Import Project="$(SolutionDir)\.nuget\nuget.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

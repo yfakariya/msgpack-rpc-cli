@@ -18,6 +18,8 @@
     <SilverlightApplication>false</SilverlightApplication>
     <ValidateXaml>true</ValidateXaml>
     <ThrowErrorsInValidation>true</ThrowErrorsInValidation>
+    <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\..\</SolutionDir>
+    <RestorePackages>true</RestorePackages>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -43,11 +45,11 @@
     <DocumentationFile>..\..\bin\sl4-windowsphone71\MsgPack.Rpc.XML</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="MsgPack">
-      <HintPath>..\..\lib\sl4-windowsphone71\MsgPack.dll</HintPath>
+    <Reference Include="MsgPack, Version=0.2.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\MsgPack.Cli.0.2-beta1\lib\sl4-windowsphone71\MsgPack.dll</HintPath>
     </Reference>
-    <Reference Include="MsgPack.Serialization">
-      <HintPath>..\..\lib\sl4-windowsphone71\MsgPack.Serialization.dll</HintPath>
+    <Reference Include="MsgPack.Serialization, Version=0.2.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\MsgPack.Cli.0.2-beta1\lib\sl4-windowsphone71\MsgPack.Serialization.dll</HintPath>
     </Reference>
     <Reference Include="system" />
     <Reference Include="System.Core" />
@@ -336,10 +338,13 @@
     <Compile Include="Compatibility\Threading\CancellationTokenSource.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Microsoft\Silverlight for Phone\$(TargetFrameworkVersion)\Microsoft.Silverlight.$(TargetFrameworkProfile).Overrides.targets" />
   <Import Project="$(MSBuildExtensionsPath)\Microsoft\Silverlight for Phone\$(TargetFrameworkVersion)\Microsoft.Silverlight.CSharp.targets" />
   <ProjectExtensions />
+  <Import Project="$(SolutionDir)\.nuget\nuget.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
