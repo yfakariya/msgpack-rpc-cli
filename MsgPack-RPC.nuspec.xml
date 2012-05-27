@@ -5,7 +5,7 @@
     <authors>FUJIWARA, Yusuke</authors>
     <owners>FUJIWARA, Yusuke</owners>
     <licenseUrl>http://www.apache.org/licenses/LICENSE-2.0</licenseUrl>
-    <projectUrl>https://github.com/msgpack/msgpack-cli</projectUrl>
+    <projectUrl>https://github.com/yfakariya/msgpack-rpc-cli</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <releaseNotes>This release is initial RPC release.</releaseNotes>
     <copyright>Copyright 2010-2012 FUJIWARA, Yusuke, all rights reserved.</copyright>
