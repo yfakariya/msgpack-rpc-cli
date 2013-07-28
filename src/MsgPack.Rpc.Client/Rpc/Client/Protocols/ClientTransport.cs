@@ -2,7 +2,7 @@
 //
 // MessagePack for CLI
 //
-// Copyright (C) 2010 FUJIWARA, Yusuke
+// Copyright (C) 2010-2013 FUJIWARA, Yusuke
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
 //    you may not use this file except in compliance with the License.
@@ -624,6 +624,7 @@ namespace MsgPack.Rpc.Client.Protocols
 		private void HandleOrphan( ClientResponseContext context )
 		{
 			var error = ErrorInterpreter.UnpackError( context );
+
 			MessagePackObject? returnValue = null;
 			if ( error.IsSuccess )
 			{
@@ -1102,25 +1103,25 @@ namespace MsgPack.Rpc.Client.Protocols
 			using ( var stream = new ByteArraySegmentStream( context.ReceivedData ) )
 			using ( var unpacker = Unpacker.Create( stream ) )
 			{
-				if ( !unpacker.Read() || !unpacker.IsArrayHeader || unpacker.Data.Value != 4 )
+				if ( !unpacker.Read() || !unpacker.IsArrayHeader || unpacker.LastReadData != 4 )
 				{
 					// Not a response message
 					return null;
 				}
 
-				if ( !unpacker.Read() || !unpacker.Data.Value.IsTypeOf<Int32>().GetValueOrDefault() || unpacker.Data.Value != ( int )MessageType.Response )
+				if ( !unpacker.Read() || !unpacker.LastReadData.IsTypeOf<Int32>().GetValueOrDefault() || unpacker.LastReadData != ( int )MessageType.Response )
 				{
 					// Not a response message or invalid message type
 					return null;
 				}
 
-				if ( !unpacker.Read() || !unpacker.Data.Value.IsTypeOf<Int32>().GetValueOrDefault() )
+				if ( !unpacker.Read() || !unpacker.LastReadData.IsTypeOf<Int32>().GetValueOrDefault() )
 				{
 					// Invalid message ID.
 					return null;
 				}
 
-				return unpacker.Data.Value.AsInt32();
+				return unpacker.LastReadData.AsInt32();
 			}
 		}
 

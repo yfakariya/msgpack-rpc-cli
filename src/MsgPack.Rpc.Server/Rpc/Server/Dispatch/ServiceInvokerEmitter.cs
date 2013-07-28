@@ -2,7 +2,7 @@
 //
 // MessagePack for CLI
 //
-// Copyright (C) 2010 FUJIWARA, Yusuke
+// Copyright (C) 2010-2013 FUJIWARA, Yusuke
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
 //    you may not use this file except in compliance with the License.
@@ -97,7 +97,7 @@ namespace MsgPack.Rpc.Server.Dispatch
 		}
 
 		/// <summary>
-		/// Initializes a new instance of the <see cref="SerializerEmitter"/> class.
+		/// Initializes a new instance of the <see cref="ServiceInvokerEmitter"/> class.
 		/// </summary>
 		/// <param name="host">The host <see cref="ModuleBuilder"/>.</param>
 		/// <param name="sequence">The sequence number to name new type..</param>

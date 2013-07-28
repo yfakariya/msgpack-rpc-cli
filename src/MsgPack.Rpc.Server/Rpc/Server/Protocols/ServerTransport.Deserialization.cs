@@ -122,7 +122,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			int numericType;
 			try
 			{
-				numericType = context.HeaderUnpacker.Data.Value.AsInt32();
+				numericType = context.HeaderUnpacker.LastReadData.AsInt32();
 			}
 			catch ( InvalidOperationException )
 			{
@@ -183,7 +183,7 @@ namespace MsgPack.Rpc.Server.Protocols
 
 			try
 			{
-				context.MessageId = unchecked( ( int )context.HeaderUnpacker.Data.Value.AsUInt32() );
+				context.MessageId = unchecked( ( int )context.HeaderUnpacker.LastReadData.AsUInt32() );
 			}
 			catch ( InvalidOperationException )
 			{
@@ -223,7 +223,7 @@ namespace MsgPack.Rpc.Server.Protocols
 
 			try
 			{
-				context.MethodName = context.HeaderUnpacker.Data.Value.AsString();
+				context.MethodName = context.HeaderUnpacker.LastReadData.AsString();
 			}
 			catch ( InvalidOperationException )
 			{
@@ -320,7 +320,7 @@ namespace MsgPack.Rpc.Server.Protocols
 					return false;
 				}
 
-				context.ArgumentsBufferPacker.Pack( context.ArgumentsBufferUnpacker.Data.Value );
+				context.ArgumentsBufferPacker.Pack( context.ArgumentsBufferUnpacker.LastReadData );
 				context.UnpackedArgumentsCount++;
 			}
 
