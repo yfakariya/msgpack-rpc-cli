@@ -81,6 +81,7 @@ namespace MsgPack.Rpc.Client.Protocols
 
 		private static void TestSendReceiveRequestCore( IPEndPoint endPoint, int count, int concurrency )
 		{
+			_SetUpFixture.EnsureThreadPoolCapacity();
 			using ( var clientTransportManager = new TcpClientTransportManager( new RpcClientConfiguration() ) )
 			{
 				 var connectTask = clientTransportManager.ConnectAsync( endPoint );

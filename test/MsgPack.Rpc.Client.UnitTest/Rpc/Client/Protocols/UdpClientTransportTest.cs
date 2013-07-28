@@ -95,6 +95,8 @@ namespace MsgPack.Rpc.Client.Protocols
 
 		private static void TestSendReceiveRequestCore( IPEndPoint endPoint, int count, int concurrency )
 		{
+			_SetUpFixture.EnsureThreadPoolCapacity();
+
 			using ( var clientTransportManager = new UdpClientTransportManager( new RpcClientConfiguration() { PreferIPv4 = true } ) )
 			{
 				var connectTask = clientTransportManager.ConnectAsync( endPoint );

@@ -100,7 +100,6 @@ namespace MsgPack.Rpc.Client.Protocols
 		/// <param name="context">Context information.</param>
 		protected sealed override void SendCore( ClientRequestContext context )
 		{
-			// Manager stores the socket which is dedicated socket to this transport in the AcceptSocket property.
 			if ( !this.BoundSocket.SendToAsync( context.SocketContext ) )
 			{
 				context.SetCompletedSynchronously();
@@ -114,7 +113,6 @@ namespace MsgPack.Rpc.Client.Protocols
 		/// <param name="context">Context information.</param>
 		protected sealed override void ReceiveCore( ClientResponseContext context )
 		{
-			// Manager stores the socket which is dedicated socket to this transport in the AcceptSocket property.
 			if ( !this.BoundSocket.ReceiveFromAsync( context.SocketContext ) )
 			{
 				context.SetCompletedSynchronously();

@@ -21,6 +21,8 @@
 using System;
 using System.Diagnostics;
 using System.Diagnostics.Contracts;
+using System.Runtime.InteropServices;
+using System.Threading;
 using NUnit.Framework;
 
 namespace MsgPack.Rpc.Server.Protocols
@@ -39,6 +41,16 @@ namespace MsgPack.Rpc.Server.Protocols
 					Console.WriteLine( new StackTrace( 0, true ) );
 					e.SetUnwind();
 				};
+
+			var winDir = Environment.GetEnvironmentVariable( "windir" );
+
+			if ( String.IsNullOrEmpty( winDir ) || !RuntimeEnvironment.GetRuntimeDirectory().StartsWith( winDir, StringComparison.OrdinalIgnoreCase ) )
+			{
+				// It might be in Mono
+				// Increase min/max worker thread to avoid async socket exhausion.
+				ThreadPool.SetMinThreads( Environment.ProcessorCount * 10, Environment.ProcessorCount * 10 );
+				ThreadPool.SetMaxThreads( Int16.MaxValue, 1000 );
+			}
 		}
 	}
 }
