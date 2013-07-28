@@ -2,7 +2,7 @@
 //
 // MessagePack for CLI
 //
-// Copyright (C) 2010 FUJIWARA, Yusuke
+// Copyright (C) 2010-2013 FUJIWARA, Yusuke
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
 //    you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Globalization;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
@@ -142,14 +143,49 @@ namespace MsgPack.Rpc.Server
 					Assert.That( result.IsArray );
 					var array = result.AsList();
 					Assert.That( array.Count, Is.EqualTo( 4 ) );
-					Assert.That( array[ 0 ] == 1, array[ 0 ].ToString() );
-					Assert.That( array[ 1 ] == 123, array[ 1 ].ToString() );
-					Assert.That( array[ 2 ] == MessagePackObject.Nil, array[ 2 ].ToString() );
+					Assert.That(
+						array[ 0 ] == 1,
+						String.Format(
+							CultureInfo.CurrentCulture,
+							"Expected: {1}{0}Actual : {2}",
+							Environment.NewLine,
+							1,
+							array[ 0 ].ToString() ) );
+					Assert.That(
+						array[ 1 ] == 123,
+						String.Format(
+							CultureInfo.CurrentCulture,
+							"Expected: {1}{0}Actual : {2}",
+							Environment.NewLine,
+							123,
+							array[ 1 ].ToString() ) );
+					Assert.That(
+						array[ 2 ] == MessagePackObject.Nil,
+						String.Format(
+							CultureInfo.CurrentCulture,
+							"Expected: {1}{0}Actual : {2}",
+							Environment.NewLine,
+							MessagePackObject.Nil,
+							array[ 2 ].ToString() ) );
 					Assert.That( array[ 3 ].IsArray, array[ 3 ].ToString() );
 					var returnValue = array[ 3 ].AsList();
 					Assert.That( returnValue.Count, Is.EqualTo( 2 ) );
-					Assert.That( returnValue[ 0 ] == message, returnValue[ 0 ].ToString() );
-					Assert.That( returnValue[ 1 ] == now, returnValue[ 1 ].ToString() );
+					Assert.That(
+						returnValue[ 0 ] == message,
+						String.Format(
+							CultureInfo.CurrentCulture,
+							"Expected: {1}{0}Actual : {2}",
+							Environment.NewLine,
+							message,
+							returnValue[ 0 ].ToString() ) );
+					Assert.That(
+						returnValue[ 1 ] == now,
+						String.Format(
+							CultureInfo.CurrentCulture,
+							"Expected: {1}{0}Actual : {2}",
+							Environment.NewLine,
+							now,
+							returnValue[ 1 ].ToString() ) );
 					this._trace.TraceInformation( "---- Client received response ----" );
 				}
 			}
