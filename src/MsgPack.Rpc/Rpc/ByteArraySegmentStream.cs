@@ -2,7 +2,7 @@
 //
 // MessagePack for CLI
 //
-// Copyright (C) 2010 FUJIWARA, Yusuke
+// Copyright (C) 2010-2013 FUJIWARA, Yusuke
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
 //    you may not use this file except in compliance with the License.
@@ -20,12 +20,14 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
 
 namespace MsgPack.Rpc
 {
+	[DebuggerTypeProxy( typeof( DebuggerProxy ) )]
 	internal sealed class ByteArraySegmentStream : Stream
 	{
 		private readonly IList<ArraySegment<byte>> _segments;
@@ -278,6 +280,79 @@ namespace MsgPack.Rpc
 		public sealed override void WriteByte( byte value )
 		{
 			throw new NotSupportedException();
+		}
+
+		internal sealed class DebuggerProxy
+		{
+			private readonly ByteArraySegmentStream _source;
+
+			public bool CanSeek
+			{
+				get { return this._source.CanSeek; }
+			}
+
+			public bool CanRead
+			{
+				get { return this._source.CanRead; }
+			}
+
+			public bool CanWrite
+			{
+				get { return this._source.CanWrite; }
+			}
+
+			public bool CanTimeout
+			{
+				get { return this._source.CanTimeout; }
+			}
+
+			public int ReadTimeout
+			{
+				get { return this._source.ReadTimeout; }
+				set { this._source.ReadTimeout = value; }
+			}
+
+			public int WriteTimeout
+			{
+				get { return this._source.WriteTimeout; }
+				set { this._source.WriteTimeout = value; }
+			}
+
+			public long Position
+			{
+				get { return this._source.Position; }
+				set { this._source.Position = value; }
+			}
+
+			public long Length
+			{
+				get { return this._source.Length; }
+			}
+
+			public IList<ArraySegment<byte>> Segments
+			{
+				get { return this._source._segments ?? new ArraySegment<byte>[ 0 ]; }
+			}
+
+			public string Data
+			{
+				get
+				{
+					return
+						"[" +
+						String.Join(
+							",",
+							this.Segments.Select(
+								s => s.AsEnumerable().Select( b => b.ToString( "X2" ) )
+							).Aggregate( ( current, subsequent ) => current.Concat( subsequent ) )
+						) + "]";
+				}
+			}
+
+			public DebuggerProxy( ByteArraySegmentStream source )
+			{
+				this._source = source;
+			}
 		}
 	}
 }
