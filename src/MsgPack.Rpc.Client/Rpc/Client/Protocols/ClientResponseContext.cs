@@ -69,6 +69,34 @@ namespace MsgPack.Rpc.Client.Protocols
 			this.ErrorStartAt = -1;
 			this.ResultStartAt = -1;
 		}
+		
+		internal long? SkipResultSegment()
+		{
+#if DEBUG
+			Contract.Assert( this.ResultStartAt > -1 );
+#endif
+			return this.SkipHeader( this.ResultStartAt );
+		}
+
+		internal long? SkipErrorSegment()
+		{
+#if DEBUG
+			Contract.Assert( this.ErrorStartAt > -1 );
+#endif
+			return this.SkipHeader( this.ErrorStartAt );
+		}
+
+		private long? SkipHeader( long origin )
+		{
+			long? result = this.HeaderUnpacker.Skip();
+			if ( result == null )
+			{
+				// Revert buffer position to handle next attempt.
+				this.UnpackingBuffer.Position = origin;
+			}
+
+			return result;
+		}
 
 		/// <summary>
 		///		Sets the bound <see cref="ClientTransport"/>.

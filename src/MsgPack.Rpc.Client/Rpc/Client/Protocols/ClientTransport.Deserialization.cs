@@ -174,7 +174,7 @@ namespace MsgPack.Rpc.Client.Protocols
 				context.ErrorStartAt = context.UnpackingBuffer.Position;
 			}
 
-			var skipped = context.HeaderUnpacker.Skip();
+			var skipped = context.SkipErrorSegment();
 			if ( skipped == null )
 			{
 				MsgPackRpcClientProtocolsTrace.TraceEvent( MsgPackRpcClientProtocolsTrace.NeedError, "Error value is needed. {{ \"SessionID\" : {0} }}", context.SessionId );
@@ -203,7 +203,7 @@ namespace MsgPack.Rpc.Client.Protocols
 				context.ResultStartAt = context.UnpackingBuffer.Position;
 			}
 
-			var skipped = context.HeaderUnpacker.Skip();
+			var skipped = context.SkipResultSegment();
 			if ( skipped == null )
 			{
 				MsgPackRpcClientProtocolsTrace.TraceEvent( MsgPackRpcClientProtocolsTrace.NeedResult, "Result value is needed. {{ \"SessionID\" : {0} }}", context.SessionId );
@@ -274,7 +274,7 @@ namespace MsgPack.Rpc.Client.Protocols
 				context.Clear();
 				return false;
 			}
-			
+
 			if ( this.Manager.Configuration.DumpCorruptResponse )
 			{
 #if !SILVERLIGHT
