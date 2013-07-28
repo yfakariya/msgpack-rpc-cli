@@ -366,12 +366,12 @@ namespace MsgPack.Rpc
 			// currently, Mono does not declare AddHostEvidence
 			evidence.AddHost( new Zone( SecurityZone.Internet ) );
 #pragma warning restore 0612
-			var permisions = GetDefaultInternetZoneSandbox();
+			var permissions = GetDefaultInternetZoneSandbox();
 #else
 			evidence.AddHostEvidence( new Zone( SecurityZone.Internet ) );
-			var permisions = SecurityManager.GetStandardSandbox( evidence );
+			var permissions = SecurityManager.GetStandardSandbox( evidence );
 #endif
-			AppDomain workerDomain = AppDomain.CreateDomain( "PartialTrust", evidence, appDomainSetUp, permisions, GetStrongName( this.GetType() ) );
+			AppDomain workerDomain = AppDomain.CreateDomain( "PartialTrust", evidence, appDomainSetUp, permissions, GetStrongName( this.GetType() ) );
 			try
 			{
 				var proxyHandle = Activator.CreateInstance( workerDomain, this.GetType().Assembly.FullName, this.GetType().FullName );
@@ -459,7 +459,7 @@ namespace MsgPack.Rpc
 #endif
 
 	}
-	
+
 	[Serializable]
 	public enum ConstructorKind
 	{
