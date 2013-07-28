@@ -295,9 +295,46 @@ namespace MsgPack.Rpc
 			var asDictionary = result.AsDictionary();
 
 			Assert.That( asDictionary.Values.Any( item => item == GetRpcError( properties ).ErrorCode ) );
-			Assert.That( asDictionary.Values.Any( item => item.IsTypeOf<string>().GetValueOrDefault() && item.AsString().Contains( GetMessage( properties ) ) ), Is.False );
-			Assert.That( asDictionary.Values.Any( item => item.IsTypeOf<string>().GetValueOrDefault() && item.AsString().Contains( GetRpcError( properties ).DefaultMessageInvariant ) ), Is.True );
-			Assert.That( asDictionary.Values.Any( item => item.IsTypeOf<string>().GetValueOrDefault() && item.AsString().Contains( GetDebugInformation( properties ) ) ), Is.False );
+			Assert.That(
+				asDictionary.Values.Any(
+					item => item.IsTypeOf<string>().GetValueOrDefault() && item.AsString().Contains( GetMessage( properties ) ) ),
+				Is.False,
+				"Expects not containing:'{0}', Actual :'{1}'",
+				GetMessage( properties ),
+				result.ToString() );
+
+			Assert.That(
+				asDictionary.Values.Any(
+					item =>
+					item.IsTypeOf<string>().GetValueOrDefault() &&
+					item.AsString().Contains( GetRpcError( properties ).DefaultMessageInvariant ) ),
+				Is.True,
+				"Expects containing:'{0}', Actual :'{1}'",
+				GetRpcError( properties ),
+				result.ToString() );
+
+			if ( String.IsNullOrEmpty( GetDebugInformation( properties ) ) )
+			{
+				Assert.That(
+					asDictionary.Keys.Any(
+						item =>
+						item.IsTypeOf<string>().GetValueOrDefault() && item.AsString().Contains( "DebugInformation" ) ),
+					Is.False,
+					"Expects not containing:'{0}', Actual :'{1}'",
+					"DebugInformation",
+					result.ToString() );
+			}
+			else
+			{
+				Assert.That(
+					asDictionary.Values.Any(
+						item =>
+						item.IsTypeOf<string>().GetValueOrDefault() && item.AsString().Contains( GetDebugInformation( properties ) ) ),
+					Is.False,
+					"Expects not containing:'{0}', Actual :'{1}'",
+					GetDebugInformation( properties ),
+					result.ToString() );
+			}
 		}
 
 		[Test()]
