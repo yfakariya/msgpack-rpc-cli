@@ -258,6 +258,9 @@
     <Compile Include="..\MsgPack.Rpc\Rpc\UnexpcetedRpcException.cs">
       <Link>Rpc\UnexpcetedRpcException.cs</Link>
     </Compile>
+    <Compile Include="..\MsgPack.Rpc\Rpc\UnpackerExtensions.cs">
+      <Link>Rpc\UnpackerExtensions.cs</Link>
+    </Compile>
     <Compile Include="Compatibility\Collections\Concurrent\BlockingCollection.cs" />
     <Compile Include="Compatibility\Collections\Concurrent\ConcurrentDictionary.cs" />
     <Compile Include="Compatibility\Collections\Concurrent\ConcurrentQueue.cs" />

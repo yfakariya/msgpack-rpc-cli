@@ -2,7 +2,7 @@
 //
 // MessagePack for CLI
 //
-// Copyright (C) 2010 FUJIWARA, Yusuke
+// Copyright (C) 2010-2013 FUJIWARA, Yusuke
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
 //    you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@ namespace MsgPack.Rpc.Client.Protocols
 				context.RenewSessionId();
 			}
 
-			if ( !context.RootUnpacker.Read() )
+			if ( !context.ReadFromRootUnpacker() )
 			{
 				MsgPackRpcClientProtocolsTrace.TraceEvent( MsgPackRpcClientProtocolsTrace.NeedRequestHeader, "Array header is needed. {{ \"SessionID\" : {0} }}", context.SessionId );
 				return false;
@@ -91,7 +91,7 @@ namespace MsgPack.Rpc.Client.Protocols
 		/// </returns>
 		private bool UnpackMessageType( ClientResponseContext context )
 		{
-			if ( !context.HeaderUnpacker.Read() )
+			if ( !context.ReadFromHeaderUnpacker() )
 			{
 				MsgPackRpcClientProtocolsTrace.TraceEvent( MsgPackRpcClientProtocolsTrace.NeedMessageType, "Message Type is needed. {{ \"SessionID\" : {0} }}", context.SessionId );
 				return false;
@@ -134,7 +134,7 @@ namespace MsgPack.Rpc.Client.Protocols
 		/// </returns>
 		private bool UnpackMessageId( ClientResponseContext context )
 		{
-			if ( !context.HeaderUnpacker.Read() )
+			if ( !context.ReadFromHeaderUnpacker() )
 			{
 				MsgPackRpcClientProtocolsTrace.TraceEvent( MsgPackRpcClientProtocolsTrace.NeedMessageId, "Message ID is needed. {{ \"SessionID\" : {0} }}", context.SessionId );
 				return false;
@@ -278,7 +278,7 @@ namespace MsgPack.Rpc.Client.Protocols
 			if ( this.Manager.Configuration.DumpCorruptResponse )
 			{
 #if !SILVERLIGHT
-				using( var dumpStream = OpenDumpStream( context.SessionStartedAt, context.RemoteEndPoint, context.SessionId, MessageType.Response, context.MessageId ) )
+				using ( var dumpStream = OpenDumpStream( context.SessionStartedAt, context.RemoteEndPoint, context.SessionId, MessageType.Response, context.MessageId ) )
 #else
 				using( var storage = IsolatedStorageFile.GetUserStoreForApplication() )
 				using( var dumpStream = OpenDumpStream( storage, context.SessionStartedAt, context.RemoteEndPoint, context.SessionId, MessageType.Response, context.MessageId ) )

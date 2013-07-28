@@ -2,7 +2,7 @@
 //
 // MessagePack for CLI
 //
-// Copyright (C) 2010 FUJIWARA, Yusuke
+// Copyright (C) 2010-2013 FUJIWARA, Yusuke
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
 //    you may not use this file except in compliance with the License.
@@ -108,6 +108,16 @@ namespace MsgPack.Rpc.Protocols
 			this._receivedData = new List<ArraySegment<byte>>( 1 );
 		}
 
+		internal bool ReadFromRootUnpacker()
+		{
+			return this.RootUnpacker.TryRead( this.UnpackingBuffer );
+		}
+
+		internal bool ReadFromHeaderUnpacker()
+		{
+			return this.HeaderUnpacker.TryRead( this.UnpackingBuffer );
+		}
+
 		/// <summary>
 		///		Set internal received data buffer for testing purposes.
 		/// </summary>
@@ -162,7 +172,7 @@ namespace MsgPack.Rpc.Protocols
 				this.UnpackingBuffer.Dispose();
 				this.UnpackingBuffer = null;
 			}
-			
+
 			base.Clear();
 		}
 
@@ -170,13 +180,29 @@ namespace MsgPack.Rpc.Protocols
 		{
 			if ( this.HeaderUnpacker != null )
 			{
-				this.HeaderUnpacker.Dispose();
+				try
+				{
+					this.HeaderUnpacker.Dispose();
+				}
+				catch ( InvalidMessagePackStreamException )
+				{
+					// Handles cleanup for corruppted stream.
+				}
+
 				this.HeaderUnpacker = null;
 			}
 
 			if ( this.RootUnpacker != null )
 			{
-				this.RootUnpacker.Dispose();
+				try
+				{
+					this.RootUnpacker.Dispose();
+				}
+				catch ( InvalidMessagePackStreamException )
+				{
+					// Handles cleanup for corruppted stream.
+				}
+
 				this.RootUnpacker = null;
 			}
 

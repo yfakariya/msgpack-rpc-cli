@@ -2,7 +2,7 @@
 //
 // MessagePack for CLI
 //
-// Copyright (C) 2010 FUJIWARA, Yusuke
+// Copyright (C) 2010-2013 FUJIWARA, Yusuke
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
 //    you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@
 using System;
 using System.Diagnostics.Contracts;
 using System.Globalization;
-using System.Linq;
 using System.Threading;
 using MsgPack.Rpc.Protocols;
 
@@ -63,7 +62,7 @@ namespace MsgPack.Rpc.Server.Protocols
 				}
 			}
 
-			if ( !context.RootUnpacker.Read() )
+			if ( !context.ReadFromRootUnpacker() )
 			{
 				MsgPackRpcServerProtocolsTrace.TraceEvent( 
 					MsgPackRpcServerProtocolsTrace.NeedRequestHeader,
@@ -110,7 +109,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		{
 			Contract.Assert( context != null );
 			
-			if ( !context.HeaderUnpacker.Read() )
+			if ( !context.ReadFromHeaderUnpacker() )
 			{
 				MsgPackRpcServerProtocolsTrace.TraceEvent( 
 					MsgPackRpcServerProtocolsTrace.NeedMessageType,
@@ -171,8 +170,8 @@ namespace MsgPack.Rpc.Server.Protocols
 		private bool UnpackMessageId( ServerRequestContext context )
 		{
 			Contract.Assert( context != null );
-			
-			if ( !context.HeaderUnpacker.Read() )
+
+			if ( !context.ReadFromHeaderUnpacker() )
 			{
 				MsgPackRpcServerProtocolsTrace.TraceEvent( 
 					MsgPackRpcServerProtocolsTrace.NeedMessageId,
@@ -212,7 +211,7 @@ namespace MsgPack.Rpc.Server.Protocols
 		{
 			Contract.Assert( context != null );
 
-			if ( !context.HeaderUnpacker.Read() )
+			if ( !context.ReadFromHeaderUnpacker() )
 			{
 				MsgPackRpcServerProtocolsTrace.TraceEvent( 
 					MsgPackRpcServerProtocolsTrace.NeedMethodName,
@@ -251,8 +250,8 @@ namespace MsgPack.Rpc.Server.Protocols
 		private bool UnpackArgumentsHeader( ServerRequestContext context )
 		{
 			Contract.Assert( context != null );
-			
-			if ( !context.HeaderUnpacker.Read() )
+
+			if ( !context.ReadFromHeaderUnpacker() )
 			{
 				MsgPackRpcServerProtocolsTrace.TraceEvent( 
 					MsgPackRpcServerProtocolsTrace.NeedArgumentsArrayHeader,
@@ -309,7 +308,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			
 			while ( context.UnpackedArgumentsCount < context.ArgumentsCount )
 			{
-				if ( !context.ArgumentsBufferUnpacker.Read() )
+				if ( !context.ReadFromArgumentsBufferUnpacker() )
 				{
 					MsgPackRpcServerProtocolsTrace.TraceEvent( 
 						MsgPackRpcServerProtocolsTrace.NeedArgumentsElement,

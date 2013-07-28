@@ -171,6 +171,7 @@
     <Compile Include="Rpc\UnexpcetedRpcException.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Rpc\UnpackerExtensions.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\MsgPack.snk">

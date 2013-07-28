@@ -2,7 +2,7 @@
 //
 // MessagePack for CLI
 //
-// Copyright (C) 2010 FUJIWARA, Yusuke
+// Copyright (C) 2010-2013 FUJIWARA, Yusuke
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
 //    you may not use this file except in compliance with the License.
@@ -101,6 +101,11 @@ namespace MsgPack.Rpc.Server.Protocols
 		{
 			this.ArgumentsBuffer =
 				new MemoryStream( ( configuration ?? RpcServerConfiguration.Default ).InitialArgumentsBufferLength );
+		}
+
+		internal bool ReadFromArgumentsBufferUnpacker()
+		{
+			return this.ArgumentsBufferUnpacker.TryRead( this.ArgumentsBuffer );
 		}
 
 		/// <summary>
