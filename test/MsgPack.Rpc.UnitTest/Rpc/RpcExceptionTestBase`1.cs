@@ -2,7 +2,7 @@
 //
 // MessagePack for CLI
 //
-// Copyright (C) 2010 FUJIWARA, Yusuke
+// Copyright (C) 2010-2013 FUJIWARA, Yusuke
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
 //    you may not use this file except in compliance with the License.
@@ -276,9 +276,26 @@ namespace MsgPack.Rpc
 			MessagePackObject result = target.GetExceptionMessage( includesDebugInformation );
 			var asDictionary = result.AsDictionary();
 
-			Assert.That( asDictionary.Values.Any( item => item == GetRpcError( properties ).ErrorCode ) );
-			Assert.That( asDictionary.Values.Any( item => item.IsTypeOf<string>().GetValueOrDefault() && item.AsString().Contains( GetMessage( properties ) ) ), Is.True );
-			Assert.That( asDictionary.Values.Any( item => item.IsTypeOf<string>().GetValueOrDefault() && item.AsString().Contains( GetDebugInformation( properties ) ) ), Is.True );
+			Assert.That(
+				asDictionary.Values.Any( item => item == GetRpcError( properties ).ErrorCode ),
+				"Expects containing:'{0}', Actual :'{1}'",
+				GetRpcError( properties ).ErrorCode,
+				result.ToString() );
+			Assert.That(
+				asDictionary.Values.Any(
+					item => item.IsTypeOf<string>().GetValueOrDefault() && item.AsString().Contains( GetMessage( properties ) ) ),
+				Is.True,
+				"Expects containing:'{0}', Actual :'{1}'",
+				GetMessage( properties ),
+				result.ToString() );
+			Assert.That(
+				asDictionary.Values.Any(
+					item =>
+					item.IsTypeOf<string>().GetValueOrDefault() && item.AsString().Contains( GetDebugInformation( properties ) ) ),
+				Is.True,
+				"Expects containing:'{0}', Actual :'{1}'",
+				GetDebugInformation( properties ),
+				result.ToString() );
 		}
 
 		/// <summary>
@@ -295,9 +312,12 @@ namespace MsgPack.Rpc
 			var asDictionary = result.AsDictionary();
 
 			Assert.That( asDictionary.Values.Any( item => item == GetRpcError( properties ).ErrorCode ) );
+
 			Assert.That(
 				asDictionary.Values.Any(
-					item => item.IsTypeOf<string>().GetValueOrDefault() && item.AsString().Contains( GetMessage( properties ) ) ),
+					item => item.IsTypeOf<string>().GetValueOrDefault()
+						&& item.AsString() != this.DefaultMessage
+						&& item.AsString().Contains( GetMessage( properties ) ) ),
 				Is.False,
 				"Expects not containing:'{0}', Actual :'{1}'",
 				GetMessage( properties ),
@@ -390,9 +410,9 @@ namespace MsgPack.Rpc
 		}
 
 		private void DoTestWithPartialTrust(
-			Func<RpcExceptionTestBase<TRpcException>, IDictionary<string, object>> propertiesGetter,
-			Func<RpcExceptionTestBase<TRpcException>, IDictionary<string, object>, TRpcException> instanceCreator,
-			Action<RpcExceptionTestBase<TRpcException>, TRpcException, IDictionary<string, object>> assertion
+			Func<RemoteWorkerProxy<TRpcException>, IDictionary<string, object>> propertiesGetter,
+			Func<RemoteWorkerProxy<TRpcException>, IDictionary<string, object>, TRpcException> instanceCreator,
+			Action<RemoteWorkerProxy<TRpcException>, TRpcException, IDictionary<string, object>> assertion
 		)
 		{
 			var appDomainSetUp = new AppDomainSetup() { ApplicationBase = AppDomain.CurrentDomain.SetupInformation.ApplicationBase };
@@ -412,7 +432,8 @@ namespace MsgPack.Rpc
 			try
 			{
 				var proxyHandle = Activator.CreateInstance( workerDomain, this.GetType().Assembly.FullName, this.GetType().FullName );
-				var proxy = ( RpcExceptionTestBase<TRpcException> )proxyHandle.Unwrap();
+				var remoteProxy = ( RpcExceptionTestBase<TRpcException> )proxyHandle.Unwrap();
+				var proxy = new RemoteWorkerProxy<TRpcException>( this, remoteProxy, workerDomain );
 				var properties = propertiesGetter( proxy );
 				var result = instanceCreator( proxy, properties );
 				assertion( proxy, result, properties );
@@ -495,6 +516,76 @@ namespace MsgPack.Rpc
 		}
 #endif
 
+		private const string dlsKeyPrefix = "RpcExceptionTest.";
+
+		// Avoids serialization formatter permission error with DLS. 
+		public string RemoteNewRpcException( string kindKey, string[] propertyKeys )
+		{
+			var properties = new Dictionary<string, object>( propertyKeys.Length );
+			foreach ( var key in propertyKeys )
+			{
+				properties.Add( key, AppDomain.CurrentDomain.GetData( dlsKeyPrefix + key ) );
+			}
+
+			var kind = ( ConstructorKind )AppDomain.CurrentDomain.GetData( dlsKeyPrefix + kindKey );
+
+			var result = this.NewRpcException( kind, properties );
+			const string resultKey = dlsKeyPrefix + ".result";
+			AppDomain.CurrentDomain.SetData( resultKey, result );
+			return resultKey;
+		}
+
+		/// <summary>
+		///		Avoids serialization formatter permission error with DLS. 
+		/// </summary>
+		/// <typeparam name="T"></typeparam>
+		private sealed class RemoteWorkerProxy<T>
+			where T : RpcException
+		{
+			private readonly RpcExceptionTestBase<T> _localInstance; 
+			private readonly RpcExceptionTestBase<T> _remoteProxy;
+			private readonly AppDomain _remoteDomain;
+
+			public RemoteWorkerProxy( RpcExceptionTestBase<T> localInstance, RpcExceptionTestBase<T> remoteProxy, AppDomain remoteDomain )
+			{
+				this._localInstance = localInstance;
+				this._remoteProxy = remoteProxy;
+				this._remoteDomain = remoteDomain;
+			}
+
+			public IDictionary<string, object> GetTestArguments()
+			{
+				return this._remoteProxy.GetTestArguments();
+			}
+
+			public IDictionary<string, object> GetTestArgumentsWithAllNullValue()
+			{
+				return this._remoteProxy.GetTestArgumentsWithAllNullValue();
+			}
+
+			public IDictionary<string, object> GetTestArgumentsWithDefaultValue()
+			{
+				return this._remoteProxy.GetTestArgumentsWithDefaultValue();
+			}
+
+			public void AssertProperties( T target, ConstructorKind kind, IDictionary<string, object> properties )
+			{
+				this._localInstance.AssertProperties( target, kind, properties );
+			}
+
+			public T NewRpcException( ConstructorKind kind, IDictionary<string, object> properties )
+			{
+				const string kindKey = "kind";
+				this._remoteDomain.SetData( dlsKeyPrefix + kindKey, kind );
+				foreach ( var property in properties )
+				{
+					this._remoteDomain.SetData( dlsKeyPrefix + property.Key, property.Value );
+				}
+
+				string resultKey = this._remoteProxy.RemoteNewRpcException( "kind", properties.Keys.ToArray() );
+				return ( T )this._remoteDomain.GetData( resultKey );
+			}
+		}
 	}
 
 	[Serializable]

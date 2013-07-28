@@ -2,7 +2,7 @@
 //
 // MessagePack for CLI
 //
-// Copyright (C) 2010 FUJIWARA, Yusuke
+// Copyright (C) 2010-2013 FUJIWARA, Yusuke
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
 //    you may not use this file except in compliance with the License.
@@ -65,7 +65,6 @@ namespace MsgPack.Rpc
 				var result = base.GetTestArguments();
 				result[ "Message" ] = this.DefaultMessage;
 				result[ "DebugInformation" ] = String.Empty;
-				result[ "RpcError" ] = this.DefaultError;
 				result[ "InnerException" ] = null;
 				result.Add( "Error", new MessagePackObject( Guid.NewGuid().ToString() ) );
 				result.Add( "ErrorDetail", new MessagePackObject( Guid.NewGuid().ToString() ) );
@@ -95,12 +94,13 @@ namespace MsgPack.Rpc
 
 			protected override UnexpcetedRpcException NewRpcException( RpcError rpcError, MessagePackObject unpackedException )
 			{
-				throw new NotSupportedException();
+				Assert.Ignore( "UnexpcetedRpcException does not handle this behavior in the first place." );
+				return null;
 			}
 
 			protected override void AssertProperties( UnexpcetedRpcException target, ConstructorKind kind, System.Collections.Generic.IDictionary<string, object> properties )
 			{
-				base.AssertProperties( target, kind, properties );
+				// Not call base.AssertProperties bevause UnexpcetedRpcException does not use general properties.
 				Assert.That( target.Error, Is.EqualTo( ( MessagePackObject )properties[ "Error" ] ) );
 				Assert.That( target.ErrorDetail, Is.EqualTo( ( MessagePackObject )properties[ "ErrorDetail" ] ) );
 			}
