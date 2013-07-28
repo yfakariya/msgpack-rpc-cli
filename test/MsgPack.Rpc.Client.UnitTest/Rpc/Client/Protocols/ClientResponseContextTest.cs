@@ -126,7 +126,7 @@ namespace MsgPack.Rpc.Client.Protocols
 			target.ShiftCurrentReceivingBuffer();
 			target.ErrorBuffer = new ByteArraySegmentStream( CreateDirtyBytes() );
 			target.ErrorStartAt = 1;
-			target.HeaderUnpacker = Unpacker.Create();
+			target.HeaderUnpacker = Unpacker.Create( new MemoryStream() );
 			target.MessageId = 1;
 			target.NextProcess = _ => true;
 			target.ReceivedData.Add( new ArraySegment<byte>( new byte[] { 1, 2, 3, 4 } ) );
