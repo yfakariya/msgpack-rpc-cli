@@ -56,13 +56,9 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="mscorlib" />
-    <Reference Include="MsgPack, Version=0.4.0.0, Culture=neutral, PublicKeyToken=a2625990d5dc0167, processorArchitecture=MSIL">
+    <Reference Include="MsgPack, Version=0.5.0.0, Culture=neutral, PublicKeyToken=a2625990d5dc0167, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\packages\MsgPack.Cli.0.4.0-beta2\lib\sl5\MsgPack.dll</HintPath>
-    </Reference>
-    <Reference Include="MsgPack.Serialization, Version=0.4.0.0, Culture=neutral, PublicKeyToken=a2625990d5dc0167, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\packages\MsgPack.Cli.0.4.0-beta2\lib\sl5\MsgPack.Serialization.dll</HintPath>
+      <HintPath>..\..\packages\MsgPack.Cli.0.5.3\lib\sl5\MsgPack.dll</HintPath>
     </Reference>
     <Reference Include="system" />
     <Reference Include="System.Core" />

@@ -46,7 +46,7 @@
   <ItemGroup>
     <Reference Include="MsgPack, Version=0.4.0.0, Culture=neutral, PublicKeyToken=a2625990d5dc0167, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\packages\MsgPack.Cli.0.4.0-beta2\lib\net40-client\MsgPack.dll</HintPath>
+      <HintPath>..\..\packages\MsgPack.Cli.0.5.3\lib\net40-client\MsgPack.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
