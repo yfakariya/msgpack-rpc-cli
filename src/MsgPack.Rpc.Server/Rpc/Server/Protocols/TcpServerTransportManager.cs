@@ -91,19 +91,17 @@ namespace MsgPack.Rpc.Server.Protocols
 					ProtocolType.Tcp
 				);
 
+#if !MONO
 			if ( !this.Configuration.PreferIPv4
 				&& Environment.OSVersion.Platform == PlatformID.Win32NT
 				&& Environment.OSVersion.Version.Major >= 6
-#if MONO
-				&& Socket.SupportsIPv6
-#else
 				&& Socket.OSSupportsIPv6
-#endif
 			)
 			{
 				// Listen both of IPv4 and IPv6
 				this._listeningSocket.SetSocketOption( SocketOptionLevel.IPv6, SocketOptionName.IPv6Only, 0 );
 			}
+#endif // !MONO
 
 			this._listeningSocket.Bind( bindingEndPoint );
 			this._listeningSocket.Listen( server.Configuration.ListenBackLog );

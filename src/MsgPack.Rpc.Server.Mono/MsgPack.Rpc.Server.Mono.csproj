@@ -37,13 +37,13 @@
     <AssemblyOriginatorKeyFile>..\MsgPack.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="MsgPack">
-      <HintPath>..\..\lib\net40\MsgPack.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.Xml" />
+    <Reference Include="MsgPack">
+      <HintPath>..\..\packages\MsgPack.Cli.0.5.3\lib\net40-client\MsgPack.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\CommonAssemblyInfo.cs">
@@ -263,7 +263,7 @@
       <Link>Validation.cs</Link>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="..\MsgPack.Rpc.Server\Rpc\Server\Dispatch\SvcFileInterop\XmlValidation.cs" >
+    <Compile Include="..\MsgPack.Rpc.Server\Rpc\Server\Dispatch\SvcFileInterop\XmlValidation.cs">
       <Link>XmlValidation.cs</Link>
     </Compile>
   </ItemGroup>
@@ -271,6 +271,7 @@
     <None Include="..\MsgPack.snk">
       <Link>MsgPack.snk</Link>
     </None>
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\MsgPack.Rpc.Mono\MsgPack.Rpc.Mono.csproj">

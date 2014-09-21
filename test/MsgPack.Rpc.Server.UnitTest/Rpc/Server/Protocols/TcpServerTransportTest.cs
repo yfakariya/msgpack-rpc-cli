@@ -432,7 +432,9 @@ namespace MsgPack.Rpc.Server.Protocols
 			{
 				Socket listeningSocket = null;
 				target.GetListeningSocket( ref listeningSocket );
+#if !MONO
 				Assert.That( listeningSocket.GetSocketOption( SocketOptionLevel.IPv6, SocketOptionName.IPv6Only ), Is.EqualTo( 0 ) );
+#endif // !MONO
 			}
 		}
 	}

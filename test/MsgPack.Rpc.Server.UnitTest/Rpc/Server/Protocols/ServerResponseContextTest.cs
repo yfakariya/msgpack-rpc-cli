@@ -61,7 +61,7 @@ namespace MsgPack.Rpc.Server.Protocols
 			TestCore( ( target, transport ) =>
 				{
 					target.MessageId = 123;
-					target.Serialize( "Test", RpcErrorMessage.Success, MessagePackSerializer.Create<string>() );
+					target.Serialize( "Test", RpcErrorMessage.Success, MessagePackSerializer.Get<string>() );
 
 					Assert.That( Unpacking.UnpackObject( target.GetReturnValueData() ).Value.Equals( "Test" ) );
 					Assert.That( Unpacking.UnpackObject( target.GetErrorData() ).Value.Equals( MessagePackObject.Nil ) );
