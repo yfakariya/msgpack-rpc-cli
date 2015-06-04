@@ -1080,9 +1080,11 @@ namespace MsgPack.Rpc.Client.Protocols
 					return;
 				}
 
-				this.FinishReceiving( context );
-				return;
+				//this.FinishReceiving( context );
+				//return;
 			}
+			
+			this.FinishReceiving( context );
 		}
 
 		private void FinishReceiving( ClientResponseContext context )
@@ -1090,7 +1092,7 @@ namespace MsgPack.Rpc.Client.Protocols
 			context.StopWatchTimeout();
 			context.Timeout -= this.OnReceiveTimeout;
 			this.Manager.ReturnResponseContext( context );
-			this.Manager.ReturnTransport( this );
+			//this.Manager.ReturnTransport( this );
 		}
 
 		private static int? TryDetectMessageId( ClientResponseContext context )
